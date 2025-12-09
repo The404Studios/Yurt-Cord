@@ -1,0 +1,163 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
+using VeaMarketplace.Server.Data;
+using VeaMarketplace.Shared.DTOs;
+using VeaMarketplace.Shared.Models;
+
+namespace VeaMarketplace.Server.Services;
+
+public class AuthService
+{
+    private readonly DatabaseService _db;
+    private readonly IConfiguration _configuration;
+
+    public AuthService(DatabaseService db, IConfiguration configuration)
+    {
+        _db = db;
+        _configuration = configuration;
+    }
+
+    public AuthResponse Register(RegisterRequest request)
+    {
+        if (_db.Users.Exists(u => u.Username.ToLower() == request.Username.ToLower()))
+        {
+            return new AuthResponse { Success = false, Message = "Username already exists" };
+        }
+
+        if (_db.Users.Exists(u => u.Email.ToLower() == request.Email.ToLower()))
+        {
+            return new AuthResponse { Success = false, Message = "Email already exists" };
+        }
+
+        var user = new User
+        {
+            Username = request.Username,
+            Email = request.Email,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            AvatarUrl = $"https://api.dicebear.com/7.x/avataaars/svg?seed={request.Username}",
+            CreatedAt = DateTime.UtcNow,
+            LastSeenAt = DateTime.UtcNow
+        };
+
+        _db.Users.Insert(user);
+
+        var token = GenerateToken(user);
+
+        return new AuthResponse
+        {
+            Success = true,
+            Message = "Registration successful",
+            Token = token,
+            User = MapToDto(user)
+        };
+    }
+
+    public AuthResponse Login(LoginRequest request)
+    {
+        var user = _db.Users.FindOne(u => u.Username.ToLower() == request.Username.ToLower());
+
+        if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        {
+            return new AuthResponse { Success = false, Message = "Invalid username or password" };
+        }
+
+        if (user.IsBanned)
+        {
+            return new AuthResponse { Success = false, Message = $"Account banned: {user.BanReason ?? "No reason provided"}" };
+        }
+
+        user.LastSeenAt = DateTime.UtcNow;
+        user.IsOnline = true;
+        _db.Users.Update(user);
+
+        var token = GenerateToken(user);
+
+        return new AuthResponse
+        {
+            Success = true,
+            Message = "Login successful",
+            Token = token,
+            User = MapToDto(user)
+        };
+    }
+
+    public User? GetUserById(string userId)
+    {
+        return _db.Users.FindById(userId);
+    }
+
+    public User? ValidateToken(string token)
+    {
+        try
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"] ?? "YourSuperSecretKeyHere12345678901234567890");
+
+            tokenHandler.ValidateToken(token, new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ClockSkew = TimeSpan.Zero
+            }, out SecurityToken validatedToken);
+
+            var jwtToken = (JwtSecurityToken)validatedToken;
+            var userId = jwtToken.Claims.First(x => x.Type == "id").Value;
+
+            return GetUserById(userId);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private string GenerateToken(User user)
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"] ?? "YourSuperSecretKeyHere12345678901234567890");
+
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(new[]
+            {
+                new Claim("id", user.Id),
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Role.ToString())
+            }),
+            Expires = DateTime.UtcNow.AddDays(7),
+            SigningCredentials = new SigningCredentials(
+                new SymmetricSecurityKey(key),
+                SecurityAlgorithms.HmacSha256Signature)
+        };
+
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        return tokenHandler.WriteToken(token);
+    }
+
+    public static UserDto MapToDto(User user)
+    {
+        return new UserDto
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            AvatarUrl = user.AvatarUrl,
+            Bio = user.Bio,
+            Role = user.Role,
+            Rank = user.Rank,
+            Reputation = user.Reputation,
+            TotalSales = user.TotalSales,
+            TotalPurchases = user.TotalPurchases,
+            Balance = user.Balance,
+            CreatedAt = user.CreatedAt,
+            LastSeenAt = user.LastSeenAt,
+            IsOnline = user.IsOnline,
+            Badges = user.Badges
+        };
+    }
+}

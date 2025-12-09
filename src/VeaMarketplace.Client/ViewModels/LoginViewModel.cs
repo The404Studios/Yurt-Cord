@@ -1,0 +1,162 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using VeaMarketplace.Client.Services;
+
+namespace VeaMarketplace.Client.ViewModels;
+
+public partial class LoginViewModel : BaseViewModel
+{
+    private readonly IApiService _apiService;
+    private readonly IChatService _chatService;
+    private readonly ISettingsService _settingsService;
+
+    [ObservableProperty]
+    private string _username = string.Empty;
+
+    [ObservableProperty]
+    private string _password = string.Empty;
+
+    [ObservableProperty]
+    private bool _rememberMe;
+
+    [ObservableProperty]
+    private bool _isRegistering;
+
+    [ObservableProperty]
+    private string _email = string.Empty;
+
+    [ObservableProperty]
+    private string _confirmPassword = string.Empty;
+
+    public event Action? OnLoginSuccess;
+    public event Action<string>? OnLoginFailed;
+
+    public LoginViewModel(IApiService apiService, IChatService chatService, ISettingsService settingsService)
+    {
+        _apiService = apiService;
+        _chatService = chatService;
+        _settingsService = settingsService;
+
+        // Load saved credentials
+        if (_settingsService.Settings.RememberMe)
+        {
+            Username = _settingsService.Settings.SavedUsername ?? string.Empty;
+            RememberMe = true;
+        }
+    }
+
+    [RelayCommand]
+    private async Task Login()
+    {
+        if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))
+        {
+            SetError("Please enter username and password");
+            return;
+        }
+
+        ClearError();
+        IsLoading = true;
+
+        try
+        {
+            var result = await _apiService.LoginAsync(Username, Password);
+
+            if (result.Success)
+            {
+                // Save credentials if remember me is checked
+                if (RememberMe)
+                {
+                    _settingsService.Settings.SavedToken = result.Token;
+                    _settingsService.Settings.SavedUsername = Username;
+                    _settingsService.Settings.RememberMe = true;
+                    _settingsService.SaveSettings();
+                }
+
+                // Connect to chat
+                if (result.Token != null)
+                {
+                    await _chatService.ConnectAsync(result.Token);
+                }
+
+                OnLoginSuccess?.Invoke();
+            }
+            else
+            {
+                SetError(result.Message);
+                OnLoginFailed?.Invoke(result.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            SetError("Connection failed. Is the server running?");
+            OnLoginFailed?.Invoke(ex.Message);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task Register()
+    {
+        if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Email) ||
+            string.IsNullOrWhiteSpace(Password) || string.IsNullOrWhiteSpace(ConfirmPassword))
+        {
+            SetError("Please fill in all fields");
+            return;
+        }
+
+        if (Password != ConfirmPassword)
+        {
+            SetError("Passwords do not match");
+            return;
+        }
+
+        if (Password.Length < 6)
+        {
+            SetError("Password must be at least 6 characters");
+            return;
+        }
+
+        ClearError();
+        IsLoading = true;
+
+        try
+        {
+            var result = await _apiService.RegisterAsync(Username, Email, Password);
+
+            if (result.Success)
+            {
+                // Connect to chat
+                if (result.Token != null)
+                {
+                    await _chatService.ConnectAsync(result.Token);
+                }
+
+                OnLoginSuccess?.Invoke();
+            }
+            else
+            {
+                SetError(result.Message);
+                OnLoginFailed?.Invoke(result.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            SetError("Connection failed. Is the server running?");
+            OnLoginFailed?.Invoke(ex.Message);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    [RelayCommand]
+    private void ToggleMode()
+    {
+        IsRegistering = !IsRegistering;
+        ClearError();
+    }
+}
