@@ -6,9 +6,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <ApplicationIcon>Resources\app.ico</ApplicationIcon>
     <AssemblyName>YurtCord</AssemblyName>
     <RootNamespace>VeaMarketplace.Client</RootNamespace>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,10 +22,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VeaMarketplace.Shared\VeaMarketplace.Shared.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Resource Include="Resources\**\*" />
   </ItemGroup>
 
 </Project>

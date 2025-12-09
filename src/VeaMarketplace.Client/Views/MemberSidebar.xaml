@@ -16,7 +16,10 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Cursor="Hand" Margin="4,1" CornerRadius="4"
-                                    Background="Transparent" Padding="8,6">
+                                    Padding="8,6">
+                                <Border.Background>
+                                    <SolidColorBrush Color="Transparent"/>
+                                </Border.Background>
                                 <Border.Triggers>
                                     <EventTrigger RoutedEvent="MouseEnter">
                                         <BeginStoryboard>
@@ -88,7 +91,10 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Cursor="Hand" Margin="4,1" CornerRadius="4"
-                                    Background="Transparent" Padding="8,6">
+                                    Padding="8,6">
+                                <Border.Background>
+                                    <SolidColorBrush Color="Transparent"/>
+                                </Border.Background>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
