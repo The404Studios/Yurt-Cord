@@ -59,7 +59,7 @@ public class ChatHub : Hub
         var joinMessage = _chatService.CreateSystemMessage("general", $"{user.Username} joined the chat", MessageType.Join);
         await Clients.Group("general").SendAsync("ReceiveMessage", joinMessage);
 
-        await Clients.Caller.SendAsync("AuthenticationSuccess", AuthService.MapToDto(user));
+        await Clients.Caller.SendAsync("AuthenticationSuccess", _authService.MapToDto(user));
     }
 
     public async Task JoinChannel(string channelName)

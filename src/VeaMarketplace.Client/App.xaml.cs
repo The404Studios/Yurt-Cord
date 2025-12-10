@@ -24,7 +24,7 @@ public partial class App : Application
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
 
         // Show splash screen
-        var splash = new SplashScreen();
+        var splash = new Views.SplashScreen();
         splash.Show();
 
         var services = new ServiceCollection();

@@ -51,9 +51,21 @@ public partial class ProfileViewModel : BaseViewModel
 
         try
         {
-            var updatedUser = await _apiService.UpdateProfileAsync(EditBio, EditAvatarUrl);
-            User = updatedUser;
-            IsEditing = false;
+            var request = new UpdateProfileRequest
+            {
+                Bio = EditBio,
+                AvatarUrl = EditAvatarUrl
+            };
+            var updatedUser = await _apiService.UpdateProfileAsync(request);
+            if (updatedUser != null)
+            {
+                User = updatedUser;
+                IsEditing = false;
+            }
+            else
+            {
+                SetError("Failed to update profile");
+            }
         }
         catch (Exception ex)
         {

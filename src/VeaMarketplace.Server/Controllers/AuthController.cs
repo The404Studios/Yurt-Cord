@@ -53,6 +53,6 @@ public class AuthController : ControllerBase
         if (user == null)
             return Unauthorized();
 
-        return Ok(AuthService.MapToDto(user));
+        return Ok(_authService.MapToDto(user));
     }
 }
