@@ -35,7 +35,7 @@ public partial class ProductCard : UserControl
         ViewsText.Text = product.ViewCount.ToString();
 
         // Load image
-        if (product.ImageUrls?.Any() == true)
+        if (product.ImageUrls?.Count > 0)
         {
             try
             {
@@ -73,7 +73,7 @@ public partial class ProductCard : UserControl
         Click?.Invoke(this, new RoutedEventArgs());
     }
 
-    private Color GetRoleColor(UserRole role)
+    private static Color GetRoleColor(UserRole role)
     {
         return role switch
         {

@@ -118,7 +118,7 @@ public partial class LoginView : UserControl
                 await _viewModel.LoginCommand.ExecuteAsync(null);
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             ShowError("Connection failed. Is the server running?");
             ShakeCard();

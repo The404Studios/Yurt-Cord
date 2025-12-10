@@ -222,5 +222,6 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         await DisconnectAsync();
+        GC.SuppressFinalize(this);
     }
 }

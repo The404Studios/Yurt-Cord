@@ -70,7 +70,7 @@ public partial class ProfileView : UserControl
         // Show edit profile dialog
     }
 
-    private Color GetRoleColor(UserRole role)
+    private static Color GetRoleColor(UserRole role)
     {
         return role switch
         {
@@ -83,7 +83,7 @@ public partial class ProfileView : UserControl
         };
     }
 
-    private Color GetRankColor(UserRank rank)
+    private static Color GetRankColor(UserRank rank)
     {
         return rank switch
         {
@@ -98,7 +98,7 @@ public partial class ProfileView : UserControl
         };
     }
 
-    private string GetRankEmoji(UserRank rank)
+    private static string GetRankEmoji(UserRank rank)
     {
         return rank switch
         {

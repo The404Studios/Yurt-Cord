@@ -25,7 +25,7 @@ public partial class MemberSidebar : UserControl
 
                 // Separate staff members
                 var staff = _viewModel.OnlineUsers.Where(u => u.Role >= UserRole.Moderator).ToList();
-                if (staff.Any())
+                if (staff.Count > 0)
                 {
                     StaffHeader.Visibility = System.Windows.Visibility.Visible;
                     StaffMembersControl.Visibility = System.Windows.Visibility.Visible;

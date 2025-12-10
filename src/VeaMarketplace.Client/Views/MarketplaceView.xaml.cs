@@ -94,7 +94,7 @@ public partial class MarketplaceView : UserControl
         }
 
         // Show image if available
-        if (product.ImageUrls?.Any() == true)
+        if (product.ImageUrls?.Count > 0)
         {
             try
             {
@@ -231,7 +231,7 @@ public partial class MarketplaceView : UserControl
         _ = _viewModel.NextPageCommand.ExecuteAsync(null);
     }
 
-    private Color GetRoleColor(UserRole role)
+    private static Color GetRoleColor(UserRole role)
     {
         return role switch
         {
