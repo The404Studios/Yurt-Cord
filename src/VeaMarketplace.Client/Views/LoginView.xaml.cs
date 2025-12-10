@@ -116,10 +116,13 @@ public partial class LoginView : UserControl
             }
             else
             {
-                _viewModel.Username = username;
-                _viewModel.Password = password;
-                _viewModel.RememberMe = RememberMeCheck.IsChecked ?? false;
-                await _viewModel.LoginCommand.ExecuteAsync(null);
+                if (_viewModel != null)
+                {
+                    _viewModel.Username = username;
+                    _viewModel.Password = password;
+                    _viewModel.RememberMe = RememberMeCheck.IsChecked ?? false;
+                    await _viewModel.LoginCommand.ExecuteAsync(null);
+                }
             }
         }
         catch (Exception)

@@ -128,7 +128,7 @@ public partial class ChannelSidebar : UserControl
         {
             // Navigate up to find the context menu
             var parent = menuItem.Parent;
-            while (parent != null && parent is not ContextMenu)
+            while (parent != null && !(parent is ContextMenu))
             {
                 if (parent is MenuItem parentMenuItem)
                     parent = parentMenuItem.Parent;

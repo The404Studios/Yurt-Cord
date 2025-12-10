@@ -150,7 +150,7 @@ public partial class MarketplaceView : UserControl
     {
         if (_selectedProduct == null || _viewModel == null) return;
 
-        var result = await _viewModel.PurchaseProductCommand.ExecuteAsync(null);
+        await _viewModel.PurchaseProductCommand.ExecuteAsync(null);
         ProductDetailModal.Visibility = Visibility.Collapsed;
     }
 
