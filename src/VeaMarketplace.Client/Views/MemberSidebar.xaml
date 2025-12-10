@@ -3,6 +3,70 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="{StaticResource SecondaryDarkBrush}">
 
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Colors.xaml"/>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Member Context Menu -->
+            <ContextMenu x:Key="MemberContextMenu" Style="{StaticResource ModernContextMenu}">
+                <MenuItem Header="View Profile" Style="{StaticResource ModernMenuItem}"
+                          Click="ViewProfile_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="👤" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Send Message" Style="{StaticResource ModernMenuItem}"
+                          Click="SendMessage_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="💬" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Add Friend" Style="{StaticResource ModernMenuItem}"
+                          Click="AddFriend_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="➕" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator Style="{StaticResource MenuSeparator}"/>
+                <MenuItem Header="Mention" Style="{StaticResource ModernMenuItem}"
+                          Click="Mention_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="@" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Invite to Voice" Style="{StaticResource ModernMenuItem}"
+                          Click="InviteToVoice_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🎤" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator Style="{StaticResource MenuSeparator}"/>
+                <MenuItem Header="Mute" Style="{StaticResource ModernMenuItem}"
+                          Click="MuteUser_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🔇" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Block" Style="{StaticResource DangerMenuItem}"
+                          Click="BlockUser_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🚫" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator Style="{StaticResource MenuSeparator}"/>
+                <MenuItem Header="Copy User ID" Style="{StaticResource ModernMenuItem}"
+                          Click="CopyUserId_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="📋" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+            </ContextMenu>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
     <Grid>
         <ScrollViewer VerticalScrollBarVisibility="Auto" Style="{StaticResource ModernScrollViewer}">
             <StackPanel Margin="8,16">
@@ -16,7 +80,9 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Cursor="Hand" Margin="4,1" CornerRadius="4"
-                                    Padding="8,6">
+                                    Padding="8,6"
+                                    ContextMenu="{StaticResource MemberContextMenu}"
+                                    Tag="{Binding}">
                                 <Border.Background>
                                     <SolidColorBrush Color="Transparent"/>
                                 </Border.Background>
@@ -91,7 +157,9 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Cursor="Hand" Margin="4,1" CornerRadius="4"
-                                    Padding="8,6">
+                                    Padding="8,6"
+                                    ContextMenu="{StaticResource MemberContextMenu}"
+                                    Tag="{Binding}">
                                 <Border.Background>
                                     <SolidColorBrush Color="Transparent"/>
                                 </Border.Background>

@@ -119,4 +119,151 @@ public partial class ChannelSidebar : UserControl
     {
         _navigationService?.NavigateToSettings();
     }
+
+    #region Voice User Context Menu Handlers
+
+    private VoiceUserState? GetVoiceUserFromSender(object sender)
+    {
+        if (sender is MenuItem menuItem)
+        {
+            // Navigate up to find the context menu
+            var parent = menuItem.Parent;
+            while (parent != null && parent is not ContextMenu)
+            {
+                if (parent is MenuItem parentMenuItem)
+                    parent = parentMenuItem.Parent;
+                else
+                    break;
+            }
+
+            if (parent is ContextMenu contextMenu && contextMenu.PlacementTarget is FrameworkElement element)
+            {
+                return element.Tag as VoiceUserState ?? element.DataContext as VoiceUserState;
+            }
+        }
+        return null;
+    }
+
+    private void VoiceViewProfile_Click(object sender, RoutedEventArgs e)
+    {
+        var user = GetVoiceUserFromSender(sender);
+        if (user == null) return;
+
+        _navigationService?.NavigateToProfile();
+    }
+
+    private void VoiceSendMessage_Click(object sender, RoutedEventArgs e)
+    {
+        var user = GetVoiceUserFromSender(sender);
+        if (user == null) return;
+
+        _navigationService?.NavigateToFriends();
+    }
+
+    private async void VoiceAddFriend_Click(object sender, RoutedEventArgs e)
+    {
+        var user = GetVoiceUserFromSender(sender);
+        if (user == null) return;
+
+        var friendService = (IFriendService?)App.ServiceProvider.GetService(typeof(IFriendService));
+        if (friendService != null)
+        {
+            try
+            {
+                await friendService.SendFriendRequestAsync(user.Username);
+                MessageBox.Show($"Friend request sent to {user.Username}!", "Success",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to send friend request: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+    }
+
+    private void VoiceMuteUser_Click(object sender, RoutedEventArgs e)
+    {
+        var user = GetVoiceUserFromSender(sender);
+        if (user == null) return;
+
+        MessageBox.Show($"Muted {user.Username} for yourself", "User Muted",
+            MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
+    private void VoiceDeafenUser_Click(object sender, RoutedEventArgs e)
+    {
+        var user = GetVoiceUserFromSender(sender);
+        if (user == null) return;
+
+        MessageBox.Show($"Deafened {user.Username}", "User Deafened",
+            MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
+    private void VoiceAdjustVolume_Click(object sender, RoutedEventArgs e)
+    {
+        var user = GetVoiceUserFromSender(sender);
+        if (user == null) return;
+
+        // Could open a volume slider dialog
+        MessageBox.Show($"Adjust volume for {user.Username}", "Volume",
+            MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
+    private void MoveToChannel_Click(object sender, RoutedEventArgs e)
+    {
+        var user = GetVoiceUserFromSender(sender);
+        if (user == null) return;
+
+        var menuItem = sender as MenuItem;
+        var channelId = menuItem?.Tag?.ToString();
+
+        MessageBox.Show($"Moving {user.Username} to {channelId}", "Move User",
+            MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
+    private void VoiceDisconnectUser_Click(object sender, RoutedEventArgs e)
+    {
+        var user = GetVoiceUserFromSender(sender);
+        if (user == null) return;
+
+        var result = MessageBox.Show(
+            $"Disconnect {user.Username} from voice?",
+            "Disconnect User",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (result == MessageBoxResult.Yes)
+        {
+            MessageBox.Show($"Disconnected {user.Username}", "User Disconnected",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+    }
+
+    private void VoiceCopyUserId_Click(object sender, RoutedEventArgs e)
+    {
+        var user = GetVoiceUserFromSender(sender);
+        if (user == null) return;
+
+        Clipboard.SetText(user.UserId);
+    }
+
+    #endregion
+
+    #region Channel Context Menu Handlers
+
+    private void CopyChannelId_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem menuItem && menuItem.Parent is ContextMenu contextMenu)
+        {
+            if (contextMenu.PlacementTarget is FrameworkElement element)
+            {
+                var channelName = element.Tag?.ToString() ??
+                    (element.DataContext as ChannelDto)?.Id ?? "unknown";
+                Clipboard.SetText(channelName);
+            }
+        }
+    }
+
+    #endregion
 }

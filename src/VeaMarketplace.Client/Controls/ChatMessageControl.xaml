@@ -8,10 +8,117 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Styles/Colors.xaml"/>
                 <ResourceDictionary Source="/Styles/Buttons.xaml"/>
+                <ResourceDictionary Source="/Styles/Controls.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <converters:RoleToColorConverter x:Key="RoleToColor"/>
             <converters:RankToBadgeConverter x:Key="RankToBadge"/>
             <converters:TimestampConverter x:Key="TimestampConverter"/>
+
+            <!-- User Context Menu -->
+            <ContextMenu x:Key="UserContextMenu" Style="{StaticResource ModernContextMenu}">
+                <MenuItem Header="View Profile" Style="{StaticResource ModernMenuItem}"
+                          Click="ViewProfile_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="👤" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Send Message" Style="{StaticResource ModernMenuItem}"
+                          Click="SendMessage_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="💬" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Add Friend" Style="{StaticResource ModernMenuItem}"
+                          Click="AddFriend_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="👥" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator Style="{StaticResource MenuSeparator}"/>
+                <MenuItem Header="Mention" Style="{StaticResource ModernMenuItem}"
+                          Click="Mention_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="@" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator Style="{StaticResource MenuSeparator}"/>
+                <MenuItem Header="Mute" Style="{StaticResource ModernMenuItem}"
+                          Click="MuteUser_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🔇" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Block" Style="{StaticResource DangerMenuItem}"
+                          Click="BlockUser_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🚫" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator Style="{StaticResource MenuSeparator}"/>
+                <MenuItem Header="Copy User ID" Style="{StaticResource ModernMenuItem}"
+                          Click="CopyUserId_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="📋" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+            </ContextMenu>
+
+            <!-- Message Context Menu -->
+            <ContextMenu x:Key="MessageContextMenu" Style="{StaticResource ModernContextMenu}">
+                <MenuItem Header="Reply" Style="{StaticResource ModernMenuItem}"
+                          Click="Reply_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="↩" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="React" Style="{StaticResource ModernMenuItem}"
+                          Click="React_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="😊" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator Style="{StaticResource MenuSeparator}"/>
+                <MenuItem Header="Copy Text" Style="{StaticResource ModernMenuItem}"
+                          Click="CopyText_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="📄" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Copy Message Link" Style="{StaticResource ModernMenuItem}"
+                          Click="CopyMessageLink_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🔗" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Pin Message" Style="{StaticResource ModernMenuItem}"
+                          Click="PinMessage_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="📌" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator Style="{StaticResource MenuSeparator}"/>
+                <MenuItem Header="Edit" Style="{StaticResource ModernMenuItem}"
+                          x:Name="EditMenuItem" Click="EditMessage_Click"
+                          Visibility="Collapsed">
+                    <MenuItem.Icon>
+                        <TextBlock Text="✏" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Delete Message" Style="{StaticResource DangerMenuItem}"
+                          x:Name="DeleteMenuItem" Click="DeleteMessage_Click"
+                          Visibility="Collapsed">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🗑" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator x:Name="DeleteSeparator" Style="{StaticResource MenuSeparator}" Visibility="Collapsed"/>
+                <MenuItem Header="Copy Message ID" Style="{StaticResource ModernMenuItem}"
+                          Click="CopyMessageId_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="📋" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+            </ContextMenu>
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -36,7 +143,8 @@
         </EventTrigger>
     </UserControl.Triggers>
 
-    <Grid x:Name="MessageContainer" Margin="0,2">
+    <Grid x:Name="MessageContainer" Margin="0,2"
+          ContextMenu="{StaticResource MessageContextMenu}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
@@ -45,7 +153,9 @@
         <!-- Avatar -->
         <Border Grid.Column="0" Width="40" Height="40" CornerRadius="20"
                 Margin="0,0,12,0" VerticalAlignment="Top"
-                x:Name="AvatarBorder">
+                x:Name="AvatarBorder" Cursor="Hand"
+                ContextMenu="{StaticResource UserContextMenu}"
+                MouseLeftButtonDown="Avatar_MouseLeftButtonDown">
             <Border.Background>
                 <ImageBrush x:Name="AvatarImage" Stretch="UniformToFill"/>
             </Border.Background>
@@ -58,7 +168,10 @@
                 <TextBlock x:Name="UsernameText"
                            FontWeight="Medium"
                            FontSize="14"
-                           VerticalAlignment="Center"/>
+                           VerticalAlignment="Center"
+                           Cursor="Hand"
+                           ContextMenu="{StaticResource UserContextMenu}"
+                           MouseLeftButtonDown="Username_MouseLeftButtonDown"/>
                 <Border x:Name="RoleBadge" CornerRadius="3"
                         Padding="6,1" Margin="8,0,0,0"
                         VerticalAlignment="Center"
