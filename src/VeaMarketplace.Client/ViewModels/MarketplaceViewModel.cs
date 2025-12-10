@@ -12,10 +12,10 @@ public partial class MarketplaceViewModel : BaseViewModel
     private readonly IApiService _apiService;
 
     [ObservableProperty]
-    private ObservableCollection<ProductDto> _products = new();
+    private ObservableCollection<ProductDto> _products = [];
 
     [ObservableProperty]
-    private ObservableCollection<ProductDto> _myProducts = new();
+    private ObservableCollection<ProductDto> _myProducts = [];
 
     [ObservableProperty]
     private ProductDto? _selectedProduct;
@@ -244,8 +244,8 @@ public partial class MarketplaceViewModel : BaseViewModel
                     .Select(t => t.Trim())
                     .ToList(),
                 ImageUrls = string.IsNullOrEmpty(NewImageUrl)
-                    ? new List<string>()
-                    : new List<string> { NewImageUrl }
+                    ? []
+                    : [NewImageUrl]
             };
 
             await _apiService.CreateProductAsync(request);

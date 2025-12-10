@@ -113,7 +113,7 @@ public partial class MarketplaceView : UserControl
 
         // Show tags
         DetailTagsPanel.Children.Clear();
-        foreach (var tag in product.Tags ?? new List<string>())
+        foreach (var tag in product.Tags ?? [])
         {
             var tagBorder = new Border
             {

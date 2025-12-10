@@ -9,7 +9,7 @@ public partial class VoiceChannelViewModel : BaseViewModel
     private readonly IVoiceService _voiceService;
 
     [ObservableProperty]
-    private ObservableCollection<VoiceUserState> _users = new();
+    private ObservableCollection<VoiceUserState> _users = [];
 
     [ObservableProperty]
     private string _channelName = string.Empty;
@@ -23,7 +23,7 @@ public partial class VoiceChannelViewModel : BaseViewModel
 
         _voiceService.OnVoiceChannelUsers += users =>
         {
-            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 Users.Clear();
                 foreach (var user in users)
@@ -33,7 +33,7 @@ public partial class VoiceChannelViewModel : BaseViewModel
 
         _voiceService.OnUserJoinedVoice += user =>
         {
-            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 if (!Users.Any(u => u.ConnectionId == user.ConnectionId))
                     Users.Add(user);
@@ -42,7 +42,7 @@ public partial class VoiceChannelViewModel : BaseViewModel
 
         _voiceService.OnUserLeftVoice += user =>
         {
-            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 var existing = Users.FirstOrDefault(u => u.ConnectionId == user.ConnectionId);
                 if (existing != null)
