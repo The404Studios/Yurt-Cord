@@ -27,6 +27,7 @@ public class AppSettings
 public class SettingsService : ISettingsService
 {
     private readonly string _settingsPath;
+    private static readonly JsonSerializerOptions s_jsonOptions = new() { WriteIndented = true };
 
     public AppSettings Settings { get; private set; } = new();
 
@@ -42,7 +43,7 @@ public class SettingsService : ISettingsService
 
     public void SaveSettings()
     {
-        var json = JsonSerializer.Serialize(Settings, new JsonSerializerOptions { WriteIndented = true });
+        var json = JsonSerializer.Serialize(Settings, s_jsonOptions);
         File.WriteAllText(_settingsPath, json);
     }
 

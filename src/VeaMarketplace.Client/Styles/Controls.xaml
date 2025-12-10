@@ -69,31 +69,7 @@
         <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
     </Style>
 
-    <!-- ScrollViewer Style -->
-    <Style x:Key="ModernScrollViewer" TargetType="ScrollViewer">
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="ScrollViewer">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <ScrollContentPresenter Grid.Column="0"/>
-                        <ScrollBar x:Name="PART_VerticalScrollBar"
-                                   Grid.Column="1"
-                                   Value="{TemplateBinding VerticalOffset}"
-                                   Maximum="{TemplateBinding ScrollableHeight}"
-                                   ViewportSize="{TemplateBinding ViewportHeight}"
-                                   Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"
-                                   Style="{StaticResource ModernScrollBar}"/>
-                    </Grid>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <!-- ScrollBar Style -->
+    <!-- ScrollBar Style (must be defined before ModernScrollViewer which references it) -->
     <Style x:Key="ModernScrollBar" TargetType="ScrollBar">
         <Setter Property="Width" Value="8"/>
         <Setter Property="Background" Value="Transparent"/>
@@ -114,6 +90,30 @@
                                 </Thumb>
                             </Track.Thumb>
                         </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ScrollViewer Style -->
+    <Style x:Key="ModernScrollViewer" TargetType="ScrollViewer">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollViewer">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ScrollContentPresenter Grid.Column="0"/>
+                        <ScrollBar x:Name="PART_VerticalScrollBar"
+                                   Grid.Column="1"
+                                   Value="{TemplateBinding VerticalOffset}"
+                                   Maximum="{TemplateBinding ScrollableHeight}"
+                                   ViewportSize="{TemplateBinding ViewportHeight}"
+                                   Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"
+                                   Style="{StaticResource ModernScrollBar}"/>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

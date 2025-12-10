@@ -98,7 +98,7 @@ public partial class ChatMessageControl : UserControl
         }
     }
 
-    private Color GetRoleColor(UserRole role)
+    private static Color GetRoleColor(UserRole role)
     {
         return role switch
         {
@@ -111,7 +111,7 @@ public partial class ChatMessageControl : UserControl
         };
     }
 
-    private Color GetRankColor(UserRank rank)
+    private static Color GetRankColor(UserRank rank)
     {
         return rank switch
         {
@@ -126,7 +126,7 @@ public partial class ChatMessageControl : UserControl
         };
     }
 
-    private string GetRankEmoji(UserRank rank)
+    private static string GetRankEmoji(UserRank rank)
     {
         return rank switch
         {
@@ -141,7 +141,7 @@ public partial class ChatMessageControl : UserControl
         };
     }
 
-    private string FormatTimestamp(DateTime timestamp)
+    private static string FormatTimestamp(DateTime timestamp)
     {
         var now = DateTime.Now;
         var local = timestamp.ToLocalTime();

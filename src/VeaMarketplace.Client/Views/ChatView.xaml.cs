@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -10,13 +11,16 @@ namespace VeaMarketplace.Client.Views;
 
 public partial class ChatView : UserControl
 {
-    private readonly ChatViewModel _viewModel;
-    private readonly IChatService _chatService;
+    private readonly ChatViewModel? _viewModel;
+    private readonly IChatService? _chatService;
     private DateTime _lastTypingSent = DateTime.MinValue;
 
     public ChatView()
     {
         InitializeComponent();
+
+        if (DesignerProperties.GetIsInDesignMode(this))
+            return;
 
         _viewModel = (ChatViewModel)App.ServiceProvider.GetService(typeof(ChatViewModel))!;
         _chatService = (IChatService)App.ServiceProvider.GetService(typeof(IChatService))!;
@@ -79,6 +83,8 @@ public partial class ChatView : UserControl
 
     private async void MessageTextBox_TextChanged(object sender, TextChangedEventArgs e)
     {
+        if (_chatService == null || _viewModel == null) return;
+
         // Send typing indicator (throttled)
         if (!string.IsNullOrEmpty(MessageTextBox.Text) &&
             (DateTime.Now - _lastTypingSent).TotalSeconds > 2)
@@ -95,6 +101,8 @@ public partial class ChatView : UserControl
 
     private async void SendMessage()
     {
+        if (_chatService == null || _viewModel == null) return;
+
         var message = MessageTextBox.Text?.Trim();
         if (string.IsNullOrEmpty(message)) return;
 

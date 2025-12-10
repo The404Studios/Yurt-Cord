@@ -4,9 +4,15 @@
              xmlns:converters="clr-namespace:VeaMarketplace.Client.Converters">
 
     <UserControl.Resources>
-        <converters:RoleToColorConverter x:Key="RoleToColor"/>
-        <converters:RankToBadgeConverter x:Key="RankToBadge"/>
-        <converters:TimestampConverter x:Key="TimestampConverter"/>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Styles/Colors.xaml"/>
+                <ResourceDictionary Source="/Styles/Buttons.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <converters:RoleToColorConverter x:Key="RoleToColor"/>
+            <converters:RankToBadgeConverter x:Key="RankToBadge"/>
+            <converters:TimestampConverter x:Key="TimestampConverter"/>
+        </ResourceDictionary>
     </UserControl.Resources>
 
     <UserControl.RenderTransform>
