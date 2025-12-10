@@ -29,7 +29,7 @@ public interface IApiService
 public class ApiService : IApiService
 {
     private readonly HttpClient _httpClient;
-    private const string BaseUrl = "http://localhost:5000";
+    private const string BaseUrl = "http://162.248.94.23:5000";
 
     public string? AuthToken { get; private set; }
     public UserDto? CurrentUser { get; private set; }

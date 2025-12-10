@@ -29,7 +29,7 @@ public interface IChatService
 public class ChatService : IChatService, IAsyncDisposable
 {
     private HubConnection? _connection;
-    private const string HubUrl = "http://localhost:5000/hubs/chat";
+    private const string HubUrl = "http://162.248.94.23:5000/hubs/chat";
 
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
 
