@@ -1,0 +1,105 @@
+<UserControl x:Class="VeaMarketplace.Client.Controls.ChatMessageControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:VeaMarketplace.Client.Converters">
+
+    <UserControl.Resources>
+        <converters:RoleToColorConverter x:Key="RoleToColor"/>
+        <converters:RankToBadgeConverter x:Key="RankToBadge"/>
+        <converters:TimestampConverter x:Key="TimestampConverter"/>
+    </UserControl.Resources>
+
+    <UserControl.RenderTransform>
+        <TranslateTransform/>
+    </UserControl.RenderTransform>
+
+    <UserControl.Triggers>
+        <EventTrigger RoutedEvent="Loaded">
+            <BeginStoryboard>
+                <Storyboard>
+                    <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                     From="0" To="1" Duration="0:0:0.2"/>
+                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                                     From="10" To="0" Duration="0:0:0.2">
+                        <DoubleAnimation.EasingFunction>
+                            <CubicEase EasingMode="EaseOut"/>
+                        </DoubleAnimation.EasingFunction>
+                    </DoubleAnimation>
+                </Storyboard>
+            </BeginStoryboard>
+        </EventTrigger>
+    </UserControl.Triggers>
+
+    <Grid x:Name="MessageContainer" Margin="0,2">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Avatar -->
+        <Border Grid.Column="0" Width="40" Height="40" CornerRadius="20"
+                Margin="0,0,12,0" VerticalAlignment="Top"
+                x:Name="AvatarBorder">
+            <Border.Background>
+                <ImageBrush x:Name="AvatarImage" Stretch="UniformToFill"/>
+            </Border.Background>
+        </Border>
+
+        <!-- Message Content -->
+        <StackPanel Grid.Column="1">
+            <!-- Header: Username, Role Badge, Timestamp -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                <TextBlock x:Name="UsernameText"
+                           FontWeight="Medium"
+                           FontSize="14"
+                           VerticalAlignment="Center"/>
+                <Border x:Name="RoleBadge" CornerRadius="3"
+                        Padding="6,1" Margin="8,0,0,0"
+                        VerticalAlignment="Center"
+                        Visibility="Collapsed">
+                    <TextBlock x:Name="RoleText" FontSize="10" FontWeight="Bold"
+                               Foreground="White"/>
+                </Border>
+                <Border x:Name="RankBadge" CornerRadius="3"
+                        Padding="6,1" Margin="4,0,0,0"
+                        VerticalAlignment="Center"
+                        Visibility="Collapsed">
+                    <TextBlock x:Name="RankText" FontSize="10" FontWeight="Bold"
+                               Foreground="White"/>
+                </Border>
+                <TextBlock x:Name="TimestampText"
+                           Foreground="{StaticResource TextMutedBrush}"
+                           FontSize="11"
+                           Margin="8,0,0,0"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Message Text -->
+            <TextBlock x:Name="MessageText"
+                       Foreground="{StaticResource TextSecondaryBrush}"
+                       FontSize="14"
+                       TextWrapping="Wrap"
+                       MaxWidth="600"
+                       HorizontalAlignment="Left"/>
+        </StackPanel>
+
+        <!-- Hover Actions -->
+        <Border x:Name="ActionsPanel" Grid.Column="1"
+                HorizontalAlignment="Right" VerticalAlignment="Top"
+                Background="{StaticResource SecondaryDarkBrush}"
+                CornerRadius="4" Padding="4"
+                Visibility="Collapsed" Margin="0,-8,0,0">
+            <StackPanel Orientation="Horizontal">
+                <Button Style="{StaticResource IconButton}" Width="28" Height="28" ToolTip="React">
+                    <TextBlock Text="😊" FontSize="14"/>
+                </Button>
+                <Button Style="{StaticResource IconButton}" Width="28" Height="28" ToolTip="Reply">
+                    <TextBlock Text="↩" FontSize="14"/>
+                </Button>
+                <Button Style="{StaticResource IconButton}" Width="28" Height="28" ToolTip="More">
+                    <TextBlock Text="⋮" FontSize="14"/>
+                </Button>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>
