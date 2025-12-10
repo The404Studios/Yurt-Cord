@@ -25,7 +25,7 @@ public class UsersController : ControllerBase
         if (user == null)
             return NotFound();
 
-        return Ok(AuthService.MapToDto(user));
+        return Ok(_authService.MapToDto(user));
     }
 
     [HttpGet("{id}/products")]
@@ -70,15 +70,36 @@ public class UsersController : ControllerBase
         if (user == null)
             return Unauthorized();
 
-        if (!string.IsNullOrWhiteSpace(request.Bio))
-            user.Bio = request.Bio;
+        var result = _authService.UpdateProfile(user.Id, request);
+        if (result == null)
+            return BadRequest("Username already taken");
 
-        if (!string.IsNullOrWhiteSpace(request.AvatarUrl))
-            user.AvatarUrl = request.AvatarUrl;
+        return Ok(result);
+    }
 
-        _db.Users.Update(user);
+    [HttpGet("{id}/roles")]
+    public ActionResult<List<CustomRoleDto>> GetUserRoles(string id)
+    {
+        var user = _db.Users.FindById(id);
+        if (user == null)
+            return NotFound();
 
-        return Ok(AuthService.MapToDto(user));
+        var roles = user.CustomRoleIds
+            .Select(roleId => _db.CustomRoles.FindById(roleId))
+            .Where(r => r != null)
+            .OrderByDescending(r => r!.Position)
+            .Select(r => new CustomRoleDto
+            {
+                Id = r!.Id,
+                Name = r.Name,
+                Color = r.Color,
+                Position = r.Position,
+                IsHoisted = r.IsHoisted,
+                Permissions = r.Permissions
+            })
+            .ToList();
+
+        return Ok(roles);
     }
 
     private Shared.Models.User? GetUserFromToken(string? authorization)
@@ -89,10 +110,4 @@ public class UsersController : ControllerBase
         var token = authorization["Bearer ".Length..];
         return _authService.ValidateToken(token);
     }
-}
-
-public class UpdateProfileRequest
-{
-    public string? Bio { get; set; }
-    public string? AvatarUrl { get; set; }
 }

@@ -101,6 +101,16 @@
                             </Border>
                         </Button>
 
+                        <!-- Friends Button -->
+                        <Button Style="{StaticResource IconButton}" Width="48" Height="48"
+                                Margin="0,8,0,0" ToolTip="Friends" Click="FriendsButton_Click">
+                            <Border x:Name="FriendsButtonBorder" Background="{StaticResource SecondaryDarkBrush}"
+                                    CornerRadius="24" Width="48" Height="48">
+                                <TextBlock Text="👥" FontSize="22"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Button>
+
                         <!-- Add Server Button -->
                         <Button Style="{StaticResource IconButton}" Width="48" Height="48"
                                 Margin="0,8,0,0" ToolTip="Add Server">
@@ -127,6 +137,8 @@
                         <views:ChatView x:Name="ChatViewControl" Visibility="Visible"/>
                         <views:MarketplaceView x:Name="MarketplaceViewControl" Visibility="Collapsed"/>
                         <views:ProfileView x:Name="ProfileViewControl" Visibility="Collapsed"/>
+                        <views:SettingsView x:Name="SettingsViewControl" Visibility="Collapsed"/>
+                        <views:FriendsView x:Name="FriendsViewControl" Visibility="Collapsed"/>
                     </Grid>
                 </Border>
 

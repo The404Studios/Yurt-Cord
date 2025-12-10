@@ -52,6 +52,8 @@ public partial class MainWindow : Window
         ChatViewControl.Visibility = view == "Chat" ? Visibility.Visible : Visibility.Collapsed;
         MarketplaceViewControl.Visibility = view == "Marketplace" ? Visibility.Visible : Visibility.Collapsed;
         ProfileViewControl.Visibility = view == "Profile" ? Visibility.Visible : Visibility.Collapsed;
+        SettingsViewControl.Visibility = view == "Settings" ? Visibility.Visible : Visibility.Collapsed;
+        FriendsViewControl.Visibility = view == "Friends" ? Visibility.Visible : Visibility.Collapsed;
 
         // Update sidebar button states
         UpdateButtonStates();
@@ -65,6 +67,7 @@ public partial class MainWindow : Window
         ChatButtonBorder.Background = _currentView == "Chat" ? activeBrush : inactiveBrush;
         MarketButtonBorder.Background = _currentView == "Marketplace" ? activeBrush : inactiveBrush;
         ProfileButtonBorder.Background = _currentView == "Profile" ? activeBrush : inactiveBrush;
+        FriendsButtonBorder.Background = _currentView == "Friends" ? activeBrush : inactiveBrush;
 
         // Animate the corner radius
         var activeRadius = new CornerRadius(16);
@@ -73,6 +76,7 @@ public partial class MainWindow : Window
         ChatButtonBorder.CornerRadius = _currentView == "Chat" ? activeRadius : inactiveRadius;
         MarketButtonBorder.CornerRadius = _currentView == "Marketplace" ? activeRadius : inactiveRadius;
         ProfileButtonBorder.CornerRadius = _currentView == "Profile" ? activeRadius : inactiveRadius;
+        FriendsButtonBorder.CornerRadius = _currentView == "Friends" ? activeRadius : inactiveRadius;
     }
 
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -127,5 +131,10 @@ public partial class MainWindow : Window
     private void ProfileButton_Click(object sender, RoutedEventArgs e)
     {
         _navigationService.NavigateToProfile();
+    }
+
+    private void FriendsButton_Click(object sender, RoutedEventArgs e)
+    {
+        _navigationService.NavigateToFriends();
     }
 }

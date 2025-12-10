@@ -1,13 +1,26 @@
 using Microsoft.AspNetCore.SignalR;
 using System.Collections.Concurrent;
+using VeaMarketplace.Server.Services;
 using VeaMarketplace.Shared.DTOs;
+using VeaMarketplace.Shared.Models;
 
 namespace VeaMarketplace.Server.Hubs;
 
 public class VoiceHub : Hub
 {
+    private readonly VoiceCallService? _callService;
+    private readonly AuthService? _authService;
     private static readonly ConcurrentDictionary<string, VoiceChannelState> _voiceChannels = new();
     private static readonly ConcurrentDictionary<string, VoiceUserState> _voiceUsers = new();
+    private static readonly ConcurrentDictionary<string, string> _userConnections = new(); // userId -> connectionId
+    private static readonly ConcurrentDictionary<string, string> _connectionUsers = new(); // connectionId -> userId
+    private static readonly ConcurrentDictionary<string, string> _activeCalls = new(); // callId -> (caller|recipient connectionId pair)
+
+    public VoiceHub(VoiceCallService? callService = null, AuthService? authService = null)
+    {
+        _callService = callService;
+        _authService = authService;
+    }
 
     public async Task JoinVoiceChannel(string channelId, string userId, string username, string avatarUrl)
     {
@@ -93,7 +106,225 @@ public class VoiceHub : Hub
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         await LeaveVoiceChannel();
+
+        // Handle call disconnection
+        if (_connectionUsers.TryRemove(Context.ConnectionId, out var userId))
+        {
+            _userConnections.TryRemove(userId, out _);
+
+            // End any active calls
+            if (_callService != null)
+            {
+                var activeCall = _callService.GetActiveCall(userId);
+                if (activeCall != null)
+                {
+                    var (_, _, call) = _callService.EndCall(activeCall.Id, userId);
+                    if (call != null)
+                    {
+                        var otherUserId = call.CallerId == userId ? call.RecipientId : call.CallerId;
+                        if (_userConnections.TryGetValue(otherUserId, out var otherConnId))
+                        {
+                            await Clients.Client(otherConnId).SendAsync("CallEnded", call.Id, "User disconnected");
+                        }
+                    }
+                }
+            }
+        }
+
         await base.OnDisconnectedAsync(exception);
+    }
+
+    // === Call Methods ===
+
+    public async Task AuthenticateForCalls(string token)
+    {
+        if (_authService == null) return;
+
+        var user = _authService.ValidateToken(token);
+        if (user == null)
+        {
+            await Clients.Caller.SendAsync("CallAuthFailed", "Invalid token");
+            return;
+        }
+
+        _userConnections[user.Id] = Context.ConnectionId;
+        _connectionUsers[Context.ConnectionId] = user.Id;
+
+        await Groups.AddToGroupAsync(Context.ConnectionId, $"user_{user.Id}");
+        await Clients.Caller.SendAsync("CallAuthSuccess");
+    }
+
+    public async Task StartCall(string recipientId)
+    {
+        if (_callService == null || !_connectionUsers.TryGetValue(Context.ConnectionId, out var callerId))
+            return;
+
+        var (success, message, call) = _callService.StartCall(callerId, recipientId);
+
+        if (success && call != null)
+        {
+            await Clients.Caller.SendAsync("CallStarted", new VoiceCallDto
+            {
+                Id = call.Id,
+                CallerId = call.CallerId,
+                CallerUsername = call.CallerUsername,
+                CallerAvatarUrl = call.CallerAvatarUrl,
+                RecipientId = call.RecipientId,
+                RecipientUsername = call.RecipientUsername,
+                RecipientAvatarUrl = call.RecipientAvatarUrl,
+                Status = call.Status,
+                StartedAt = call.StartedAt
+            });
+
+            // Notify recipient
+            if (_userConnections.TryGetValue(recipientId, out var recipientConnId))
+            {
+                await Clients.Client(recipientConnId).SendAsync("IncomingCall", new VoiceCallDto
+                {
+                    Id = call.Id,
+                    CallerId = call.CallerId,
+                    CallerUsername = call.CallerUsername,
+                    CallerAvatarUrl = call.CallerAvatarUrl,
+                    RecipientId = call.RecipientId,
+                    RecipientUsername = call.RecipientUsername,
+                    RecipientAvatarUrl = call.RecipientAvatarUrl,
+                    Status = call.Status,
+                    StartedAt = call.StartedAt
+                });
+            }
+            else
+            {
+                // Recipient not online
+                _callService.EndCall(call.Id, callerId);
+                await Clients.Caller.SendAsync("CallFailed", "User is not online");
+            }
+        }
+        else
+        {
+            await Clients.Caller.SendAsync("CallFailed", message);
+        }
+    }
+
+    public async Task AnswerCall(string callId, bool accept)
+    {
+        if (_callService == null || !_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        var (success, message, call) = _callService.AnswerCall(callId, userId, accept);
+
+        if (success && call != null)
+        {
+            var dto = new VoiceCallDto
+            {
+                Id = call.Id,
+                CallerId = call.CallerId,
+                CallerUsername = call.CallerUsername,
+                CallerAvatarUrl = call.CallerAvatarUrl,
+                RecipientId = call.RecipientId,
+                RecipientUsername = call.RecipientUsername,
+                RecipientAvatarUrl = call.RecipientAvatarUrl,
+                Status = call.Status,
+                StartedAt = call.StartedAt,
+                AnsweredAt = call.AnsweredAt
+            };
+
+            if (accept)
+            {
+                await Clients.Caller.SendAsync("CallAnswered", dto);
+
+                if (_userConnections.TryGetValue(call.CallerId, out var callerConnId))
+                {
+                    await Clients.Client(callerConnId).SendAsync("CallAnswered", dto);
+                }
+            }
+            else
+            {
+                await Clients.Caller.SendAsync("CallDeclined", dto);
+
+                if (_userConnections.TryGetValue(call.CallerId, out var callerConnId))
+                {
+                    await Clients.Client(callerConnId).SendAsync("CallDeclined", dto);
+                }
+            }
+        }
+        else
+        {
+            await Clients.Caller.SendAsync("CallError", message);
+        }
+    }
+
+    public async Task EndCall(string callId)
+    {
+        if (_callService == null || !_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        var (success, message, call) = _callService.EndCall(callId, userId);
+
+        if (success && call != null)
+        {
+            var dto = new VoiceCallDto
+            {
+                Id = call.Id,
+                CallerId = call.CallerId,
+                CallerUsername = call.CallerUsername,
+                CallerAvatarUrl = call.CallerAvatarUrl,
+                RecipientId = call.RecipientId,
+                RecipientUsername = call.RecipientUsername,
+                RecipientAvatarUrl = call.RecipientAvatarUrl,
+                Status = call.Status,
+                StartedAt = call.StartedAt,
+                AnsweredAt = call.AnsweredAt,
+                Duration = call.Duration
+            };
+
+            await Clients.Caller.SendAsync("CallEnded", dto.Id, "Call ended");
+
+            var otherUserId = call.CallerId == userId ? call.RecipientId : call.CallerId;
+            if (_userConnections.TryGetValue(otherUserId, out var otherConnId))
+            {
+                await Clients.Client(otherConnId).SendAsync("CallEnded", dto.Id, "Call ended");
+            }
+        }
+    }
+
+    // Send audio data during a call
+    public async Task SendCallAudio(string callId, byte[] audioData)
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        if (_callService != null)
+        {
+            var activeCall = _callService.GetActiveCall(userId);
+            if (activeCall != null && activeCall.Id == callId && activeCall.Status == VoiceCallStatus.InProgress)
+            {
+                var otherUserId = activeCall.CallerId == userId ? activeCall.RecipientId : activeCall.CallerId;
+                if (_userConnections.TryGetValue(otherUserId, out var otherConnId))
+                {
+                    await Clients.Client(otherConnId).SendAsync("ReceiveCallAudio", audioData);
+                }
+            }
+        }
+    }
+
+    // Send speaking state during a call
+    public async Task SendCallSpeakingState(string callId, bool isSpeaking, double audioLevel)
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        if (_callService != null)
+        {
+            var activeCall = _callService.GetActiveCall(userId);
+            if (activeCall != null && activeCall.Id == callId)
+            {
+                var otherUserId = activeCall.CallerId == userId ? activeCall.RecipientId : activeCall.CallerId;
+                if (_userConnections.TryGetValue(otherUserId, out var otherConnId))
+                {
+                    await Clients.Client(otherConnId).SendAsync("CallUserSpeaking", userId, isSpeaking, audioLevel);
+                }
+            }
+        }
     }
 }
 

@@ -1,0 +1,361 @@
+<UserControl x:Class="VeaMarketplace.Client.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewmodels="clr-namespace:VeaMarketplace.Client.ViewModels"
+             Background="{StaticResource TertiaryDarkBrush}"
+             KeyDown="UserControl_KeyDown">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <!-- Slider Style -->
+        <Style x:Key="ModernSlider" TargetType="Slider">
+            <Setter Property="Minimum" Value="0"/>
+            <Setter Property="Maximum" Value="1"/>
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid>
+                            <Border Background="{StaticResource PrimaryDarkBrush}"
+                                    Height="4" CornerRadius="2" VerticalAlignment="Center"/>
+                            <Border Background="{StaticResource AccentBrush}"
+                                    Height="4" CornerRadius="2" VerticalAlignment="Center"
+                                    HorizontalAlignment="Left"
+                                    Width="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Value, Converter={StaticResource SliderWidthConverter}}"/>
+                            <Track x:Name="PART_Track">
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Ellipse Width="16" Height="16"
+                                                         Fill="{StaticResource AccentBrush}"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Toggle Switch Style -->
+        <Style x:Key="ToggleSwitch" TargetType="CheckBox">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Grid>
+                            <Border x:Name="Background" Width="44" Height="24"
+                                    CornerRadius="12" Background="{StaticResource QuaternaryDarkBrush}"/>
+                            <Ellipse x:Name="Indicator" Width="18" Height="18"
+                                     Fill="White" HorizontalAlignment="Left"
+                                     Margin="3,0,0,0"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Background" Property="Background" Value="{StaticResource AccentGreenBrush}"/>
+                                <Setter TargetName="Indicator" Property="HorizontalAlignment" Value="Right"/>
+                                <Setter TargetName="Indicator" Property="Margin" Value="0,0,3,0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ComboBox Style for Dark Theme -->
+        <Style x:Key="DarkComboBox" TargetType="ComboBox">
+            <Setter Property="Background" Value="{StaticResource PrimaryDarkBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <Border x:Name="Border" Background="{TemplateBinding Background}"
+                                    CornerRadius="4" BorderThickness="2" BorderBrush="Transparent">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="30"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ContentPresenter Grid.Column="0"
+                                                      Content="{TemplateBinding SelectionBoxItem}"
+                                                      ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                      Margin="{TemplateBinding Padding}"
+                                                      VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="v" FontSize="12"
+                                               Foreground="{StaticResource TextMutedBrush}"
+                                               VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                            <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   Placement="Bottom" AllowsTransparency="True">
+                                <Border Background="{StaticResource SecondaryDarkBrush}"
+                                        CornerRadius="4" Margin="0,4,0,0"
+                                        MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <ScrollViewer>
+                                        <ItemsPresenter/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsDropDownOpen" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                        <Setter Property="Padding" Value="12,8"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ComboBoxItem">
+                                    <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource QuaternaryDarkBrush}"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentBrush}"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <!-- Header -->
+        <Border Height="48" VerticalAlignment="Top"
+                BorderBrush="{StaticResource PrimaryDarkBrush}" BorderThickness="0,0,0,1">
+            <Grid Margin="16,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Settings" FontSize="16" FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Settings Content -->
+        <ScrollViewer Margin="0,48,0,0" VerticalScrollBarVisibility="Auto"
+                      Style="{StaticResource ModernScrollViewer}">
+            <StackPanel Margin="24" MaxWidth="800">
+
+                <!-- Voice & Audio Section -->
+                <TextBlock Text="VOICE &amp; AUDIO" FontSize="12" FontWeight="Bold"
+                           Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,16"/>
+
+                <!-- Input Device -->
+                <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8"
+                        Padding="20" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="Input Device" FontSize="14" FontWeight="Medium"
+                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                        <ComboBox x:Name="InputDeviceCombo" Style="{StaticResource DarkComboBox}"
+                                  ItemsSource="{Binding InputDevices}"
+                                  SelectedItem="{Binding SelectedInputDevice, Mode=TwoWay}"
+                                  DisplayMemberPath="Name"/>
+
+                        <!-- Microphone Volume -->
+                        <TextBlock Text="Input Volume" FontSize="13" Margin="0,16,0,8"
+                                   Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="50"/>
+                            </Grid.ColumnDefinitions>
+                            <Slider Grid.Column="0" Minimum="0" Maximum="2"
+                                    Value="{Binding MicrophoneVolume, Mode=TwoWay}"
+                                    VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding MicrophoneVolume, StringFormat='{}{0:P0}'}"
+                                       Foreground="{StaticResource TextMutedBrush}"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <!-- Audio Level Meter -->
+                        <TextBlock Text="Microphone Test" FontSize="13" Margin="0,16,0,8"
+                                   Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <Grid Height="8" Margin="0,0,0,8">
+                            <Border Background="{StaticResource PrimaryDarkBrush}" CornerRadius="4"/>
+                            <Border x:Name="AudioLevelIndicator" Background="{StaticResource AccentGreenBrush}"
+                                    CornerRadius="4" HorizontalAlignment="Left">
+                                <Border.Width>
+                                    <MultiBinding Converter="{StaticResource AudioLevelConverter}">
+                                        <Binding Path="TestAudioLevel"/>
+                                        <Binding Path="ActualWidth" RelativeSource="{RelativeSource AncestorType=Grid}"/>
+                                    </MultiBinding>
+                                </Border.Width>
+                            </Border>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Output Device -->
+                <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8"
+                        Padding="20" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="Output Device" FontSize="14" FontWeight="Medium"
+                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                        <ComboBox x:Name="OutputDeviceCombo" Style="{StaticResource DarkComboBox}"
+                                  ItemsSource="{Binding OutputDevices}"
+                                  SelectedItem="{Binding SelectedOutputDevice, Mode=TwoWay}"
+                                  DisplayMemberPath="Name"/>
+
+                        <!-- Output Volume -->
+                        <TextBlock Text="Output Volume" FontSize="13" Margin="0,16,0,8"
+                                   Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="50"/>
+                            </Grid.ColumnDefinitions>
+                            <Slider Grid.Column="0" Minimum="0" Maximum="2"
+                                    Value="{Binding Volume, Mode=TwoWay}"
+                                    VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding Volume, StringFormat='{}{0:P0}'}"
+                                       Foreground="{StaticResource TextMutedBrush}"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Voice Mode Section -->
+                <TextBlock Text="VOICE MODE" FontSize="12" FontWeight="Bold"
+                           Foreground="{StaticResource TextMutedBrush}" Margin="0,24,0,16"/>
+
+                <!-- Push to Talk / Voice Activity -->
+                <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8"
+                        Padding="20" Margin="0,0,0,12">
+                    <StackPanel>
+                        <!-- Voice Mode Toggle -->
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Push to Talk" FontSize="14" FontWeight="Medium"
+                                           Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <TextBlock Text="Transmit voice only when holding a key"
+                                           FontSize="12" Foreground="{StaticResource TextMutedBrush}"
+                                           Margin="0,4,0,0"/>
+                            </StackPanel>
+                            <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}"
+                                      IsChecked="{Binding PushToTalkEnabled, Mode=TwoWay}"
+                                      VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <!-- PTT Key Binding -->
+                        <StackPanel Visibility="{Binding PushToTalkEnabled, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="Push to Talk Key" FontSize="13" Margin="0,0,0,8"
+                                       Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <Button x:Name="PttKeyButton" Click="PttKeyButton_Click"
+                                    Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Key: " Foreground="{StaticResource TextSecondaryBrush}"/>
+                                    <TextBlock Text="{Binding PushToTalkKeyDisplay}"
+                                               FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                </StackPanel>
+                            </Button>
+                            <TextBlock Text="Click to change, then press a new key"
+                                       FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                                       Margin="0,8,0,0"
+                                       Visibility="{Binding IsRecordingPttKey, Converter={StaticResource BoolToVis}}"/>
+                        </StackPanel>
+
+                        <!-- Voice Activity Sensitivity (when not PTT) -->
+                        <StackPanel Visibility="{Binding PushToTalkEnabled, Converter={StaticResource InverseBoolToVis}}">
+                            <TextBlock Text="Voice Activity Sensitivity" FontSize="13" Margin="0,0,0,8"
+                                       Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="80"/>
+                                </Grid.ColumnDefinitions>
+                                <Slider Grid.Column="0" Minimum="0.001" Maximum="0.2"
+                                        Value="{Binding VoiceActivityThreshold, Mode=TwoWay}"
+                                        VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding VoiceActivityThreshold, StringFormat='Threshold: {0:F3}'}"
+                                           Foreground="{StaticResource TextMutedBrush}"
+                                           FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            </Grid>
+                            <TextBlock Text="Lower = more sensitive, Higher = less sensitive"
+                                       FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                                       Margin="0,8,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Audio Processing -->
+                <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8"
+                        Padding="20" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="Audio Processing" FontSize="14" FontWeight="Medium"
+                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,16"/>
+
+                        <!-- Noise Suppression -->
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Noise Suppression" FontSize="13"
+                                           Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <TextBlock Text="Reduces background noise"
+                                           FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                            </StackPanel>
+                            <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}"
+                                      IsChecked="{Binding NoiseSuppression, Mode=TwoWay}"
+                                      VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <!-- Echo Cancellation -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Echo Cancellation" FontSize="13"
+                                           Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <TextBlock Text="Prevents echo from speakers"
+                                           FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                            </StackPanel>
+                            <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}"
+                                      IsChecked="{Binding EchoCancellation, Mode=TwoWay}"
+                                      VerticalAlignment="Center"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Refresh Devices Button -->
+                <Button Content="Refresh Audio Devices" Style="{StaticResource SecondaryButton}"
+                        Command="{Binding RefreshDevicesCommand}" HorizontalAlignment="Left"
+                        Margin="0,8,0,0"/>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

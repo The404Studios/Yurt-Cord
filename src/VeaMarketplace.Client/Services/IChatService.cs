@@ -29,9 +29,15 @@ public interface IChatService
 public class ChatService : IChatService, IAsyncDisposable
 {
     private HubConnection? _connection;
+    private readonly INotificationService _notificationService;
     private const string HubUrl = "http://162.248.94.23:5000/hubs/chat";
 
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
+
+    public ChatService(INotificationService notificationService)
+    {
+        _notificationService = notificationService;
+    }
 
     public event Action<ChatMessageDto>? OnMessageReceived;
     public event Action<OnlineUserDto>? OnUserJoined;
@@ -65,10 +71,16 @@ public class ChatService : IChatService, IAsyncDisposable
             OnMessageReceived?.Invoke(message));
 
         _connection.On<OnlineUserDto>("UserJoined", user =>
-            OnUserJoined?.Invoke(user));
+        {
+            _notificationService.PlayUserJoinSound();
+            OnUserJoined?.Invoke(user);
+        });
 
         _connection.On<OnlineUserDto>("UserLeft", user =>
-            OnUserLeft?.Invoke(user));
+        {
+            _notificationService.PlayUserLeaveSound();
+            OnUserLeft?.Invoke(user);
+        });
 
         _connection.On<List<OnlineUserDto>>("OnlineUsers", users =>
             OnOnlineUsersReceived?.Invoke(users));

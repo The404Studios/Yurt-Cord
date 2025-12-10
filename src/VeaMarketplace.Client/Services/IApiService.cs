@@ -23,7 +23,9 @@ public interface IApiService
     Task<List<ProductDto>> GetMyProductsAsync();
 
     Task<UserDto?> GetUserAsync(string userId);
-    Task<UserDto> UpdateProfileAsync(string? bio, string? avatarUrl);
+    Task<UserDto?> UpdateProfileAsync(UpdateProfileRequest request);
+    Task<List<CustomRoleDto>> GetUserRolesAsync(string userId);
+    Task<List<CustomRoleDto>> GetAllRolesAsync();
 }
 
 public class ApiService : IApiService
@@ -144,10 +146,27 @@ public class ApiService : IApiService
         return await response.Content.ReadFromJsonAsync<UserDto>();
     }
 
-    public async Task<UserDto> UpdateProfileAsync(string? bio, string? avatarUrl)
+    public async Task<UserDto?> UpdateProfileAsync(UpdateProfileRequest request)
     {
-        var request = new { Bio = bio, AvatarUrl = avatarUrl };
         var response = await _httpClient.PutAsJsonAsync("/api/users/profile", request);
-        return await response.Content.ReadFromJsonAsync<UserDto>() ?? CurrentUser!;
+        if (!response.IsSuccessStatusCode) return null;
+
+        var user = await response.Content.ReadFromJsonAsync<UserDto>();
+        if (user != null) CurrentUser = user;
+        return user;
+    }
+
+    public async Task<List<CustomRoleDto>> GetUserRolesAsync(string userId)
+    {
+        var response = await _httpClient.GetAsync($"/api/users/{userId}/roles");
+        if (!response.IsSuccessStatusCode) return new List<CustomRoleDto>();
+        return await response.Content.ReadFromJsonAsync<List<CustomRoleDto>>() ?? new List<CustomRoleDto>();
+    }
+
+    public async Task<List<CustomRoleDto>> GetAllRolesAsync()
+    {
+        var response = await _httpClient.GetAsync("/api/roles");
+        if (!response.IsSuccessStatusCode) return new List<CustomRoleDto>();
+        return await response.Content.ReadFromJsonAsync<List<CustomRoleDto>>() ?? new List<CustomRoleDto>();
     }
 }

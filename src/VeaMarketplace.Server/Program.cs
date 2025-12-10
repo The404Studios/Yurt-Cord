@@ -20,6 +20,10 @@ builder.Services.AddSingleton<DatabaseService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ChatService>();
 builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<FriendService>();
+builder.Services.AddScoped<DirectMessageService>();
+builder.Services.AddScoped<VoiceCallService>();
+builder.Services.AddScoped<RoleService>();
 
 // JWT Authentication
 var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "YurtCordSuperSecretKey12345678901234567890";
@@ -84,6 +88,7 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<ChatHub>("/hubs/chat");
 app.MapHub<VoiceHub>("/hubs/voice");
+app.MapHub<FriendHub>("/hubs/friends");
 
 // Ensure data directory exists
 Directory.CreateDirectory("Data");

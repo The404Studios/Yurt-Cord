@@ -3,14 +3,39 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="{StaticResource TertiaryDarkBrush}">
 
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Colors.xaml"/>
+                <ResourceDictionary Source="../Styles/Buttons.xaml"/>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
     <Grid>
         <!-- Banner -->
-        <Border Height="200" VerticalAlignment="Top">
+        <Border x:Name="BannerBorder" Height="200" VerticalAlignment="Top">
             <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Color="#5865F2" Offset="0"/>
-                    <GradientStop Color="#EB459E" Offset="1"/>
-                </LinearGradientBrush>
+                <ImageBrush x:Name="BannerBrush" Stretch="UniformToFill">
+                    <ImageBrush.ImageSource>
+                        <DrawingImage>
+                            <DrawingImage.Drawing>
+                                <GeometryDrawing>
+                                    <GeometryDrawing.Brush>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                            <GradientStop Color="#5865F2" Offset="0"/>
+                                            <GradientStop Color="#EB459E" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </GeometryDrawing.Brush>
+                                    <GeometryDrawing.Geometry>
+                                        <RectangleGeometry Rect="0,0,1,1"/>
+                                    </GeometryDrawing.Geometry>
+                                </GeometryDrawing>
+                            </DrawingImage.Drawing>
+                        </DrawingImage>
+                    </ImageBrush.ImageSource>
+                </ImageBrush>
             </Border.Background>
         </Border>
 
@@ -140,9 +165,33 @@
                     </Border>
                 </Grid>
 
-                <!-- Badges Section -->
+                <!-- About Me Section -->
                 <Border Background="{StaticResource SecondaryDarkBrush}"
                         CornerRadius="8" Margin="24,0" Padding="24">
+                    <StackPanel>
+                        <TextBlock Text="ABOUT ME" FontSize="12" FontWeight="Bold"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   Margin="0,0,0,12"/>
+                        <TextBlock x:Name="DescriptionText" FontSize="14"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   TextWrapping="Wrap" LineHeight="22"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Custom Roles Section -->
+                <Border Background="{StaticResource SecondaryDarkBrush}"
+                        CornerRadius="8" Margin="24,16,24,0" Padding="24">
+                    <StackPanel>
+                        <TextBlock Text="ROLES" FontSize="12" FontWeight="Bold"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   Margin="0,0,0,12"/>
+                        <WrapPanel x:Name="RolesPanel"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Badges Section -->
+                <Border Background="{StaticResource SecondaryDarkBrush}"
+                        CornerRadius="8" Margin="24,16,24,0" Padding="24">
                     <StackPanel>
                         <TextBlock Text="BADGES" FontSize="12" FontWeight="Bold"
                                    Foreground="{StaticResource TextMutedBrush}"

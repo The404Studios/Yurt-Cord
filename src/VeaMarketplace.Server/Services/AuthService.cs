@@ -88,6 +88,28 @@ public class AuthService
         return _db.Users.FindById(userId);
     }
 
+    public UserDto? UpdateProfile(string userId, UpdateProfileRequest request)
+    {
+        var user = _db.Users.FindById(userId);
+        if (user == null) return null;
+
+        if (request.Username != null && request.Username != user.Username)
+        {
+            // Check if username is taken
+            if (_db.Users.Exists(u => u.Username.ToLower() == request.Username.ToLower() && u.Id != userId))
+                return null;
+            user.Username = request.Username;
+        }
+
+        if (request.Bio != null) user.Bio = request.Bio;
+        if (request.Description != null) user.Description = request.Description;
+        if (request.AvatarUrl != null) user.AvatarUrl = request.AvatarUrl;
+        if (request.BannerUrl != null) user.BannerUrl = request.BannerUrl;
+
+        _db.Users.Update(user);
+        return MapToDto(user);
+    }
+
     public User? ValidateToken(string token)
     {
         try
@@ -139,15 +161,32 @@ public class AuthService
         return tokenHandler.WriteToken(token);
     }
 
-    public static UserDto MapToDto(User user)
+    public UserDto MapToDto(User user)
     {
+        var customRoles = user.CustomRoleIds
+            .Select(id => _db.CustomRoles.FindById(id))
+            .Where(r => r != null)
+            .OrderByDescending(r => r!.Position)
+            .Select(r => new CustomRoleDto
+            {
+                Id = r!.Id,
+                Name = r.Name,
+                Color = r.Color,
+                Position = r.Position,
+                IsHoisted = r.IsHoisted,
+                Permissions = r.Permissions
+            })
+            .ToList();
+
         return new UserDto
         {
             Id = user.Id,
             Username = user.Username,
             Email = user.Email,
             AvatarUrl = user.AvatarUrl,
+            BannerUrl = user.BannerUrl,
             Bio = user.Bio,
+            Description = user.Description,
             Role = user.Role,
             Rank = user.Rank,
             Reputation = user.Reputation,
@@ -157,7 +196,8 @@ public class AuthService
             CreatedAt = user.CreatedAt,
             LastSeenAt = user.LastSeenAt,
             IsOnline = user.IsOnline,
-            Badges = user.Badges
+            Badges = user.Badges,
+            CustomRoles = customRoles
         };
     }
 }

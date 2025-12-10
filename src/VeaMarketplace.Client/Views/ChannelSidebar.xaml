@@ -4,7 +4,107 @@
              Background="{StaticResource SecondaryDarkBrush}">
 
     <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Colors.xaml"/>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+            <!-- Voice User Context Menu -->
+            <ContextMenu x:Key="VoiceUserContextMenu" Style="{StaticResource ModernContextMenu}">
+                <MenuItem Header="View Profile" Style="{StaticResource ModernMenuItem}"
+                          Click="VoiceViewProfile_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="👤" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Send Message" Style="{StaticResource ModernMenuItem}"
+                          Click="VoiceSendMessage_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="💬" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Add Friend" Style="{StaticResource ModernMenuItem}"
+                          Click="VoiceAddFriend_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="➕" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator Style="{StaticResource MenuSeparator}"/>
+                <MenuItem Header="Mute User" Style="{StaticResource ModernMenuItem}"
+                          Click="VoiceMuteUser_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🔇" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Deafen User" Style="{StaticResource ModernMenuItem}"
+                          Click="VoiceDeafenUser_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🔈" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Adjust Volume" Style="{StaticResource ModernMenuItem}"
+                          Click="VoiceAdjustVolume_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🔊" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator Style="{StaticResource MenuSeparator}"/>
+                <MenuItem Header="Move To">
+                    <MenuItem.Icon>
+                        <TextBlock Text="↪" FontSize="14"/>
+                    </MenuItem.Icon>
+                    <MenuItem Header="General Voice" Style="{StaticResource ModernMenuItem}"
+                              Click="MoveToChannel_Click" Tag="general-voice"/>
+                    <MenuItem Header="Music" Style="{StaticResource ModernMenuItem}"
+                              Click="MoveToChannel_Click" Tag="music-voice"/>
+                    <MenuItem Header="Marketplace Deals" Style="{StaticResource ModernMenuItem}"
+                              Click="MoveToChannel_Click" Tag="marketplace-voice"/>
+                </MenuItem>
+                <MenuItem Header="Disconnect" Style="{StaticResource DangerMenuItem}"
+                          Click="VoiceDisconnectUser_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🚫" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator Style="{StaticResource MenuSeparator}"/>
+                <MenuItem Header="Copy User ID" Style="{StaticResource ModernMenuItem}"
+                          Click="VoiceCopyUserId_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="📋" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+            </ContextMenu>
+
+            <!-- Channel Context Menu -->
+            <ContextMenu x:Key="ChannelContextMenu" Style="{StaticResource ModernContextMenu}">
+                <MenuItem Header="Mark as Read" Style="{StaticResource ModernMenuItem}">
+                    <MenuItem.Icon>
+                        <TextBlock Text="✓" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator Style="{StaticResource MenuSeparator}"/>
+                <MenuItem Header="Mute Channel" Style="{StaticResource ModernMenuItem}">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🔕" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Notification Settings" Style="{StaticResource ModernMenuItem}">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🔔" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator Style="{StaticResource MenuSeparator}"/>
+                <MenuItem Header="Copy Channel ID" Style="{StaticResource ModernMenuItem}"
+                          Click="CopyChannelId_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="📋" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+            </ContextMenu>
+        </ResourceDictionary>
     </UserControl.Resources>
 
     <Grid>
@@ -52,7 +152,8 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Button Style="{StaticResource ChannelButton}"
-                                    Click="ChannelButton_Click" Tag="{Binding Name}">
+                                    Click="ChannelButton_Click" Tag="{Binding Name}"
+                                    ContextMenu="{StaticResource ChannelContextMenu}">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="{Binding Icon}" FontSize="18" Margin="0,0,8,0"/>
                                     <TextBlock Text="{Binding Name}" FontSize="15"
@@ -105,7 +206,9 @@
                     <ItemsControl x:Name="VoiceUsersItemsControl">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Grid Margin="0,4">
+                                <Grid Margin="0,4" Cursor="Hand"
+                                      ContextMenu="{StaticResource VoiceUserContextMenu}"
+                                      Tag="{Binding}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
