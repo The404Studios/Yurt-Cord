@@ -23,6 +23,7 @@ builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<FriendService>();
 builder.Services.AddScoped<DirectMessageService>();
 builder.Services.AddScoped<VoiceCallService>();
+builder.Services.AddScoped<RoleService>();
 
 // JWT Authentication
 var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "YurtCordSuperSecretKey12345678901234567890";

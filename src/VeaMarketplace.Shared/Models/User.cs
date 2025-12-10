@@ -9,7 +9,9 @@ public class User
     public string Email { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
     public string AvatarUrl { get; set; } = string.Empty;
+    public string BannerUrl { get; set; } = string.Empty;
     public string Bio { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
     public UserRole Role { get; set; } = UserRole.Member;
     public UserRank Rank { get; set; } = UserRank.Newcomer;
     public int Reputation { get; set; } = 0;
@@ -22,4 +24,5 @@ public class User
     public bool IsBanned { get; set; } = false;
     public string? BanReason { get; set; }
     public List<string> Badges { get; set; } = new();
+    public List<string> CustomRoleIds { get; set; } = new();
 }

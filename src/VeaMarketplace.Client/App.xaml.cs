@@ -8,6 +8,7 @@ using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using VeaMarketplace.Client.Services;
 using VeaMarketplace.Client.ViewModels;
+using VeaMarketplace.Client.Views;
 
 namespace VeaMarketplace.Client;
 
@@ -15,12 +16,16 @@ public partial class App : Application
 {
     public static IServiceProvider ServiceProvider { get; private set; } = null!;
 
-    protected override void OnStartup(StartupEventArgs e)
+    protected override async void OnStartup(StartupEventArgs e)
     {
         // Set up global exception handlers FIRST, before anything else
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+
+        // Show splash screen
+        var splash = new SplashScreen();
+        splash.Show();
 
         var services = new ServiceCollection();
 
@@ -32,6 +37,7 @@ public partial class App : Application
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<IAudioDeviceService, AudioDeviceService>();
         services.AddSingleton<IFriendService, FriendService>();
+        services.AddSingleton<INotificationService, NotificationService>();
 
         // ViewModels
         services.AddTransient<LoginViewModel>();
@@ -45,6 +51,14 @@ public partial class App : Application
         services.AddSingleton<FriendsViewModel>();
 
         ServiceProvider = services.BuildServiceProvider();
+
+        // Wait for splash to complete
+        await Task.Delay(2500);
+        await splash.CompleteAndClose();
+
+        // Show main window
+        var mainWindow = new MainWindow();
+        mainWindow.Show();
 
         base.OnStartup(e);
     }

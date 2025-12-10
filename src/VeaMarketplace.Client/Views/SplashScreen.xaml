@@ -1,0 +1,66 @@
+<Window x:Class="VeaMarketplace.Client.Views.SplashScreen"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Yurt Cord"
+        WindowStyle="None" AllowsTransparency="True"
+        Background="Transparent"
+        WindowStartupLocation="CenterScreen"
+        Width="400" Height="300"
+        ResizeMode="NoResize">
+
+    <Border Background="#1a1a2e" CornerRadius="16">
+        <Grid>
+            <!-- Background Gradient -->
+            <Border CornerRadius="16" Opacity="0.3">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#5865F2" Offset="0"/>
+                        <GradientStop Color="#EB459E" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+            </Border>
+
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <!-- Logo/Icon -->
+                <Border Width="80" Height="80" CornerRadius="40" Margin="0,0,0,24">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#5865F2" Offset="0"/>
+                            <GradientStop Color="#EB459E" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <TextBlock Text="Y" FontSize="40" FontWeight="Bold"
+                               Foreground="White"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+
+                <!-- App Name -->
+                <TextBlock Text="YURT CORD" FontSize="28" FontWeight="Bold"
+                           Foreground="White" HorizontalAlignment="Center"
+                           Margin="0,0,0,8"/>
+
+                <!-- Loading Text -->
+                <TextBlock x:Name="LoadingText" Text="Initializing..."
+                           FontSize="14" Foreground="#B9BBBE"
+                           HorizontalAlignment="Center" Margin="0,0,0,24"/>
+
+                <!-- Loading Bar -->
+                <Border Width="200" Height="4" CornerRadius="2" Background="#2f3136">
+                    <Border x:Name="LoadingProgress" Width="0" Height="4"
+                            CornerRadius="2" HorizontalAlignment="Left">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#5865F2" Offset="0"/>
+                                <GradientStop Color="#EB459E" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
+                </Border>
+
+                <!-- Version -->
+                <TextBlock Text="v1.0.0" FontSize="11" Foreground="#72767D"
+                           HorizontalAlignment="Center" Margin="0,16,0,0"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

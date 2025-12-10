@@ -44,6 +44,7 @@ public partial class ProfileView : UserControl
 
         UsernameText.Text = user.Username;
         BioText.Text = string.IsNullOrEmpty(user.Bio) ? "No bio yet..." : user.Bio;
+        DescriptionText.Text = string.IsNullOrEmpty(user.Description) ? "This user hasn't written anything about themselves yet." : user.Description;
         JoinedText.Text = $"Joined {user.CreatedAt:MMMM yyyy}";
         BalanceText.Text = $"${user.Balance:F2}";
         ReputationText.Text = user.Reputation.ToString();
@@ -60,6 +61,16 @@ public partial class ProfileView : UserControl
             catch { }
         }
 
+        // Banner
+        if (!string.IsNullOrEmpty(user.BannerUrl))
+        {
+            try
+            {
+                BannerBrush.ImageSource = new BitmapImage(new Uri(user.BannerUrl));
+            }
+            catch { }
+        }
+
         // Role Badge
         RoleBadge.Background = new SolidColorBrush(GetRoleColor(user.Role));
         RoleBadgeText.Text = user.Role.ToString().ToUpper();
@@ -67,11 +78,60 @@ public partial class ProfileView : UserControl
         // Rank Badge
         RankBadge.Background = new SolidColorBrush(GetRankColor(user.Rank));
         RankBadgeText.Text = $"{GetRankEmoji(user.Rank)} {user.Rank}";
+
+        // Custom Roles
+        RolesPanel.Children.Clear();
+        foreach (var role in user.CustomRoles)
+        {
+            var border = new Border
+            {
+                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(role.Color)),
+                CornerRadius = new CornerRadius(4),
+                Padding = new Thickness(8, 4, 8, 4),
+                Margin = new Thickness(0, 0, 8, 8)
+            };
+            var text = new TextBlock
+            {
+                Text = role.Name,
+                FontSize = 12,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = Brushes.White
+            };
+            border.Child = text;
+            RolesPanel.Children.Add(border);
+        }
+
+        // If no custom roles, show a placeholder
+        if (user.CustomRoles.Count == 0)
+        {
+            RolesPanel.Children.Add(new TextBlock
+            {
+                Text = "No custom roles assigned",
+                FontSize = 12,
+                Foreground = (Brush)FindResource("TextMutedBrush")
+            });
+        }
     }
 
     private void EditProfile_Click(object sender, RoutedEventArgs e)
     {
-        // Show edit profile dialog
+        var user = _viewModel?.User ?? _apiService?.CurrentUser;
+        if (user == null) return;
+
+        var dialog = new ProfileEditDialog(user)
+        {
+            Owner = Window.GetWindow(this)
+        };
+
+        if (dialog.ShowDialog() == true && dialog.UpdatedUser != null)
+        {
+            // Refresh the UI with updated user
+            if (_viewModel != null)
+            {
+                _viewModel.User = dialog.UpdatedUser;
+            }
+            UpdateUI();
+        }
     }
 
     private static Color GetRoleColor(UserRole role)
