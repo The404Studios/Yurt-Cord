@@ -41,7 +41,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     private WaveInEvent? _waveIn;
     private WaveOutEvent? _waveOut;
     private BufferedWaveProvider? _bufferedWaveProvider;
-    private const string HubUrl = "http://localhost:5000/hubs/voice";
+    private const string HubUrl = "http://162.248.94.23:5000/hubs/voice";
     private bool _isSpeaking;
     private DateTime _lastSpeakingUpdate = DateTime.MinValue;
     private readonly ConcurrentDictionary<string, VoiceUserState> _voiceUsers = new();
