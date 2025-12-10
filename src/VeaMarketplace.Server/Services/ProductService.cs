@@ -57,11 +57,14 @@ public class ProductService
         }
 
         var totalCount = query.Count();
+        // LiteDB doesn't support ThenByDescending, so we fetch and sort in memory
         var products = query
+            .OrderByDescending(p => p.CreatedAt)
+            .ToEnumerable()
             .OrderByDescending(p => p.IsFeatured)
             .ThenByDescending(p => p.CreatedAt)
             .Skip((page - 1) * pageSize)
-            .Limit(pageSize)
+            .Take(pageSize)
             .ToList();
 
         var productDtos = products.Select(p =>

@@ -1,7 +1,7 @@
 <UserControl x:Class="VeaMarketplace.Client.Controls.ChatMessageControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:converters="clr-namespace:VeaMarketplace.Client.Converters">
+             xmlns:converters="clr-namespace:VeaMarketplace.Client.Converters;assembly=YurtCord">
 
     <UserControl.Resources>
         <converters:RoleToColorConverter x:Key="RoleToColor"/>
