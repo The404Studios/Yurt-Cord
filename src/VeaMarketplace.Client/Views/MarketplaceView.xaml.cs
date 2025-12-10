@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -11,12 +12,15 @@ namespace VeaMarketplace.Client.Views;
 
 public partial class MarketplaceView : UserControl
 {
-    private readonly MarketplaceViewModel _viewModel;
+    private readonly MarketplaceViewModel? _viewModel;
     private ProductDto? _selectedProduct;
 
     public MarketplaceView()
     {
         InitializeComponent();
+
+        if (DesignerProperties.GetIsInDesignMode(this))
+            return;
 
         _viewModel = (MarketplaceViewModel)App.ServiceProvider.GetService(typeof(MarketplaceViewModel))!;
         DataContext = _viewModel;
@@ -43,6 +47,7 @@ public partial class MarketplaceView : UserControl
 
     private void SearchBox_KeyDown(object sender, KeyEventArgs e)
     {
+        if (_viewModel == null) return;
         if (e.Key == Key.Enter)
         {
             _viewModel.SearchQuery = SearchBox.Text;
@@ -52,6 +57,7 @@ public partial class MarketplaceView : UserControl
 
     private void CategoryFilter_Click(object sender, RoutedEventArgs e)
     {
+        if (_viewModel == null) return;
         var button = (Button)sender;
         var tag = button.Tag?.ToString();
 
@@ -142,7 +148,7 @@ public partial class MarketplaceView : UserControl
 
     private async void BuyNow_Click(object sender, RoutedEventArgs e)
     {
-        if (_selectedProduct == null) return;
+        if (_selectedProduct == null || _viewModel == null) return;
 
         var result = await _viewModel.PurchaseProductCommand.ExecuteAsync(null);
         ProductDetailModal.Visibility = Visibility.Collapsed;
@@ -161,6 +167,8 @@ public partial class MarketplaceView : UserControl
 
     private async void ConfirmCreateListing_Click(object sender, RoutedEventArgs e)
     {
+        if (_viewModel == null) return;
+
         CreateErrorBorder.Visibility = Visibility.Collapsed;
 
         var title = NewTitleBox.Text?.Trim();
@@ -223,11 +231,13 @@ public partial class MarketplaceView : UserControl
 
     private void PrevPage_Click(object sender, RoutedEventArgs e)
     {
+        if (_viewModel == null) return;
         _ = _viewModel.PreviousPageCommand.ExecuteAsync(null);
     }
 
     private void NextPage_Click(object sender, RoutedEventArgs e)
     {
+        if (_viewModel == null) return;
         _ = _viewModel.NextPageCommand.ExecuteAsync(null);
     }
 

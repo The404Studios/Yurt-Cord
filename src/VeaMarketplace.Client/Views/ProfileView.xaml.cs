@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -11,12 +12,15 @@ namespace VeaMarketplace.Client.Views;
 
 public partial class ProfileView : UserControl
 {
-    private readonly ProfileViewModel _viewModel;
-    private readonly IApiService _apiService;
+    private readonly ProfileViewModel? _viewModel;
+    private readonly IApiService? _apiService;
 
     public ProfileView()
     {
         InitializeComponent();
+
+        if (DesignerProperties.GetIsInDesignMode(this))
+            return;
 
         _viewModel = (ProfileViewModel)App.ServiceProvider.GetService(typeof(ProfileViewModel))!;
         _apiService = (IApiService)App.ServiceProvider.GetService(typeof(IApiService))!;
@@ -35,7 +39,7 @@ public partial class ProfileView : UserControl
 
     private void UpdateUI()
     {
-        var user = _viewModel.User ?? _apiService.CurrentUser;
+        var user = _viewModel?.User ?? _apiService?.CurrentUser;
         if (user == null) return;
 
         UsernameText.Text = user.Username;

@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -9,7 +10,7 @@ namespace VeaMarketplace.Client.Views;
 
 public partial class LoginView : UserControl
 {
-    private readonly LoginViewModel _viewModel;
+    private readonly LoginViewModel? _viewModel;
     private bool _isRegistering;
 
     public event Action? OnLoginSuccess;
@@ -17,6 +18,9 @@ public partial class LoginView : UserControl
     public LoginView()
     {
         InitializeComponent();
+
+        if (DesignerProperties.GetIsInDesignMode(this))
+            return;
 
         _viewModel = (LoginViewModel)App.ServiceProvider.GetService(typeof(LoginViewModel))!;
         DataContext = _viewModel;

@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -9,15 +10,18 @@ namespace VeaMarketplace.Client.Views;
 
 public partial class ChannelSidebar : UserControl
 {
-    private readonly ChatViewModel _viewModel;
-    private readonly IApiService _apiService;
-    private readonly IVoiceService _voiceService;
+    private readonly ChatViewModel? _viewModel;
+    private readonly IApiService? _apiService;
+    private readonly IVoiceService? _voiceService;
     private bool _isMuted;
     private bool _isDeafened;
 
     public ChannelSidebar()
     {
         InitializeComponent();
+
+        if (DesignerProperties.GetIsInDesignMode(this))
+            return;
 
         _viewModel = (ChatViewModel)App.ServiceProvider.GetService(typeof(ChatViewModel))!;
         _apiService = (IApiService)App.ServiceProvider.GetService(typeof(IApiService))!;
@@ -46,7 +50,7 @@ public partial class ChannelSidebar : UserControl
 
     private void UpdateUserPanel()
     {
-        var user = _apiService.CurrentUser;
+        var user = _apiService?.CurrentUser;
         if (user != null)
         {
             UserNameText.Text = user.Username;
@@ -63,6 +67,7 @@ public partial class ChannelSidebar : UserControl
 
     private async void ChannelButton_Click(object sender, RoutedEventArgs e)
     {
+        if (_viewModel == null) return;
         var button = (Button)sender;
         var channelName = button.Tag?.ToString();
         if (!string.IsNullOrEmpty(channelName))
@@ -73,6 +78,7 @@ public partial class ChannelSidebar : UserControl
 
     private async void VoiceChannel_Click(object sender, RoutedEventArgs e)
     {
+        if (_viewModel == null) return;
         var button = (Button)sender;
         var channelId = button.Tag?.ToString();
         if (!string.IsNullOrEmpty(channelId))
@@ -83,6 +89,7 @@ public partial class ChannelSidebar : UserControl
 
     private void MicButton_Click(object sender, RoutedEventArgs e)
     {
+        if (_voiceService == null) return;
         _isMuted = !_isMuted;
         _voiceService.IsMuted = _isMuted;
         MicIcon.Text = _isMuted ? "🔇" : "🎤";
@@ -91,6 +98,7 @@ public partial class ChannelSidebar : UserControl
 
     private void DeafenButton_Click(object sender, RoutedEventArgs e)
     {
+        if (_voiceService == null) return;
         _isDeafened = !_isDeafened;
         _voiceService.IsDeafened = _isDeafened;
         DeafenIcon.Text = _isDeafened ? "🔈" : "🔊";
