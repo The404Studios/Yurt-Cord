@@ -10,6 +10,7 @@ public interface INavigationService
     void NavigateToMarketplace();
     void NavigateToProfile();
     void NavigateToSettings();
+    void NavigateToFriends();
 }
 
 public class NavigationService : INavigationService
@@ -27,4 +28,5 @@ public class NavigationService : INavigationService
     public void NavigateToMarketplace() => NavigateTo("Marketplace");
     public void NavigateToProfile() => NavigateTo("Profile");
     public void NavigateToSettings() => NavigateTo("Settings");
+    public void NavigateToFriends() => NavigateTo("Friends");
 }

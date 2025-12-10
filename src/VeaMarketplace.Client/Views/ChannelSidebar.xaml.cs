@@ -13,6 +13,7 @@ public partial class ChannelSidebar : UserControl
     private readonly ChatViewModel? _viewModel;
     private readonly IApiService? _apiService;
     private readonly IVoiceService? _voiceService;
+    private readonly INavigationService? _navigationService;
     private bool _isMuted;
     private bool _isDeafened;
 
@@ -26,6 +27,7 @@ public partial class ChannelSidebar : UserControl
         _viewModel = (ChatViewModel)App.ServiceProvider.GetService(typeof(ChatViewModel))!;
         _apiService = (IApiService)App.ServiceProvider.GetService(typeof(IApiService))!;
         _voiceService = (IVoiceService)App.ServiceProvider.GetService(typeof(IVoiceService))!;
+        _navigationService = (INavigationService)App.ServiceProvider.GetService(typeof(INavigationService))!;
 
         ChannelsItemsControl.ItemsSource = _viewModel.Channels;
         VoiceUsersItemsControl.ItemsSource = _viewModel.VoiceUsers;
@@ -115,6 +117,6 @@ public partial class ChannelSidebar : UserControl
 
     private void SettingsButton_Click(object sender, RoutedEventArgs e)
     {
-        // Open settings
+        _navigationService?.NavigateToSettings();
     }
 }

@@ -30,6 +30,8 @@ public partial class App : Application
         services.AddSingleton<IVoiceService, VoiceService>();
         services.AddSingleton<INavigationService, NavigationService>();
         services.AddSingleton<ISettingsService, SettingsService>();
+        services.AddSingleton<IAudioDeviceService, AudioDeviceService>();
+        services.AddSingleton<IFriendService, FriendService>();
 
         // ViewModels
         services.AddTransient<LoginViewModel>();
@@ -39,6 +41,8 @@ public partial class App : Application
         services.AddTransient<MarketplaceViewModel>();
         services.AddTransient<ProfileViewModel>();
         services.AddTransient<VoiceChannelViewModel>();
+        services.AddSingleton<SettingsViewModel>();
+        services.AddSingleton<FriendsViewModel>();
 
         ServiceProvider = services.BuildServiceProvider();
 

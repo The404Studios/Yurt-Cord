@@ -12,6 +12,9 @@ public class DatabaseService : IDisposable
     public ILiteCollection<ChatMessage> Messages => _database.GetCollection<ChatMessage>("messages");
     public ILiteCollection<ChatChannel> Channels => _database.GetCollection<ChatChannel>("channels");
     public ILiteCollection<Transaction> Transactions => _database.GetCollection<Transaction>("transactions");
+    public ILiteCollection<Friendship> Friendships => _database.GetCollection<Friendship>("friendships");
+    public ILiteCollection<DirectMessage> DirectMessages => _database.GetCollection<DirectMessage>("direct_messages");
+    public ILiteCollection<VoiceCall> VoiceCalls => _database.GetCollection<VoiceCall>("voice_calls");
 
     public DatabaseService(IConfiguration configuration)
     {
@@ -25,6 +28,13 @@ public class DatabaseService : IDisposable
         Products.EnsureIndex(x => x.Status);
         Messages.EnsureIndex(x => x.Channel);
         Messages.EnsureIndex(x => x.Timestamp);
+        Friendships.EnsureIndex(x => x.RequesterId);
+        Friendships.EnsureIndex(x => x.AddresseeId);
+        DirectMessages.EnsureIndex(x => x.SenderId);
+        DirectMessages.EnsureIndex(x => x.RecipientId);
+        DirectMessages.EnsureIndex(x => x.Timestamp);
+        VoiceCalls.EnsureIndex(x => x.CallerId);
+        VoiceCalls.EnsureIndex(x => x.RecipientId);
 
         // Seed default channels
         SeedDefaultData();

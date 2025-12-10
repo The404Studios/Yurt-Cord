@@ -22,6 +22,13 @@ public class AppSettings
     public string PushToTalkKey { get; set; } = "V";
     public bool ShowNotifications { get; set; } = true;
     public bool PlaySounds { get; set; } = true;
+
+    // Audio Device Settings
+    public string? InputDeviceId { get; set; }
+    public string? OutputDeviceId { get; set; }
+    public double VoiceActivityThreshold { get; set; } = 0.02;
+    public bool NoiseSuppression { get; set; } = true;
+    public bool EchoCancellation { get; set; } = true;
 }
 
 public class SettingsService : ISettingsService
