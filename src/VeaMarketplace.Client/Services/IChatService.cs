@@ -59,8 +59,8 @@ public class ChatService : IChatService, IAsyncDisposable
 
         RegisterHandlers();
 
-        await _connection.StartAsync();
-        await _connection.InvokeAsync("Authenticate", token);
+        await _connection.StartAsync().ConfigureAwait(false);
+        await _connection.InvokeAsync("Authenticate", token).ConfigureAwait(false);
     }
 
     private void RegisterHandlers()
@@ -108,8 +108,8 @@ public class ChatService : IChatService, IAsyncDisposable
     {
         if (_connection != null)
         {
-            await _connection.StopAsync();
-            await _connection.DisposeAsync();
+            await _connection.StopAsync().ConfigureAwait(false);
+            await _connection.DisposeAsync().ConfigureAwait(false);
             _connection = null;
         }
     }
@@ -117,36 +117,36 @@ public class ChatService : IChatService, IAsyncDisposable
     public async Task JoinChannelAsync(string channelName)
     {
         if (_connection != null && IsConnected)
-            await _connection.InvokeAsync("JoinChannel", channelName);
+            await _connection.InvokeAsync("JoinChannel", channelName).ConfigureAwait(false);
     }
 
     public async Task LeaveChannelAsync(string channelName)
     {
         if (_connection != null && IsConnected)
-            await _connection.InvokeAsync("LeaveChannel", channelName);
+            await _connection.InvokeAsync("LeaveChannel", channelName).ConfigureAwait(false);
     }
 
     public async Task SendMessageAsync(string content, string channel = "general")
     {
         if (_connection != null && IsConnected)
-            await _connection.InvokeAsync("SendMessage", content, channel);
+            await _connection.InvokeAsync("SendMessage", content, channel).ConfigureAwait(false);
     }
 
     public async Task DeleteMessageAsync(string messageId)
     {
         if (_connection != null && IsConnected)
-            await _connection.InvokeAsync("DeleteMessage", messageId);
+            await _connection.InvokeAsync("DeleteMessage", messageId).ConfigureAwait(false);
     }
 
     public async Task SendTypingAsync(string channel)
     {
         if (_connection != null && IsConnected)
-            await _connection.InvokeAsync("SendTyping", channel);
+            await _connection.InvokeAsync("SendTyping", channel).ConfigureAwait(false);
     }
 
     public async ValueTask DisposeAsync()
     {
-        await DisconnectAsync();
+        await DisconnectAsync().ConfigureAwait(false);
         GC.SuppressFinalize(this);
     }
 }

@@ -62,8 +62,8 @@ public class FriendService : IFriendService, IAsyncDisposable
             .Build();
 
         RegisterHandlers();
-        await _connection.StartAsync();
-        await _connection.InvokeAsync("Authenticate", token);
+        await _connection.StartAsync().ConfigureAwait(false);
+        await _connection.InvokeAsync("Authenticate", token).ConfigureAwait(false);
     }
 
     private void RegisterHandlers()
@@ -183,58 +183,58 @@ public class FriendService : IFriendService, IAsyncDisposable
     public async Task SendFriendRequestAsync(string username)
     {
         if (_connection != null && IsConnected)
-            await _connection.InvokeAsync("SendFriendRequest", username);
+            await _connection.InvokeAsync("SendFriendRequest", username).ConfigureAwait(false);
     }
 
     public async Task RespondToFriendRequestAsync(string requestId, bool accept)
     {
         if (_connection != null && IsConnected)
-            await _connection.InvokeAsync("RespondToFriendRequest", requestId, accept);
+            await _connection.InvokeAsync("RespondToFriendRequest", requestId, accept).ConfigureAwait(false);
     }
 
     public async Task RemoveFriendAsync(string friendId)
     {
         if (_connection != null && IsConnected)
-            await _connection.InvokeAsync("RemoveFriend", friendId);
+            await _connection.InvokeAsync("RemoveFriend", friendId).ConfigureAwait(false);
     }
 
     public async Task GetDMHistoryAsync(string partnerId)
     {
         if (_connection != null && IsConnected)
-            await _connection.InvokeAsync("GetDMHistory", partnerId);
+            await _connection.InvokeAsync("GetDMHistory", partnerId).ConfigureAwait(false);
     }
 
     public async Task SendDirectMessageAsync(string recipientId, string content)
     {
         if (_connection != null && IsConnected)
-            await _connection.InvokeAsync("SendDirectMessage", recipientId, content);
+            await _connection.InvokeAsync("SendDirectMessage", recipientId, content).ConfigureAwait(false);
     }
 
     public async Task MarkMessagesReadAsync(string partnerId)
     {
         if (_connection != null && IsConnected)
-            await _connection.InvokeAsync("MarkMessagesRead", partnerId);
+            await _connection.InvokeAsync("MarkMessagesRead", partnerId).ConfigureAwait(false);
     }
 
     public async Task SendTypingDMAsync(string recipientId)
     {
         if (_connection != null && IsConnected)
-            await _connection.InvokeAsync("StartTypingDM", recipientId);
+            await _connection.InvokeAsync("StartTypingDM", recipientId).ConfigureAwait(false);
     }
 
     public async Task DisconnectAsync()
     {
         if (_connection != null)
         {
-            await _connection.StopAsync();
-            await _connection.DisposeAsync();
+            await _connection.StopAsync().ConfigureAwait(false);
+            await _connection.DisposeAsync().ConfigureAwait(false);
             _connection = null;
         }
     }
 
     public async ValueTask DisposeAsync()
     {
-        await DisconnectAsync();
+        await DisconnectAsync().ConfigureAwait(false);
         GC.SuppressFinalize(this);
     }
 }
