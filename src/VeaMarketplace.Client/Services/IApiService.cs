@@ -68,6 +68,16 @@ public interface IApiService
     // Media Upload
     Task<string> UploadImageAsync(string filePath);
     Task<List<string>> UploadImagesAsync(IEnumerable<string> filePaths);
+
+    // Cart
+    Task<CartDto> GetCartAsync();
+    Task<CartDto> AddToCartAsync(AddToCartRequest request);
+    Task<CartDto> UpdateCartItemAsync(UpdateCartItemRequest request);
+    Task<bool> RemoveFromCartAsync(string itemId);
+    Task<bool> ClearCartAsync();
+    Task<CouponResultDto> ApplyCouponAsync(string couponCode);
+    Task<bool> RemoveCouponAsync();
+    Task<CheckoutResultDto> CheckoutAsync(CheckoutRequest request);
 }
 
 public class ApiService : IApiService
@@ -435,6 +445,64 @@ public class ApiService : IApiService
             ".webp" => "image/webp",
             _ => "application/octet-stream"
         };
+    }
+
+    // Cart
+    public async Task<CartDto> GetCartAsync()
+    {
+        var response = await _httpClient.GetAsync("/api/cart").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return new CartDto();
+        return await response.Content.ReadFromJsonAsync<CartDto>().ConfigureAwait(false) ?? new CartDto();
+    }
+
+    public async Task<CartDto> AddToCartAsync(AddToCartRequest request)
+    {
+        var response = await _httpClient.PostAsJsonAsync("/api/cart/items", request).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return new CartDto();
+        return await response.Content.ReadFromJsonAsync<CartDto>().ConfigureAwait(false) ?? new CartDto();
+    }
+
+    public async Task<CartDto> UpdateCartItemAsync(UpdateCartItemRequest request)
+    {
+        var response = await _httpClient.PutAsJsonAsync($"/api/cart/items/{request.ItemId}", request).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return new CartDto();
+        return await response.Content.ReadFromJsonAsync<CartDto>().ConfigureAwait(false) ?? new CartDto();
+    }
+
+    public async Task<bool> RemoveFromCartAsync(string itemId)
+    {
+        var response = await _httpClient.DeleteAsync($"/api/cart/items/{itemId}").ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> ClearCartAsync()
+    {
+        var response = await _httpClient.DeleteAsync("/api/cart").ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<CouponResultDto> ApplyCouponAsync(string couponCode)
+    {
+        var response = await _httpClient.PostAsJsonAsync("/api/cart/coupon", new ApplyCouponRequest { CouponCode = couponCode }).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return new CouponResultDto { IsValid = false, ErrorMessage = "Failed to apply coupon" };
+        return await response.Content.ReadFromJsonAsync<CouponResultDto>().ConfigureAwait(false) ?? new CouponResultDto();
+    }
+
+    public async Task<bool> RemoveCouponAsync()
+    {
+        var response = await _httpClient.DeleteAsync("/api/cart/coupon").ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<CheckoutResultDto> CheckoutAsync(CheckoutRequest request)
+    {
+        var response = await _httpClient.PostAsJsonAsync("/api/cart/checkout", request).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            return new CheckoutResultDto { Success = false, ErrorMessage = error };
+        }
+        return await response.Content.ReadFromJsonAsync<CheckoutResultDto>().ConfigureAwait(false) ?? new CheckoutResultDto();
     }
 }
 

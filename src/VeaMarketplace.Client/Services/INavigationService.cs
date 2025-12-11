@@ -23,6 +23,8 @@ public interface INavigationService
     void NavigateToOrder(string orderId);
     void NavigateToNotifications();
     void NavigateToWishlist();
+    void NavigateToCart();
+    void NavigateToModeration();
 }
 
 public class NavigationService : INavigationService
@@ -95,4 +97,8 @@ public class NavigationService : INavigationService
     public void NavigateToNotifications() => NavigateTo("Notifications");
 
     public void NavigateToWishlist() => NavigateTo("Wishlist");
+
+    public void NavigateToCart() => NavigateTo("Cart");
+
+    public void NavigateToModeration() => NavigateTo("Moderation");
 }
