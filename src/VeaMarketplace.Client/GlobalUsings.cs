@@ -18,6 +18,7 @@ global using Clipboard = System.Windows.Clipboard;
 global using Color = System.Windows.Media.Color;
 global using ColorConverter = System.Windows.Media.ColorConverter;
 global using KeyEventArgs = System.Windows.Input.KeyEventArgs;
+global using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 global using MessageBox = System.Windows.MessageBox;
 global using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 global using Orientation = System.Windows.Controls.Orientation;

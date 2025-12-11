@@ -59,9 +59,9 @@ public partial class VoiceSettingsPanel : UserControl
         _levelTimer.Tick += (s, e) =>
         {
             // Smooth the level display
-            var targetWidth = _currentLevel * InputLevelBar.Parent is FrameworkElement parent
+            var targetWidth = _currentLevel * (InputLevelBar.Parent is FrameworkElement parent
                 ? parent.ActualWidth
-                : 200;
+                : 200);
             InputLevelBar.Width = Math.Max(0, Math.Min(targetWidth, InputLevelBar.Width * 0.8 + targetWidth * 0.2));
         };
         _levelTimer.Start();
