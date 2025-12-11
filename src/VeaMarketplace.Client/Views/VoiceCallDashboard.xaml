@@ -234,6 +234,7 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Self View -->
@@ -267,8 +268,27 @@
                     </Border>
                 </Grid>
 
+                <!-- Output Device Selection -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,16,0">
+                    <TextBlock Text="🔈" FontSize="14" Foreground="#B5BAC1"
+                               VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <ComboBox x:Name="OutputDeviceCombo" Width="150"
+                              SelectionChanged="OutputDevice_SelectionChanged"
+                              ToolTip="Output Device">
+                        <ComboBox.Style>
+                            <Style TargetType="ComboBox">
+                                <Setter Property="Background" Value="#36393F"/>
+                                <Setter Property="Foreground" Value="#B5BAC1"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Padding" Value="8,4"/>
+                                <Setter Property="FontSize" Value="12"/>
+                            </Style>
+                        </ComboBox.Style>
+                    </ComboBox>
+                </StackPanel>
+
                 <!-- Volume Control -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                <StackPanel Grid.Column="3" Orientation="Horizontal">
                     <TextBlock Text="🔊" FontSize="14" Foreground="#B5BAC1"
                                VerticalAlignment="Center" Margin="0,0,8,0"/>
                     <Slider x:Name="VolumeSlider" Width="100" Minimum="0" Maximum="100"

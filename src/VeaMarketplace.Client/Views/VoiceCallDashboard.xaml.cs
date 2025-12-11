@@ -41,6 +41,43 @@ public partial class VoiceCallDashboard : UserControl
 
         SetupEventHandlers();
         UpdateSelfInfo();
+        LoadOutputDevices();
+    }
+
+    private void LoadOutputDevices()
+    {
+        try
+        {
+            var devices = _voiceService.GetOutputDevices();
+            OutputDeviceCombo.Items.Clear();
+
+            foreach (var device in devices)
+            {
+                OutputDeviceCombo.Items.Add(new ComboBoxItem
+                {
+                    Content = device.Name,
+                    Tag = device.DeviceNumber
+                });
+            }
+
+            // Select first device by default
+            if (OutputDeviceCombo.Items.Count > 0)
+            {
+                OutputDeviceCombo.SelectedIndex = 0;
+            }
+        }
+        catch
+        {
+            // Audio device enumeration failed
+        }
+    }
+
+    private void OutputDevice_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (OutputDeviceCombo.SelectedItem is ComboBoxItem item && item.Tag is int deviceNumber)
+        {
+            _voiceService.SetOutputDevice(deviceNumber);
+        }
     }
 
     private void SetupEventHandlers()
@@ -294,11 +331,21 @@ public partial class VoiceCallDashboard : UserControl
         }
         else
         {
-            await _voiceService.StartScreenShareAsync();
-            ScreenShareIcon.Text = "🛑";
-            ScreenShareBtn.Background = new System.Windows.Media.SolidColorBrush(
-                System.Windows.Media.Color.FromRgb(67, 181, 129));
-            ScreenShareBtn.ToolTip = "Stop Sharing";
+            // Show screen share picker dialog
+            var picker = new ScreenSharePicker(_voiceService)
+            {
+                Owner = Window.GetWindow(this)
+            };
+
+            if (picker.ShowDialog() == true && picker.SelectedDisplay != null)
+            {
+                // Start screen sharing with the selected display
+                await _voiceService.StartScreenShareAsync(picker.SelectedDisplay);
+                ScreenShareIcon.Text = "🛑";
+                ScreenShareBtn.Background = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(67, 181, 129));
+                ScreenShareBtn.ToolTip = $"Stop Sharing ({picker.SelectedDisplay.FriendlyName})";
+            }
         }
     }
 
