@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using VeaMarketplace.Client.Services;
+using VeaMarketplace.Client.Views;
 
 namespace VeaMarketplace.Client.ViewModels;
 
@@ -16,6 +18,15 @@ public partial class VoiceChannelViewModel : BaseViewModel
 
     [ObservableProperty]
     private bool _isConnected;
+
+    [ObservableProperty]
+    private bool _isScreenSharing;
+
+    [ObservableProperty]
+    private ScreenShareStats? _screenShareStats;
+
+    [ObservableProperty]
+    private ObservableCollection<RemoteScreenShare> _activeScreenShares = [];
 
     public VoiceChannelViewModel(IVoiceService voiceService)
     {
@@ -49,5 +60,125 @@ public partial class VoiceChannelViewModel : BaseViewModel
                     Users.Remove(existing);
             });
         };
+
+        _voiceService.OnUserScreenShareChanged += (connectionId, isSharing) =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                var user = Users.FirstOrDefault(u => u.ConnectionId == connectionId);
+                if (user != null)
+                {
+                    user.IsScreenSharing = isSharing;
+                }
+
+                if (!isSharing)
+                {
+                    var share = ActiveScreenShares.FirstOrDefault(s => s.ConnectionId == connectionId);
+                    if (share != null)
+                        ActiveScreenShares.Remove(share);
+                }
+            });
+        };
+
+        _voiceService.OnScreenShareStatsUpdated += stats =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                ScreenShareStats = stats;
+            });
+        };
     }
+
+    [RelayCommand]
+    private async Task StartScreenShareAsync()
+    {
+        try
+        {
+            if (!_voiceService.IsInVoiceChannel)
+            {
+                SetError("You must be in a voice channel to share your screen.");
+                return;
+            }
+
+            var picker = new ScreenSharePicker(_voiceService);
+            picker.Owner = System.Windows.Application.Current.MainWindow;
+
+            if (picker.ShowDialog() == true && picker.SelectedDisplay != null)
+            {
+                var settings = picker.GetSettings();
+                await _voiceService.StartScreenShareAsync(picker.SelectedDisplay, settings);
+                IsScreenSharing = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to start screen share: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private async Task StopScreenShareAsync()
+    {
+        try
+        {
+            await _voiceService.StopScreenShareAsync();
+            IsScreenSharing = false;
+            ScreenShareStats = null;
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to stop screen share: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private void ViewScreenShare(VoiceUserState user)
+    {
+        if (user == null || !user.IsScreenSharing) return;
+
+        try
+        {
+            var viewer = new ScreenShareViewer(_voiceService, user.ConnectionId, user.Username);
+            viewer.Show();
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to open screen share viewer: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private void ToggleMute()
+    {
+        _voiceService.IsMuted = !_voiceService.IsMuted;
+        OnPropertyChanged(nameof(IsMuted));
+    }
+
+    [RelayCommand]
+    private void ToggleDeafen()
+    {
+        _voiceService.IsDeafened = !_voiceService.IsDeafened;
+        OnPropertyChanged(nameof(IsDeafened));
+    }
+
+    [RelayCommand]
+    private async Task LeaveVoiceChannelAsync()
+    {
+        try
+        {
+            if (IsScreenSharing)
+            {
+                await StopScreenShareAsync();
+            }
+            await _voiceService.LeaveVoiceChannelAsync();
+            IsConnected = false;
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to leave voice channel: {ex.Message}");
+        }
+    }
+
+    public bool IsMuted => _voiceService.IsMuted;
+    public bool IsDeafened => _voiceService.IsDeafened;
 }
