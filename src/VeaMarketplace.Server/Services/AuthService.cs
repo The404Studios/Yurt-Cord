@@ -101,10 +101,25 @@ public class AuthService
             user.Username = request.Username;
         }
 
+        // Basic profile fields
+        if (request.DisplayName != null) user.DisplayName = request.DisplayName;
         if (request.Bio != null) user.Bio = request.Bio;
         if (request.Description != null) user.Description = request.Description;
+        if (request.StatusMessage != null) user.StatusMessage = request.StatusMessage;
         if (request.AvatarUrl != null) user.AvatarUrl = request.AvatarUrl;
         if (request.BannerUrl != null) user.BannerUrl = request.BannerUrl;
+
+        // Appearance
+        if (request.AccentColor != null) user.AccentColor = request.AccentColor;
+
+        // Privacy
+        if (request.ProfileVisibility != null) user.ProfileVisibility = request.ProfileVisibility.Value;
+
+        // Social links
+        if (request.DiscordUsername != null) user.DiscordUsername = request.DiscordUsername;
+        if (request.TwitterHandle != null) user.TwitterHandle = request.TwitterHandle;
+        if (request.TelegramUsername != null) user.TelegramUsername = request.TelegramUsername;
+        if (request.WebsiteUrl != null) user.WebsiteUrl = request.WebsiteUrl;
 
         _db.Users.Update(user);
         return MapToDto(user);
@@ -182,11 +197,15 @@ public class AuthService
         {
             Id = user.Id,
             Username = user.Username,
+            DisplayName = user.DisplayName,
             Email = user.Email,
             AvatarUrl = user.AvatarUrl,
             BannerUrl = user.BannerUrl,
             Bio = user.Bio,
             Description = user.Description,
+            StatusMessage = user.StatusMessage,
+            AccentColor = user.AccentColor,
+            ProfileVisibility = user.ProfileVisibility,
             Role = user.Role,
             Rank = user.Rank,
             Reputation = user.Reputation,
@@ -197,7 +216,11 @@ public class AuthService
             LastSeenAt = user.LastSeenAt,
             IsOnline = user.IsOnline,
             Badges = user.Badges,
-            CustomRoles = customRoles
+            CustomRoles = customRoles,
+            DiscordUsername = user.DiscordUsername,
+            TwitterHandle = user.TwitterHandle,
+            TelegramUsername = user.TelegramUsername,
+            WebsiteUrl = user.WebsiteUrl
         };
     }
 }

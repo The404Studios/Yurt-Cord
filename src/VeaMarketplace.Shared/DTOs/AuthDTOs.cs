@@ -1,4 +1,5 @@
 using VeaMarketplace.Shared.Enums;
+using VeaMarketplace.Shared.Models;
 
 namespace VeaMarketplace.Shared.DTOs;
 
@@ -27,11 +28,15 @@ public class UserDto
 {
     public string Id { get; set; } = string.Empty;
     public string Username { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string AvatarUrl { get; set; } = string.Empty;
     public string BannerUrl { get; set; } = string.Empty;
     public string Bio { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public string StatusMessage { get; set; } = string.Empty;
+    public string AccentColor { get; set; } = "#5865F2";
+    public ProfileVisibility ProfileVisibility { get; set; } = ProfileVisibility.Public;
     public UserRole Role { get; set; }
     public UserRank Rank { get; set; }
     public int Reputation { get; set; }
@@ -43,15 +48,34 @@ public class UserDto
     public bool IsOnline { get; set; }
     public List<string> Badges { get; set; } = new();
     public List<CustomRoleDto> CustomRoles { get; set; } = new();
+
+    // Social Links
+    public string? DiscordUsername { get; set; }
+    public string? TwitterHandle { get; set; }
+    public string? TelegramUsername { get; set; }
+    public string? WebsiteUrl { get; set; }
+
+    // Helper to get display name or username
+    public string GetDisplayName() => string.IsNullOrEmpty(DisplayName) ? Username : DisplayName;
 }
 
 public class UpdateProfileRequest
 {
     public string? Username { get; set; }
+    public string? DisplayName { get; set; }
     public string? Bio { get; set; }
     public string? Description { get; set; }
+    public string? StatusMessage { get; set; }
     public string? AvatarUrl { get; set; }
     public string? BannerUrl { get; set; }
+    public string? AccentColor { get; set; }
+    public ProfileVisibility? ProfileVisibility { get; set; }
+
+    // Social Links
+    public string? DiscordUsername { get; set; }
+    public string? TwitterHandle { get; set; }
+    public string? TelegramUsername { get; set; }
+    public string? WebsiteUrl { get; set; }
 }
 
 public class CustomRoleDto

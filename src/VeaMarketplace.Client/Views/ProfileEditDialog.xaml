@@ -5,7 +5,7 @@
         WindowStyle="None" AllowsTransparency="True"
         Background="Transparent"
         WindowStartupLocation="CenterOwner"
-        Width="500" Height="600"
+        Width="650" Height="700"
         ResizeMode="NoResize">
 
     <Window.Resources>
@@ -15,13 +15,73 @@
                 <ResourceDictionary Source="../Styles/Buttons.xaml"/>
                 <ResourceDictionary Source="../Styles/Controls.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Tab Style -->
+            <Style x:Key="ProfileTab" TargetType="Button">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+                <Setter Property="BorderThickness" Value="0,0,0,2"/>
+                <Setter Property="BorderBrush" Value="Transparent"/>
+                <Setter Property="Padding" Value="16,12"/>
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style x:Key="ProfileTabActive" TargetType="Button" BasedOn="{StaticResource ProfileTab}">
+                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+            </Style>
+
+            <!-- Color Button Style -->
+            <Style x:Key="ColorButton" TargetType="Button">
+                <Setter Property="Width" Value="36"/>
+                <Setter Property="Height" Value="36"/>
+                <Setter Property="Margin" Value="4"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Grid>
+                                <Ellipse Fill="{TemplateBinding Background}"
+                                         Stroke="{StaticResource PrimaryDarkBrush}"
+                                         StrokeThickness="2"/>
+                                <Ellipse x:Name="SelectRing" Stroke="White"
+                                         StrokeThickness="3" Visibility="Collapsed"/>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="SelectRing" Property="Visibility" Value="Visible"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
-    <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8"
+    <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="12"
             BorderBrush="{StaticResource QuaternaryDarkBrush}" BorderThickness="1">
         <Grid>
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
@@ -29,123 +89,462 @@
 
             <!-- Header -->
             <Border Grid.Row="0" Background="{StaticResource PrimaryDarkBrush}"
-                    CornerRadius="8,8,0,0" Padding="16">
+                    CornerRadius="12,12,0,0" Padding="20,16">
                 <Grid>
-                    <TextBlock Text="Edit Profile" FontSize="18" FontWeight="Bold"
+                    <TextBlock Text="Customize Profile" FontSize="20" FontWeight="Bold"
                                Foreground="{StaticResource TextPrimaryBrush}"/>
                     <Button Content="X" Style="{StaticResource IconButton}"
-                            HorizontalAlignment="Right" Width="24" Height="24"
+                            HorizontalAlignment="Right" Width="28" Height="28"
                             Click="CloseButton_Click"/>
                 </Grid>
             </Border>
 
-            <!-- Content -->
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24">
-                <StackPanel>
-                    <!-- Banner Preview -->
-                    <TextBlock Text="BANNER" FontSize="12" FontWeight="SemiBold"
-                               Foreground="{StaticResource TextMutedBrush}"
-                               Margin="0,0,0,8"/>
-                    <Border Height="120" CornerRadius="8" Margin="0,0,0,8">
-                        <Border.Background>
-                            <ImageBrush x:Name="BannerPreview" Stretch="UniformToFill"/>
-                        </Border.Background>
-                        <Border Background="#80000000" CornerRadius="8">
-                            <TextBlock Text="Click to change banner"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                                       Foreground="White" FontSize="14"/>
-                        </Border>
-                    </Border>
-                    <Grid Margin="0,0,0,16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox x:Name="BannerUrlInput" Grid.Column="0"
-                                 Style="{StaticResource ModernTextBox}"
-                                 Margin="0,0,8,0"/>
-                        <Button Grid.Column="1" Content="Preview"
-                                Style="{StaticResource SecondaryButton}"
-                                Click="PreviewBanner_Click"/>
-                    </Grid>
-
-                    <!-- Avatar Preview -->
-                    <TextBlock Text="AVATAR" FontSize="12" FontWeight="SemiBold"
-                               Foreground="{StaticResource TextMutedBrush}"
-                               Margin="0,0,0,8"/>
-                    <Grid Margin="0,0,0,8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Ellipse Grid.Column="0" Width="80" Height="80" Margin="0,0,16,0">
-                            <Ellipse.Fill>
-                                <ImageBrush x:Name="AvatarPreview" Stretch="UniformToFill"/>
-                            </Ellipse.Fill>
-                        </Ellipse>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBox x:Name="AvatarUrlInput"
-                                     Style="{StaticResource ModernTextBox}"
-                                     Margin="0,0,0,8"/>
-                            <Button Content="Preview Avatar"
-                                    Style="{StaticResource SecondaryButton}"
-                                    Click="PreviewAvatar_Click"/>
-                        </StackPanel>
-                    </Grid>
-
-                    <!-- Username -->
-                    <TextBlock Text="USERNAME" FontSize="12" FontWeight="SemiBold"
-                               Foreground="{StaticResource TextMutedBrush}"
-                               Margin="0,16,0,8"/>
-                    <TextBox x:Name="UsernameInput"
-                             Style="{StaticResource ModernTextBox}"
-                             Margin="0,0,0,16"/>
-
-                    <!-- Bio -->
-                    <TextBlock Text="BIO (short)" FontSize="12" FontWeight="SemiBold"
-                               Foreground="{StaticResource TextMutedBrush}"
-                               Margin="0,0,0,8"/>
-                    <TextBox x:Name="BioInput"
-                             Style="{StaticResource ModernTextBox}"
-                             TextWrapping="Wrap" AcceptsReturn="False"
-                             MaxLength="150"
-                             Margin="0,0,0,4"/>
-                    <TextBlock x:Name="BioCharCount" Text="0/150"
-                               FontSize="11" Foreground="{StaticResource TextMutedBrush}"
-                               HorizontalAlignment="Right" Margin="0,0,0,16"/>
-
-                    <!-- Description -->
-                    <TextBlock Text="ABOUT ME" FontSize="12" FontWeight="SemiBold"
-                               Foreground="{StaticResource TextMutedBrush}"
-                               Margin="0,0,0,8"/>
-                    <TextBox x:Name="DescriptionInput"
-                             Style="{StaticResource ModernTextBox}"
-                             TextWrapping="Wrap" AcceptsReturn="True"
-                             Height="100" VerticalScrollBarVisibility="Auto"
-                             MaxLength="500"
-                             Margin="0,0,0,4"/>
-                    <TextBlock x:Name="DescCharCount" Text="0/500"
-                               FontSize="11" Foreground="{StaticResource TextMutedBrush}"
-                               HorizontalAlignment="Right"/>
-
-                    <!-- Error Message -->
-                    <TextBlock x:Name="ErrorText" Text=""
-                               FontSize="12" Foreground="{StaticResource AccentRedBrush}"
-                               TextWrapping="Wrap" Margin="0,16,0,0"/>
+            <!-- Tabs -->
+            <Border Grid.Row="1" Background="{StaticResource PrimaryDarkBrush}"
+                    BorderBrush="{StaticResource QuaternaryDarkBrush}"
+                    BorderThickness="0,0,0,1">
+                <StackPanel Orientation="Horizontal" Margin="16,0">
+                    <Button x:Name="TabProfile" Content="Profile" Style="{StaticResource ProfileTabActive}"
+                            Click="TabProfile_Click"/>
+                    <Button x:Name="TabAppearance" Content="Appearance" Style="{StaticResource ProfileTab}"
+                            Click="TabAppearance_Click"/>
+                    <Button x:Name="TabSocial" Content="Social Links" Style="{StaticResource ProfileTab}"
+                            Click="TabSocial_Click"/>
+                    <Button x:Name="TabPrivacy" Content="Privacy" Style="{StaticResource ProfileTab}"
+                            Click="TabPrivacy_Click"/>
                 </StackPanel>
+            </Border>
+
+            <!-- Content -->
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="24,16">
+                <Grid>
+                    <!-- Profile Tab Content -->
+                    <StackPanel x:Name="ProfileContent" Visibility="Visible">
+                        <!-- Banner Section -->
+                        <TextBlock Text="BANNER" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   Margin="0,0,0,8"/>
+                        <Border Height="140" CornerRadius="8" Margin="0,0,0,8" Cursor="Hand"
+                                MouseLeftButtonDown="Banner_Click">
+                            <Border.Background>
+                                <ImageBrush x:Name="BannerPreview" Stretch="UniformToFill"/>
+                            </Border.Background>
+                            <Border Background="#60000000" CornerRadius="8">
+                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <TextBlock Text="Click to change banner" FontSize="14"
+                                               HorizontalAlignment="Center" Foreground="White"/>
+                                    <TextBlock Text="Recommended: 1500x500" FontSize="11"
+                                               HorizontalAlignment="Center" Foreground="#B5BAC1"
+                                               Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </Border>
+                        </Border>
+                        <Grid Margin="0,0,0,20">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="BannerUrlInput" Grid.Column="0"
+                                     Style="{StaticResource ModernTextBox}"
+                                     Margin="0,0,8,0"/>
+                            <Button Grid.Column="1" Content="Preview"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Click="PreviewBanner_Click" Margin="0,0,8,0"/>
+                            <Button Grid.Column="2" Content="Clear"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Click="ClearBanner_Click"/>
+                        </Grid>
+
+                        <!-- Avatar Section -->
+                        <TextBlock Text="AVATAR" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   Margin="0,0,0,8"/>
+                        <Grid Margin="0,0,0,20">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Avatar Preview with Accent Ring -->
+                            <Grid Grid.Column="0" Margin="0,0,20,0">
+                                <Ellipse x:Name="AvatarAccentRing" Width="110" Height="110"
+                                         StrokeThickness="4" Stroke="{StaticResource AccentBrush}"/>
+                                <Ellipse Width="100" Height="100" Cursor="Hand"
+                                         MouseLeftButtonDown="Avatar_Click">
+                                    <Ellipse.Fill>
+                                        <ImageBrush x:Name="AvatarPreview" Stretch="UniformToFill"/>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <Border Width="100" Height="100" CornerRadius="50"
+                                        Background="#60000000" Cursor="Hand"
+                                        MouseLeftButtonDown="Avatar_Click">
+                                    <TextBlock Text="Change" FontSize="12" Foreground="White"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </Grid>
+
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBox x:Name="AvatarUrlInput"
+                                         Style="{StaticResource ModernTextBox}"
+                                         Margin="0,0,0,8"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="Preview Avatar"
+                                            Style="{StaticResource SecondaryButton}"
+                                            Click="PreviewAvatar_Click" Margin="0,0,8,0"/>
+                                    <Button Content="Clear"
+                                            Style="{StaticResource SecondaryButton}"
+                                            Click="ClearAvatar_Click"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Display Name -->
+                        <TextBlock Text="DISPLAY NAME" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   Margin="0,0,0,8"/>
+                        <TextBox x:Name="DisplayNameInput"
+                                 Style="{StaticResource ModernTextBox}"
+                                 MaxLength="32"
+                                 Margin="0,0,0,4"/>
+                        <TextBlock Text="This is how others will see your name. Leave empty to use username."
+                                   FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                                   Margin="0,0,0,16"/>
+
+                        <!-- Username -->
+                        <TextBlock Text="USERNAME" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   Margin="0,0,0,8"/>
+                        <TextBox x:Name="UsernameInput"
+                                 Style="{StaticResource ModernTextBox}"
+                                 Margin="0,0,0,16"/>
+
+                        <!-- Status Message -->
+                        <TextBlock Text="STATUS MESSAGE" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   Margin="0,0,0,8"/>
+                        <TextBox x:Name="StatusInput"
+                                 Style="{StaticResource ModernTextBox}"
+                                 MaxLength="100"
+                                 Margin="0,0,0,4"/>
+                        <TextBlock x:Name="StatusCharCount" Text="0/100"
+                                   FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                                   HorizontalAlignment="Right" Margin="0,0,0,16"/>
+
+                        <!-- Bio -->
+                        <TextBlock Text="BIO (short)" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   Margin="0,0,0,8"/>
+                        <TextBox x:Name="BioInput"
+                                 Style="{StaticResource ModernTextBox}"
+                                 TextWrapping="Wrap" AcceptsReturn="False"
+                                 MaxLength="150"
+                                 Margin="0,0,0,4"/>
+                        <TextBlock x:Name="BioCharCount" Text="0/150"
+                                   FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                                   HorizontalAlignment="Right" Margin="0,0,0,16"/>
+
+                        <!-- Description / About Me -->
+                        <TextBlock Text="ABOUT ME" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   Margin="0,0,0,8"/>
+                        <TextBox x:Name="DescriptionInput"
+                                 Style="{StaticResource ModernTextBox}"
+                                 TextWrapping="Wrap" AcceptsReturn="True"
+                                 Height="100" VerticalScrollBarVisibility="Auto"
+                                 MaxLength="500"
+                                 Margin="0,0,0,4"/>
+                        <TextBlock x:Name="DescCharCount" Text="0/500"
+                                   FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                                   HorizontalAlignment="Right"/>
+                    </StackPanel>
+
+                    <!-- Appearance Tab Content -->
+                    <StackPanel x:Name="AppearanceContent" Visibility="Collapsed">
+                        <TextBlock Text="ACCENT COLOR" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   Margin="0,0,0,12"/>
+                        <TextBlock Text="Choose a color that represents you. This will be used for your profile accent."
+                                   FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"
+                                   TextWrapping="Wrap" Margin="0,0,0,16"/>
+
+                        <!-- Preset Colors -->
+                        <WrapPanel x:Name="ColorPalette" Margin="0,0,0,16">
+                            <Button Style="{StaticResource ColorButton}" Background="#5865F2" Tag="#5865F2" Click="ColorButton_Click"/>
+                            <Button Style="{StaticResource ColorButton}" Background="#EB459E" Tag="#EB459E" Click="ColorButton_Click"/>
+                            <Button Style="{StaticResource ColorButton}" Background="#57F287" Tag="#57F287" Click="ColorButton_Click"/>
+                            <Button Style="{StaticResource ColorButton}" Background="#FEE75C" Tag="#FEE75C" Click="ColorButton_Click"/>
+                            <Button Style="{StaticResource ColorButton}" Background="#ED4245" Tag="#ED4245" Click="ColorButton_Click"/>
+                            <Button Style="{StaticResource ColorButton}" Background="#FF7B1C" Tag="#FF7B1C" Click="ColorButton_Click"/>
+                            <Button Style="{StaticResource ColorButton}" Background="#00D4AA" Tag="#00D4AA" Click="ColorButton_Click"/>
+                            <Button Style="{StaticResource ColorButton}" Background="#9B59B6" Tag="#9B59B6" Click="ColorButton_Click"/>
+                            <Button Style="{StaticResource ColorButton}" Background="#E91E63" Tag="#E91E63" Click="ColorButton_Click"/>
+                            <Button Style="{StaticResource ColorButton}" Background="#00BCD4" Tag="#00BCD4" Click="ColorButton_Click"/>
+                            <Button Style="{StaticResource ColorButton}" Background="#8BC34A" Tag="#8BC34A" Click="ColorButton_Click"/>
+                            <Button Style="{StaticResource ColorButton}" Background="#FF5722" Tag="#FF5722" Click="ColorButton_Click"/>
+                        </WrapPanel>
+
+                        <!-- Custom Color -->
+                        <TextBlock Text="CUSTOM COLOR" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   Margin="0,0,0,8"/>
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border x:Name="ColorPreview" Grid.Column="0" Width="40" Height="40"
+                                    CornerRadius="8" Background="{StaticResource AccentBrush}"
+                                    Margin="0,0,12,0"/>
+                            <TextBox x:Name="AccentColorInput" Grid.Column="1"
+                                     Style="{StaticResource ModernTextBox}"
+                                     TextChanged="AccentColorInput_TextChanged"/>
+                        </Grid>
+
+                        <!-- Preview Card -->
+                        <TextBlock Text="PREVIEW" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   Margin="0,16,0,12"/>
+                        <Border Background="{StaticResource PrimaryDarkBrush}" CornerRadius="8" Padding="16">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid Grid.Column="0" Margin="0,0,16,0">
+                                    <Ellipse x:Name="PreviewAccentRing" Width="70" Height="70"
+                                             StrokeThickness="3" Stroke="{StaticResource AccentBrush}"/>
+                                    <Ellipse Width="60" Height="60">
+                                        <Ellipse.Fill>
+                                            <ImageBrush x:Name="PreviewAvatar" Stretch="UniformToFill"/>
+                                        </Ellipse.Fill>
+                                    </Ellipse>
+                                </Grid>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock x:Name="PreviewName" Text="Username"
+                                               FontSize="18" FontWeight="Bold"
+                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock x:Name="PreviewStatus" Text="Custom status..."
+                                               FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"
+                                               Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Social Links Tab Content -->
+                    <StackPanel x:Name="SocialContent" Visibility="Collapsed">
+                        <TextBlock Text="Connect your social accounts to let others find you."
+                                   FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"
+                                   TextWrapping="Wrap" Margin="0,0,0,20"/>
+
+                        <!-- Discord -->
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Background="#5865F2" Width="44" Height="44"
+                                    CornerRadius="8" Margin="0,0,12,0">
+                                <TextBlock Text="D" FontSize="20" FontWeight="Bold"
+                                           Foreground="White" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="DISCORD USERNAME" FontSize="11" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
+                                <TextBox x:Name="DiscordInput" Style="{StaticResource ModernTextBox}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Twitter/X -->
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Background="#1DA1F2" Width="44" Height="44"
+                                    CornerRadius="8" Margin="0,0,12,0">
+                                <TextBlock Text="X" FontSize="20" FontWeight="Bold"
+                                           Foreground="White" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="TWITTER / X HANDLE" FontSize="11" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="@" FontSize="14"
+                                               Foreground="{StaticResource TextMutedBrush}"
+                                               VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                    <TextBox x:Name="TwitterInput" Grid.Column="1"
+                                             Style="{StaticResource ModernTextBox}"/>
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Telegram -->
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Background="#0088CC" Width="44" Height="44"
+                                    CornerRadius="8" Margin="0,0,12,0">
+                                <TextBlock Text="T" FontSize="20" FontWeight="Bold"
+                                           Foreground="White" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="TELEGRAM USERNAME" FontSize="11" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="@" FontSize="14"
+                                               Foreground="{StaticResource TextMutedBrush}"
+                                               VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                    <TextBox x:Name="TelegramInput" Grid.Column="1"
+                                             Style="{StaticResource ModernTextBox}"/>
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Website -->
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Background="{StaticResource QuaternaryDarkBrush}"
+                                    Width="44" Height="44" CornerRadius="8" Margin="0,0,12,0">
+                                <TextBlock Text="W" FontSize="20" FontWeight="Bold"
+                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="WEBSITE URL" FontSize="11" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
+                                <TextBox x:Name="WebsiteInput" Style="{StaticResource ModernTextBox}"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Privacy Tab Content -->
+                    <StackPanel x:Name="PrivacyContent" Visibility="Collapsed">
+                        <TextBlock Text="Control who can see your profile information."
+                                   FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"
+                                   TextWrapping="Wrap" Margin="0,0,0,20"/>
+
+                        <TextBlock Text="PROFILE VISIBILITY" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   Margin="0,0,0,12"/>
+
+                        <!-- Public -->
+                        <Border x:Name="VisibilityPublic" Background="{StaticResource PrimaryDarkBrush}"
+                                CornerRadius="8" Padding="16" Margin="0,0,0,8" Cursor="Hand"
+                                MouseLeftButtonDown="VisibilityPublic_Click"
+                                BorderThickness="2" BorderBrush="{StaticResource AccentBrush}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Globe" FontSize="24" Margin="0,0,16,0"
+                                           VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="Public" FontSize="14" FontWeight="Medium"
+                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="Anyone can view your full profile"
+                                               FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                                </StackPanel>
+                                <Ellipse x:Name="PublicCheck" Grid.Column="2" Width="20" Height="20"
+                                         Fill="{StaticResource AccentBrush}" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Friends Only -->
+                        <Border x:Name="VisibilityFriends" Background="{StaticResource PrimaryDarkBrush}"
+                                CornerRadius="8" Padding="16" Margin="0,0,0,8" Cursor="Hand"
+                                MouseLeftButtonDown="VisibilityFriends_Click"
+                                BorderThickness="2" BorderBrush="Transparent">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Friends" FontSize="24" Margin="0,0,16,0"
+                                           VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="Friends Only" FontSize="14" FontWeight="Medium"
+                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="Only friends can see your full profile"
+                                               FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                                </StackPanel>
+                                <Ellipse x:Name="FriendsCheck" Grid.Column="2" Width="20" Height="20"
+                                         Stroke="{StaticResource TextMutedBrush}" StrokeThickness="2"
+                                         Fill="Transparent" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Private -->
+                        <Border x:Name="VisibilityPrivate" Background="{StaticResource PrimaryDarkBrush}"
+                                CornerRadius="8" Padding="16" Cursor="Hand"
+                                MouseLeftButtonDown="VisibilityPrivate_Click"
+                                BorderThickness="2" BorderBrush="Transparent">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Lock" FontSize="24" Margin="0,0,16,0"
+                                           VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="Private" FontSize="14" FontWeight="Medium"
+                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="Only you can see your full profile"
+                                               FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                                </StackPanel>
+                                <Ellipse x:Name="PrivateCheck" Grid.Column="2" Width="20" Height="20"
+                                         Stroke="{StaticResource TextMutedBrush}" StrokeThickness="2"
+                                         Fill="Transparent" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </Grid>
             </ScrollViewer>
 
+            <!-- Error Message -->
+            <Border Grid.Row="2" Background="{StaticResource AccentRedBrush}" CornerRadius="4"
+                    Margin="24,0" Padding="12,8" VerticalAlignment="Bottom"
+                    x:Name="ErrorBorder" Visibility="Collapsed">
+                <TextBlock x:Name="ErrorText" Text="" Foreground="White" FontSize="13"/>
+            </Border>
+
             <!-- Footer -->
-            <Border Grid.Row="2" Background="{StaticResource PrimaryDarkBrush}"
-                    CornerRadius="0,0,8,8" Padding="16">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="Cancel" Style="{StaticResource SecondaryButton}"
-                            Margin="0,0,8,0" Width="80"
-                            Click="CancelButton_Click"/>
-                    <Button Content="Save" Style="{StaticResource PrimaryButton}"
-                            Width="80"
-                            Click="SaveButton_Click"/>
-                </StackPanel>
+            <Border Grid.Row="3" Background="{StaticResource PrimaryDarkBrush}"
+                    CornerRadius="0,0,12,12" Padding="20,16">
+                <Grid>
+                    <Button Content="Reset" Style="{StaticResource SecondaryButton}"
+                            HorizontalAlignment="Left"
+                            Click="ResetButton_Click"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Cancel" Style="{StaticResource SecondaryButton}"
+                                Margin="0,0,12,0" Width="100"
+                                Click="CancelButton_Click"/>
+                        <Button Content="Save Changes" Style="{StaticResource PrimaryButton}"
+                                Width="120"
+                                Click="SaveButton_Click"/>
+                    </StackPanel>
+                </Grid>
             </Border>
         </Grid>
     </Border>

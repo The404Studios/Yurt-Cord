@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
 using VeaMarketplace.Client.Services;
 using VeaMarketplace.Client.ViewModels;
 using VeaMarketplace.Shared.DTOs;
@@ -42,14 +43,77 @@ public partial class ProfileView : UserControl
         var user = _viewModel?.User ?? _apiService?.CurrentUser;
         if (user == null) return;
 
-        UsernameText.Text = user.Username;
+        // Display Name and Username
+        var displayName = user.GetDisplayName();
+        DisplayNameText.Text = displayName;
+
+        // Show username separately if display name is different
+        if (!string.IsNullOrEmpty(user.DisplayName) && user.DisplayName != user.Username)
+        {
+            UsernameText.Text = $"@{user.Username}";
+            UsernameText.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            UsernameText.Visibility = Visibility.Collapsed;
+        }
+
+        // Status Message
+        if (!string.IsNullOrEmpty(user.StatusMessage))
+        {
+            StatusText.Text = user.StatusMessage;
+            StatusPanel.Visibility = Visibility.Visible;
+
+            // Set status dot color based on accent color
+            try
+            {
+                var accentColor = string.IsNullOrEmpty(user.AccentColor) ? "#5865F2" : user.AccentColor;
+                StatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString(accentColor));
+            }
+            catch
+            {
+                StatusDot.Fill = (Brush)FindResource("AccentBrush");
+            }
+        }
+        else
+        {
+            StatusPanel.Visibility = Visibility.Collapsed;
+        }
+
+        // Bio and Description
         BioText.Text = string.IsNullOrEmpty(user.Bio) ? "No bio yet..." : user.Bio;
-        DescriptionText.Text = string.IsNullOrEmpty(user.Description) ? "This user hasn't written anything about themselves yet." : user.Description;
+        DescriptionText.Text = string.IsNullOrEmpty(user.Description)
+            ? "This user hasn't written anything about themselves yet."
+            : user.Description;
+
+        // Stats
         JoinedText.Text = $"Joined {user.CreatedAt:MMMM yyyy}";
         BalanceText.Text = $"${user.Balance:F2}";
         ReputationText.Text = user.Reputation.ToString();
         SalesText.Text = user.TotalSales.ToString();
         PurchasesText.Text = user.TotalPurchases.ToString();
+
+        // Accent Color for Avatar Ring
+        try
+        {
+            var accentColor = string.IsNullOrEmpty(user.AccentColor) ? "#5865F2" : user.AccentColor;
+            var color = (Color)ColorConverter.ConvertFromString(accentColor);
+            AvatarAccentRing.Stroke = new SolidColorBrush(color);
+
+            // Update banner gradient with accent color
+            BannerGradient1.Color = color;
+            // Create a secondary color by shifting hue
+            var secondaryColor = Color.FromRgb(
+                (byte)Math.Max(0, color.R - 50),
+                (byte)Math.Min(255, color.G + 30),
+                (byte)Math.Min(255, color.B + 80)
+            );
+            BannerGradient2.Color = secondaryColor;
+        }
+        catch
+        {
+            AvatarAccentRing.Stroke = (Brush)FindResource("AccentBrush");
+        }
 
         // Avatar
         if (!string.IsNullOrEmpty(user.AvatarUrl))
@@ -78,6 +142,9 @@ public partial class ProfileView : UserControl
         // Rank Badge
         RankBadge.Background = new SolidColorBrush(GetRankColor(user.Rank));
         RankBadgeText.Text = $"{GetRankEmoji(user.Rank)} {user.Rank}";
+
+        // Social Links
+        UpdateSocialLinks(user);
 
         // Custom Roles
         RolesPanel.Children.Clear();
@@ -111,6 +178,103 @@ public partial class ProfileView : UserControl
                 Foreground = (Brush)FindResource("TextMutedBrush")
             });
         }
+    }
+
+    private void UpdateSocialLinks(UserDto user)
+    {
+        SocialLinksPanel.Children.Clear();
+
+        bool hasAnyLink = false;
+
+        // Discord
+        if (!string.IsNullOrEmpty(user.DiscordUsername))
+        {
+            hasAnyLink = true;
+            SocialLinksPanel.Children.Add(CreateSocialLinkItem("Discord", user.DiscordUsername, "#5865F2"));
+        }
+
+        // Twitter/X
+        if (!string.IsNullOrEmpty(user.TwitterHandle))
+        {
+            hasAnyLink = true;
+            SocialLinksPanel.Children.Add(CreateSocialLinkItem("Twitter", $"@{user.TwitterHandle}", "#1DA1F2"));
+        }
+
+        // Telegram
+        if (!string.IsNullOrEmpty(user.TelegramUsername))
+        {
+            hasAnyLink = true;
+            SocialLinksPanel.Children.Add(CreateSocialLinkItem("Telegram", $"@{user.TelegramUsername}", "#0088CC"));
+        }
+
+        // Website
+        if (!string.IsNullOrEmpty(user.WebsiteUrl))
+        {
+            hasAnyLink = true;
+            SocialLinksPanel.Children.Add(CreateSocialLinkItem("Website", user.WebsiteUrl, "#95A5A6"));
+        }
+
+        // Show placeholder if no links
+        if (!hasAnyLink)
+        {
+            SocialLinksPanel.Children.Add(new TextBlock
+            {
+                Text = "No connections added",
+                FontSize = 13,
+                Foreground = (Brush)FindResource("TextMutedBrush")
+            });
+        }
+    }
+
+    private UIElement CreateSocialLinkItem(string platform, string value, string colorHex)
+    {
+        var grid = new Grid { Margin = new Thickness(0, 0, 0, 8) };
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+        // Platform icon
+        var iconBorder = new Border
+        {
+            Width = 28,
+            Height = 28,
+            CornerRadius = new CornerRadius(4),
+            Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(colorHex)),
+            Margin = new Thickness(0, 0, 10, 0)
+        };
+        var iconText = new TextBlock
+        {
+            Text = platform[0].ToString(),
+            FontSize = 14,
+            FontWeight = FontWeights.Bold,
+            Foreground = Brushes.White,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        iconBorder.Child = iconText;
+        Grid.SetColumn(iconBorder, 0);
+        grid.Children.Add(iconBorder);
+
+        // Value text
+        var valuePanel = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+        var platformText = new TextBlock
+        {
+            Text = platform,
+            FontSize = 11,
+            Foreground = (Brush)FindResource("TextMutedBrush")
+        };
+        var valueText = new TextBlock
+        {
+            Text = value,
+            FontSize = 13,
+            Foreground = (Brush)FindResource("TextPrimaryBrush"),
+            TextTrimming = TextTrimming.CharacterEllipsis
+        };
+        valuePanel.Children.Add(platformText);
+        valuePanel.Children.Add(valueText);
+        Grid.SetColumn(valuePanel, 1);
+        grid.Children.Add(valuePanel);
+
+        return grid;
     }
 
     private void EditProfile_Click(object sender, RoutedEventArgs e)
@@ -166,14 +330,14 @@ public partial class ProfileView : UserControl
     {
         return rank switch
         {
-            UserRank.Legend => "👑",
-            UserRank.Elite => "🔥",
-            UserRank.Diamond => "💎",
-            UserRank.Platinum => "✨",
-            UserRank.Gold => "🥇",
-            UserRank.Silver => "🥈",
-            UserRank.Bronze => "🥉",
-            _ => "🌟"
+            UserRank.Legend => "Crown",
+            UserRank.Elite => "Fire",
+            UserRank.Diamond => "Diamond",
+            UserRank.Platinum => "Star",
+            UserRank.Gold => "Gold",
+            UserRank.Silver => "Silver",
+            UserRank.Bronze => "Bronze",
+            _ => "Star"
         };
     }
 }
