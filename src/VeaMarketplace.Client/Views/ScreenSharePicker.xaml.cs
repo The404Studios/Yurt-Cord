@@ -26,9 +26,6 @@ public partial class ScreenSharePicker : Window
         InitializeComponent();
         _voiceService = voiceService;
 
-        // Add BoolToVis converter to resources
-        Resources["BoolToVis"] = new BooleanToVisibilityConverter();
-
         DisplaysItemsControl.ItemsSource = _displays;
         LoadDisplays();
 

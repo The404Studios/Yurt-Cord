@@ -127,7 +127,12 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     // Per-user audio control
     private readonly ConcurrentDictionary<string, float> _userVolumes = new();
     private readonly ConcurrentDictionary<string, bool> _mutedUsers = new();
-    private readonly ConcurrentDictionary<string, BufferedWaveProvider> _userAudioBuffers = new();
+    private readonly ConcurrentDictionary<string, ConcurrentQueue<short[]>> _userAudioQueues = new();
+    private readonly ConcurrentDictionary<string, OpusDecoder> _userOpusDecoders = new();
+
+    // Audio mixing thread
+    private CancellationTokenSource? _mixingCts;
+    private Thread? _mixingThread;
 
     // Audio device configuration
     private int _inputDeviceNumber = 0;
@@ -145,11 +150,15 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     private const int BitsPerSample = 16;
     private const int Channels = 1;
 
-    // Screen sharing
+    // Screen sharing - uses dedicated threads for smooth 60 FPS
     private bool _isScreenSharing;
     private CancellationTokenSource? _screenShareCts;
-    private Task? _screenShareTask;
+    private Thread? _screenCaptureThread;
+    private Task? _screenSendTask;
     private DisplayInfo? _selectedDisplay;
+    private readonly ConcurrentQueue<byte[]> _frameQueue = new();
+    private const int ScreenShareFps = 60;
+    private const int ScreenFrameIntervalMs = 1000 / ScreenShareFps;
 
     // Audio send queue - prevents blocking audio callback with network operations
     private readonly ConcurrentQueue<byte[]> _audioSendQueue = new();
@@ -159,9 +168,11 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     // Opus codec for efficient audio compression
     // Reduces bandwidth from ~768kbps to ~24kbps per user
     private OpusEncoder? _opusEncoder;
-    private OpusDecoder? _opusDecoder;
     private const int OpusBitrate = 24000; // 24kbps - good for voice
     private const int OpusFrameSize = 960; // 20ms at 48kHz (48000 * 0.020 = 960 samples)
+
+    // Mic boost - amplify input audio before sending
+    private const float MicGain = 2.5f; // 2.5x boost for quiet mics
 
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
     public bool IsInVoiceChannel { get; private set; }
@@ -331,22 +342,17 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         _connection.On<VoiceUserState>("UserJoinedVoice", user =>
         {
             _voiceUsers[user.ConnectionId] = user;
-            // Create audio buffer for this user
-            var buffer = new BufferedWaveProvider(new WaveFormat(48000, 16, 1))
-            {
-                DiscardOnBufferOverflow = true,
-                BufferDuration = TimeSpan.FromSeconds(1)
-            };
-            _userAudioBuffers[user.ConnectionId] = buffer;
             OnUserJoinedVoice?.Invoke(user);
         });
 
         _connection.On<VoiceUserState>("UserLeftVoice", user =>
         {
             _voiceUsers.TryRemove(user.ConnectionId, out _);
-            _userAudioBuffers.TryRemove(user.ConnectionId, out _);
             _userVolumes.TryRemove(user.ConnectionId, out _);
             _mutedUsers.TryRemove(user.ConnectionId, out _);
+            // Clean up user's audio resources
+            _userAudioQueues.TryRemove(user.ConnectionId, out _);
+            _userOpusDecoders.TryRemove(user.ConnectionId, out _);
             OnUserLeftVoice?.Invoke(user);
         });
 
@@ -363,17 +369,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         _connection.On<List<VoiceUserState>>("VoiceChannelUsers", users =>
         {
             _voiceUsers.Clear();
-            _userAudioBuffers.Clear();
             foreach (var user in users)
             {
                 _voiceUsers[user.ConnectionId] = user;
-                // Create audio buffer for each user
-                var buffer = new BufferedWaveProvider(new WaveFormat(48000, 16, 1))
-                {
-                    DiscardOnBufferOverflow = true,
-                    BufferDuration = TimeSpan.FromSeconds(1)
-                };
-                _userAudioBuffers[user.ConnectionId] = buffer;
             }
             OnVoiceChannelUsers?.Invoke(users);
         });
@@ -388,46 +386,53 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         });
 
         // Receive audio data from other users (Opus encoded)
+        // Each user gets their own decoder and queue for proper multi-user mixing
         _connection.On<string, byte[]>("ReceiveAudio", (senderConnectionId, opusData) =>
         {
             // Don't play audio if we're deafened or if user is muted locally
             if (IsDeafened || IsUserMuted(senderConnectionId)) return;
+            if (opusData.Length == 0) return;
 
-            if (opusData.Length > 0 && _bufferedWaveProvider != null && _opusDecoder != null)
+            try
             {
-                try
+                // Get or create per-user decoder (each user needs separate decoder state)
+                var decoder = _userOpusDecoders.GetOrAdd(senderConnectionId,
+                    _ => new OpusDecoder(SampleRate, Channels));
+
+                // Get or create per-user audio queue
+                var queue = _userAudioQueues.GetOrAdd(senderConnectionId,
+                    _ => new ConcurrentQueue<short[]>());
+
+                // Decode Opus to PCM
+                var pcmBuffer = new short[OpusFrameSize];
+                var decodedSamples = decoder.Decode(opusData, 0, opusData.Length, pcmBuffer, 0, OpusFrameSize, false);
+
+                if (decodedSamples > 0)
                 {
-                    // Decode Opus to PCM
-                    var pcmBuffer = new short[OpusFrameSize];
-                    var decodedSamples = _opusDecoder.Decode(opusData, 0, opusData.Length, pcmBuffer, 0, OpusFrameSize, false);
-
-                    if (decodedSamples > 0)
+                    // Apply per-user volume
+                    var volume = GetUserVolume(senderConnectionId);
+                    if (Math.Abs(volume - 1.0f) > 0.01f)
                     {
-                        // Convert short[] to byte[]
-                        var pcmBytes = new byte[decodedSamples * 2];
-                        Buffer.BlockCopy(pcmBuffer, 0, pcmBytes, 0, pcmBytes.Length);
-
-                        // Apply per-user volume if needed
-                        var volume = GetUserVolume(senderConnectionId);
-                        byte[] processedData;
-
-                        if (Math.Abs(volume - 1.0f) > 0.01f)
+                        for (int i = 0; i < decodedSamples; i++)
                         {
-                            processedData = ApplyVolume(pcmBytes, volume);
+                            pcmBuffer[i] = (short)Math.Clamp(pcmBuffer[i] * volume, short.MinValue, short.MaxValue);
                         }
-                        else
-                        {
-                            processedData = pcmBytes;
-                        }
+                    }
 
-                        // Add to playback buffer
-                        _bufferedWaveProvider.AddSamples(processedData, 0, processedData.Length);
+                    // Copy to new array and add to user's queue
+                    var samples = new short[decodedSamples];
+                    Array.Copy(pcmBuffer, samples, decodedSamples);
+
+                    // Limit queue size to prevent memory buildup (max ~200ms of audio)
+                    if (queue.Count < 10)
+                    {
+                        queue.Enqueue(samples);
                     }
                 }
-                catch
-                {
-                    // Decode error - skip this frame
-                }
+            }
+            catch
+            {
+                // Decode error - skip this frame
             }
         });
 
@@ -513,9 +518,6 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                 SignalType = OpusSignal.OPUS_SIGNAL_VOICE
             };
 
-            // Initialize Opus decoder for receiving audio
-            _opusDecoder = new OpusDecoder(SampleRate, Channels);
-
             // Configure audio capture with small buffer for low latency
             _waveIn = new WaveInEvent
             {
@@ -528,19 +530,19 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             _waveIn.DataAvailable += OnAudioDataAvailable;
             _waveIn.StartRecording();
 
-            // Setup playback buffer with proper size for jitter compensation
+            // Setup playback buffer with proper size for mixing
             _bufferedWaveProvider = new BufferedWaveProvider(new WaveFormat(SampleRate, BitsPerSample, Channels))
             {
                 DiscardOnBufferOverflow = true,
-                BufferDuration = TimeSpan.FromMilliseconds(500) // 500ms buffer capacity
+                BufferDuration = TimeSpan.FromMilliseconds(500)
             };
 
             // Initialize output device with low latency settings
             _waveOut = new WaveOutEvent
             {
                 DeviceNumber = _outputDeviceNumber,
-                DesiredLatency = 50, // Lower latency for better responsiveness
-                NumberOfBuffers = 3  // More buffers for smoother playback
+                DesiredLatency = 50,
+                NumberOfBuffers = 3
             };
             _waveOut.Init(_bufferedWaveProvider);
             _waveOut.Play();
@@ -548,6 +550,16 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             // Start the background audio send thread (decouples network from audio callback)
             _audioSendCts = new CancellationTokenSource();
             _audioSendTask = Task.Run(() => AudioSendLoop(_audioSendCts.Token));
+
+            // Start the audio mixing thread (mixes all user audio streams)
+            _mixingCts = new CancellationTokenSource();
+            _mixingThread = new Thread(() => AudioMixingLoop(_mixingCts.Token))
+            {
+                IsBackground = true,
+                Priority = ThreadPriority.Highest, // Audio needs priority
+                Name = "AudioMixingThread"
+            };
+            _mixingThread.Start();
         }
         catch (Exception ex)
         {
@@ -609,14 +621,156 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Audio mixing thread - runs at consistent intervals to mix all user audio streams.
+    /// Uses a real thread instead of Task for more precise timing.
+    /// Implements fade-in/fade-out to prevent crackling at speech boundaries.
+    /// </summary>
+    private void AudioMixingLoop(CancellationToken cancellationToken)
+    {
+        // Use Stopwatch for precise timing
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var lastMixTime = stopwatch.ElapsedMilliseconds;
+        const int mixIntervalMs = 20; // Mix every 20ms (matches Opus frame size)
+        var mixBuffer = new int[OpusFrameSize]; // Use int for mixing to prevent clipping
+        var outputBuffer = new byte[OpusFrameSize * 2]; // 16-bit samples = 2 bytes each
+        var silenceBuffer = new byte[OpusFrameSize * 2]; // Pre-allocated silence
+
+        // Fade state for smooth transitions
+        bool wasActive = false;
+        const int fadeFrames = 48; // ~1ms fade at 48kHz
+
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                var now = stopwatch.ElapsedMilliseconds;
+                var elapsed = now - lastMixTime;
+
+                if (elapsed >= mixIntervalMs)
+                {
+                    lastMixTime = now;
+
+                    // Clear mix buffer
+                    Array.Clear(mixBuffer, 0, mixBuffer.Length);
+                    int activeStreams = 0;
+
+                    // Mix all user audio streams together
+                    foreach (var kvp in _userAudioQueues)
+                    {
+                        if (kvp.Value.TryDequeue(out var userSamples))
+                        {
+                            activeStreams++;
+                            var samplesToMix = Math.Min(userSamples.Length, mixBuffer.Length);
+                            for (int i = 0; i < samplesToMix; i++)
+                            {
+                                mixBuffer[i] += userSamples[i];
+                            }
+                        }
+                    }
+
+                    bool isActive = activeStreams > 0;
+
+                    if (_bufferedWaveProvider != null)
+                    {
+                        if (isActive)
+                        {
+                            // Apply fade-in if transitioning from silence to audio
+                            if (!wasActive)
+                            {
+                                for (int i = 0; i < Math.Min(fadeFrames, OpusFrameSize); i++)
+                                {
+                                    float fadeMultiplier = (float)i / fadeFrames;
+                                    mixBuffer[i] = (int)(mixBuffer[i] * fadeMultiplier);
+                                }
+                            }
+
+                            // Convert mixed int samples to short with soft clipping
+                            for (int i = 0; i < OpusFrameSize; i++)
+                            {
+                                var sample = mixBuffer[i];
+                                if (sample > short.MaxValue)
+                                    sample = short.MaxValue;
+                                else if (sample < short.MinValue)
+                                    sample = short.MinValue;
+
+                                outputBuffer[i * 2] = (byte)(sample & 0xFF);
+                                outputBuffer[i * 2 + 1] = (byte)((sample >> 8) & 0xFF);
+                            }
+
+                            // Add to playback buffer
+                            try
+                            {
+                                _bufferedWaveProvider.AddSamples(outputBuffer, 0, outputBuffer.Length);
+                            }
+                            catch
+                            {
+                                // Buffer full - skip
+                            }
+                        }
+                        else if (wasActive)
+                        {
+                            // Output a fade-out frame when transitioning to silence
+                            for (int i = 0; i < OpusFrameSize; i++)
+                            {
+                                float fadeMultiplier = 1.0f - ((float)i / OpusFrameSize);
+                                // Fade out from the last sample value (approximate with zero)
+                                outputBuffer[i * 2] = 0;
+                                outputBuffer[i * 2 + 1] = 0;
+                            }
+                            try
+                            {
+                                _bufferedWaveProvider.AddSamples(silenceBuffer, 0, silenceBuffer.Length);
+                            }
+                            catch { }
+                        }
+                        // When idle, occasionally add silence to keep buffer from underrunning
+                        else if (_bufferedWaveProvider.BufferedBytes < OpusFrameSize * 4)
+                        {
+                            try
+                            {
+                                _bufferedWaveProvider.AddSamples(silenceBuffer, 0, silenceBuffer.Length);
+                            }
+                            catch { }
+                        }
+                    }
+
+                    wasActive = isActive;
+                }
+
+                // Sleep for remaining time (use SpinWait for precision)
+                var remaining = mixIntervalMs - (stopwatch.ElapsedMilliseconds - lastMixTime);
+                if (remaining > 2)
+                {
+                    Thread.Sleep((int)(remaining - 1));
+                }
+                else if (remaining > 0)
+                {
+                    Thread.SpinWait(100);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Mixing error: {ex.Message}");
+                Thread.Sleep(10);
+            }
+        }
+    }
+
     private void StopAudioCapture()
     {
-        // Stop background send task first
+        // Stop mixing thread first
+        _mixingCts?.Cancel();
+        _mixingThread?.Join(500);
+        _mixingCts?.Dispose();
+        _mixingCts = null;
+        _mixingThread = null;
+
+        // Stop background send task
         _audioSendCts?.Cancel();
 
         try
         {
-            // Wait for task to complete with timeout
             if (_audioSendTask != null)
             {
                 _audioSendTask.Wait(TimeSpan.FromMilliseconds(500));
@@ -628,8 +782,14 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         _audioSendCts = null;
         _audioSendTask = null;
 
-        // Clear send queue
+        // Clear queues
         while (_audioSendQueue.TryDequeue(out _)) { }
+        foreach (var queue in _userAudioQueues.Values)
+        {
+            while (queue.TryDequeue(out _)) { }
+        }
+        _userAudioQueues.Clear();
+        _userOpusDecoders.Clear();
 
         _waveIn?.StopRecording();
         _waveIn?.Dispose();
@@ -641,9 +801,8 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _bufferedWaveProvider = null;
 
-        // Clean up Opus codec
+        // Clean up Opus encoder
         _opusEncoder = null;
-        _opusDecoder = null;
     }
 
     private void OnAudioDataAvailable(object? sender, WaveInEventArgs e)
@@ -733,9 +892,18 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         // The background AudioSendLoop will handle the actual network transmission
         if (_isSpeaking && !IsMuted && e.BytesRecorded > 0)
         {
-            // Copy the audio buffer (must copy since original buffer will be reused)
+            // Copy and apply mic gain boost
             var audioData = new byte[e.BytesRecorded];
-            Buffer.BlockCopy(e.Buffer, 0, audioData, 0, e.BytesRecorded);
+            for (int i = 0; i < e.BytesRecorded; i += 2)
+            {
+                var sample = BitConverter.ToInt16(e.Buffer, i);
+                // Apply gain with clipping protection
+                var boosted = (int)(sample * MicGain);
+                boosted = Math.Clamp(boosted, short.MinValue, short.MaxValue);
+                var bytes = BitConverter.GetBytes((short)boosted);
+                audioData[i] = bytes[0];
+                audioData[i + 1] = bytes[1];
+            }
 
             // Add to send queue - background thread will send it
             // Limit queue size to prevent memory buildup if network is slow
@@ -842,20 +1010,30 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         _isScreenSharing = true;
         _screenShareCts = new CancellationTokenSource();
 
+        // Clear old frames
+        while (_frameQueue.TryDequeue(out _)) { }
+
         // Notify others that we started screen sharing
         try
         {
-            // Use SendAsync for fire-and-forget - server notification is best-effort
             await _connection.SendAsync("StartScreenShare").ConfigureAwait(false);
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"StartScreenShare notification failed: {ex.Message}");
-            // Continue anyway - the frame sending will still work
         }
 
-        // Start capture task
-        _screenShareTask = Task.Run(() => CaptureScreenLoop(_screenShareCts.Token), _screenShareCts.Token);
+        // Start capture thread (dedicated thread for consistent timing)
+        _screenCaptureThread = new Thread(() => ScreenCaptureLoop(_screenShareCts.Token))
+        {
+            IsBackground = true,
+            Priority = ThreadPriority.AboveNormal,
+            Name = "ScreenCaptureThread"
+        };
+        _screenCaptureThread.Start();
+
+        // Start send task (async for network I/O)
+        _screenSendTask = Task.Run(() => ScreenSendLoop(_screenShareCts.Token), _screenShareCts.Token);
     }
 
     public async Task StopScreenShareAsync()
@@ -865,18 +1043,27 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         _screenShareCts?.Cancel();
         _isScreenSharing = false;
 
-        if (_screenShareTask != null)
+        // Wait for capture thread to stop
+        _screenCaptureThread?.Join(1000);
+        _screenCaptureThread = null;
+
+        // Wait for send task to stop
+        if (_screenSendTask != null)
         {
             try
             {
-                await _screenShareTask.ConfigureAwait(false);
+                await _screenSendTask.ConfigureAwait(false);
             }
             catch (OperationCanceledException) { }
+            catch { }
         }
+        _screenSendTask = null;
 
-        _screenShareTask = null;
         _screenShareCts?.Dispose();
         _screenShareCts = null;
+
+        // Clear frame queue
+        while (_frameQueue.TryDequeue(out _)) { }
 
         // Notify others that we stopped screen sharing
         if (_connection != null && IsConnected)
@@ -889,67 +1076,106 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         }
     }
 
-    private async Task CaptureScreenLoop(CancellationToken cancellationToken)
+    /// <summary>
+    /// Dedicated thread for screen capture at 60 FPS.
+    /// Uses Stopwatch for precise timing. Captures frames into queue.
+    /// </summary>
+    private void ScreenCaptureLoop(CancellationToken cancellationToken)
     {
-        // Use reasonable defaults for SignalR streaming
-        // 30 FPS is more practical for SignalR than 60
-        const int targetFps = 30;
-        const int frameDelayMs = 1000 / targetFps;
         const int targetWidth = 1280;
         const int targetHeight = 720;
+        const int maxFrameSize = 50 * 1024; // 50KB target for 60fps
 
-        // Track failed sends to implement backoff
-        int consecutiveFailures = 0;
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var lastCaptureTime = stopwatch.ElapsedMilliseconds;
 
-        while (!cancellationToken.IsCancellationRequested && _connection != null && IsConnected)
+        while (!cancellationToken.IsCancellationRequested && _isScreenSharing)
         {
             try
             {
-                var frameStart = DateTime.UtcNow;
+                var now = stopwatch.ElapsedMilliseconds;
+                var elapsed = now - lastCaptureTime;
 
-                // Capture screen using GDI+ (cross-compatible approach)
-                var frameData = CaptureScreen(targetWidth, targetHeight);
-
-                if (frameData != null && frameData.Length > 0 && _connection != null && IsConnected)
+                if (elapsed >= ScreenFrameIntervalMs)
                 {
-                    // SignalR default max message size is 32KB, we'll target smaller frames
-                    const int maxFrameSize = 64 * 1024; // 64KB max
+                    lastCaptureTime = now;
 
-                    byte[] dataToSend = frameData;
+                    // Capture screen
+                    var frameData = CaptureScreen(targetWidth, targetHeight);
 
-                    // If frame is too large, compress more
-                    if (frameData.Length > maxFrameSize)
+                    if (frameData != null && frameData.Length > 0)
                     {
-                        dataToSend = CompressFrame(frameData, targetWidth, targetHeight, 25);
-                    }
-
-                    // Only send if frame is reasonable size
-                    if (dataToSend.Length <= maxFrameSize * 2)
-                    {
-                        try
+                        // Compress more aggressively if too large for 60fps
+                        if (frameData.Length > maxFrameSize)
                         {
-                            // Use SendAsync for fire-and-forget - don't wait for server response
-                            // This prevents frame capture from blocking on network
-                            await _connection.SendAsync("SendScreenFrame", dataToSend, targetWidth, targetHeight, cancellationToken).ConfigureAwait(false);
-                            consecutiveFailures = 0;
+                            frameData = CompressFrame(frameData, targetWidth, targetHeight, 30);
                         }
-                        catch
+
+                        // Queue frame if not backed up (max 3 frames = 50ms buffer)
+                        if (_frameQueue.Count < 3)
                         {
-                            consecutiveFailures++;
-                            // If we're failing repeatedly, back off
-                            if (consecutiveFailures > 5)
-                            {
-                                await Task.Delay(500, cancellationToken).ConfigureAwait(false);
-                            }
+                            _frameQueue.Enqueue(frameData);
                         }
                     }
                 }
 
-                // Maintain target framerate
-                var elapsed = (DateTime.UtcNow - frameStart).TotalMilliseconds;
-                if (elapsed < frameDelayMs)
+                // Precise sleep
+                var remaining = ScreenFrameIntervalMs - (int)(stopwatch.ElapsedMilliseconds - lastCaptureTime);
+                if (remaining > 1)
                 {
-                    await Task.Delay((int)(frameDelayMs - elapsed), cancellationToken).ConfigureAwait(false);
+                    Thread.Sleep(remaining - 1);
+                }
+            }
+            catch
+            {
+                Thread.Sleep(10);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Async task for sending frames from queue to server.
+    /// Runs independently of capture for smooth streaming.
+    /// </summary>
+    private async Task ScreenSendLoop(CancellationToken cancellationToken)
+    {
+        const int targetWidth = 1280;
+        const int targetHeight = 720;
+
+        while (!cancellationToken.IsCancellationRequested && _isScreenSharing)
+        {
+            try
+            {
+                // Check connection
+                if (_connection == null || !IsConnected)
+                {
+                    await Task.Delay(50, cancellationToken).ConfigureAwait(false);
+                    continue;
+                }
+
+                // Get latest frame (skip old ones to stay current)
+                byte[]? frameToSend = null;
+                while (_frameQueue.TryDequeue(out var frame))
+                {
+                    frameToSend = frame;
+                    if (_frameQueue.IsEmpty) break;
+                }
+
+                if (frameToSend != null)
+                {
+                    try
+                    {
+                        await _connection.SendAsync("SendScreenFrame", frameToSend, targetWidth, targetHeight, cancellationToken).ConfigureAwait(false);
+                    }
+                    catch
+                    {
+                        // Ignore send errors, continue
+                    }
+                }
+                else
+                {
+                    // No frame available, wait a bit
+                    await Task.Delay(5, cancellationToken).ConfigureAwait(false);
                 }
             }
             catch (OperationCanceledException)
@@ -958,8 +1184,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             }
             catch
             {
-                // Continue on errors, but add small delay
-                await Task.Delay(100, cancellationToken).ConfigureAwait(false);
+                await Task.Delay(10, cancellationToken).ConfigureAwait(false);
             }
         }
     }
@@ -1015,9 +1240,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             if (encoder != null)
             {
                 var encoderParams = new System.Drawing.Imaging.EncoderParameters(1);
-                // Use 35% quality - good balance between size and visual quality for screen sharing
+                // Use 40% quality for 60fps streaming (balance size vs quality)
                 encoderParams.Param[0] = new System.Drawing.Imaging.EncoderParameter(
-                    System.Drawing.Imaging.Encoder.Quality, 35L);
+                    System.Drawing.Imaging.Encoder.Quality, 40L);
 
                 finalBitmap.Save(ms, encoder, encoderParams);
             }
