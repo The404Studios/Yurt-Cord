@@ -150,11 +150,15 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     private const int BitsPerSample = 16;
     private const int Channels = 1;
 
-    // Screen sharing
+    // Screen sharing - uses dedicated threads for smooth 60 FPS
     private bool _isScreenSharing;
     private CancellationTokenSource? _screenShareCts;
-    private Task? _screenShareTask;
+    private Thread? _screenCaptureThread;
+    private Task? _screenSendTask;
     private DisplayInfo? _selectedDisplay;
+    private readonly ConcurrentQueue<byte[]> _frameQueue = new();
+    private const int ScreenShareFps = 60;
+    private const int ScreenFrameIntervalMs = 1000 / ScreenShareFps;
 
     // Audio send queue - prevents blocking audio callback with network operations
     private readonly ConcurrentQueue<byte[]> _audioSendQueue = new();
@@ -1006,6 +1010,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         _isScreenSharing = true;
         _screenShareCts = new CancellationTokenSource();
 
+        // Clear old frames
+        while (_frameQueue.TryDequeue(out _)) { }
+
         // Notify others that we started screen sharing
         try
         {
@@ -1016,8 +1023,17 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             System.Diagnostics.Debug.WriteLine($"StartScreenShare notification failed: {ex.Message}");
         }
 
-        // Start capture and send task
-        _screenShareTask = Task.Run(() => ScreenShareLoop(_screenShareCts.Token), _screenShareCts.Token);
+        // Start capture thread (dedicated thread for consistent timing)
+        _screenCaptureThread = new Thread(() => ScreenCaptureLoop(_screenShareCts.Token))
+        {
+            IsBackground = true,
+            Priority = ThreadPriority.AboveNormal,
+            Name = "ScreenCaptureThread"
+        };
+        _screenCaptureThread.Start();
+
+        // Start send task (async for network I/O)
+        _screenSendTask = Task.Run(() => ScreenSendLoop(_screenShareCts.Token), _screenShareCts.Token);
     }
 
     public async Task StopScreenShareAsync()
@@ -1027,19 +1043,27 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         _screenShareCts?.Cancel();
         _isScreenSharing = false;
 
-        if (_screenShareTask != null)
+        // Wait for capture thread to stop
+        _screenCaptureThread?.Join(1000);
+        _screenCaptureThread = null;
+
+        // Wait for send task to stop
+        if (_screenSendTask != null)
         {
             try
             {
-                await _screenShareTask.ConfigureAwait(false);
+                await _screenSendTask.ConfigureAwait(false);
             }
             catch (OperationCanceledException) { }
             catch { }
         }
+        _screenSendTask = null;
 
-        _screenShareTask = null;
         _screenShareCts?.Dispose();
         _screenShareCts = null;
+
+        // Clear frame queue
+        while (_frameQueue.TryDequeue(out _)) { }
 
         // Notify others that we stopped screen sharing
         if (_connection != null && IsConnected)
@@ -1053,59 +1077,105 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     }
 
     /// <summary>
-    /// Screen capture and send loop at 20 FPS.
-    /// Uses Task.Delay for timing - no SpinWait to avoid CPU contention with audio.
+    /// Dedicated thread for screen capture at 60 FPS.
+    /// Uses Stopwatch for precise timing. Captures frames into queue.
     /// </summary>
-    private async Task ScreenShareLoop(CancellationToken cancellationToken)
+    private void ScreenCaptureLoop(CancellationToken cancellationToken)
     {
-        const int targetFps = 20; // 20 FPS - good balance of smooth and CPU
-        const int frameIntervalMs = 1000 / targetFps;
         const int targetWidth = 1280;
         const int targetHeight = 720;
-        const int maxFrameSize = 64 * 1024;
-        int consecutiveErrors = 0;
+        const int maxFrameSize = 50 * 1024; // 50KB target for 60fps
+
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var lastCaptureTime = stopwatch.ElapsedMilliseconds;
 
         while (!cancellationToken.IsCancellationRequested && _isScreenSharing)
         {
-            var frameStart = DateTime.UtcNow;
-
             try
             {
-                // Check connection before capturing
+                var now = stopwatch.ElapsedMilliseconds;
+                var elapsed = now - lastCaptureTime;
+
+                if (elapsed >= ScreenFrameIntervalMs)
+                {
+                    lastCaptureTime = now;
+
+                    // Capture screen
+                    var frameData = CaptureScreen(targetWidth, targetHeight);
+
+                    if (frameData != null && frameData.Length > 0)
+                    {
+                        // Compress more aggressively if too large for 60fps
+                        if (frameData.Length > maxFrameSize)
+                        {
+                            frameData = CompressFrame(frameData, targetWidth, targetHeight, 30);
+                        }
+
+                        // Queue frame if not backed up (max 3 frames = 50ms buffer)
+                        if (_frameQueue.Count < 3)
+                        {
+                            _frameQueue.Enqueue(frameData);
+                        }
+                    }
+                }
+
+                // Precise sleep
+                var remaining = ScreenFrameIntervalMs - (int)(stopwatch.ElapsedMilliseconds - lastCaptureTime);
+                if (remaining > 1)
+                {
+                    Thread.Sleep(remaining - 1);
+                }
+            }
+            catch
+            {
+                Thread.Sleep(10);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Async task for sending frames from queue to server.
+    /// Runs independently of capture for smooth streaming.
+    /// </summary>
+    private async Task ScreenSendLoop(CancellationToken cancellationToken)
+    {
+        const int targetWidth = 1280;
+        const int targetHeight = 720;
+
+        while (!cancellationToken.IsCancellationRequested && _isScreenSharing)
+        {
+            try
+            {
+                // Check connection
                 if (_connection == null || !IsConnected)
                 {
-                    await Task.Delay(100, cancellationToken).ConfigureAwait(false);
+                    await Task.Delay(50, cancellationToken).ConfigureAwait(false);
                     continue;
                 }
 
-                var frameData = CaptureScreen(targetWidth, targetHeight);
-
-                if (frameData != null && frameData.Length > 0)
+                // Get latest frame (skip old ones to stay current)
+                byte[]? frameToSend = null;
+                while (_frameQueue.TryDequeue(out var frame))
                 {
-                    // Compress if needed
-                    if (frameData.Length > maxFrameSize)
-                    {
-                        frameData = CompressFrame(frameData, targetWidth, targetHeight, 25);
-                    }
+                    frameToSend = frame;
+                    if (_frameQueue.IsEmpty) break;
+                }
 
-                    // Send frame if size is reasonable
-                    if (frameData.Length <= maxFrameSize * 2)
+                if (frameToSend != null)
+                {
+                    try
                     {
-                        try
-                        {
-                            await _connection.SendAsync("SendScreenFrame", frameData, targetWidth, targetHeight, cancellationToken).ConfigureAwait(false);
-                            consecutiveErrors = 0;
-                        }
-                        catch (Exception)
-                        {
-                            consecutiveErrors++;
-                            // If too many errors, wait a bit longer
-                            if (consecutiveErrors > 3)
-                            {
-                                await Task.Delay(200, cancellationToken).ConfigureAwait(false);
-                            }
-                        }
+                        await _connection.SendAsync("SendScreenFrame", frameToSend, targetWidth, targetHeight, cancellationToken).ConfigureAwait(false);
                     }
+                    catch
+                    {
+                        // Ignore send errors, continue
+                    }
+                }
+                else
+                {
+                    // No frame available, wait a bit
+                    await Task.Delay(5, cancellationToken).ConfigureAwait(false);
                 }
             }
             catch (OperationCanceledException)
@@ -1114,18 +1184,8 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             }
             catch
             {
-                consecutiveErrors++;
-                if (consecutiveErrors > 5)
-                {
-                    await Task.Delay(500, cancellationToken).ConfigureAwait(false);
-                    consecutiveErrors = 0;
-                }
+                await Task.Delay(10, cancellationToken).ConfigureAwait(false);
             }
-
-            // Wait for next frame
-            var elapsed = (DateTime.UtcNow - frameStart).TotalMilliseconds;
-            var delay = Math.Max(1, frameIntervalMs - (int)elapsed);
-            await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -1180,9 +1240,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             if (encoder != null)
             {
                 var encoderParams = new System.Drawing.Imaging.EncoderParameters(1);
-                // Use 50% quality for clearer screen sharing
+                // Use 40% quality for 60fps streaming (balance size vs quality)
                 encoderParams.Param[0] = new System.Drawing.Imaging.EncoderParameter(
-                    System.Drawing.Imaging.Encoder.Quality, 50L);
+                    System.Drawing.Imaging.Encoder.Quality, 40L);
 
                 finalBitmap.Save(ms, encoder, encoderParams);
             }
