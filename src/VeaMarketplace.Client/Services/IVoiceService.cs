@@ -149,6 +149,23 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     private Task? _screenShareTask;
     private DisplayInfo? _selectedDisplay;
 
+    // Audio send queue - prevents blocking audio callback with network operations
+    private readonly ConcurrentQueue<byte[]> _audioSendQueue = new();
+    private CancellationTokenSource? _audioSendCts;
+    private Task? _audioSendTask;
+
+    // Jitter buffer for smooth playback
+    private readonly ConcurrentQueue<byte[]> _jitterBuffer = new();
+    private const int JitterBufferTargetMs = 60; // Target 60ms of buffered audio
+    private const int JitterBufferMaxMs = 200; // Max buffer before discarding
+    private DateTime _lastPlaybackTime = DateTime.MinValue;
+    private Task? _playbackTask;
+    private CancellationTokenSource? _playbackCts;
+
+    // Thread synchronization
+    private readonly object _audioLock = new();
+    private readonly SemaphoreSlim _sendSemaphore = new(1, 1);
+
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
     public bool IsInVoiceChannel { get; private set; }
     public bool IsMuted { get; set; }
@@ -379,19 +396,34 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             // Don't play audio if we're deafened or if user is muted locally
             if (IsDeafened || IsUserMuted(senderConnectionId)) return;
 
-            // Add audio to the playback buffer with user-specific volume
-            if (_bufferedWaveProvider != null && audioData.Length > 0)
+            if (audioData.Length > 0)
             {
+                // Apply per-user volume if needed
                 var volume = GetUserVolume(senderConnectionId);
-                if (volume != 1.0f)
+                byte[] processedData;
+
+                if (Math.Abs(volume - 1.0f) > 0.01f)
                 {
-                    // Apply per-user volume
-                    var adjustedData = ApplyVolume(audioData, volume);
-                    _bufferedWaveProvider.AddSamples(adjustedData, 0, adjustedData.Length);
+                    // Apply per-user volume on a separate array
+                    processedData = ApplyVolume(audioData, volume);
                 }
                 else
                 {
-                    _bufferedWaveProvider.AddSamples(audioData, 0, audioData.Length);
+                    processedData = audioData;
+                }
+
+                // Add to jitter buffer instead of directly to playback
+                // This smooths out network timing variations
+                // Limit jitter buffer size to prevent excessive delay
+                if (_jitterBuffer.Count < 25) // ~500ms max buffered audio
+                {
+                    _jitterBuffer.Enqueue(processedData);
+                }
+                else
+                {
+                    // Buffer is full, discard oldest and add new (keeps audio current)
+                    _jitterBuffer.TryDequeue(out _);
+                    _jitterBuffer.Enqueue(processedData);
                 }
             }
         });
@@ -469,34 +501,42 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     {
         try
         {
-            // Configure audio capture with moderate buffer for stability
+            // Configure audio capture with small buffer for low latency
             _waveIn = new WaveInEvent
             {
                 DeviceNumber = _inputDeviceNumber,
                 WaveFormat = new WaveFormat(SampleRate, BitsPerSample, Channels),
-                BufferMilliseconds = 20, // Standard buffer size
+                BufferMilliseconds = 20, // 20ms buffers for low latency
                 NumberOfBuffers = 3
             };
 
             _waveIn.DataAvailable += OnAudioDataAvailable;
             _waveIn.StartRecording();
 
-            // Setup playback buffer - keep it simple for reliable output
+            // Setup playback buffer with proper size for jitter compensation
             _bufferedWaveProvider = new BufferedWaveProvider(new WaveFormat(SampleRate, BitsPerSample, Channels))
             {
                 DiscardOnBufferOverflow = true,
-                BufferDuration = TimeSpan.FromSeconds(2) // Large capacity to prevent underruns
+                BufferDuration = TimeSpan.FromMilliseconds(500) // 500ms buffer capacity
             };
 
-            // Initialize output device
+            // Initialize output device with low latency settings
             _waveOut = new WaveOutEvent
             {
                 DeviceNumber = _outputDeviceNumber,
-                DesiredLatency = 100, // Reasonable latency for voice chat
-                NumberOfBuffers = 2
+                DesiredLatency = 50, // Lower latency for better responsiveness
+                NumberOfBuffers = 3  // More buffers for smoother playback
             };
             _waveOut.Init(_bufferedWaveProvider);
             _waveOut.Play();
+
+            // Start the background audio send thread (decouples network from audio callback)
+            _audioSendCts = new CancellationTokenSource();
+            _audioSendTask = Task.Run(() => AudioSendLoop(_audioSendCts.Token));
+
+            // Start jitter buffer playback thread
+            _playbackCts = new CancellationTokenSource();
+            _playbackTask = Task.Run(() => JitterBufferPlaybackLoop(_playbackCts.Token));
         }
         catch (Exception ex)
         {
@@ -504,8 +544,116 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Background loop that sends queued audio data to the server.
+    /// This decouples network I/O from the audio callback thread.
+    /// </summary>
+    private async Task AudioSendLoop(CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                if (_audioSendQueue.TryDequeue(out var audioData))
+                {
+                    if (_connection != null && IsConnected)
+                    {
+                        // Use ConfigureAwait(false) to avoid context switching overhead
+                        await _connection.InvokeAsync("SendAudio", audioData, cancellationToken).ConfigureAwait(false);
+                    }
+                }
+                else
+                {
+                    // No data to send, wait a bit to avoid busy-spinning
+                    await Task.Delay(5, cancellationToken).ConfigureAwait(false);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch
+            {
+                // Ignore send errors - network issues shouldn't crash audio
+                await Task.Delay(10, cancellationToken).ConfigureAwait(false);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Jitter buffer playback loop - smooths out network timing variations
+    /// </summary>
+    private async Task JitterBufferPlaybackLoop(CancellationToken cancellationToken)
+    {
+        const int playbackIntervalMs = 20; // Play audio every 20ms
+        var bytesPerInterval = (SampleRate * Channels * (BitsPerSample / 8) * playbackIntervalMs) / 1000;
+
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                // Calculate how much data should be in the buffer
+                var bufferCount = _jitterBuffer.Count;
+
+                // If we have enough buffered data, play it
+                if (_jitterBuffer.TryDequeue(out var audioData) && _bufferedWaveProvider != null)
+                {
+                    lock (_audioLock)
+                    {
+                        // Only add if buffer isn't too full
+                        if (_bufferedWaveProvider.BufferedBytes < _bufferedWaveProvider.BufferLength * 0.8)
+                        {
+                            _bufferedWaveProvider.AddSamples(audioData, 0, audioData.Length);
+                        }
+                    }
+                }
+
+                // Maintain consistent timing
+                await Task.Delay(playbackIntervalMs, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch
+            {
+                await Task.Delay(10, cancellationToken).ConfigureAwait(false);
+            }
+        }
+    }
+
     private void StopAudioCapture()
     {
+        // Stop background tasks first
+        _audioSendCts?.Cancel();
+        _playbackCts?.Cancel();
+
+        try
+        {
+            // Wait for tasks to complete with timeout
+            if (_audioSendTask != null)
+            {
+                _audioSendTask.Wait(TimeSpan.FromMilliseconds(500));
+            }
+            if (_playbackTask != null)
+            {
+                _playbackTask.Wait(TimeSpan.FromMilliseconds(500));
+            }
+        }
+        catch { }
+
+        _audioSendCts?.Dispose();
+        _audioSendCts = null;
+        _audioSendTask = null;
+
+        _playbackCts?.Dispose();
+        _playbackCts = null;
+        _playbackTask = null;
+
+        // Clear queues
+        while (_audioSendQueue.TryDequeue(out _)) { }
+        while (_jitterBuffer.TryDequeue(out _)) { }
+
         _waveIn?.StopRecording();
         _waveIn?.Dispose();
         _waveIn = null;
@@ -517,8 +665,11 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         _bufferedWaveProvider = null;
     }
 
-    private async void OnAudioDataAvailable(object? sender, WaveInEventArgs e)
+    private void OnAudioDataAvailable(object? sender, WaveInEventArgs e)
     {
+        // CRITICAL: This callback runs on the audio thread and must NOT block!
+        // Any blocking here causes crackling/stuttering.
+
         if (_connection == null || !IsConnected) return;
 
         // Calculate audio level (RMS for better accuracy)
@@ -533,7 +684,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         var audioLevel = Math.Min(1.0, rms * 3); // Scale for better visualization
 
         _currentAudioLevel = audioLevel;
-        OnLocalAudioLevel?.Invoke(audioLevel);
+
+        // Fire events on thread pool to avoid blocking audio thread
+        ThreadPool.QueueUserWorkItem(_ => OnLocalAudioLevel?.Invoke(audioLevel));
 
         // Determine if speaking based on mode
         var wasSpeaking = _isSpeaking;
@@ -548,41 +701,46 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             _isSpeaking = !IsMuted && audioLevel > _voiceActivityThreshold;
         }
 
-        // Notify if speaking state changed
+        // Notify if speaking state changed (on thread pool)
         if (_isSpeaking != wasSpeaking)
         {
-            OnSpeakingChanged?.Invoke(_isSpeaking);
+            ThreadPool.QueueUserWorkItem(_ => OnSpeakingChanged?.Invoke(_isSpeaking));
         }
 
-        // Send speaking state updates
+        // Send speaking state updates (fire-and-forget on thread pool)
         if (_isSpeaking != wasSpeaking || (DateTime.Now - _lastSpeakingUpdate).TotalMilliseconds > 100)
         {
             _lastSpeakingUpdate = DateTime.Now;
-            try
+            var speakingState = _isSpeaking;
+            var level = audioLevel;
+
+            // Fire and forget - don't block audio thread
+            _ = Task.Run(async () =>
             {
-                await _connection.InvokeAsync("UpdateSpeakingState", _isSpeaking, audioLevel);
-            }
-            catch
-            {
-                // Ignore send errors
-            }
+                try
+                {
+                    if (_connection != null && IsConnected)
+                    {
+                        await _connection.InvokeAsync("UpdateSpeakingState", speakingState, level).ConfigureAwait(false);
+                    }
+                }
+                catch { }
+            });
         }
 
-        // ACTUALLY SEND THE AUDIO DATA if speaking and not muted
+        // Queue audio for sending if speaking and not muted
+        // The background AudioSendLoop will handle the actual network transmission
         if (_isSpeaking && !IsMuted && e.BytesRecorded > 0)
         {
-            try
-            {
-                // Copy the audio buffer to send
-                var audioData = new byte[e.BytesRecorded];
-                Array.Copy(e.Buffer, audioData, e.BytesRecorded);
+            // Copy the audio buffer (must copy since original buffer will be reused)
+            var audioData = new byte[e.BytesRecorded];
+            Buffer.BlockCopy(e.Buffer, 0, audioData, 0, e.BytesRecorded);
 
-                // Send audio to the server for broadcasting to other users
-                await _connection.InvokeAsync("SendAudio", audioData);
-            }
-            catch
+            // Add to send queue - background thread will send it
+            // Limit queue size to prevent memory buildup if network is slow
+            if (_audioSendQueue.Count < 50) // ~1 second of audio max
             {
-                // Ignore send errors - network issues shouldn't crash audio
+                _audioSendQueue.Enqueue(audioData);
             }
         }
     }
