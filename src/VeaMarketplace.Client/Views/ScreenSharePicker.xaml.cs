@@ -18,8 +18,74 @@ public partial class ScreenSharePicker : Window
 
     public DisplayInfo? SelectedDisplay { get; private set; }
     public int SelectedResolution { get; private set; } = 1080;
-    public int SelectedFrameRate { get; private set; } = 30;
+    public int SelectedFrameRate { get; private set; } = 60;
     public bool ShareAudio { get; private set; }
+
+    /// <summary>
+    /// Gets the ScreenShareSettings based on user selections
+    /// </summary>
+    public ScreenShareSettings GetSettings()
+    {
+        var settings = new ScreenShareSettings
+        {
+            TargetFps = SelectedFrameRate,
+            ShareAudio = ShareAudio,
+            AdaptiveQuality = true
+        };
+
+        // Set resolution based on selection
+        switch (SelectedResolution)
+        {
+            case 720:
+                settings.TargetWidth = 1280;
+                settings.TargetHeight = 720;
+                settings.JpegQuality = 50;
+                settings.MaxFrameSizeKb = 75;
+                break;
+            case 1080:
+                settings.TargetWidth = 1920;
+                settings.TargetHeight = 1080;
+                settings.JpegQuality = 55;
+                settings.MaxFrameSizeKb = 120;
+                break;
+            case 0: // Source/Native
+                if (SelectedDisplay != null)
+                {
+                    settings.TargetWidth = SelectedDisplay.Width;
+                    settings.TargetHeight = SelectedDisplay.Height;
+                }
+                else
+                {
+                    settings.TargetWidth = 1920;
+                    settings.TargetHeight = 1080;
+                }
+                settings.JpegQuality = 60;
+                settings.MaxFrameSizeKb = 150;
+                break;
+            default:
+                settings.TargetWidth = 1280;
+                settings.TargetHeight = 720;
+                settings.JpegQuality = 50;
+                settings.MaxFrameSizeKb = 100;
+                break;
+        }
+
+        // Adjust quality based on frame rate
+        if (SelectedFrameRate >= 60)
+        {
+            // Higher FPS = more frames = need smaller frames
+            settings.JpegQuality = Math.Max(35, settings.JpegQuality - 10);
+            settings.MaxFrameSizeKb = Math.Max(50, settings.MaxFrameSizeKb - 30);
+        }
+        else if (SelectedFrameRate <= 15)
+        {
+            // Lower FPS = can afford higher quality per frame
+            settings.JpegQuality = Math.Min(75, settings.JpegQuality + 15);
+            settings.MaxFrameSizeKb += 50;
+        }
+
+        return settings;
+    }
 
     public ScreenSharePicker(IVoiceService voiceService)
     {

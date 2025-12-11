@@ -59,9 +59,13 @@ public interface IVoiceService
     // Screen sharing
     bool IsScreenSharing { get; }
     DisplayInfo? SelectedDisplay { get; set; }
+    IScreenSharingManager ScreenSharingManager { get; }
     event Action<string, byte[], int, int>? OnScreenFrameReceived;
+    event Action<ScreenShareStats>? OnScreenShareStatsUpdated;
     Task StartScreenShareAsync();
     Task StartScreenShareAsync(DisplayInfo display);
+    Task StartScreenShareAsync(DisplayInfo display, ScreenShareQuality quality);
+    Task StartScreenShareAsync(DisplayInfo display, ScreenShareSettings settings);
     Task StopScreenShareAsync();
 
     // Device enumeration
@@ -150,15 +154,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     private const int BitsPerSample = 16;
     private const int Channels = 1;
 
-    // Screen sharing - uses dedicated threads for smooth 60 FPS
-    private bool _isScreenSharing;
-    private CancellationTokenSource? _screenShareCts;
-    private Thread? _screenCaptureThread;
-    private Task? _screenSendTask;
+    // Screen sharing manager
+    private readonly IScreenSharingManager _screenSharingManager;
     private DisplayInfo? _selectedDisplay;
-    private readonly ConcurrentQueue<byte[]> _frameQueue = new();
-    private const int ScreenShareFps = 60;
-    private const int ScreenFrameIntervalMs = 1000 / ScreenShareFps;
 
     // Audio send queue - prevents blocking audio callback with network operations
     private readonly ConcurrentQueue<byte[]> _audioSendQueue = new();
@@ -174,6 +172,19 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     // Mic boost - amplify input audio before sending
     private const float MicGain = 2.5f; // 2.5x boost for quiet mics
 
+    public VoiceService()
+    {
+        _screenSharingManager = new ScreenSharingManager();
+        _screenSharingManager.OnFrameReceived += frame =>
+        {
+            OnScreenFrameReceived?.Invoke(frame.SenderConnectionId, frame.Data, frame.Width, frame.Height);
+        };
+        _screenSharingManager.OnStatsUpdated += stats =>
+        {
+            OnScreenShareStatsUpdated?.Invoke(stats);
+        };
+    }
+
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
     public bool IsInVoiceChannel { get; private set; }
     public bool IsMuted { get; set; }
@@ -181,7 +192,8 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     public bool IsSpeaking => _isSpeaking;
     public double CurrentAudioLevel => _currentAudioLevel;
     public string? CurrentChannelId { get; private set; }
-    public bool IsScreenSharing => _isScreenSharing;
+    public bool IsScreenSharing => _screenSharingManager.IsSharing;
+    public IScreenSharingManager ScreenSharingManager => _screenSharingManager;
     public DisplayInfo? SelectedDisplay
     {
         get => _selectedDisplay;
@@ -213,6 +225,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     public event Action<string, string>? OnUserMovedToChannel;
     public event Action<string, byte[], int, int>? OnScreenFrameReceived;
     public event Action<string, bool>? OnUserScreenShareChanged;
+    public event Action<ScreenShareStats>? OnScreenShareStatsUpdated;
 
     // Per-user volume control
     public void SetUserVolume(string connectionId, float volume)
@@ -453,6 +466,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         // Screen sharing handlers
         _connection.On<string, byte[], int, int>("ReceiveScreenFrame", (senderConnectionId, frameData, width, height) =>
         {
+            _screenSharingManager.HandleFrameReceived(senderConnectionId, frameData, width, height);
             OnScreenFrameReceived?.Invoke(senderConnectionId, frameData, width, height);
         });
 
@@ -460,9 +474,24 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         {
             if (_voiceUsers.TryGetValue(connectionId, out var user))
             {
-                // Could add IsScreenSharing to VoiceUserState
+                user.IsScreenSharing = isSharing;
             }
             OnUserScreenShareChanged?.Invoke(connectionId, isSharing);
+        });
+
+        _connection.On<string, string, string>("ScreenShareStarted", (connectionId, username, channelId) =>
+        {
+            _screenSharingManager.HandleScreenShareStarted(connectionId, username);
+        });
+
+        _connection.On<string>("ScreenShareStopped", connectionId =>
+        {
+            _screenSharingManager.HandleScreenShareStopped(connectionId);
+        });
+
+        _connection.On<int>("ViewerCountUpdated", count =>
+        {
+            _screenSharingManager.HandleViewerCountUpdate(count);
         });
     }
 
@@ -985,7 +1014,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         }
     }
 
-    // Screen sharing implementation
+    // Screen sharing implementation - now delegates to ScreenSharingManager
     public async Task StartScreenShareAsync()
     {
         // Use primary display if none selected
@@ -994,305 +1023,59 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             var displays = GetAvailableDisplays();
             _selectedDisplay = displays.FirstOrDefault(d => d.IsPrimary) ?? displays.FirstOrDefault();
         }
-        await StartScreenShareInternal();
+
+        if (_selectedDisplay != null)
+        {
+            await StartScreenShareAsync(_selectedDisplay);
+        }
     }
 
-    public async Task StartScreenShareAsync(DisplayInfo display)
+    public Task StartScreenShareAsync(DisplayInfo display)
     {
+        return StartScreenShareAsync(display, ScreenShareQuality.High);
+    }
+
+    public Task StartScreenShareAsync(DisplayInfo display, ScreenShareQuality quality)
+    {
+        return StartScreenShareAsync(display, ScreenShareSettings.FromQuality(quality));
+    }
+
+    public async Task StartScreenShareAsync(DisplayInfo display, ScreenShareSettings settings)
+    {
+        if (_connection == null || !IsConnected) return;
+
         _selectedDisplay = display;
-        await StartScreenShareInternal();
-    }
 
-    private async Task StartScreenShareInternal()
-    {
-        if (_connection == null || !IsConnected || _isScreenSharing) return;
+        // Connect the manager to our SignalR connection
+        await _screenSharingManager.ConnectAsync(
+            async (frameData, width, height) =>
+            {
+                if (_connection != null && IsConnected)
+                {
+                    await _connection.SendAsync("SendScreenFrame", frameData, width, height).ConfigureAwait(false);
+                }
+            },
+            async () =>
+            {
+                if (_connection != null && IsConnected)
+                {
+                    await _connection.SendAsync("StartScreenShare").ConfigureAwait(false);
+                }
+            },
+            async () =>
+            {
+                if (_connection != null && IsConnected)
+                {
+                    await _connection.SendAsync("StopScreenShare").ConfigureAwait(false);
+                }
+            });
 
-        _isScreenSharing = true;
-        _screenShareCts = new CancellationTokenSource();
-
-        // Clear old frames
-        while (_frameQueue.TryDequeue(out _)) { }
-
-        // Notify others that we started screen sharing
-        try
-        {
-            await _connection.SendAsync("StartScreenShare").ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"StartScreenShare notification failed: {ex.Message}");
-        }
-
-        // Start capture thread (dedicated thread for consistent timing)
-        _screenCaptureThread = new Thread(() => ScreenCaptureLoop(_screenShareCts.Token))
-        {
-            IsBackground = true,
-            Priority = ThreadPriority.AboveNormal,
-            Name = "ScreenCaptureThread"
-        };
-        _screenCaptureThread.Start();
-
-        // Start send task (async for network I/O)
-        _screenSendTask = Task.Run(() => ScreenSendLoop(_screenShareCts.Token), _screenShareCts.Token);
+        // Start sharing
+        await _screenSharingManager.StartSharingAsync(display, settings);
     }
 
     public async Task StopScreenShareAsync()
     {
-        if (!_isScreenSharing) return;
-
-        _screenShareCts?.Cancel();
-        _isScreenSharing = false;
-
-        // Wait for capture thread to stop
-        _screenCaptureThread?.Join(1000);
-        _screenCaptureThread = null;
-
-        // Wait for send task to stop
-        if (_screenSendTask != null)
-        {
-            try
-            {
-                await _screenSendTask.ConfigureAwait(false);
-            }
-            catch (OperationCanceledException) { }
-            catch { }
-        }
-        _screenSendTask = null;
-
-        _screenShareCts?.Dispose();
-        _screenShareCts = null;
-
-        // Clear frame queue
-        while (_frameQueue.TryDequeue(out _)) { }
-
-        // Notify others that we stopped screen sharing
-        if (_connection != null && IsConnected)
-        {
-            try
-            {
-                await _connection.SendAsync("StopScreenShare").ConfigureAwait(false);
-            }
-            catch { }
-        }
-    }
-
-    /// <summary>
-    /// Dedicated thread for screen capture at 60 FPS.
-    /// Uses Stopwatch for precise timing. Captures frames into queue.
-    /// </summary>
-    private void ScreenCaptureLoop(CancellationToken cancellationToken)
-    {
-        const int targetWidth = 1280;
-        const int targetHeight = 720;
-        const int maxFrameSize = 50 * 1024; // 50KB target for 60fps
-
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-        var lastCaptureTime = stopwatch.ElapsedMilliseconds;
-
-        while (!cancellationToken.IsCancellationRequested && _isScreenSharing)
-        {
-            try
-            {
-                var now = stopwatch.ElapsedMilliseconds;
-                var elapsed = now - lastCaptureTime;
-
-                if (elapsed >= ScreenFrameIntervalMs)
-                {
-                    lastCaptureTime = now;
-
-                    // Capture screen
-                    var frameData = CaptureScreen(targetWidth, targetHeight);
-
-                    if (frameData != null && frameData.Length > 0)
-                    {
-                        // Compress more aggressively if too large for 60fps
-                        if (frameData.Length > maxFrameSize)
-                        {
-                            frameData = CompressFrame(frameData, targetWidth, targetHeight, 30);
-                        }
-
-                        // Queue frame if not backed up (max 3 frames = 50ms buffer)
-                        if (_frameQueue.Count < 3)
-                        {
-                            _frameQueue.Enqueue(frameData);
-                        }
-                    }
-                }
-
-                // Precise sleep
-                var remaining = ScreenFrameIntervalMs - (int)(stopwatch.ElapsedMilliseconds - lastCaptureTime);
-                if (remaining > 1)
-                {
-                    Thread.Sleep(remaining - 1);
-                }
-            }
-            catch
-            {
-                Thread.Sleep(10);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Async task for sending frames from queue to server.
-    /// Runs independently of capture for smooth streaming.
-    /// </summary>
-    private async Task ScreenSendLoop(CancellationToken cancellationToken)
-    {
-        const int targetWidth = 1280;
-        const int targetHeight = 720;
-
-        while (!cancellationToken.IsCancellationRequested && _isScreenSharing)
-        {
-            try
-            {
-                // Check connection
-                if (_connection == null || !IsConnected)
-                {
-                    await Task.Delay(50, cancellationToken).ConfigureAwait(false);
-                    continue;
-                }
-
-                // Get latest frame (skip old ones to stay current)
-                byte[]? frameToSend = null;
-                while (_frameQueue.TryDequeue(out var frame))
-                {
-                    frameToSend = frame;
-                    if (_frameQueue.IsEmpty) break;
-                }
-
-                if (frameToSend != null)
-                {
-                    try
-                    {
-                        await _connection.SendAsync("SendScreenFrame", frameToSend, targetWidth, targetHeight, cancellationToken).ConfigureAwait(false);
-                    }
-                    catch
-                    {
-                        // Ignore send errors, continue
-                    }
-                }
-                else
-                {
-                    // No frame available, wait a bit
-                    await Task.Delay(5, cancellationToken).ConfigureAwait(false);
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                break;
-            }
-            catch
-            {
-                await Task.Delay(10, cancellationToken).ConfigureAwait(false);
-            }
-        }
-    }
-
-    private byte[]? CaptureScreen(int targetWidth, int targetHeight)
-    {
-        try
-        {
-            // Get screen bounds from selected display or primary
-            int screenLeft, screenTop, screenWidth, screenHeight;
-
-            if (_selectedDisplay != null)
-            {
-                screenLeft = _selectedDisplay.Left;
-                screenTop = _selectedDisplay.Top;
-                screenWidth = _selectedDisplay.Width;
-                screenHeight = _selectedDisplay.Height;
-            }
-            else
-            {
-                // Fallback to primary screen
-                screenLeft = 0;
-                screenTop = 0;
-                screenWidth = (int)System.Windows.SystemParameters.PrimaryScreenWidth;
-                screenHeight = (int)System.Windows.SystemParameters.PrimaryScreenHeight;
-            }
-
-            using var bitmap = new System.Drawing.Bitmap(screenWidth, screenHeight);
-            using var graphics = System.Drawing.Graphics.FromImage(bitmap);
-
-            // Capture the selected screen region
-            graphics.CopyFromScreen(screenLeft, screenTop, 0, 0, new System.Drawing.Size(screenWidth, screenHeight));
-
-            // Resize if needed
-            System.Drawing.Bitmap finalBitmap;
-            if (screenWidth != targetWidth || screenHeight != targetHeight)
-            {
-                finalBitmap = new System.Drawing.Bitmap(targetWidth, targetHeight);
-                using var resizeGraphics = System.Drawing.Graphics.FromImage(finalBitmap);
-                resizeGraphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Bilinear;
-                resizeGraphics.DrawImage(bitmap, 0, 0, targetWidth, targetHeight);
-            }
-            else
-            {
-                finalBitmap = bitmap;
-            }
-
-            // Compress to JPEG with lower quality for better network performance
-            using var ms = new MemoryStream();
-            var encoder = System.Drawing.Imaging.ImageCodecInfo.GetImageEncoders()
-                .FirstOrDefault(e => e.MimeType == "image/jpeg");
-
-            if (encoder != null)
-            {
-                var encoderParams = new System.Drawing.Imaging.EncoderParameters(1);
-                // Use 40% quality for 60fps streaming (balance size vs quality)
-                encoderParams.Param[0] = new System.Drawing.Imaging.EncoderParameter(
-                    System.Drawing.Imaging.Encoder.Quality, 40L);
-
-                finalBitmap.Save(ms, encoder, encoderParams);
-            }
-            else
-            {
-                finalBitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
-            }
-
-            if (finalBitmap != bitmap)
-            {
-                finalBitmap.Dispose();
-            }
-
-            return ms.ToArray();
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    private byte[] CompressFrame(byte[] frameData, int width, int height, int quality)
-    {
-        try
-        {
-            using var inputMs = new MemoryStream(frameData);
-            using var image = System.Drawing.Image.FromStream(inputMs);
-            using var outputMs = new MemoryStream();
-
-            var encoder = System.Drawing.Imaging.ImageCodecInfo.GetImageEncoders()
-                .FirstOrDefault(e => e.MimeType == "image/jpeg");
-
-            if (encoder != null)
-            {
-                var encoderParams = new System.Drawing.Imaging.EncoderParameters(1);
-                encoderParams.Param[0] = new System.Drawing.Imaging.EncoderParameter(
-                    System.Drawing.Imaging.Encoder.Quality, (long)quality);
-
-                image.Save(outputMs, encoder, encoderParams);
-            }
-            else
-            {
-                image.Save(outputMs, System.Drawing.Imaging.ImageFormat.Jpeg);
-            }
-
-            return outputMs.ToArray();
-        }
-        catch
-        {
-            return frameData;
-        }
+        await _screenSharingManager.StopSharingAsync();
     }
 }
