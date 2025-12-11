@@ -238,9 +238,9 @@
                                                 <ImageBrush ImageSource="{Binding AvatarUrl}"/>
                                             </Ellipse.Fill>
                                         </Ellipse>
-                                        <!-- Voice ring animation when speaking -->
+                                        <!-- Voice ring animation when speaking (White indicator) -->
                                         <Ellipse x:Name="VoiceRing" Width="28" Height="28"
-                                                 Stroke="{StaticResource AccentGreenBrush}"
+                                                 Stroke="White"
                                                  StrokeThickness="2"
                                                  Visibility="{Binding IsSpeaking, Converter={StaticResource BoolToVis}}"
                                                  RenderTransformOrigin="0.5,0.5">

@@ -182,9 +182,9 @@
                                                                     Stretch="UniformToFill"/>
                                                     </Ellipse.Fill>
                                                 </Ellipse>
-                                                <!-- Speaking Ring -->
+                                                <!-- Speaking Ring (White indicator when speaking) -->
                                                 <Ellipse Width="44" Height="44"
-                                                         Stroke="#43B581" StrokeThickness="2"
+                                                         Stroke="White" StrokeThickness="2"
                                                          Visibility="{Binding IsSpeaking, Converter={StaticResource BoolToVis}}"/>
                                             </Grid>
 

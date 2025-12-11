@@ -19,9 +19,9 @@
             </Ellipse.Fill>
         </Ellipse>
 
-        <!-- Voice Activity Ring -->
+        <!-- Voice Activity Ring (White indicator when speaking) -->
         <Ellipse x:Name="VoiceRing" Width="46" Height="46"
-                 Stroke="{StaticResource AccentGreenBrush}"
+                 Stroke="White"
                  StrokeThickness="3"
                  Visibility="Collapsed"
                  RenderTransformOrigin="0.5,0.5">

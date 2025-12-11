@@ -247,8 +247,8 @@ public partial class ProfileView : UserControl
             FontSize = 14,
             FontWeight = FontWeights.Bold,
             Foreground = Brushes.White,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = System.Windows.VerticalAlignment.Center
         };
         iconBorder.Child = iconText;
         Grid.SetColumn(iconBorder, 0);

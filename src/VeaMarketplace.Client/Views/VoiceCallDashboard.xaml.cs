@@ -302,7 +302,7 @@ public partial class VoiceCallDashboard : UserControl
         if (sender is MenuItem menuItem)
         {
             var parent = menuItem.Parent;
-            while (parent != null && parent is not ContextMenu)
+            while (parent != null && !(parent is ContextMenu))
             {
                 if (parent is MenuItem parentMenuItem)
                     parent = parentMenuItem.Parent;

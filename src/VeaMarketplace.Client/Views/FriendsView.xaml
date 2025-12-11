@@ -365,9 +365,9 @@
                                 <ImageBrush ImageSource="{Binding SelectedFriend.AvatarUrl}"/>
                             </Ellipse.Fill>
                         </Ellipse>
-                        <!-- Voice activity ring -->
+                        <!-- Voice activity ring (White indicator when speaking) -->
                         <Ellipse Width="130" Height="130"
-                                 Stroke="{StaticResource AccentGreenBrush}"
+                                 Stroke="White"
                                  StrokeThickness="3"
                                  Visibility="{Binding IsCallUserSpeaking, Converter={StaticResource BoolToVis}}"/>
                     </Grid>
