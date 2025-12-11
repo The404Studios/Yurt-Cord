@@ -1,0 +1,185 @@
+<UserControl x:Class="VeaMarketplace.Client.Controls.FriendListItem"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Height="62">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Styles/Colors.xaml"/>
+                <ResourceDictionary Source="/Styles/Buttons.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Border x:Name="RootBorder"
+            Background="Transparent"
+            CornerRadius="8"
+            Padding="8"
+            Cursor="Hand"
+            MouseEnter="Border_MouseEnter"
+            MouseLeave="Border_MouseLeave">
+
+        <Border.ContextMenu>
+            <ContextMenu Style="{StaticResource ModernContextMenu}">
+                <MenuItem Header="View Profile" Click="ViewProfile_Click" Style="{StaticResource ModernMenuItem}"/>
+                <MenuItem Header="Send Message" Click="SendMessage_Click" Style="{StaticResource ModernMenuItem}"/>
+                <Separator Style="{StaticResource MenuSeparator}"/>
+                <MenuItem Header="Invite to Voice" Click="InviteToVoice_Click" Style="{StaticResource ModernMenuItem}"/>
+                <Separator Style="{StaticResource MenuSeparator}"/>
+                <MenuItem Header="Remove Friend" Click="RemoveFriend_Click" Style="{StaticResource DangerMenuItem}"/>
+            </ContextMenu>
+        </Border.ContextMenu>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Avatar with Status -->
+            <Grid Grid.Column="0" Margin="0,0,12,0">
+                <Ellipse x:Name="AvatarEllipse" Width="40" Height="40">
+                    <Ellipse.Fill>
+                        <ImageBrush x:Name="AvatarBrush" Stretch="UniformToFill"/>
+                    </Ellipse.Fill>
+                </Ellipse>
+
+                <!-- Online Status Indicator -->
+                <Border x:Name="StatusIndicator"
+                        Width="14" Height="14"
+                        CornerRadius="7"
+                        BorderThickness="3"
+                        BorderBrush="{StaticResource TertiaryDarkBrush}"
+                        Background="{StaticResource AccentGreenBrush}"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Bottom"
+                        Margin="0,0,-2,-2"/>
+            </Grid>
+
+            <!-- User Info -->
+            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock x:Name="DisplayNameText"
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimaryBrush}"/>
+
+                    <!-- Role Badge -->
+                    <Border x:Name="RoleBadge"
+                            CornerRadius="3"
+                            Padding="4,1"
+                            Margin="6,0,0,0"
+                            Background="{StaticResource AccentBrush}"
+                            VerticalAlignment="Center"
+                            Visibility="Collapsed">
+                        <TextBlock x:Name="RoleBadgeText"
+                                   FontSize="9"
+                                   FontWeight="Bold"
+                                   Foreground="White"/>
+                    </Border>
+                </StackPanel>
+
+                <TextBlock x:Name="StatusText"
+                           FontSize="12"
+                           Foreground="{StaticResource TextMutedBrush}"
+                           TextTrimming="CharacterEllipsis"
+                           Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <!-- Action Buttons -->
+            <StackPanel x:Name="ActionButtons"
+                        Grid.Column="2"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center"
+                        Visibility="Collapsed">
+                <Button x:Name="MessageButton"
+                        Width="32" Height="32"
+                        Background="{StaticResource QuaternaryDarkBrush}"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        ToolTip="Send Message"
+                        Click="SendMessage_Click">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="ButtonBorder"
+                                    Background="{TemplateBinding Background}"
+                                    CornerRadius="16">
+                                <TextBlock Text="&#xE8BD;"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="14"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource AccentBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+
+                <Button x:Name="CallButton"
+                        Width="32" Height="32"
+                        Background="{StaticResource QuaternaryDarkBrush}"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        Margin="8,0,0,0"
+                        ToolTip="Start Call"
+                        Click="StartCall_Click">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="ButtonBorder"
+                                    Background="{TemplateBinding Background}"
+                                    CornerRadius="16">
+                                <TextBlock Text="&#xE717;"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="14"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource AccentGreenBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+
+                <Button x:Name="MoreButton"
+                        Width="32" Height="32"
+                        Background="{StaticResource QuaternaryDarkBrush}"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        Margin="8,0,0,0"
+                        ToolTip="More"
+                        Click="More_Click">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="ButtonBorder"
+                                    Background="{TemplateBinding Background}"
+                                    CornerRadius="16">
+                                <TextBlock Text="&#xE712;"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="14"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource QuaternaryDarkBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>
