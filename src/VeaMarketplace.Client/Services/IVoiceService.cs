@@ -436,8 +436,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                     var samples = new short[decodedSamples];
                     Array.Copy(pcmBuffer, samples, decodedSamples);
 
-                    // Limit queue size to prevent memory buildup (max ~200ms of audio)
-                    if (queue.Count < 10)
+                    // Limit queue size to prevent memory buildup (max ~500ms of audio)
+                    // Larger queue handles network jitter better
+                    if (queue.Count < 25)
                     {
                         queue.Enqueue(samples);
                     }
@@ -522,11 +523,31 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
     public async Task LeaveVoiceChannelAsync()
     {
+        // Stop screen sharing first to avoid threading issues
+        if (_screenSharingManager.IsSharing)
+        {
+            try
+            {
+                await _screenSharingManager.StopSharingAsync().ConfigureAwait(false);
+            }
+            catch
+            {
+                // Ignore errors during cleanup
+            }
+        }
+
         StopAudioCapture();
 
         if (_connection != null && IsConnected)
         {
-            await _connection.InvokeAsync("LeaveVoiceChannel");
+            try
+            {
+                await _connection.InvokeAsync("LeaveVoiceChannel");
+            }
+            catch
+            {
+                // Ignore errors during disconnect
+            }
         }
 
         IsInVoiceChannel = false;
@@ -547,31 +568,31 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                 SignalType = OpusSignal.OPUS_SIGNAL_VOICE
             };
 
-            // Configure audio capture with small buffer for low latency
+            // Configure audio capture with balanced buffer for smooth audio
             _waveIn = new WaveInEvent
             {
                 DeviceNumber = _inputDeviceNumber,
                 WaveFormat = new WaveFormat(SampleRate, BitsPerSample, Channels),
-                BufferMilliseconds = 20, // 20ms buffers for low latency
-                NumberOfBuffers = 3
+                BufferMilliseconds = 40, // 40ms buffers - better stability
+                NumberOfBuffers = 4      // More buffers for smoother capture
             };
 
             _waveIn.DataAvailable += OnAudioDataAvailable;
             _waveIn.StartRecording();
 
-            // Setup playback buffer with proper size for mixing
+            // Setup playback buffer with larger size for smooth playback
             _bufferedWaveProvider = new BufferedWaveProvider(new WaveFormat(SampleRate, BitsPerSample, Channels))
             {
                 DiscardOnBufferOverflow = true,
-                BufferDuration = TimeSpan.FromMilliseconds(500)
+                BufferDuration = TimeSpan.FromMilliseconds(1000) // 1 second buffer
             };
 
-            // Initialize output device with low latency settings
+            // Initialize output device with balanced latency settings
             _waveOut = new WaveOutEvent
             {
                 DeviceNumber = _outputDeviceNumber,
-                DesiredLatency = 50,
-                NumberOfBuffers = 3
+                DesiredLatency = 100,    // 100ms latency - smoother playback
+                NumberOfBuffers = 4      // More buffers for stability
             };
             _waveOut.Init(_bufferedWaveProvider);
             _waveOut.Play();
@@ -667,7 +688,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         // Fade state for smooth transitions
         bool wasActive = false;
-        const int fadeFrames = 48; // ~1ms fade at 48kHz
+        const int fadeFrames = 240; // ~5ms fade at 48kHz - longer fade for smoother transitions
+        short[] lastOutputSamples = new short[OpusFrameSize]; // Track last samples for fade-out
+        int silenceFrameCount = 0; // Track consecutive silence frames
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -704,6 +727,8 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                     {
                         if (isActive)
                         {
+                            silenceFrameCount = 0;
+
                             // Apply fade-in if transitioning from silence to audio
                             if (!wasActive)
                             {
@@ -718,11 +743,13 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                             for (int i = 0; i < OpusFrameSize; i++)
                             {
                                 var sample = mixBuffer[i];
+                                // Soft clipping to avoid harsh distortion
                                 if (sample > short.MaxValue)
                                     sample = short.MaxValue;
                                 else if (sample < short.MinValue)
                                     sample = short.MinValue;
 
+                                lastOutputSamples[i] = (short)sample;
                                 outputBuffer[i * 2] = (byte)(sample & 0xFF);
                                 outputBuffer[i * 2 + 1] = (byte)((sample >> 8) & 0xFF);
                             }
@@ -739,28 +766,36 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                         }
                         else if (wasActive)
                         {
-                            // Output a fade-out frame when transitioning to silence
+                            // Output a proper fade-out frame when transitioning to silence
                             for (int i = 0; i < OpusFrameSize; i++)
                             {
                                 float fadeMultiplier = 1.0f - ((float)i / OpusFrameSize);
-                                // Fade out from the last sample value (approximate with zero)
-                                outputBuffer[i * 2] = 0;
-                                outputBuffer[i * 2 + 1] = 0;
+                                short fadedSample = (short)(lastOutputSamples[Math.Min(i, lastOutputSamples.Length - 1)] * fadeMultiplier);
+                                outputBuffer[i * 2] = (byte)(fadedSample & 0xFF);
+                                outputBuffer[i * 2 + 1] = (byte)((fadedSample >> 8) & 0xFF);
                             }
                             try
                             {
-                                _bufferedWaveProvider.AddSamples(silenceBuffer, 0, silenceBuffer.Length);
+                                _bufferedWaveProvider.AddSamples(outputBuffer, 0, outputBuffer.Length);
                             }
                             catch { }
+
+                            // Clear last samples after fade
+                            Array.Clear(lastOutputSamples, 0, lastOutputSamples.Length);
                         }
-                        // When idle, occasionally add silence to keep buffer from underrunning
-                        else if (_bufferedWaveProvider.BufferedBytes < OpusFrameSize * 4)
+                        else
                         {
-                            try
+                            silenceFrameCount++;
+                            // When idle, add silence to keep buffer healthy (not underrunning)
+                            // But limit how much silence we add to avoid buffer bloat
+                            if (_bufferedWaveProvider.BufferedBytes < OpusFrameSize * 8 && silenceFrameCount < 50)
                             {
-                                _bufferedWaveProvider.AddSamples(silenceBuffer, 0, silenceBuffer.Length);
+                                try
+                                {
+                                    _bufferedWaveProvider.AddSamples(silenceBuffer, 0, silenceBuffer.Length);
+                                }
+                                catch { }
                             }
-                            catch { }
                         }
                     }
 

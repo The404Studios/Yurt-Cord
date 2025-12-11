@@ -181,7 +181,7 @@
                             </ComboBox>
 
                             <TextBlock Text="Frame Rate" FontSize="13" Foreground="#B5BAC1" Margin="0,16,0,8"/>
-                            <ComboBox x:Name="FrameRateCombo" SelectedIndex="1">
+                            <ComboBox x:Name="FrameRateCombo" SelectedIndex="2">
                                 <ComboBox.Style>
                                     <Style TargetType="ComboBox">
                                         <Setter Property="Background" Value="#36393F"/>
