@@ -10,6 +10,7 @@ namespace VeaMarketplace.Client.Views;
 public partial class UserSearchDialog : Window
 {
     private readonly IFriendService? _friendService;
+    private readonly IApiService? _apiService;
     private readonly ObservableCollection<UserSearchResultDto> _results = new();
     private CancellationTokenSource? _searchCts;
 
@@ -22,6 +23,7 @@ public partial class UserSearchDialog : Window
         if (!System.ComponentModel.DesignerProperties.GetIsInDesignMode(this))
         {
             _friendService = (IFriendService?)App.ServiceProvider?.GetService(typeof(IFriendService));
+            _apiService = (IApiService?)App.ServiceProvider?.GetService(typeof(IApiService));
         }
 
         ResultsListBox.ItemsSource = _results;
@@ -73,7 +75,7 @@ public partial class UserSearchDialog : Window
 
         try
         {
-            var results = await (_friendService?.SearchUsersAsync(query) ?? Task.FromResult<List<UserSearchResultDto>?>(null));
+            var results = await (_apiService?.SearchUsersAsync(query) ?? Task.FromResult<List<UserSearchResultDto>>([]));
 
             _results.Clear();
 
@@ -115,10 +117,9 @@ public partial class UserSearchDialog : Window
                 button.IsEnabled = false;
                 button.Content = "Sending...";
 
-                var success = await (_friendService?.SendFriendRequestByIdAsync(user.Id) ?? Task.FromResult(false));
-
-                if (success)
+                if (_friendService != null)
                 {
+                    await _friendService.SendFriendRequestByIdAsync(user.UserId);
                     button.Content = "Sent!";
                     MessageBox.Show($"Friend request sent to {user.Username}!", "Success",
                         MessageBoxButton.OK, MessageBoxImage.Information);
@@ -127,6 +128,8 @@ public partial class UserSearchDialog : Window
                 {
                     button.Content = "Failed";
                     button.IsEnabled = true;
+                    MessageBox.Show("Friend service not available", "Error",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
