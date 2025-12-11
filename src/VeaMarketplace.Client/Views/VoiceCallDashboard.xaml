@@ -2,6 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:VeaMarketplace.Client.Views"
+             xmlns:converters="clr-namespace:VeaMarketplace.Client.Converters"
              Background="#1E1F22">
 
     <UserControl.Resources>
@@ -12,7 +13,7 @@
             </ResourceDictionary.MergedDictionaries>
 
             <BooleanToVisibilityConverter x:Key="BoolToVis"/>
-            <local:AudioLevelToHeightConverter x:Key="AudioLevelToHeightConverter"/>
+            <converters:AudioLevelToHeightConverter x:Key="AudioLevelToHeightConverter"/>
 
             <!-- User Tile Context Menu -->
             <ContextMenu x:Key="UserTileContextMenu" Style="{StaticResource ModernContextMenu}">

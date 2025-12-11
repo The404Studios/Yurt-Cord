@@ -15,5 +15,5 @@ public class ChatMessage
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     public bool IsEdited { get; set; } = false;
     public bool IsDeleted { get; set; } = false;
-    public List<string> Mentions { get; set; } = new();
+    public List<string> Mentions { get; set; } = [];
 }
