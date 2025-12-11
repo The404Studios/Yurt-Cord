@@ -256,8 +256,9 @@ public class VoiceHub : Hub
                 shareState.LastFrameTime = DateTime.UtcNow;
             }
 
-            // Broadcast screen frame to all OTHER users in the channel
-            await Clients.OthersInGroup($"voice_{userState.ChannelId}")
+            // Broadcast screen frame to ALL users in the channel INCLUDING the sender
+            // This allows the sharer to see their own stream for verification
+            await Clients.Group($"voice_{userState.ChannelId}")
                 .SendAsync("ReceiveScreenFrame", Context.ConnectionId, frameData, width, height);
         }
     }
@@ -350,7 +351,52 @@ public class VoiceHub : Hub
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        await LeaveVoiceChannel();
+        // Clean up screen share FIRST (before leaving voice channel)
+        // This prevents async streaming issues when the connection is terminated
+        if (_screenSharers.TryRemove(Context.ConnectionId, out var shareState))
+        {
+            _screenShareViewers.TryRemove(Context.ConnectionId, out _);
+
+            // Notify channel that screen share stopped
+            try
+            {
+                await Clients.Group($"voice_{shareState.ChannelId}")
+                    .SendAsync("UserScreenShareChanged", Context.ConnectionId, false);
+                await Clients.Group($"voice_{shareState.ChannelId}")
+                    .SendAsync("ScreenShareStopped", Context.ConnectionId);
+            }
+            catch
+            {
+                // Ignore errors during disconnect cleanup
+            }
+        }
+
+        // Also remove this user from any viewer lists they're in
+        foreach (var kvp in _screenShareViewers)
+        {
+            lock (kvp.Value)
+            {
+                kvp.Value.Remove(Context.ConnectionId);
+            }
+        }
+
+        // Now leave voice channel
+        try
+        {
+            await LeaveVoiceChannel();
+        }
+        catch
+        {
+            // Ignore errors during disconnect cleanup
+            // Force cleanup the voice user state
+            if (_voiceUsers.TryRemove(Context.ConnectionId, out var userState))
+            {
+                if (_voiceChannels.TryGetValue(userState.ChannelId, out var channel))
+                {
+                    channel.Users.TryRemove(Context.ConnectionId, out _);
+                }
+            }
+        }
 
         // Handle call disconnection
         if (_connectionUsers.TryRemove(Context.ConnectionId, out var userId))
@@ -360,18 +406,25 @@ public class VoiceHub : Hub
             // End any active calls
             if (_callService != null)
             {
-                var activeCall = _callService.GetActiveCall(userId);
-                if (activeCall != null)
+                try
                 {
-                    var (_, _, call) = _callService.EndCall(activeCall.Id, userId);
-                    if (call != null)
+                    var activeCall = _callService.GetActiveCall(userId);
+                    if (activeCall != null)
                     {
-                        var otherUserId = call.CallerId == userId ? call.RecipientId : call.CallerId;
-                        if (_userConnections.TryGetValue(otherUserId, out var otherConnId))
+                        var (_, _, call) = _callService.EndCall(activeCall.Id, userId);
+                        if (call != null)
                         {
-                            await Clients.Client(otherConnId).SendAsync("CallEnded", call.Id, "User disconnected");
+                            var otherUserId = call.CallerId == userId ? call.RecipientId : call.CallerId;
+                            if (_userConnections.TryGetValue(otherUserId, out var otherConnId))
+                            {
+                                await Clients.Client(otherConnId).SendAsync("CallEnded", call.Id, "User disconnected");
+                            }
                         }
                     }
+                }
+                catch
+                {
+                    // Ignore call cleanup errors during disconnect
                 }
             }
         }

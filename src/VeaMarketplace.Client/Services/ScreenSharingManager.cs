@@ -96,14 +96,40 @@ public class ScreenSharingManager : IScreenSharingManager
 
     public void Disconnect()
     {
+        // Mark as disconnected first to prevent further operations
         _isConnected = false;
+
+        // Clear callbacks immediately to prevent async operations
+        var notifyStop = _notifyStopFunc;
         _sendFrameFunc = null;
         _notifyStartFunc = null;
         _notifyStopFunc = null;
 
+        // Stop sharing if active (synchronously to avoid async issues during disconnect)
         if (_isSharing)
         {
-            _ = StopSharingAsync();
+            _isSharing = false;
+
+            // Cancel and cleanup synchronously
+            try { _captureCts?.Cancel(); } catch { }
+
+            // Give threads a moment to stop
+            _captureThread?.Join(500);
+            _captureThread = null;
+
+            // Don't wait for send task - just let it cancel
+            _sendTask = null;
+
+            try { _captureCts?.Dispose(); } catch { }
+            _captureCts = null;
+
+            // Clear frame queue
+            while (_frameQueue.TryDequeue(out _)) { }
+
+            // Cleanup capture resources
+            CleanupCaptureResources();
+
+            _sessionStopwatch.Stop();
         }
     }
 
@@ -195,24 +221,52 @@ public class ScreenSharingManager : IScreenSharingManager
         if (!_isSharing) return;
 
         _isSharing = false;
-        _captureCts?.Cancel();
 
-        // Wait for threads to stop
-        _captureThread?.Join(1000);
-        _captureThread = null;
+        // Cancel the token first
+        try
+        {
+            _captureCts?.Cancel();
+        }
+        catch { }
 
+        // Wait for capture thread to stop with timeout
+        if (_captureThread != null)
+        {
+            if (!_captureThread.Join(2000))
+            {
+                // Thread didn't stop in time, force it
+                Debug.WriteLine("Capture thread did not stop gracefully");
+            }
+            _captureThread = null;
+        }
+
+        // Wait for send task to complete with timeout
         if (_sendTask != null)
         {
             try
             {
-                await _sendTask.ConfigureAwait(false);
+                // Use a timeout to prevent hanging
+                var timeoutTask = Task.Delay(2000);
+                var completedTask = await Task.WhenAny(_sendTask, timeoutTask).ConfigureAwait(false);
+                if (completedTask == timeoutTask)
+                {
+                    Debug.WriteLine("Send task did not complete in time");
+                }
             }
             catch (OperationCanceledException) { }
-            catch { }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error waiting for send task: {ex.Message}");
+            }
         }
         _sendTask = null;
 
-        _captureCts?.Dispose();
+        // Dispose CTS after tasks are stopped
+        try
+        {
+            _captureCts?.Dispose();
+        }
+        catch { }
         _captureCts = null;
 
         // Clear frame queue
@@ -224,12 +278,20 @@ public class ScreenSharingManager : IScreenSharingManager
         _sessionStopwatch.Stop();
         _stats.Duration = _sessionStopwatch.Elapsed;
 
-        // Notify server
+        // Notify server - do this last and don't wait if connection is closing
         if (_isConnected && _notifyStopFunc != null)
         {
             try
             {
-                await _notifyStopFunc().ConfigureAwait(false);
+                // Fire and forget to prevent blocking on network
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await _notifyStopFunc().ConfigureAwait(false);
+                    }
+                    catch { }
+                });
             }
             catch { }
         }
@@ -718,10 +780,29 @@ public class ScreenSharingManager : IScreenSharingManager
 
     public async ValueTask DisposeAsync()
     {
-        await StopSharingAsync();
+        try
+        {
+            // Stop sharing with timeout
+            if (_isSharing)
+            {
+                var stopTask = StopSharingAsync();
+                var timeoutTask = Task.Delay(3000);
+                await Task.WhenAny(stopTask, timeoutTask).ConfigureAwait(false);
+            }
+        }
+        catch { }
+
+        // Disconnect synchronously
         Disconnect();
+
+        // Final cleanup
         CleanupCaptureResources();
-        _encoderParams?.Dispose();
+
+        try { _encoderParams?.Dispose(); } catch { }
+
+        // Clear any remaining state
+        _activeShares.Clear();
+
         GC.SuppressFinalize(this);
     }
 
