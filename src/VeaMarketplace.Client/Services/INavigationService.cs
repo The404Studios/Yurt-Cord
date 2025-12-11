@@ -13,8 +13,11 @@ public interface INavigationService
     void NavigateToProfile();
     void NavigateToProfile(string userId);
     void NavigateToSettings();
+    void NavigateToSettings(string section);
     void NavigateToFriends();
     void NavigateToVoiceCall();
+    void NavigateToProduct(string productId);
+    void NavigateToDirectMessage(string userId);
 }
 
 public class NavigationService : INavigationService
@@ -48,6 +51,25 @@ public class NavigationService : INavigationService
     }
 
     public void NavigateToSettings() => NavigateTo("Settings");
+
+    public void NavigateToSettings(string section)
+    {
+        // Store section for settings view to use
+        NavigateTo($"Settings:{section}");
+    }
+
     public void NavigateToFriends() => NavigateTo("Friends");
     public void NavigateToVoiceCall() => NavigateTo("VoiceCall");
+
+    public void NavigateToProduct(string productId)
+    {
+        // Navigate to product details
+        NavigateTo($"Product:{productId}");
+    }
+
+    public void NavigateToDirectMessage(string userId)
+    {
+        // Navigate to DM with specific user
+        NavigateTo($"DirectMessage:{userId}");
+    }
 }
