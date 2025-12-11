@@ -65,7 +65,7 @@ public partial class MemberSidebar : UserControl
         if (user == null) return;
 
         var navigationService = (INavigationService?)App.ServiceProvider.GetService(typeof(INavigationService));
-        navigationService?.NavigateToProfile();
+        navigationService?.NavigateToProfile(user.Id);
     }
 
     private void SendMessage_Click(object sender, RoutedEventArgs e)
