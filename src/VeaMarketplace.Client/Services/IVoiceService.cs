@@ -1,3 +1,5 @@
+using Concentus.Enums;
+using Concentus.Structs;
 using Microsoft.AspNetCore.SignalR.Client;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
@@ -153,6 +155,13 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     private readonly ConcurrentQueue<byte[]> _audioSendQueue = new();
     private CancellationTokenSource? _audioSendCts;
     private Task? _audioSendTask;
+
+    // Opus codec for efficient audio compression
+    // Reduces bandwidth from ~768kbps to ~24kbps per user
+    private OpusEncoder? _opusEncoder;
+    private OpusDecoder? _opusDecoder;
+    private const int OpusBitrate = 24000; // 24kbps - good for voice
+    private const int OpusFrameSize = 960; // 20ms at 48kHz (48000 * 0.020 = 960 samples)
 
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
     public bool IsInVoiceChannel { get; private set; }
@@ -378,37 +387,46 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             }
         });
 
-        // Receive audio data from other users
-        _connection.On<string, byte[]>("ReceiveAudio", (senderConnectionId, audioData) =>
+        // Receive audio data from other users (Opus encoded)
+        _connection.On<string, byte[]>("ReceiveAudio", (senderConnectionId, opusData) =>
         {
             // Don't play audio if we're deafened or if user is muted locally
             if (IsDeafened || IsUserMuted(senderConnectionId)) return;
 
-            if (audioData.Length > 0 && _bufferedWaveProvider != null)
+            if (opusData.Length > 0 && _bufferedWaveProvider != null && _opusDecoder != null)
             {
-                // Apply per-user volume if needed
-                var volume = GetUserVolume(senderConnectionId);
-                byte[] processedData;
-
-                if (Math.Abs(volume - 1.0f) > 0.01f)
-                {
-                    // Apply per-user volume on a separate array
-                    processedData = ApplyVolume(audioData, volume);
-                }
-                else
-                {
-                    processedData = audioData;
-                }
-
-                // Add directly to the BufferedWaveProvider - it handles timing internally
-                // NAudio's WaveOutEvent will pull data at the correct rate
                 try
                 {
-                    _bufferedWaveProvider.AddSamples(processedData, 0, processedData.Length);
+                    // Decode Opus to PCM
+                    var pcmBuffer = new short[OpusFrameSize];
+                    var decodedSamples = _opusDecoder.Decode(opusData, 0, opusData.Length, pcmBuffer, 0, OpusFrameSize, false);
+
+                    if (decodedSamples > 0)
+                    {
+                        // Convert short[] to byte[]
+                        var pcmBytes = new byte[decodedSamples * 2];
+                        Buffer.BlockCopy(pcmBuffer, 0, pcmBytes, 0, pcmBytes.Length);
+
+                        // Apply per-user volume if needed
+                        var volume = GetUserVolume(senderConnectionId);
+                        byte[] processedData;
+
+                        if (Math.Abs(volume - 1.0f) > 0.01f)
+                        {
+                            processedData = ApplyVolume(pcmBytes, volume);
+                        }
+                        else
+                        {
+                            processedData = pcmBytes;
+                        }
+
+                        // Add to playback buffer
+                        _bufferedWaveProvider.AddSamples(processedData, 0, processedData.Length);
+                    }
                 }
                 catch
                 {
-                    // Buffer overflow - discard (DiscardOnBufferOverflow handles this)
+                    // Decode error - skip this frame
                 }
             }
         });
@@ -486,6 +504,18 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     {
         try
         {
+            // Initialize Opus encoder for sending audio
+            _opusEncoder = new OpusEncoder(SampleRate, Channels, OpusApplication.OPUS_APPLICATION_VOIP)
+            {
+                Bitrate = OpusBitrate,
+                Complexity = 5, // Balance between quality and CPU (0-10)
+                UseVBR = true,
+                SignalType = OpusSignal.OPUS_SIGNAL_VOICE
+            };
+
+            // Initialize Opus decoder for receiving audio
+            _opusDecoder = new OpusDecoder(SampleRate, Channels);
+
             // Configure audio capture with small buffer for low latency
             _waveIn = new WaveInEvent
             {
@@ -528,19 +558,37 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     /// <summary>
     /// Background loop that sends queued audio data to the server.
     /// This decouples network I/O from the audio callback thread.
+    /// Encodes audio with Opus codec before sending.
     /// </summary>
     private async Task AudioSendLoop(CancellationToken cancellationToken)
     {
+        // Buffer for Opus encoded output (max Opus frame is ~4000 bytes)
+        var opusBuffer = new byte[4000];
+
         while (!cancellationToken.IsCancellationRequested)
         {
             try
             {
-                if (_audioSendQueue.TryDequeue(out var audioData))
+                if (_audioSendQueue.TryDequeue(out var pcmData))
                 {
-                    if (_connection != null && IsConnected)
+                    if (_connection != null && IsConnected && _opusEncoder != null)
                     {
-                        // Use ConfigureAwait(false) to avoid context switching overhead
-                        await _connection.InvokeAsync("SendAudio", audioData, cancellationToken).ConfigureAwait(false);
+                        // Convert byte[] PCM to short[] for Opus encoder
+                        var pcmSamples = new short[pcmData.Length / 2];
+                        Buffer.BlockCopy(pcmData, 0, pcmSamples, 0, pcmData.Length);
+
+                        // Encode with Opus - dramatically reduces bandwidth
+                        var encodedLength = _opusEncoder.Encode(pcmSamples, 0, OpusFrameSize, opusBuffer, 0, opusBuffer.Length);
+
+                        if (encodedLength > 0)
+                        {
+                            // Create correctly sized array for sending
+                            var opusData = new byte[encodedLength];
+                            Buffer.BlockCopy(opusBuffer, 0, opusData, 0, encodedLength);
+
+                            // Send the compressed audio
+                            await _connection.SendAsync("SendAudio", opusData, cancellationToken).ConfigureAwait(false);
+                        }
                     }
                 }
                 else
@@ -592,6 +640,10 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         _waveOut = null;
 
         _bufferedWaveProvider = null;
+
+        // Clean up Opus codec
+        _opusEncoder = null;
+        _opusDecoder = null;
     }
 
     private void OnAudioDataAvailable(object? sender, WaveInEventArgs e)
