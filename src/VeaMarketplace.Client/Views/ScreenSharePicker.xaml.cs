@@ -1,8 +1,11 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using VeaMarketplace.Client.Services;
 
 namespace VeaMarketplace.Client.Views;
@@ -11,6 +14,7 @@ public partial class ScreenSharePicker : Window
 {
     private readonly IVoiceService _voiceService;
     private readonly ObservableCollection<SelectableDisplayInfo> _displays = new();
+    private readonly DispatcherTimer _previewTimer;
 
     public DisplayInfo? SelectedDisplay { get; private set; }
     public int SelectedResolution { get; private set; } = 1080;
@@ -27,6 +31,85 @@ public partial class ScreenSharePicker : Window
 
         DisplaysItemsControl.ItemsSource = _displays;
         LoadDisplays();
+
+        // Set up timer for refreshing previews
+        _previewTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(500) // Update every 500ms
+        };
+        _previewTimer.Tick += PreviewTimer_Tick;
+        _previewTimer.Start();
+
+        // Capture initial previews
+        CaptureAllPreviews();
+
+        // Stop timer when window closes
+        Closed += (s, e) => _previewTimer.Stop();
+    }
+
+    private void PreviewTimer_Tick(object? sender, EventArgs e)
+    {
+        CaptureAllPreviews();
+    }
+
+    private void CaptureAllPreviews()
+    {
+        foreach (var display in _displays)
+        {
+            try
+            {
+                var preview = CaptureDisplayPreview(display);
+                if (preview != null)
+                {
+                    display.PreviewImageSource = preview;
+                }
+            }
+            catch
+            {
+                // Ignore capture errors
+            }
+        }
+    }
+
+    private BitmapSource? CaptureDisplayPreview(SelectableDisplayInfo display)
+    {
+        try
+        {
+            // Capture at reduced resolution for preview (200x112 aspect ratio matches 16:9)
+            const int previewWidth = 200;
+            const int previewHeight = 112;
+
+            using var bitmap = new System.Drawing.Bitmap(display.Width, display.Height);
+            using var graphics = System.Drawing.Graphics.FromImage(bitmap);
+
+            // Capture the screen region
+            graphics.CopyFromScreen(display.Left, display.Top, 0, 0,
+                new System.Drawing.Size(display.Width, display.Height));
+
+            // Resize to preview size
+            using var resized = new System.Drawing.Bitmap(previewWidth, previewHeight);
+            using var resizeGraphics = System.Drawing.Graphics.FromImage(resized);
+            resizeGraphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBilinear;
+            resizeGraphics.DrawImage(bitmap, 0, 0, previewWidth, previewHeight);
+
+            // Convert to BitmapSource for WPF
+            using var ms = new MemoryStream();
+            resized.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+            ms.Position = 0;
+
+            var bitmapImage = new BitmapImage();
+            bitmapImage.BeginInit();
+            bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+            bitmapImage.StreamSource = ms;
+            bitmapImage.EndInit();
+            bitmapImage.Freeze(); // Make it thread-safe
+
+            return bitmapImage;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private void LoadDisplays()
@@ -103,11 +186,12 @@ public partial class ScreenSharePicker : Window
 }
 
 /// <summary>
-/// Wrapper for DisplayInfo with selection support
+/// Wrapper for DisplayInfo with selection support and live preview
 /// </summary>
 public class SelectableDisplayInfo : INotifyPropertyChanged
 {
     private bool _isSelected;
+    private System.Windows.Media.ImageSource? _previewImageSource;
 
     public string DeviceName { get; set; } = string.Empty;
     public string FriendlyName { get; set; } = string.Empty;
@@ -127,6 +211,19 @@ public class SelectableDisplayInfo : INotifyPropertyChanged
             OnPropertyChanged(nameof(IsSelected));
         }
     }
+
+    public System.Windows.Media.ImageSource? PreviewImageSource
+    {
+        get => _previewImageSource;
+        set
+        {
+            _previewImageSource = value;
+            OnPropertyChanged(nameof(PreviewImageSource));
+            OnPropertyChanged(nameof(HasNoPreview));
+        }
+    }
+
+    public bool HasNoPreview => _previewImageSource == null;
 
     public SelectableDisplayInfo() { }
 

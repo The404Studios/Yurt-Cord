@@ -154,18 +154,6 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     private CancellationTokenSource? _audioSendCts;
     private Task? _audioSendTask;
 
-    // Jitter buffer for smooth playback
-    private readonly ConcurrentQueue<byte[]> _jitterBuffer = new();
-    private const int JitterBufferTargetMs = 60; // Target 60ms of buffered audio
-    private const int JitterBufferMaxMs = 200; // Max buffer before discarding
-    private DateTime _lastPlaybackTime = DateTime.MinValue;
-    private Task? _playbackTask;
-    private CancellationTokenSource? _playbackCts;
-
-    // Thread synchronization
-    private readonly object _audioLock = new();
-    private readonly SemaphoreSlim _sendSemaphore = new(1, 1);
-
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
     public bool IsInVoiceChannel { get; private set; }
     public bool IsMuted { get; set; }
@@ -396,7 +384,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             // Don't play audio if we're deafened or if user is muted locally
             if (IsDeafened || IsUserMuted(senderConnectionId)) return;
 
-            if (audioData.Length > 0)
+            if (audioData.Length > 0 && _bufferedWaveProvider != null)
             {
                 // Apply per-user volume if needed
                 var volume = GetUserVolume(senderConnectionId);
@@ -412,18 +400,15 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                     processedData = audioData;
                 }
 
-                // Add to jitter buffer instead of directly to playback
-                // This smooths out network timing variations
-                // Limit jitter buffer size to prevent excessive delay
-                if (_jitterBuffer.Count < 25) // ~500ms max buffered audio
+                // Add directly to the BufferedWaveProvider - it handles timing internally
+                // NAudio's WaveOutEvent will pull data at the correct rate
+                try
                 {
-                    _jitterBuffer.Enqueue(processedData);
+                    _bufferedWaveProvider.AddSamples(processedData, 0, processedData.Length);
                 }
-                else
+                catch
                 {
-                    // Buffer is full, discard oldest and add new (keeps audio current)
-                    _jitterBuffer.TryDequeue(out _);
-                    _jitterBuffer.Enqueue(processedData);
+                    // Buffer overflow - discard (DiscardOnBufferOverflow handles this)
                 }
             }
         });
@@ -533,10 +518,6 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             // Start the background audio send thread (decouples network from audio callback)
             _audioSendCts = new CancellationTokenSource();
             _audioSendTask = Task.Run(() => AudioSendLoop(_audioSendCts.Token));
-
-            // Start jitter buffer playback thread
-            _playbackCts = new CancellationTokenSource();
-            _playbackTask = Task.Run(() => JitterBufferPlaybackLoop(_playbackCts.Token));
         }
         catch (Exception ex)
         {
@@ -580,64 +561,17 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         }
     }
 
-    /// <summary>
-    /// Jitter buffer playback loop - smooths out network timing variations
-    /// </summary>
-    private async Task JitterBufferPlaybackLoop(CancellationToken cancellationToken)
-    {
-        const int playbackIntervalMs = 20; // Play audio every 20ms
-        var bytesPerInterval = (SampleRate * Channels * (BitsPerSample / 8) * playbackIntervalMs) / 1000;
-
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            try
-            {
-                // Calculate how much data should be in the buffer
-                var bufferCount = _jitterBuffer.Count;
-
-                // If we have enough buffered data, play it
-                if (_jitterBuffer.TryDequeue(out var audioData) && _bufferedWaveProvider != null)
-                {
-                    lock (_audioLock)
-                    {
-                        // Only add if buffer isn't too full
-                        if (_bufferedWaveProvider.BufferedBytes < _bufferedWaveProvider.BufferLength * 0.8)
-                        {
-                            _bufferedWaveProvider.AddSamples(audioData, 0, audioData.Length);
-                        }
-                    }
-                }
-
-                // Maintain consistent timing
-                await Task.Delay(playbackIntervalMs, cancellationToken).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                break;
-            }
-            catch
-            {
-                await Task.Delay(10, cancellationToken).ConfigureAwait(false);
-            }
-        }
-    }
-
     private void StopAudioCapture()
     {
-        // Stop background tasks first
+        // Stop background send task first
         _audioSendCts?.Cancel();
-        _playbackCts?.Cancel();
 
         try
         {
-            // Wait for tasks to complete with timeout
+            // Wait for task to complete with timeout
             if (_audioSendTask != null)
             {
                 _audioSendTask.Wait(TimeSpan.FromMilliseconds(500));
-            }
-            if (_playbackTask != null)
-            {
-                _playbackTask.Wait(TimeSpan.FromMilliseconds(500));
             }
         }
         catch { }
@@ -646,13 +580,8 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         _audioSendCts = null;
         _audioSendTask = null;
 
-        _playbackCts?.Dispose();
-        _playbackCts = null;
-        _playbackTask = null;
-
-        // Clear queues
+        // Clear send queue
         while (_audioSendQueue.TryDequeue(out _)) { }
-        while (_jitterBuffer.TryDequeue(out _)) { }
 
         _waveIn?.StopRecording();
         _waveIn?.Dispose();
@@ -707,8 +636,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             ThreadPool.QueueUserWorkItem(_ => OnSpeakingChanged?.Invoke(_isSpeaking));
         }
 
-        // Send speaking state updates (fire-and-forget on thread pool)
-        if (_isSpeaking != wasSpeaking || (DateTime.Now - _lastSpeakingUpdate).TotalMilliseconds > 100)
+        // Send speaking state updates ONLY when state actually changes
+        // This prevents flooding the server with constant updates
+        if (_isSpeaking != wasSpeaking)
         {
             _lastSpeakingUpdate = DateTime.Now;
             var speakingState = _isSpeaking;
@@ -721,7 +651,26 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                 {
                     if (_connection != null && IsConnected)
                     {
-                        await _connection.InvokeAsync("UpdateSpeakingState", speakingState, level).ConfigureAwait(false);
+                        // Use SendAsync for fire-and-forget instead of InvokeAsync
+                        await _connection.SendAsync("UpdateSpeakingState", speakingState, level).ConfigureAwait(false);
+                    }
+                }
+                catch { }
+            });
+        }
+        // Send periodic level updates only while actively speaking (every 500ms)
+        else if (_isSpeaking && (DateTime.Now - _lastSpeakingUpdate).TotalMilliseconds > 500)
+        {
+            _lastSpeakingUpdate = DateTime.Now;
+            var level = audioLevel;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    if (_connection != null && IsConnected)
+                    {
+                        await _connection.SendAsync("UpdateSpeakingState", true, level).ConfigureAwait(false);
                     }
                 }
                 catch { }
@@ -844,12 +793,13 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         // Notify others that we started screen sharing
         try
         {
-            await _connection.InvokeAsync("StartScreenShare");
+            // Use SendAsync for fire-and-forget - server notification is best-effort
+            await _connection.SendAsync("StartScreenShare").ConfigureAwait(false);
         }
-        catch
+        catch (Exception ex)
         {
-            _isScreenSharing = false;
-            return;
+            System.Diagnostics.Debug.WriteLine($"StartScreenShare notification failed: {ex.Message}");
+            // Continue anyway - the frame sending will still work
         }
 
         // Start capture task
@@ -867,7 +817,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         {
             try
             {
-                await _screenShareTask;
+                await _screenShareTask.ConfigureAwait(false);
             }
             catch (OperationCanceledException) { }
         }
@@ -881,7 +831,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         {
             try
             {
-                await _connection.InvokeAsync("StopScreenShare");
+                await _connection.SendAsync("StopScreenShare").ConfigureAwait(false);
             }
             catch { }
         }
@@ -889,10 +839,15 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
     private async Task CaptureScreenLoop(CancellationToken cancellationToken)
     {
-        const int targetFps = 60;
+        // Use reasonable defaults for SignalR streaming
+        // 30 FPS is more practical for SignalR than 60
+        const int targetFps = 30;
         const int frameDelayMs = 1000 / targetFps;
-        const int targetWidth = 1920;
-        const int targetHeight = 1080;
+        const int targetWidth = 1280;
+        const int targetHeight = 720;
+
+        // Track failed sends to implement backoff
+        int consecutiveFailures = 0;
 
         while (!cancellationToken.IsCancellationRequested && _connection != null && IsConnected)
         {
@@ -903,23 +858,37 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                 // Capture screen using GDI+ (cross-compatible approach)
                 var frameData = CaptureScreen(targetWidth, targetHeight);
 
-                if (frameData != null && frameData.Length > 0)
+                if (frameData != null && frameData.Length > 0 && _connection != null && IsConnected)
                 {
-                    // Send frame in chunks if needed (SignalR has message size limits)
-                    const int chunkSize = 64 * 1024; // 64KB chunks
+                    // SignalR default max message size is 32KB, we'll target smaller frames
+                    const int maxFrameSize = 64 * 1024; // 64KB max
 
-                    if (frameData.Length <= chunkSize)
+                    byte[] dataToSend = frameData;
+
+                    // If frame is too large, compress more
+                    if (frameData.Length > maxFrameSize)
                     {
-                        await _connection.InvokeAsync("SendScreenFrame", frameData, targetWidth, targetHeight);
+                        dataToSend = CompressFrame(frameData, targetWidth, targetHeight, 25);
                     }
-                    else
+
+                    // Only send if frame is reasonable size
+                    if (dataToSend.Length <= maxFrameSize * 2)
                     {
-                        // For large frames, compress more aggressively or skip
-                        // This is a simplified version - production would use proper streaming
-                        var compressedData = CompressFrame(frameData, targetWidth, targetHeight, 30); // Lower quality for large frames
-                        if (compressedData.Length <= chunkSize * 4) // Allow up to 256KB
+                        try
                         {
-                            await _connection.InvokeAsync("SendScreenFrame", compressedData, targetWidth, targetHeight);
+                            // Use SendAsync for fire-and-forget - don't wait for server response
+                            // This prevents frame capture from blocking on network
+                            await _connection.SendAsync("SendScreenFrame", dataToSend, targetWidth, targetHeight, cancellationToken).ConfigureAwait(false);
+                            consecutiveFailures = 0;
+                        }
+                        catch
+                        {
+                            consecutiveFailures++;
+                            // If we're failing repeatedly, back off
+                            if (consecutiveFailures > 5)
+                            {
+                                await Task.Delay(500, cancellationToken).ConfigureAwait(false);
+                            }
                         }
                     }
                 }
@@ -928,7 +897,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                 var elapsed = (DateTime.UtcNow - frameStart).TotalMilliseconds;
                 if (elapsed < frameDelayMs)
                 {
-                    await Task.Delay((int)(frameDelayMs - elapsed), cancellationToken);
+                    await Task.Delay((int)(frameDelayMs - elapsed), cancellationToken).ConfigureAwait(false);
                 }
             }
             catch (OperationCanceledException)
@@ -938,7 +907,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             catch
             {
                 // Continue on errors, but add small delay
-                await Task.Delay(100, cancellationToken);
+                await Task.Delay(100, cancellationToken).ConfigureAwait(false);
             }
         }
     }
@@ -986,7 +955,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                 finalBitmap = bitmap;
             }
 
-            // Compress to JPEG
+            // Compress to JPEG with lower quality for better network performance
             using var ms = new MemoryStream();
             var encoder = System.Drawing.Imaging.ImageCodecInfo.GetImageEncoders()
                 .FirstOrDefault(e => e.MimeType == "image/jpeg");
@@ -994,8 +963,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             if (encoder != null)
             {
                 var encoderParams = new System.Drawing.Imaging.EncoderParameters(1);
+                // Use 35% quality - good balance between size and visual quality for screen sharing
                 encoderParams.Param[0] = new System.Drawing.Imaging.EncoderParameter(
-                    System.Drawing.Imaging.Encoder.Quality, 50L); // 50% quality for balance
+                    System.Drawing.Imaging.Encoder.Quality, 35L);
 
                 finalBitmap.Save(ms, encoder, encoderParams);
             }

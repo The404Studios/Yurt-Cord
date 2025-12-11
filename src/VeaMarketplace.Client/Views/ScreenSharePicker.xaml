@@ -69,17 +69,27 @@
                                         Margin="0,0,12,12" Padding="8" Cursor="Hand"
                                         BorderThickness="2" BorderBrush="Transparent"
                                         MouseLeftButtonDown="Display_Click">
-                                    <StackPanel Width="180">
-                                        <!-- Preview (placeholder) -->
-                                        <Border Background="#36393F" CornerRadius="4" Height="100" Margin="0,0,0,8">
+                                    <StackPanel Width="200">
+                                        <!-- Live Preview -->
+                                        <Border Background="#36393F" CornerRadius="4" Height="112" Margin="0,0,0,8"
+                                                ClipToBounds="True">
                                             <Grid>
+                                                <!-- Actual screen preview image -->
+                                                <Image Source="{Binding PreviewImageSource}" Stretch="Uniform"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                <!-- Fallback icon when no preview -->
                                                 <TextBlock Text="🖥️" FontSize="32"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           Visibility="{Binding HasNoPreview, Converter={StaticResource BoolToVis}}"/>
+                                                <!-- Primary badge -->
                                                 <Border Background="#5865F2" CornerRadius="2" Padding="4,2"
                                                         HorizontalAlignment="Right" VerticalAlignment="Top" Margin="4"
                                                         Visibility="{Binding IsPrimary, Converter={StaticResource BoolToVis}}">
                                                     <TextBlock Text="Primary" FontSize="10" Foreground="White"/>
                                                 </Border>
+                                                <!-- Selection indicator -->
+                                                <Border x:Name="SelectionOverlay" Background="#335865F2"
+                                                        Visibility="Collapsed"/>
                                             </Grid>
                                         </Border>
 
@@ -94,6 +104,7 @@
                                 <DataTemplate.Triggers>
                                     <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                         <Setter TargetName="DisplayBorder" Property="BorderBrush" Value="#5865F2"/>
+                                        <Setter TargetName="SelectionOverlay" Property="Visibility" Value="Visible"/>
                                     </DataTrigger>
                                 </DataTemplate.Triggers>
                             </DataTemplate>
