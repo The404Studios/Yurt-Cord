@@ -1,4 +1,4 @@
-<![CDATA[<UserControl x:Class="VeaMarketplace.Client.Views.ProductReviewsView"
+<UserControl x:Class="VeaMarketplace.Client.Views.ProductReviewsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -237,4 +237,3 @@
                 HorizontalAlignment="Center" Margin="20" Padding="30,12"/>
     </Grid>
 </UserControl>
-]]>
