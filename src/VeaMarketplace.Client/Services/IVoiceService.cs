@@ -138,13 +138,10 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     private bool _isPushToTalkActive;
     private Key _pushToTalkKey = Key.V;
 
-    // Audio quality settings - FIXED for smoother audio
+    // Audio quality settings
     private const int SampleRate = 48000;
     private const int BitsPerSample = 16;
     private const int Channels = 1;
-    private const int CaptureBufferMs = 40; // Larger capture buffer (was 20)
-    private const int PlaybackLatencyMs = 150; // Higher latency for smoother playback
-    private const int JitterBufferMs = 100; // Jitter buffer to handle network variation
 
     // Screen sharing
     private bool _isScreenSharing;
@@ -472,42 +469,38 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     {
         try
         {
-            // Configure audio capture with larger buffer for stability
+            // Configure audio capture with moderate buffer for stability
             _waveIn = new WaveInEvent
             {
                 DeviceNumber = _inputDeviceNumber,
                 WaveFormat = new WaveFormat(SampleRate, BitsPerSample, Channels),
-                BufferMilliseconds = CaptureBufferMs, // Larger buffer (40ms) for more stable capture
-                NumberOfBuffers = 3 // Multiple buffers to reduce underruns
+                BufferMilliseconds = 20, // Standard buffer size
+                NumberOfBuffers = 3
             };
 
             _waveIn.DataAvailable += OnAudioDataAvailable;
             _waveIn.StartRecording();
 
-            // Setup playback with jitter buffer for network variation
+            // Setup playback buffer - keep it simple for reliable output
             _bufferedWaveProvider = new BufferedWaveProvider(new WaveFormat(SampleRate, BitsPerSample, Channels))
             {
                 DiscardOnBufferOverflow = true,
-                BufferDuration = TimeSpan.FromMilliseconds(500), // Larger buffer capacity
-                ReadFully = false // Don't wait for full buffer - reduces latency
+                BufferDuration = TimeSpan.FromSeconds(2) // Large capacity to prevent underruns
             };
 
-            // Pre-fill buffer with silence to create jitter buffer
-            var silenceBytes = new byte[SampleRate * (BitsPerSample / 8) * Channels * JitterBufferMs / 1000];
-            _bufferedWaveProvider.AddSamples(silenceBytes, 0, silenceBytes.Length);
-
+            // Initialize output device
             _waveOut = new WaveOutEvent
             {
                 DeviceNumber = _outputDeviceNumber,
-                DesiredLatency = PlaybackLatencyMs, // Higher latency for smoother playback
-                NumberOfBuffers = 3 // Multiple buffers to reduce clicks
+                DesiredLatency = 100, // Reasonable latency for voice chat
+                NumberOfBuffers = 2
             };
             _waveOut.Init(_bufferedWaveProvider);
             _waveOut.Play();
         }
-        catch
+        catch (Exception ex)
         {
-            // Audio device not available
+            System.Diagnostics.Debug.WriteLine($"Audio device error: {ex.Message}");
         }
     }
 
