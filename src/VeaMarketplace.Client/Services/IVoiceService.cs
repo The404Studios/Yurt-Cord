@@ -167,6 +167,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     private const int OpusBitrate = 24000; // 24kbps - good for voice
     private const int OpusFrameSize = 960; // 20ms at 48kHz (48000 * 0.020 = 960 samples)
 
+    // Mic boost - amplify input audio before sending
+    private const float MicGain = 2.5f; // 2.5x boost for quiet mics
+
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
     public bool IsInVoiceChannel { get; private set; }
     public bool IsMuted { get; set; }
@@ -885,9 +888,18 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         // The background AudioSendLoop will handle the actual network transmission
         if (_isSpeaking && !IsMuted && e.BytesRecorded > 0)
         {
-            // Copy the audio buffer (must copy since original buffer will be reused)
+            // Copy and apply mic gain boost
             var audioData = new byte[e.BytesRecorded];
-            Buffer.BlockCopy(e.Buffer, 0, audioData, 0, e.BytesRecorded);
+            for (int i = 0; i < e.BytesRecorded; i += 2)
+            {
+                var sample = BitConverter.ToInt16(e.Buffer, i);
+                // Apply gain with clipping protection
+                var boosted = (int)(sample * MicGain);
+                boosted = Math.Clamp(boosted, short.MinValue, short.MaxValue);
+                var bytes = BitConverter.GetBytes((short)boosted);
+                audioData[i] = bytes[0];
+                audioData[i + 1] = bytes[1];
+            }
 
             // Add to send queue - background thread will send it
             // Limit queue size to prevent memory buildup if network is slow
@@ -1041,35 +1053,58 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     }
 
     /// <summary>
-    /// Simple screen capture and send loop at 15 FPS.
+    /// Screen capture and send loop at 20 FPS.
     /// Uses Task.Delay for timing - no SpinWait to avoid CPU contention with audio.
     /// </summary>
     private async Task ScreenShareLoop(CancellationToken cancellationToken)
     {
-        const int targetFps = 15; // Lower FPS to reduce CPU load
+        const int targetFps = 20; // 20 FPS - good balance of smooth and CPU
         const int frameIntervalMs = 1000 / targetFps;
         const int targetWidth = 1280;
         const int targetHeight = 720;
         const int maxFrameSize = 64 * 1024;
+        int consecutiveErrors = 0;
 
-        while (!cancellationToken.IsCancellationRequested && _connection != null && IsConnected)
+        while (!cancellationToken.IsCancellationRequested && _isScreenSharing)
         {
             var frameStart = DateTime.UtcNow;
 
             try
             {
+                // Check connection before capturing
+                if (_connection == null || !IsConnected)
+                {
+                    await Task.Delay(100, cancellationToken).ConfigureAwait(false);
+                    continue;
+                }
+
                 var frameData = CaptureScreen(targetWidth, targetHeight);
 
                 if (frameData != null && frameData.Length > 0)
                 {
+                    // Compress if needed
                     if (frameData.Length > maxFrameSize)
                     {
                         frameData = CompressFrame(frameData, targetWidth, targetHeight, 25);
                     }
 
-                    if (frameData.Length <= maxFrameSize * 2 && _connection != null && IsConnected)
+                    // Send frame if size is reasonable
+                    if (frameData.Length <= maxFrameSize * 2)
                     {
-                        await _connection.SendAsync("SendScreenFrame", frameData, targetWidth, targetHeight, cancellationToken).ConfigureAwait(false);
+                        try
+                        {
+                            await _connection.SendAsync("SendScreenFrame", frameData, targetWidth, targetHeight, cancellationToken).ConfigureAwait(false);
+                            consecutiveErrors = 0;
+                        }
+                        catch (Exception)
+                        {
+                            consecutiveErrors++;
+                            // If too many errors, wait a bit longer
+                            if (consecutiveErrors > 3)
+                            {
+                                await Task.Delay(200, cancellationToken).ConfigureAwait(false);
+                            }
+                        }
                     }
                 }
             }
@@ -1079,10 +1114,15 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             }
             catch
             {
-                // Ignore errors, continue
+                consecutiveErrors++;
+                if (consecutiveErrors > 5)
+                {
+                    await Task.Delay(500, cancellationToken).ConfigureAwait(false);
+                    consecutiveErrors = 0;
+                }
             }
 
-            // Wait for next frame - use simple delay, no SpinWait
+            // Wait for next frame
             var elapsed = (DateTime.UtcNow - frameStart).TotalMilliseconds;
             var delay = Math.Max(1, frameIntervalMs - (int)elapsed);
             await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
@@ -1140,9 +1180,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             if (encoder != null)
             {
                 var encoderParams = new System.Drawing.Imaging.EncoderParameters(1);
-                // Use 35% quality - good balance between size and visual quality for screen sharing
+                // Use 50% quality for clearer screen sharing
                 encoderParams.Param[0] = new System.Drawing.Imaging.EncoderParameter(
-                    System.Drawing.Imaging.Encoder.Quality, 35L);
+                    System.Drawing.Imaging.Encoder.Quality, 50L);
 
                 finalBitmap.Save(ms, encoder, encoderParams);
             }
