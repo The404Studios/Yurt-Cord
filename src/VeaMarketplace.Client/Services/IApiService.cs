@@ -51,6 +51,23 @@ public interface IApiService
     Task<ProductReviewDto> CreateReviewAsync(CreateReviewRequest request);
     Task<bool> MarkReviewHelpfulAsync(string reviewId);
     Task<bool> ReportReviewAsync(string reviewId, string reason);
+
+    // Moderation
+    Task<ModerationDashboardDto> GetModerationDashboardAsync();
+    Task<List<UserBanDto>> GetBannedUsersAsync();
+    Task<List<MessageReportDto>> GetPendingReportsAsync();
+    Task<bool> BanUserAsync(BanUserRequest request);
+    Task<bool> UnbanUserAsync(string oderId, string reason);
+    Task<bool> WarnUserAsync(WarnUserRequest request);
+    Task<bool> MuteUserAsync(MuteUserRequest request);
+    Task<bool> UnmuteUserAsync(string oderId, string reason);
+    Task<bool> DismissReportAsync(string reportId);
+    Task<bool> ResolveReportAsync(string reportId, string resolution);
+    Task<bool> DeleteMessageAsync(string messageId, string reason);
+
+    // Media Upload
+    Task<string> UploadImageAsync(string filePath);
+    Task<List<string>> UploadImagesAsync(IEnumerable<string> filePaths);
 }
 
 public class ApiService : IApiService
@@ -308,4 +325,122 @@ public class ApiService : IApiService
         var response = await _httpClient.PostAsJsonAsync($"/api/reviews/{reviewId}/report", new { Reason = reason }).ConfigureAwait(false);
         return response.IsSuccessStatusCode;
     }
+
+    // Moderation
+    public async Task<ModerationDashboardDto> GetModerationDashboardAsync()
+    {
+        var response = await _httpClient.GetAsync("/api/moderation/dashboard").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return new ModerationDashboardDto();
+        return await response.Content.ReadFromJsonAsync<ModerationDashboardDto>().ConfigureAwait(false) ?? new ModerationDashboardDto();
+    }
+
+    public async Task<List<UserBanDto>> GetBannedUsersAsync()
+    {
+        var response = await _httpClient.GetAsync("/api/moderation/bans").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return [];
+        return await response.Content.ReadFromJsonAsync<List<UserBanDto>>().ConfigureAwait(false) ?? [];
+    }
+
+    public async Task<List<MessageReportDto>> GetPendingReportsAsync()
+    {
+        var response = await _httpClient.GetAsync("/api/moderation/reports?status=pending").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return [];
+        return await response.Content.ReadFromJsonAsync<List<MessageReportDto>>().ConfigureAwait(false) ?? [];
+    }
+
+    public async Task<bool> BanUserAsync(BanUserRequest request)
+    {
+        var response = await _httpClient.PostAsJsonAsync("/api/moderation/bans", request).ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> UnbanUserAsync(string oderId, string reason)
+    {
+        var response = await _httpClient.PostAsJsonAsync($"/api/moderation/bans/{oderId}/unban", new { Reason = reason }).ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> WarnUserAsync(WarnUserRequest request)
+    {
+        var response = await _httpClient.PostAsJsonAsync("/api/moderation/warnings", request).ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> MuteUserAsync(MuteUserRequest request)
+    {
+        var response = await _httpClient.PostAsJsonAsync("/api/moderation/mutes", request).ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> UnmuteUserAsync(string oderId, string reason)
+    {
+        var response = await _httpClient.PostAsJsonAsync($"/api/moderation/mutes/{oderId}/unmute", new { Reason = reason }).ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> DismissReportAsync(string reportId)
+    {
+        var response = await _httpClient.PostAsync($"/api/moderation/reports/{reportId}/dismiss", null).ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> ResolveReportAsync(string reportId, string resolution)
+    {
+        var response = await _httpClient.PostAsJsonAsync($"/api/moderation/reports/{reportId}/resolve", new { Resolution = resolution }).ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> DeleteMessageAsync(string messageId, string reason)
+    {
+        var response = await _httpClient.PostAsJsonAsync($"/api/moderation/messages/{messageId}/delete", new { Reason = reason }).ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    // Media Upload
+    public async Task<string> UploadImageAsync(string filePath)
+    {
+        using var form = new MultipartFormDataContent();
+        using var fileStream = System.IO.File.OpenRead(filePath);
+        using var streamContent = new StreamContent(fileStream);
+        streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(GetMimeType(filePath));
+        form.Add(streamContent, "file", System.IO.Path.GetFileName(filePath));
+
+        var response = await _httpClient.PostAsync("/api/media/upload", form).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return string.Empty;
+
+        var result = await response.Content.ReadFromJsonAsync<MediaUploadResponse>().ConfigureAwait(false);
+        return result?.Url ?? string.Empty;
+    }
+
+    public async Task<List<string>> UploadImagesAsync(IEnumerable<string> filePaths)
+    {
+        var urls = new List<string>();
+        foreach (var filePath in filePaths)
+        {
+            var url = await UploadImageAsync(filePath).ConfigureAwait(false);
+            if (!string.IsNullOrEmpty(url))
+                urls.Add(url);
+        }
+        return urls;
+    }
+
+    private static string GetMimeType(string filePath)
+    {
+        var extension = System.IO.Path.GetExtension(filePath).ToLowerInvariant();
+        return extension switch
+        {
+            ".png" => "image/png",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".gif" => "image/gif",
+            ".webp" => "image/webp",
+            _ => "application/octet-stream"
+        };
+    }
+}
+
+public class MediaUploadResponse
+{
+    public string Url { get; set; } = string.Empty;
+    public string FileName { get; set; } = string.Empty;
+    public long Size { get; set; }
 }

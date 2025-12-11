@@ -66,26 +66,42 @@ public partial class WriteReviewViewModel : BaseViewModel
     {
         try
         {
-            // TODO: Open file picker and upload images
-            // var dialog = new Microsoft.Win32.OpenFileDialog
-            // {
-            //     Multiselect = true,
-            //     Filter = "Image files (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg"
-            // };
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Multiselect = true,
+                Filter = "Image files (*.png;*.jpg;*.jpeg;*.gif;*.webp)|*.png;*.jpg;*.jpeg;*.gif;*.webp",
+                Title = "Select images for your review"
+            };
 
-            // if (dialog.ShowDialog() == true)
-            // {
-            //     foreach (var file in dialog.FileNames)
-            //     {
-            //         var url = await _apiService.UploadImageAsync(file);
-            //         UploadedImageUrls.Add(url);
-            //     }
-            // }
+            if (dialog.ShowDialog() == true)
+            {
+                IsLoading = true;
+                var newUrls = new List<string>(UploadedImageUrls);
+
+                foreach (var file in dialog.FileNames)
+                {
+                    var url = await _apiService.UploadImageAsync(file);
+                    if (!string.IsNullOrEmpty(url))
+                        newUrls.Add(url);
+                }
+
+                UploadedImageUrls = newUrls;
+                IsLoading = false;
+            }
         }
         catch (Exception ex)
         {
+            IsLoading = false;
             ErrorMessage = $"Failed to upload images: {ex.Message}";
         }
+    }
+
+    [RelayCommand]
+    private void RemoveImage(string imageUrl)
+    {
+        var newUrls = new List<string>(UploadedImageUrls);
+        newUrls.Remove(imageUrl);
+        UploadedImageUrls = newUrls;
     }
 
     [RelayCommand]
@@ -96,6 +112,7 @@ public partial class WriteReviewViewModel : BaseViewModel
         try
         {
             IsLoading = true;
+            ErrorMessage = null;
 
             var request = new CreateReviewRequest
             {
@@ -106,22 +123,28 @@ public partial class WriteReviewViewModel : BaseViewModel
                 ImageUrls = UploadedImageUrls
             };
 
-            // TODO: Call API to submit review
-            // await _apiService.CreateReviewAsync(request);
+            var review = await _apiService.CreateReviewAsync(request);
 
-            // Close dialog on success
-            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            if (review != null && !string.IsNullOrEmpty(review.Id))
             {
-                if (System.Windows.Application.Current.MainWindow?.OwnedWindows.Count > 0)
+                // Close dialog on success
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
-                    var dialog = System.Windows.Application.Current.MainWindow.OwnedWindows[0] as Views.WriteReviewDialog;
-                    if (dialog != null)
+                    if (System.Windows.Application.Current.MainWindow?.OwnedWindows.Count > 0)
                     {
-                        dialog.DialogResult = true;
-                        dialog.Close();
+                        var dialog = System.Windows.Application.Current.MainWindow.OwnedWindows[0] as Views.WriteReviewDialog;
+                        if (dialog != null)
+                        {
+                            dialog.DialogResult = true;
+                            dialog.Close();
+                        }
                     }
-                }
-            });
+                });
+            }
+            else
+            {
+                ErrorMessage = "Failed to submit review. Please try again.";
+            }
         }
         catch (Exception ex)
         {
@@ -131,5 +154,22 @@ public partial class WriteReviewViewModel : BaseViewModel
         {
             IsLoading = false;
         }
+    }
+
+    [RelayCommand]
+    private void Cancel()
+    {
+        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+        {
+            if (System.Windows.Application.Current.MainWindow?.OwnedWindows.Count > 0)
+            {
+                var dialog = System.Windows.Application.Current.MainWindow.OwnedWindows[0] as Views.WriteReviewDialog;
+                if (dialog != null)
+                {
+                    dialog.DialogResult = false;
+                    dialog.Close();
+                }
+            }
+        });
     }
 }
