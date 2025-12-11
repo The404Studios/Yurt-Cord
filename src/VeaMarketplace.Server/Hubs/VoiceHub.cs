@@ -178,6 +178,42 @@ public class VoiceHub : Hub
         // Note: Actual ban persistence would require a database - this is just the immediate disconnect
     }
 
+    // Screen Sharing
+    private static readonly ConcurrentDictionary<string, bool> _screenSharers = new(); // connectionId -> isSharing
+
+    public async Task StartScreenShare()
+    {
+        if (_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
+        {
+            _screenSharers[Context.ConnectionId] = true;
+
+            // Notify all users in the channel
+            await Clients.OthersInGroup($"voice_{userState.ChannelId}")
+                .SendAsync("UserScreenShareChanged", Context.ConnectionId, true);
+        }
+    }
+
+    public async Task StopScreenShare()
+    {
+        _screenSharers.TryRemove(Context.ConnectionId, out _);
+
+        if (_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
+        {
+            await Clients.OthersInGroup($"voice_{userState.ChannelId}")
+                .SendAsync("UserScreenShareChanged", Context.ConnectionId, false);
+        }
+    }
+
+    public async Task SendScreenFrame(byte[] frameData, int width, int height)
+    {
+        if (_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
+        {
+            // Broadcast screen frame to all OTHER users in the channel
+            await Clients.OthersInGroup($"voice_{userState.ChannelId}")
+                .SendAsync("ReceiveScreenFrame", Context.ConnectionId, frameData, width, height);
+        }
+    }
+
     // WebRTC Signaling
     public async Task SendOffer(string targetConnectionId, string offer)
     {

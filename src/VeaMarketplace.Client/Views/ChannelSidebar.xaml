@@ -46,6 +46,13 @@
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator Style="{StaticResource MenuSeparator}"/>
+                <MenuItem Header="Watch Screen" Style="{StaticResource ModernMenuItem}"
+                          Click="VoiceWatchScreen_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🖥" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator Style="{StaticResource MenuSeparator}"/>
                 <MenuItem Header="Move To">
                     <MenuItem.Icon>
                         <TextBlock Text="↪" FontSize="14"/>
@@ -284,17 +291,26 @@
                                Foreground="{StaticResource TextMutedBrush}"/>
                 </StackPanel>
 
-                <!-- Disconnect Button -->
-                <Button Grid.Row="0" Grid.Column="1" Style="{StaticResource IconButton}"
-                        Width="28" Height="28" Click="DisconnectVoice_Click"
-                        ToolTip="Disconnect from Voice"
-                        Background="#ED4245" Margin="4,0,0,0">
-                    <TextBlock Text="📞" FontSize="14" RenderTransformOrigin="0.5,0.5">
-                        <TextBlock.RenderTransform>
-                            <RotateTransform Angle="135"/>
-                        </TextBlock.RenderTransform>
-                    </TextBlock>
-                </Button>
+                <!-- Voice Control Buttons -->
+                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
+                    <!-- Screen Share Button -->
+                    <Button x:Name="ScreenShareButton" Style="{StaticResource IconButton}"
+                            Width="28" Height="28" Click="ScreenShare_Click"
+                            ToolTip="Share Screen" Margin="0,0,4,0">
+                        <TextBlock x:Name="ScreenShareIcon" Text="🖥" FontSize="14"/>
+                    </Button>
+                    <!-- Disconnect Button -->
+                    <Button Style="{StaticResource IconButton}"
+                            Width="28" Height="28" Click="DisconnectVoice_Click"
+                            ToolTip="Disconnect from Voice"
+                            Background="#ED4245">
+                        <TextBlock Text="📞" FontSize="14" RenderTransformOrigin="0.5,0.5">
+                            <TextBlock.RenderTransform>
+                                <RotateTransform Angle="135"/>
+                            </TextBlock.RenderTransform>
+                        </TextBlock>
+                    </Button>
+                </StackPanel>
 
                 <!-- Audio Level Indicator -->
                 <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,6,0,0">
