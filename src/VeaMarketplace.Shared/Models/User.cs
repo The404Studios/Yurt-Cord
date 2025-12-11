@@ -29,12 +29,24 @@ public class User
     public string? BanReason { get; set; }
     public List<string> Badges { get; set; } = new();
     public List<string> CustomRoleIds { get; set; } = new();
+    public int WarningCount { get; set; } = 0;
+    public bool IsMuted { get; set; } = false;
+    public DateTime? MutedUntil { get; set; }
+    public int MessagesCount { get; set; } = 0;
+    public int VoiceMinutes { get; set; } = 0;
 
     // Social Links
     public string? DiscordUsername { get; set; }
     public string? TwitterHandle { get; set; }
     public string? TelegramUsername { get; set; }
     public string? WebsiteUrl { get; set; }
+
+    // Enhanced profile features
+    public string? CustomEmoji { get; set; }
+    public string? ActivityStatus { get; set; }
+    public DateTime? ActivityStatusExpiresAt { get; set; }
+    public string? ProfileThemeId { get; set; }
+    public List<string> FavoriteProductIds { get; set; } = new();
 }
 
 public enum ProfileVisibility

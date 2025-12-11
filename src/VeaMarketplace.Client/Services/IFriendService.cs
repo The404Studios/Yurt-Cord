@@ -85,7 +85,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<List<FriendDto>>("FriendsList", friends =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 Friends.Clear();
                 foreach (var friend in friends)
@@ -95,7 +95,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<List<FriendRequestDto>>("PendingRequests", requests =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 PendingRequests.Clear();
                 foreach (var request in requests)
@@ -105,7 +105,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<List<FriendRequestDto>>("OutgoingRequests", requests =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 OutgoingRequests.Clear();
                 foreach (var request in requests)
@@ -115,7 +115,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<List<ConversationDto>>("Conversations", conversations =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 Conversations.Clear();
                 foreach (var conv in conversations)
@@ -125,7 +125,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<string, List<DirectMessageDto>>("DMHistory", (partnerId, messages) =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 CurrentDMPartnerId = partnerId;
                 CurrentDMHistory.Clear();
@@ -136,7 +136,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<DirectMessageDto>("DirectMessageReceived", message =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 // If we're in a conversation with this person, add the message
                 if (CurrentDMPartnerId == message.SenderId || CurrentDMPartnerId == message.RecipientId)
@@ -149,7 +149,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<string, string>("FriendOnline", (userId, username) =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 var friend = Friends.FirstOrDefault(f => f.UserId == userId);
                 if (friend != null)
@@ -162,7 +162,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<string>("FriendOffline", userId =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 var friend = Friends.FirstOrDefault(f => f.UserId == userId);
                 if (friend != null)
@@ -195,7 +195,7 @@ public class FriendService : IFriendService, IAsyncDisposable
         // User search handlers
         _connection.On<UserSearchResultDto?>("UserSearchResult", result =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 LastSearchResult = result;
                 OnUserSearchResult?.Invoke(result);
@@ -204,7 +204,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<List<UserSearchResultDto>>("UserSearchResults", results =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 SearchResults.Clear();
                 foreach (var result in results)
@@ -216,7 +216,7 @@ public class FriendService : IFriendService, IAsyncDisposable
         // Friend profile update handler
         _connection.On<FriendDto>("FriendProfileUpdated", friend =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 var existing = Friends.FirstOrDefault(f => f.UserId == friend.UserId);
                 if (existing != null)

@@ -116,7 +116,7 @@ public class ScreenShareViewerService : IScreenShareViewerService
         try
         {
             // Convert to BitmapImage on UI thread
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 try
                 {
@@ -164,7 +164,7 @@ public class ScreenShareViewerService : IScreenShareViewerService
 
         _screenShares[connectionId] = share;
 
-        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
         {
             var existing = ActiveScreenShares.FirstOrDefault(s => s.SharerConnectionId == connectionId);
             if (existing != null)
@@ -191,7 +191,7 @@ public class ScreenShareViewerService : IScreenShareViewerService
             _viewingConnectionId = null;
         }
 
-        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
         {
             var existing = ActiveScreenShares.FirstOrDefault(s => s.SharerConnectionId == connectionId);
             if (existing != null)
@@ -215,7 +215,7 @@ public class ScreenShareViewerService : IScreenShareViewerService
         _latestFrames.Clear();
         _screenShares.Clear();
 
-        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
         {
             ActiveScreenShares.Clear();
         });

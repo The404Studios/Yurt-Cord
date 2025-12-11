@@ -14,6 +14,15 @@ public class ChatMessage
     public string Channel { get; set; } = "general";
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     public bool IsEdited { get; set; } = false;
+    public DateTime? EditedAt { get; set; }
     public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
     public List<string> Mentions { get; set; } = [];
+    public List<string> AttachmentIds { get; set; } = []; // References to MessageAttachment
+    public Dictionary<string, int> ReactionCounts { get; set; } = new(); // emoji -> count
+    public bool IsPinned { get; set; } = false;
+    public string? ReplyToMessageId { get; set; }
+    public string? EmbedUrl { get; set; } // For link previews
+    public bool ContainsCodeBlock { get; set; } = false;
+    public bool IsSystemMessage { get; set; } = false;
 }

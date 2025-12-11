@@ -61,7 +61,7 @@ public partial class ChatViewModel : BaseViewModel
     {
         _chatService.OnMessageReceived += message =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 if (message.Channel == CurrentChannel)
                 {
@@ -72,7 +72,7 @@ public partial class ChatViewModel : BaseViewModel
 
         _chatService.OnUserJoined += user =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 if (!OnlineUsers.Any(u => u.Id == user.Id))
                     OnlineUsers.Add(user);
@@ -81,7 +81,7 @@ public partial class ChatViewModel : BaseViewModel
 
         _chatService.OnUserLeft += user =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 var existingUser = OnlineUsers.FirstOrDefault(u => u.Id == user.Id);
                 if (existingUser != null)
@@ -91,7 +91,7 @@ public partial class ChatViewModel : BaseViewModel
 
         _chatService.OnOnlineUsersReceived += users =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 OnlineUsers.Clear();
                 foreach (var user in users)
@@ -101,7 +101,7 @@ public partial class ChatViewModel : BaseViewModel
 
         _chatService.OnChatHistoryReceived += (channel, messages) =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 if (channel == CurrentChannel)
                 {
@@ -114,7 +114,7 @@ public partial class ChatViewModel : BaseViewModel
 
         _chatService.OnChannelListReceived += channels =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 Channels.Clear();
                 foreach (var channel in channels)
@@ -126,7 +126,7 @@ public partial class ChatViewModel : BaseViewModel
         {
             if (channel == CurrentChannel && username != _apiService.CurrentUser?.Username)
             {
-                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
                 {
                     TypingUser = username;
                 });
@@ -134,7 +134,7 @@ public partial class ChatViewModel : BaseViewModel
                 // Clear typing indicator after 3 seconds
                 Task.Delay(3000).ContinueWith(_ =>
                 {
-                    System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                    System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
                     {
                         if (TypingUser == username)
                             TypingUser = null;
@@ -145,7 +145,7 @@ public partial class ChatViewModel : BaseViewModel
 
         _chatService.OnMessageDeleted += messageId =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 var message = Messages.FirstOrDefault(m => m.Id == messageId);
                 if (message != null)
@@ -156,7 +156,7 @@ public partial class ChatViewModel : BaseViewModel
         // Voice events
         _voiceService.OnUserJoinedVoice += user =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 if (!VoiceUsers.Any(u => u.ConnectionId == user.ConnectionId))
                     VoiceUsers.Add(user);
@@ -165,7 +165,7 @@ public partial class ChatViewModel : BaseViewModel
 
         _voiceService.OnUserLeftVoice += user =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 var existingUser = VoiceUsers.FirstOrDefault(u => u.ConnectionId == user.ConnectionId);
                 if (existingUser != null)
@@ -175,7 +175,7 @@ public partial class ChatViewModel : BaseViewModel
 
         _voiceService.OnVoiceChannelUsers += users =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 VoiceUsers.Clear();
                 foreach (var user in users)
@@ -185,7 +185,7 @@ public partial class ChatViewModel : BaseViewModel
 
         _voiceService.OnUserSpeaking += (connectionId, username, isSpeaking, audioLevel) =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 var user = VoiceUsers.FirstOrDefault(u => u.ConnectionId == connectionId);
                 if (user != null)
