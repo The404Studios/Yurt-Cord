@@ -23,9 +23,12 @@ public interface IApiService
     Task<List<ProductDto>> GetMyProductsAsync();
 
     Task<UserDto?> GetUserAsync(string userId);
+    Task<UserDto?> GetUserProfileAsync(string userId);
     Task<UserDto?> UpdateProfileAsync(UpdateProfileRequest request);
     Task<List<CustomRoleDto>> GetUserRolesAsync(string userId);
     Task<List<CustomRoleDto>> GetAllRolesAsync();
+    Task<List<UserSearchResultDto>> SearchUsersAsync(string query);
+    Task<UserSearchResultDto?> LookupUserAsync(string query);
 }
 
 public class ApiService : IApiService
@@ -144,6 +147,27 @@ public class ApiService : IApiService
         var response = await _httpClient.GetAsync($"/api/users/{userId}").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return null;
         return await response.Content.ReadFromJsonAsync<UserDto>().ConfigureAwait(false);
+    }
+
+    public async Task<UserDto?> GetUserProfileAsync(string userId)
+    {
+        var response = await _httpClient.GetAsync($"/api/users/{userId}/profile").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadFromJsonAsync<UserDto>().ConfigureAwait(false);
+    }
+
+    public async Task<List<UserSearchResultDto>> SearchUsersAsync(string query)
+    {
+        var response = await _httpClient.GetAsync($"/api/users/search?query={Uri.EscapeDataString(query)}").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return [];
+        return await response.Content.ReadFromJsonAsync<List<UserSearchResultDto>>().ConfigureAwait(false) ?? [];
+    }
+
+    public async Task<UserSearchResultDto?> LookupUserAsync(string query)
+    {
+        var response = await _httpClient.GetAsync($"/api/users/lookup?query={Uri.EscapeDataString(query)}").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadFromJsonAsync<UserSearchResultDto>().ConfigureAwait(false);
     }
 
     public async Task<UserDto?> UpdateProfileAsync(UpdateProfileRequest request)

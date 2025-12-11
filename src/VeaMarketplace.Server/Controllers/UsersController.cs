@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using VeaMarketplace.Server.Data;
 using VeaMarketplace.Server.Services;
 using VeaMarketplace.Shared.DTOs;
+using VeaMarketplace.Shared.Models;
 
 namespace VeaMarketplace.Server.Controllers;
 
@@ -11,11 +12,13 @@ public class UsersController : ControllerBase
 {
     private readonly DatabaseService _db;
     private readonly AuthService _authService;
+    private readonly FriendService _friendService;
 
-    public UsersController(DatabaseService db, AuthService authService)
+    public UsersController(DatabaseService db, AuthService authService, FriendService friendService)
     {
         _db = db;
         _authService = authService;
+        _friendService = friendService;
     }
 
     [HttpGet("{id}")]
@@ -26,6 +29,111 @@ public class UsersController : ControllerBase
             return NotFound();
 
         return Ok(_authService.MapToDto(user));
+    }
+
+    // Public profile endpoint with visibility enforcement
+    [HttpGet("{id}/profile")]
+    public ActionResult<UserDto> GetPublicProfile(
+        string id,
+        [FromHeader(Name = "Authorization")] string? authorization)
+    {
+        var targetUser = _db.Users.FindById(id);
+        if (targetUser == null)
+            return NotFound();
+
+        var requestingUser = GetUserFromToken(authorization);
+        var requesterId = requestingUser?.Id;
+
+        // Check visibility
+        if (targetUser.ProfileVisibility == ProfileVisibility.Private && requesterId != id)
+        {
+            return Forbid("This profile is private");
+        }
+
+        if (targetUser.ProfileVisibility == ProfileVisibility.FriendsOnly && requesterId != id)
+        {
+            if (requesterId == null || !_friendService.AreFriends(requesterId, id))
+            {
+                // Return limited profile
+                return Ok(new UserDto
+                {
+                    Id = targetUser.Id,
+                    Username = targetUser.Username,
+                    DisplayName = targetUser.DisplayName,
+                    AvatarUrl = targetUser.AvatarUrl,
+                    Role = targetUser.Role,
+                    Rank = targetUser.Rank,
+                    IsOnline = targetUser.IsOnline,
+                    CreatedAt = targetUser.CreatedAt
+                });
+            }
+        }
+
+        return Ok(_authService.MapToDto(targetUser));
+    }
+
+    // Search users by ID or username
+    [HttpGet("search")]
+    public ActionResult<List<UserSearchResultDto>> SearchUsers(
+        [FromQuery] string query,
+        [FromHeader(Name = "Authorization")] string? authorization)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            return BadRequest("Query is required");
+
+        var requestingUser = GetUserFromToken(authorization);
+        var requesterId = requestingUser?.Id;
+
+        var users = _friendService.SearchUsers(query, 20);
+        var results = users
+            .Where(u => requesterId == null || u.Id != requesterId)
+            .Select(u => new UserSearchResultDto
+            {
+                UserId = u.Id,
+                Username = u.Username,
+                DisplayName = u.DisplayName,
+                AvatarUrl = u.AvatarUrl,
+                Bio = u.ProfileVisibility == ProfileVisibility.Public ? u.Bio : string.Empty,
+                StatusMessage = u.ProfileVisibility == ProfileVisibility.Public ? u.StatusMessage : string.Empty,
+                Role = u.Role,
+                Rank = u.Rank,
+                IsOnline = u.IsOnline,
+                IsFriend = requesterId != null && _friendService.AreFriends(requesterId, u.Id)
+            })
+            .ToList();
+
+        return Ok(results);
+    }
+
+    // Lookup user by exact ID or username
+    [HttpGet("lookup")]
+    public ActionResult<UserSearchResultDto?> LookupUser(
+        [FromQuery] string query,
+        [FromHeader(Name = "Authorization")] string? authorization)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            return BadRequest("Query is required");
+
+        var requestingUser = GetUserFromToken(authorization);
+        var requesterId = requestingUser?.Id;
+
+        var user = _friendService.SearchUserByIdOrUsername(query);
+        if (user == null || (requesterId != null && user.Id == requesterId))
+            return Ok((UserSearchResultDto?)null);
+
+        return Ok(new UserSearchResultDto
+        {
+            UserId = user.Id,
+            Username = user.Username,
+            DisplayName = user.DisplayName,
+            AvatarUrl = user.AvatarUrl,
+            Bio = user.ProfileVisibility == ProfileVisibility.Public ? user.Bio : string.Empty,
+            StatusMessage = user.ProfileVisibility == ProfileVisibility.Public ? user.StatusMessage : string.Empty,
+            Role = user.Role,
+            Rank = user.Rank,
+            IsOnline = user.IsOnline,
+            IsFriend = requesterId != null && _friendService.AreFriends(requesterId, user.Id)
+        });
     }
 
     [HttpGet("{id}/products")]

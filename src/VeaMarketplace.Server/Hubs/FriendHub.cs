@@ -60,14 +60,28 @@ public class FriendHub : Hub
         await Clients.Caller.SendAsync("AuthenticationSuccess");
     }
 
-    // Friend Requests
+    // Friend Requests - by username
     public async Task SendFriendRequest(string username)
     {
         if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
             return;
 
         var (success, message, friendship) = _friendService.SendFriendRequest(userId, username);
+        await HandleFriendRequestResult(userId, success, message, friendship);
+    }
 
+    // Friend Requests - by user ID
+    public async Task SendFriendRequestById(string targetUserId)
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        var (success, message, friendship) = _friendService.SendFriendRequestById(userId, targetUserId);
+        await HandleFriendRequestResult(userId, success, message, friendship);
+    }
+
+    private async Task HandleFriendRequestResult(string userId, bool success, string message, Friendship? friendship)
+    {
         if (success && friendship != null)
         {
             // Notify the requester
@@ -89,6 +103,65 @@ public class FriendHub : Hub
         {
             await Clients.Caller.SendAsync("FriendRequestError", message);
         }
+    }
+
+    // Search users by ID or username
+    public async Task SearchUser(string query)
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        var user = _friendService.SearchUserByIdOrUsername(query);
+        if (user != null && user.Id != userId)
+        {
+            // Check if already friends or pending
+            var isFriend = _friendService.AreFriends(userId, user.Id);
+            var result = new UserSearchResultDto
+            {
+                UserId = user.Id,
+                Username = user.Username,
+                DisplayName = user.DisplayName,
+                AvatarUrl = user.AvatarUrl,
+                Bio = user.Bio,
+                StatusMessage = user.StatusMessage,
+                Role = user.Role,
+                Rank = user.Rank,
+                IsOnline = user.IsOnline,
+                IsFriend = isFriend
+            };
+            await Clients.Caller.SendAsync("UserSearchResult", result);
+        }
+        else
+        {
+            await Clients.Caller.SendAsync("UserSearchResult", null);
+        }
+    }
+
+    // Search multiple users
+    public async Task SearchUsers(string query)
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        var users = _friendService.SearchUsers(query);
+        var results = users
+            .Where(u => u.Id != userId)
+            .Select(u => new UserSearchResultDto
+            {
+                UserId = u.Id,
+                Username = u.Username,
+                DisplayName = u.DisplayName,
+                AvatarUrl = u.AvatarUrl,
+                Bio = u.Bio,
+                StatusMessage = u.StatusMessage,
+                Role = u.Role,
+                Rank = u.Rank,
+                IsOnline = u.IsOnline,
+                IsFriend = _friendService.AreFriends(userId, u.Id)
+            })
+            .ToList();
+
+        await Clients.Caller.SendAsync("UserSearchResults", results);
     }
 
     public async Task RespondToFriendRequest(string requestId, bool accept)
