@@ -360,8 +360,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             _voiceUsers.TryRemove(user.ConnectionId, out _);
             _userVolumes.TryRemove(user.ConnectionId, out _);
             _mutedUsers.TryRemove(user.ConnectionId, out _);
-            // Clean up user's audio resources
-            _userAudioQueues.TryRemove(user.ConnectionId, out _);
+            // Clean up user's Opus decoder
             _userOpusDecoders.TryRemove(user.ConnectionId, out _);
             OnUserLeftVoice?.Invoke(user);
         });
