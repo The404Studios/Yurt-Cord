@@ -1,7 +1,7 @@
 using System.Timers;
 using System.Windows;
-using System.Windows.Controls;
 using VeaMarketplace.Client.Controls;
+using WpfPanel = System.Windows.Controls.Panel;
 
 namespace VeaMarketplace.Client.Services;
 
@@ -14,16 +14,16 @@ public interface IToastNotificationService
     void ShowFriendRequest(string fromUsername);
     void ShowMessage(string fromUsername, string preview);
     void ClearAll();
-    void SetContainer(Panel container);
+    void SetContainer(WpfPanel container);
 }
 
 public class ToastNotificationService : IToastNotificationService
 {
-    private Panel? _container;
+    private WpfPanel? _container;
     private readonly List<NotificationToast> _activeNotifications = new();
     private const int MaxNotifications = 5;
 
-    public void SetContainer(Panel container)
+    public void SetContainer(WpfPanel container)
     {
         _container = container;
     }

@@ -53,65 +53,68 @@
             <DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.4" Color="Black"/>
         </Border.Effect>
 
-        <Grid Margin="16">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-
-            <!-- Icon -->
-            <Border x:Name="IconBorder" Grid.Column="0"
-                    Width="36" Height="36"
-                    CornerRadius="18"
+        <Grid>
+            <!-- Accent Bar at Left -->
+            <Border x:Name="AccentBar"
+                    Width="4"
                     Background="{StaticResource AccentBrush}"
-                    Margin="0,0,12,0"
-                    VerticalAlignment="Center">
-                <TextBlock x:Name="IconText"
-                           Text="&#xE8BD;"
-                           FontFamily="Segoe MDL2 Assets"
-                           FontSize="18"
-                           Foreground="White"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"/>
-            </Border>
+                    CornerRadius="8,0,0,8"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Stretch"/>
 
-            <!-- Content -->
-            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                <TextBlock x:Name="TitleText"
-                           FontSize="14"
-                           FontWeight="SemiBold"
-                           Foreground="{StaticResource TextPrimaryBrush}"
-                           TextTrimming="CharacterEllipsis"/>
-                <TextBlock x:Name="MessageText"
-                           FontSize="12"
-                           Foreground="{StaticResource TextSecondaryBrush}"
-                           TextWrapping="Wrap"
-                           MaxHeight="40"
-                           Margin="0,4,0,0"/>
-            </StackPanel>
+            <!-- Content Grid -->
+            <Grid Margin="20,16,16,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-            <!-- Close Button -->
-            <Button x:Name="CloseButton" Grid.Column="2"
-                    Width="24" Height="24"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Cursor="Hand"
-                    VerticalAlignment="Top"
-                    Click="CloseButton_Click">
-                <TextBlock Text="&#xE711;"
-                           FontFamily="Segoe MDL2 Assets"
-                           FontSize="12"
-                           Foreground="{StaticResource TextMutedBrush}"/>
-            </Button>
+                <!-- Icon -->
+                <Border x:Name="IconBorder" Grid.Column="0"
+                        Width="36" Height="36"
+                        CornerRadius="18"
+                        Background="{StaticResource AccentBrush}"
+                        Margin="0,0,12,0"
+                        VerticalAlignment="Center">
+                    <TextBlock x:Name="IconText"
+                               Text="&#xE8BD;"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="18"
+                               Foreground="White"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"/>
+                </Border>
+
+                <!-- Content -->
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock x:Name="TitleText"
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimaryBrush}"
+                               TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="MessageText"
+                               FontSize="12"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               TextWrapping="Wrap"
+                               MaxHeight="40"
+                               Margin="0,4,0,0"/>
+                </StackPanel>
+
+                <!-- Close Button -->
+                <Button x:Name="CloseButton" Grid.Column="2"
+                        Width="24" Height="24"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        VerticalAlignment="Top"
+                        Click="CloseButton_Click">
+                    <TextBlock Text="&#xE711;"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="12"
+                               Foreground="{StaticResource TextMutedBrush}"/>
+                </Button>
+            </Grid>
         </Grid>
-
-        <!-- Accent Bar at Left -->
-        <Border x:Name="AccentBar"
-                Width="4"
-                Background="{StaticResource AccentBrush}"
-                CornerRadius="8,0,0,8"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Stretch"/>
     </Border>
 </UserControl>
