@@ -64,8 +64,9 @@
                 <ContentControl Content="{Binding CurrentView}">
                     <ContentControl.ContentTemplate>
                         <DataTemplate>
-                            <!-- Dashboard View -->
-                            <Grid Visibility="{Binding CurrentSection, Converter={StaticResource EqualityToVisibilityConverter}, ConverterParameter='Dashboard'}">
+                            <Grid>
+                                <!-- Dashboard View -->
+                                <Grid Visibility="{Binding CurrentSection, Converter={StaticResource EqualityToVisibilityConverter}, ConverterParameter='Dashboard'}">
                                 <StackPanel>
                                     <TextBlock Text="Moderation Dashboard" FontSize="24" FontWeight="Bold" Foreground="White" Margin="0,0,0,20"/>
 
@@ -297,6 +298,7 @@
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
                                 </StackPanel>
+                            </Grid>
                             </Grid>
                         </DataTemplate>
                     </ContentControl.ContentTemplate>
