@@ -148,6 +148,11 @@
                         Margin="0,32,0,0">
                     <views:MemberSidebar x:Name="MemberSidebar"/>
                 </Border>
+
+                <!-- Toast Notification Container -->
+                <StackPanel x:Name="ToastContainer" Grid.Column="2" Grid.ColumnSpan="2"
+                            HorizontalAlignment="Right" VerticalAlignment="Top"
+                            Margin="0,48,16,0" Width="350"/>
             </Grid>
         </Grid>
     </Border>

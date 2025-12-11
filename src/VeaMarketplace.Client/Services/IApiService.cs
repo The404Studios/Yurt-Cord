@@ -78,6 +78,16 @@ public interface IApiService
     Task<CouponResultDto> ApplyCouponAsync(string couponCode);
     Task<bool> RemoveCouponAsync();
     Task<CheckoutResultDto> CheckoutAsync(CheckoutRequest request);
+
+    // Presence & Status
+    Task<UserPresenceDto?> GetPresenceAsync(string userId);
+    Task<bool> UpdatePresenceAsync(UpdatePresenceRequest request);
+    Task<bool> SetCustomStatusAsync(SetCustomStatusRequest request);
+    Task<bool> ClearCustomStatusAsync();
+
+    // Products - additional
+    Task<bool> DeleteProductAsync(string productId);
+    Task<CartDto> AddToCartAsync(string productId, int quantity);
 }
 
 public class ApiService : IApiService
@@ -503,6 +513,45 @@ public class ApiService : IApiService
             return new CheckoutResultDto { Success = false, ErrorMessage = error };
         }
         return await response.Content.ReadFromJsonAsync<CheckoutResultDto>().ConfigureAwait(false) ?? new CheckoutResultDto();
+    }
+
+    // Presence & Status
+    public async Task<UserPresenceDto?> GetPresenceAsync(string userId)
+    {
+        var response = await _httpClient.GetAsync($"/api/users/{userId}/presence").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadFromJsonAsync<UserPresenceDto>().ConfigureAwait(false);
+    }
+
+    public async Task<bool> UpdatePresenceAsync(UpdatePresenceRequest request)
+    {
+        var response = await _httpClient.PutAsJsonAsync("/api/users/me/presence", request).ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> SetCustomStatusAsync(SetCustomStatusRequest request)
+    {
+        var response = await _httpClient.PutAsJsonAsync("/api/users/me/status", request).ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> ClearCustomStatusAsync()
+    {
+        var response = await _httpClient.DeleteAsync("/api/users/me/status").ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    // Products - additional
+    public async Task<bool> DeleteProductAsync(string productId)
+    {
+        var response = await _httpClient.DeleteAsync($"/api/products/{productId}").ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<CartDto> AddToCartAsync(string productId, int quantity)
+    {
+        var request = new AddToCartRequest { ProductId = productId, Quantity = quantity };
+        return await AddToCartAsync(request).ConfigureAwait(false);
     }
 }
 

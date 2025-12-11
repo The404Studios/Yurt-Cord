@@ -38,6 +38,7 @@ public partial class App : Application
         services.AddSingleton<IAudioDeviceService, AudioDeviceService>();
         services.AddSingleton<IFriendService, FriendService>();
         services.AddSingleton<INotificationService, NotificationService>();
+        services.AddSingleton<IToastNotificationService, ToastNotificationService>();
 
         // ViewModels
         services.AddTransient<LoginViewModel>();
