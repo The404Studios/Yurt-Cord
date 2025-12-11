@@ -87,6 +87,97 @@ public class VoiceHub : Hub
         }
     }
 
+    // Send audio to all other users in the voice channel
+    public async Task SendAudio(byte[] audioData)
+    {
+        if (_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
+        {
+            // Don't send if user is muted
+            if (userState.IsMuted) return;
+
+            // Broadcast audio to all OTHER users in the channel (not the sender)
+            await Clients.OthersInGroup($"voice_{userState.ChannelId}")
+                .SendAsync("ReceiveAudio", Context.ConnectionId, audioData);
+        }
+    }
+
+    // Admin: Disconnect a user from voice
+    public async Task DisconnectUser(string targetConnectionId)
+    {
+        if (_voiceUsers.TryGetValue(targetConnectionId, out var targetUser))
+        {
+            // Notify the user they've been disconnected
+            await Clients.Client(targetConnectionId).SendAsync("DisconnectedByAdmin", "You have been disconnected by an administrator");
+
+            // Remove them from the channel
+            if (_voiceChannels.TryGetValue(targetUser.ChannelId, out var channel))
+            {
+                channel.Users.TryRemove(targetConnectionId, out _);
+                await Groups.RemoveFromGroupAsync(targetConnectionId, $"voice_{targetUser.ChannelId}");
+                await Clients.Group($"voice_{targetUser.ChannelId}").SendAsync("UserLeftVoice", targetUser);
+            }
+            _voiceUsers.TryRemove(targetConnectionId, out _);
+        }
+    }
+
+    // Admin: Move a user to a different channel
+    public async Task MoveUserToChannel(string targetConnectionId, string targetChannelId)
+    {
+        if (_voiceUsers.TryGetValue(targetConnectionId, out var targetUser))
+        {
+            var oldChannelId = targetUser.ChannelId;
+
+            // Remove from old channel
+            if (_voiceChannels.TryGetValue(oldChannelId, out var oldChannel))
+            {
+                oldChannel.Users.TryRemove(targetConnectionId, out _);
+                await Groups.RemoveFromGroupAsync(targetConnectionId, $"voice_{oldChannelId}");
+                await Clients.Group($"voice_{oldChannelId}").SendAsync("UserLeftVoice", targetUser);
+            }
+
+            // Add to new channel
+            targetUser.ChannelId = targetChannelId;
+            var newChannel = _voiceChannels.GetOrAdd(targetChannelId, _ => new VoiceChannelState { ChannelId = targetChannelId });
+            newChannel.Users[targetConnectionId] = targetUser;
+            await Groups.AddToGroupAsync(targetConnectionId, $"voice_{targetChannelId}");
+
+            // Notify old channel users
+            await Clients.Group($"voice_{targetChannelId}").SendAsync("UserJoinedVoice", targetUser);
+
+            // Notify the moved user
+            await Clients.Client(targetConnectionId).SendAsync("MovedToChannel", targetChannelId, "Administrator");
+
+            // Send the user the list of users in new channel
+            await Clients.Client(targetConnectionId).SendAsync("VoiceChannelUsers", newChannel.Users.Values.ToList());
+        }
+    }
+
+    // Admin: Kick user (just disconnects with a kick message)
+    public async Task KickUser(string userId, string reason)
+    {
+        // Find connection ID by user ID
+        var targetEntry = _voiceUsers.FirstOrDefault(kvp => kvp.Value.UserId == userId);
+        if (targetEntry.Value != null)
+        {
+            await Clients.Client(targetEntry.Key).SendAsync("DisconnectedByAdmin", $"You have been kicked: {reason}");
+            await DisconnectUser(targetEntry.Key);
+        }
+    }
+
+    // Admin: Ban user from voice channels
+    public async Task BanUser(string userId, string reason, double? durationMinutes)
+    {
+        // Find and kick the user first
+        var targetEntry = _voiceUsers.FirstOrDefault(kvp => kvp.Value.UserId == userId);
+        if (targetEntry.Value != null)
+        {
+            var banDuration = durationMinutes.HasValue ? $" for {durationMinutes} minutes" : " permanently";
+            await Clients.Client(targetEntry.Key).SendAsync("DisconnectedByAdmin", $"You have been banned from voice{banDuration}: {reason}");
+            await DisconnectUser(targetEntry.Key);
+        }
+        // Note: Actual ban persistence would require a database - this is just the immediate disconnect
+    }
+
     // WebRTC Signaling
     public async Task SendOffer(string targetConnectionId, string offer)
     {

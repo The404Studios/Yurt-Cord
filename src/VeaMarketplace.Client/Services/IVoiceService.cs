@@ -20,12 +20,20 @@ public interface IVoiceService
     Key PushToTalkKey { get; set; }
     bool IsPushToTalkActive { get; }
 
+    // Per-user volume control
+    void SetUserVolume(string connectionId, float volume);
+    float GetUserVolume(string connectionId);
+    void SetUserMuted(string connectionId, bool muted);
+    bool IsUserMuted(string connectionId);
+
     event Action<VoiceUserState>? OnUserJoinedVoice;
     event Action<VoiceUserState>? OnUserLeftVoice;
     event Action<string, string, bool, double>? OnUserSpeaking;
     event Action<List<VoiceUserState>>? OnVoiceChannelUsers;
     event Action<double>? OnLocalAudioLevel;
     event Action<bool>? OnSpeakingChanged;
+    event Action<string>? OnUserDisconnectedByAdmin;
+    event Action<string, string>? OnUserMovedToChannel;
 
     Task ConnectAsync();
     Task DisconnectAsync();
@@ -39,6 +47,12 @@ public interface IVoiceService
 
     // Push-to-talk control
     void SetPushToTalkActive(bool active);
+
+    // Admin controls
+    Task DisconnectUserAsync(string connectionId);
+    Task MoveUserToChannelAsync(string connectionId, string targetChannelId);
+    Task KickUserAsync(string userId, string reason);
+    Task BanUserAsync(string userId, string reason, TimeSpan? duration);
 }
 
 public class VoiceUserState
@@ -64,6 +78,13 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     private bool _isSpeaking;
     private DateTime _lastSpeakingUpdate = DateTime.MinValue;
     private readonly ConcurrentDictionary<string, VoiceUserState> _voiceUsers = new();
+
+    // Per-user audio control
+    private readonly ConcurrentDictionary<string, float> _userVolumes = new();
+    private readonly ConcurrentDictionary<string, bool> _mutedUsers = new();
+    private readonly ConcurrentDictionary<string, BufferedWaveProvider> _userAudioBuffers = new();
+    private MixingWaveProvider32? _mixer;
+    private float _masterVolume = 1.0f;
 
     // Audio device configuration
     private int _inputDeviceNumber = 0;
@@ -105,6 +126,29 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     public event Action<List<VoiceUserState>>? OnVoiceChannelUsers;
     public event Action<double>? OnLocalAudioLevel;
     public event Action<bool>? OnSpeakingChanged;
+    public event Action<string>? OnUserDisconnectedByAdmin;
+    public event Action<string, string>? OnUserMovedToChannel;
+
+    // Per-user volume control
+    public void SetUserVolume(string connectionId, float volume)
+    {
+        _userVolumes[connectionId] = Math.Clamp(volume, 0f, 2f);
+    }
+
+    public float GetUserVolume(string connectionId)
+    {
+        return _userVolumes.TryGetValue(connectionId, out var vol) ? vol : 1f;
+    }
+
+    public void SetUserMuted(string connectionId, bool muted)
+    {
+        _mutedUsers[connectionId] = muted;
+    }
+
+    public bool IsUserMuted(string connectionId)
+    {
+        return _mutedUsers.TryGetValue(connectionId, out var muted) && muted;
+    }
 
     public void SetInputDevice(int deviceNumber)
     {
@@ -156,12 +200,22 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         _connection.On<VoiceUserState>("UserJoinedVoice", user =>
         {
             _voiceUsers[user.ConnectionId] = user;
+            // Create audio buffer for this user
+            var buffer = new BufferedWaveProvider(new WaveFormat(48000, 16, 1))
+            {
+                DiscardOnBufferOverflow = true,
+                BufferDuration = TimeSpan.FromSeconds(1)
+            };
+            _userAudioBuffers[user.ConnectionId] = buffer;
             OnUserJoinedVoice?.Invoke(user);
         });
 
         _connection.On<VoiceUserState>("UserLeftVoice", user =>
         {
             _voiceUsers.TryRemove(user.ConnectionId, out _);
+            _userAudioBuffers.TryRemove(user.ConnectionId, out _);
+            _userVolumes.TryRemove(user.ConnectionId, out _);
+            _mutedUsers.TryRemove(user.ConnectionId, out _);
             OnUserLeftVoice?.Invoke(user);
         });
 
@@ -178,8 +232,18 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         _connection.On<List<VoiceUserState>>("VoiceChannelUsers", users =>
         {
             _voiceUsers.Clear();
+            _userAudioBuffers.Clear();
             foreach (var user in users)
+            {
                 _voiceUsers[user.ConnectionId] = user;
+                // Create audio buffer for each user
+                var buffer = new BufferedWaveProvider(new WaveFormat(48000, 16, 1))
+                {
+                    DiscardOnBufferOverflow = true,
+                    BufferDuration = TimeSpan.FromSeconds(1)
+                };
+                _userAudioBuffers[user.ConnectionId] = buffer;
+            }
             OnVoiceChannelUsers?.Invoke(users);
         });
 
@@ -191,6 +255,57 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                 user.IsDeafened = isDeafened;
             }
         });
+
+        // Receive audio data from other users
+        _connection.On<string, byte[]>("ReceiveAudio", (senderConnectionId, audioData) =>
+        {
+            // Don't play audio if we're deafened or if user is muted locally
+            if (IsDeafened || IsUserMuted(senderConnectionId)) return;
+
+            // Add audio to the playback buffer with user-specific volume
+            if (_bufferedWaveProvider != null && audioData.Length > 0)
+            {
+                var volume = GetUserVolume(senderConnectionId);
+                if (volume != 1.0f)
+                {
+                    // Apply per-user volume
+                    var adjustedData = ApplyVolume(audioData, volume);
+                    _bufferedWaveProvider.AddSamples(adjustedData, 0, adjustedData.Length);
+                }
+                else
+                {
+                    _bufferedWaveProvider.AddSamples(audioData, 0, audioData.Length);
+                }
+            }
+        });
+
+        // Handle being disconnected by admin
+        _connection.On<string>("DisconnectedByAdmin", reason =>
+        {
+            OnUserDisconnectedByAdmin?.Invoke(reason);
+            _ = LeaveVoiceChannelAsync();
+        });
+
+        // Handle being moved to another channel
+        _connection.On<string, string>("MovedToChannel", (newChannelId, movedBy) =>
+        {
+            CurrentChannelId = newChannelId;
+            OnUserMovedToChannel?.Invoke(newChannelId, movedBy);
+        });
+    }
+
+    private byte[] ApplyVolume(byte[] audioData, float volume)
+    {
+        var result = new byte[audioData.Length];
+        for (var i = 0; i < audioData.Length; i += 2)
+        {
+            var sample = BitConverter.ToInt16(audioData, i);
+            sample = (short)Math.Clamp(sample * volume, short.MinValue, short.MaxValue);
+            var bytes = BitConverter.GetBytes(sample);
+            result[i] = bytes[0];
+            result[i + 1] = bytes[1];
+        }
+        return result;
     }
 
     public async Task JoinVoiceChannelAsync(string channelId, string userId, string username, string avatarUrl)
@@ -301,7 +416,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             OnSpeakingChanged?.Invoke(_isSpeaking);
         }
 
-        // Only send updates at reasonable intervals
+        // Send speaking state updates
         if (_isSpeaking != wasSpeaking || (DateTime.Now - _lastSpeakingUpdate).TotalMilliseconds > 100)
         {
             _lastSpeakingUpdate = DateTime.Now;
@@ -312,6 +427,24 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             catch
             {
                 // Ignore send errors
+            }
+        }
+
+        // ACTUALLY SEND THE AUDIO DATA if speaking and not muted
+        if (_isSpeaking && !IsMuted && e.BytesRecorded > 0)
+        {
+            try
+            {
+                // Copy the audio buffer to send
+                var audioData = new byte[e.BytesRecorded];
+                Array.Copy(e.Buffer, audioData, e.BytesRecorded);
+
+                // Send audio to the server for broadcasting to other users
+                await _connection.InvokeAsync("SendAudio", audioData);
+            }
+            catch
+            {
+                // Ignore send errors - network issues shouldn't crash audio
             }
         }
     }
@@ -332,5 +465,58 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     {
         await DisconnectAsync();
         GC.SuppressFinalize(this);
+    }
+
+    // Admin control methods
+    public async Task DisconnectUserAsync(string connectionId)
+    {
+        if (_connection == null || !IsConnected) return;
+        try
+        {
+            await _connection.InvokeAsync("DisconnectUser", connectionId);
+        }
+        catch
+        {
+            // Ignore errors
+        }
+    }
+
+    public async Task MoveUserToChannelAsync(string connectionId, string targetChannelId)
+    {
+        if (_connection == null || !IsConnected) return;
+        try
+        {
+            await _connection.InvokeAsync("MoveUserToChannel", connectionId, targetChannelId);
+        }
+        catch
+        {
+            // Ignore errors
+        }
+    }
+
+    public async Task KickUserAsync(string userId, string reason)
+    {
+        if (_connection == null || !IsConnected) return;
+        try
+        {
+            await _connection.InvokeAsync("KickUser", userId, reason);
+        }
+        catch
+        {
+            // Ignore errors
+        }
+    }
+
+    public async Task BanUserAsync(string userId, string reason, TimeSpan? duration)
+    {
+        if (_connection == null || !IsConnected) return;
+        try
+        {
+            await _connection.InvokeAsync("BanUser", userId, reason, duration?.TotalMinutes);
+        }
+        catch
+        {
+            // Ignore errors
+        }
     }
 }
