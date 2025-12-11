@@ -30,7 +30,7 @@ public class ToastNotificationService : IToastNotificationService
 
     public void ShowNotification(string title, string message, NotificationType type = NotificationType.Info, int durationMs = 5000)
     {
-        Application.Current?.Dispatcher.Invoke(() =>
+        Application.Current?.Dispatcher.InvokeAsync(() =>
         {
             if (_container == null) return;
 
@@ -60,7 +60,7 @@ public class ToastNotificationService : IToastNotificationService
                 {
                     timer.Stop();
                     timer.Dispose();
-                    Application.Current?.Dispatcher.Invoke(() => toast.Close());
+                    Application.Current?.Dispatcher.InvokeAsync(() => toast.Close());
                 };
                 timer.Start();
             }
@@ -71,7 +71,7 @@ public class ToastNotificationService : IToastNotificationService
     {
         if (sender is NotificationToast toast)
         {
-            Application.Current?.Dispatcher.Invoke(() =>
+            Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 _activeNotifications.Remove(toast);
                 _container?.Children.Remove(toast);
@@ -96,7 +96,7 @@ public class ToastNotificationService : IToastNotificationService
 
     public void ClearAll()
     {
-        Application.Current?.Dispatcher.Invoke(() =>
+        Application.Current?.Dispatcher.InvokeAsync(() =>
         {
             foreach (var toast in _activeNotifications.ToList())
             {

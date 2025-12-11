@@ -23,7 +23,7 @@ public partial class VoiceChannelViewModel : BaseViewModel
 
         _voiceService.OnVoiceChannelUsers += users =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 Users.Clear();
                 foreach (var user in users)
@@ -33,7 +33,7 @@ public partial class VoiceChannelViewModel : BaseViewModel
 
         _voiceService.OnUserJoinedVoice += user =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 if (!Users.Any(u => u.ConnectionId == user.ConnectionId))
                     Users.Add(user);
@@ -42,7 +42,7 @@ public partial class VoiceChannelViewModel : BaseViewModel
 
         _voiceService.OnUserLeftVoice += user =>
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 var existing = Users.FirstOrDefault(u => u.ConnectionId == user.ConnectionId);
                 if (existing != null)
