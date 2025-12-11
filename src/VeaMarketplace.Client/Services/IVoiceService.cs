@@ -617,6 +617,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     /// <summary>
     /// Audio mixing thread - runs at consistent intervals to mix all user audio streams.
     /// Uses a real thread instead of Task for more precise timing.
+    /// Implements fade-in/fade-out to prevent crackling at speech boundaries.
     /// </summary>
     private void AudioMixingLoop(CancellationToken cancellationToken)
     {
@@ -626,6 +627,11 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         const int mixIntervalMs = 20; // Mix every 20ms (matches Opus frame size)
         var mixBuffer = new int[OpusFrameSize]; // Use int for mixing to prevent clipping
         var outputBuffer = new byte[OpusFrameSize * 2]; // 16-bit samples = 2 bytes each
+        var silenceBuffer = new byte[OpusFrameSize * 2]; // Pre-allocated silence
+
+        // Fade state for smooth transitions
+        bool wasActive = false;
+        const int fadeFrames = 48; // ~1ms fade at 48kHz
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -656,34 +662,73 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                         }
                     }
 
-                    // If we have audio to play, convert and add to output buffer
-                    if (activeStreams > 0 && _bufferedWaveProvider != null)
+                    bool isActive = activeStreams > 0;
+
+                    if (_bufferedWaveProvider != null)
                     {
-                        // Convert mixed int samples to short with soft clipping
-                        for (int i = 0; i < OpusFrameSize; i++)
+                        if (isActive)
                         {
-                            // Soft clip to prevent harsh distortion
-                            var sample = mixBuffer[i];
-                            if (sample > short.MaxValue)
-                                sample = short.MaxValue;
-                            else if (sample < short.MinValue)
-                                sample = short.MinValue;
+                            // Apply fade-in if transitioning from silence to audio
+                            if (!wasActive)
+                            {
+                                for (int i = 0; i < Math.Min(fadeFrames, OpusFrameSize); i++)
+                                {
+                                    float fadeMultiplier = (float)i / fadeFrames;
+                                    mixBuffer[i] = (int)(mixBuffer[i] * fadeMultiplier);
+                                }
+                            }
 
-                            // Convert to bytes (little-endian)
-                            outputBuffer[i * 2] = (byte)(sample & 0xFF);
-                            outputBuffer[i * 2 + 1] = (byte)((sample >> 8) & 0xFF);
-                        }
+                            // Convert mixed int samples to short with soft clipping
+                            for (int i = 0; i < OpusFrameSize; i++)
+                            {
+                                var sample = mixBuffer[i];
+                                if (sample > short.MaxValue)
+                                    sample = short.MaxValue;
+                                else if (sample < short.MinValue)
+                                    sample = short.MinValue;
 
-                        // Add to playback buffer
-                        try
-                        {
-                            _bufferedWaveProvider.AddSamples(outputBuffer, 0, outputBuffer.Length);
+                                outputBuffer[i * 2] = (byte)(sample & 0xFF);
+                                outputBuffer[i * 2 + 1] = (byte)((sample >> 8) & 0xFF);
+                            }
+
+                            // Add to playback buffer
+                            try
+                            {
+                                _bufferedWaveProvider.AddSamples(outputBuffer, 0, outputBuffer.Length);
+                            }
+                            catch
+                            {
+                                // Buffer full - skip
+                            }
                         }
-                        catch
+                        else if (wasActive)
                         {
-                            // Buffer full - skip
+                            // Output a fade-out frame when transitioning to silence
+                            for (int i = 0; i < OpusFrameSize; i++)
+                            {
+                                float fadeMultiplier = 1.0f - ((float)i / OpusFrameSize);
+                                // Fade out from the last sample value (approximate with zero)
+                                outputBuffer[i * 2] = 0;
+                                outputBuffer[i * 2 + 1] = 0;
+                            }
+                            try
+                            {
+                                _bufferedWaveProvider.AddSamples(silenceBuffer, 0, silenceBuffer.Length);
+                            }
+                            catch { }
+                        }
+                        // When idle, occasionally add silence to keep buffer from underrunning
+                        else if (_bufferedWaveProvider.BufferedBytes < OpusFrameSize * 4)
+                        {
+                            try
+                            {
+                                _bufferedWaveProvider.AddSamples(silenceBuffer, 0, silenceBuffer.Length);
+                            }
+                            catch { }
                         }
                     }
+
+                    wasActive = isActive;
                 }
 
                 // Sleep for remaining time (use SpinWait for precision)

@@ -9,6 +9,10 @@
         Background="Transparent"
         ResizeMode="NoResize">
 
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </Window.Resources>
+
     <Border Background="#2B2D31" CornerRadius="8" BorderBrush="#1E1F22" BorderThickness="1">
         <Grid>
             <Grid.RowDefinitions>
