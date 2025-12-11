@@ -10,6 +10,8 @@ namespace VeaMarketplace.Client.Views;
 public partial class MainWindow : Window
 {
     private readonly INavigationService _navigationService;
+    private readonly IToastNotificationService _toastService;
+    private readonly IFriendService _friendService;
     private string _currentView = "Chat";
 
     public MainWindow()
@@ -17,6 +19,23 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         _navigationService = (INavigationService)App.ServiceProvider.GetService(typeof(INavigationService))!;
+        _toastService = (IToastNotificationService)App.ServiceProvider.GetService(typeof(IToastNotificationService))!;
+        _friendService = (IFriendService)App.ServiceProvider.GetService(typeof(IFriendService))!;
+
+        // Set up toast notification container
+        _toastService.SetContainer(ToastContainer);
+
+        // Subscribe to friend service events for notifications
+        _friendService.OnFriendRequestReceived += user =>
+        {
+            _toastService.ShowFriendRequest(user.Username);
+        };
+
+        _friendService.OnDirectMessageReceived += message =>
+        {
+            _toastService.ShowMessage(message.SenderUsername,
+                message.Content.Length > 50 ? message.Content[..50] + "..." : message.Content);
+        };
 
         // Subscribe to login success
         LoginView.OnLoginSuccess += () =>
@@ -32,6 +51,9 @@ public partial class MainWindow : Window
 
                     var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300));
                     MainAppGrid.BeginAnimation(OpacityProperty, fadeIn);
+
+                    // Show welcome toast
+                    _toastService.ShowSuccess("Welcome!", "You have successfully logged in.");
                 };
                 LoginView.BeginAnimation(OpacityProperty, fadeOut);
             });

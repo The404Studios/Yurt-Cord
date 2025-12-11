@@ -96,3 +96,72 @@ public class OnlineUserDto
     public UserRole Role { get; set; }
     public UserRank Rank { get; set; }
 }
+
+public enum ActivityType
+{
+    None,
+    Playing,
+    Streaming,
+    Listening,
+    Watching,
+    Competing,
+    Custom
+}
+
+public enum UserPresenceStatus
+{
+    Online,
+    Idle,
+    DoNotDisturb,
+    Invisible,
+    Offline
+}
+
+public class RichPresenceDto
+{
+    public ActivityType ActivityType { get; set; } = ActivityType.None;
+    public string? ActivityName { get; set; }
+    public string? ActivityDetails { get; set; }
+    public string? ActivityState { get; set; }
+    public string? LargeImageUrl { get; set; }
+    public string? SmallImageUrl { get; set; }
+    public string? PartyId { get; set; }
+    public int? PartySize { get; set; }
+    public int? PartyMax { get; set; }
+    public DateTime? StartTimestamp { get; set; }
+    public DateTime? EndTimestamp { get; set; }
+    public string? StreamUrl { get; set; }
+}
+
+public class CustomStatusDto
+{
+    public string? Text { get; set; }
+    public string? EmojiId { get; set; }
+    public string? EmojiName { get; set; }
+    public DateTime? ExpiresAt { get; set; }
+}
+
+public class UserPresenceDto
+{
+    public string UserId { get; set; } = string.Empty;
+    public UserPresenceStatus Status { get; set; } = UserPresenceStatus.Offline;
+    public CustomStatusDto? CustomStatus { get; set; }
+    public RichPresenceDto? RichPresence { get; set; }
+    public string? ClientType { get; set; } // desktop, mobile, web
+    public DateTime LastSeenAt { get; set; }
+}
+
+public class UpdatePresenceRequest
+{
+    public UserPresenceStatus? Status { get; set; }
+    public CustomStatusDto? CustomStatus { get; set; }
+    public RichPresenceDto? RichPresence { get; set; }
+}
+
+public class SetCustomStatusRequest
+{
+    public string? Text { get; set; }
+    public string? EmojiId { get; set; }
+    public string? EmojiName { get; set; }
+    public int? DurationMinutes { get; set; } // null = no expiry, otherwise expires after X minutes
+}
