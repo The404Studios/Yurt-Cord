@@ -462,7 +462,7 @@ public partial class VoiceCallDashboard : UserControl
         if (participant == null) return;
 
         var navService = (INavigationService?)App.ServiceProvider.GetService(typeof(INavigationService));
-        navService?.NavigateToProfile();
+        navService?.NavigateToProfile(participant.UserId);
     }
 
     #endregion
