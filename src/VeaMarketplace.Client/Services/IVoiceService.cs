@@ -3,9 +3,35 @@ using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 using System.Collections.Concurrent;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows.Input;
 
 namespace VeaMarketplace.Client.Services;
+
+// Display/Screen information
+public class DisplayInfo
+{
+    public string DeviceName { get; set; } = string.Empty;
+    public string FriendlyName { get; set; } = string.Empty;
+    public int Left { get; set; }
+    public int Top { get; set; }
+    public int Width { get; set; }
+    public int Height { get; set; }
+    public bool IsPrimary { get; set; }
+    public int Index { get; set; }
+
+    public override string ToString() => FriendlyName;
+}
+
+// Audio device information
+public class AudioDeviceInfo
+{
+    public int DeviceNumber { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public bool IsInput { get; set; }
+
+    public override string ToString() => Name;
+}
 
 public interface IVoiceService
 {
@@ -30,9 +56,16 @@ public interface IVoiceService
 
     // Screen sharing
     bool IsScreenSharing { get; }
+    DisplayInfo? SelectedDisplay { get; set; }
     event Action<string, byte[], int, int>? OnScreenFrameReceived;
     Task StartScreenShareAsync();
+    Task StartScreenShareAsync(DisplayInfo display);
     Task StopScreenShareAsync();
+
+    // Device enumeration
+    List<DisplayInfo> GetAvailableDisplays();
+    List<AudioDeviceInfo> GetInputDevices();
+    List<AudioDeviceInfo> GetOutputDevices();
 
     event Action<VoiceUserState>? OnUserJoinedVoice;
     event Action<VoiceUserState>? OnUserLeftVoice;
@@ -117,6 +150,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     private bool _isScreenSharing;
     private CancellationTokenSource? _screenShareCts;
     private Task? _screenShareTask;
+    private DisplayInfo? _selectedDisplay;
 
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
     public bool IsInVoiceChannel { get; private set; }
@@ -126,6 +160,11 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     public double CurrentAudioLevel => _currentAudioLevel;
     public string? CurrentChannelId { get; private set; }
     public bool IsScreenSharing => _isScreenSharing;
+    public DisplayInfo? SelectedDisplay
+    {
+        get => _selectedDisplay;
+        set => _selectedDisplay = value;
+    }
 
     // Push-to-talk properties
     public bool PushToTalkEnabled
@@ -204,6 +243,63 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     public void SetPushToTalkActive(bool active)
     {
         _isPushToTalkActive = active;
+    }
+
+    // Device enumeration
+    public List<DisplayInfo> GetAvailableDisplays()
+    {
+        var displays = new List<DisplayInfo>();
+        var screens = System.Windows.Forms.Screen.AllScreens;
+
+        for (var i = 0; i < screens.Length; i++)
+        {
+            var screen = screens[i];
+            displays.Add(new DisplayInfo
+            {
+                DeviceName = screen.DeviceName,
+                FriendlyName = screen.Primary ? $"Display {i + 1} (Primary)" : $"Display {i + 1}",
+                Left = screen.Bounds.Left,
+                Top = screen.Bounds.Top,
+                Width = screen.Bounds.Width,
+                Height = screen.Bounds.Height,
+                IsPrimary = screen.Primary,
+                Index = i
+            });
+        }
+
+        return displays;
+    }
+
+    public List<AudioDeviceInfo> GetInputDevices()
+    {
+        var devices = new List<AudioDeviceInfo>();
+        for (var i = 0; i < WaveIn.DeviceCount; i++)
+        {
+            var caps = WaveIn.GetCapabilities(i);
+            devices.Add(new AudioDeviceInfo
+            {
+                DeviceNumber = i,
+                Name = caps.ProductName,
+                IsInput = true
+            });
+        }
+        return devices;
+    }
+
+    public List<AudioDeviceInfo> GetOutputDevices()
+    {
+        var devices = new List<AudioDeviceInfo>();
+        for (var i = 0; i < WaveOut.DeviceCount; i++)
+        {
+            var caps = WaveOut.GetCapabilities(i);
+            devices.Add(new AudioDeviceInfo
+            {
+                DeviceNumber = i,
+                Name = caps.ProductName,
+                IsInput = false
+            });
+        }
+        return devices;
     }
 
     public async Task ConnectAsync()
@@ -572,6 +668,23 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     // Screen sharing implementation
     public async Task StartScreenShareAsync()
     {
+        // Use primary display if none selected
+        if (_selectedDisplay == null)
+        {
+            var displays = GetAvailableDisplays();
+            _selectedDisplay = displays.FirstOrDefault(d => d.IsPrimary) ?? displays.FirstOrDefault();
+        }
+        await StartScreenShareInternal();
+    }
+
+    public async Task StartScreenShareAsync(DisplayInfo display)
+    {
+        _selectedDisplay = display;
+        await StartScreenShareInternal();
+    }
+
+    private async Task StartScreenShareInternal()
+    {
         if (_connection == null || !IsConnected || _isScreenSharing) return;
 
         _isScreenSharing = true;
@@ -683,15 +796,30 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     {
         try
         {
-            // Get primary screen bounds
-            var screenWidth = (int)System.Windows.SystemParameters.PrimaryScreenWidth;
-            var screenHeight = (int)System.Windows.SystemParameters.PrimaryScreenHeight;
+            // Get screen bounds from selected display or primary
+            int screenLeft, screenTop, screenWidth, screenHeight;
+
+            if (_selectedDisplay != null)
+            {
+                screenLeft = _selectedDisplay.Left;
+                screenTop = _selectedDisplay.Top;
+                screenWidth = _selectedDisplay.Width;
+                screenHeight = _selectedDisplay.Height;
+            }
+            else
+            {
+                // Fallback to primary screen
+                screenLeft = 0;
+                screenTop = 0;
+                screenWidth = (int)System.Windows.SystemParameters.PrimaryScreenWidth;
+                screenHeight = (int)System.Windows.SystemParameters.PrimaryScreenHeight;
+            }
 
             using var bitmap = new System.Drawing.Bitmap(screenWidth, screenHeight);
             using var graphics = System.Drawing.Graphics.FromImage(bitmap);
 
-            // Capture the screen
-            graphics.CopyFromScreen(0, 0, 0, 0, new System.Drawing.Size(screenWidth, screenHeight));
+            // Capture the selected screen region
+            graphics.CopyFromScreen(screenLeft, screenTop, 0, 0, new System.Drawing.Size(screenWidth, screenHeight));
 
             // Resize if needed
             System.Drawing.Bitmap finalBitmap;
