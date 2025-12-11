@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows.Input;
+using VeaMarketplace.Shared.DTOs;
 
 namespace VeaMarketplace.Client.Services;
 
@@ -101,6 +102,22 @@ public interface IVoiceService
     Task MoveUserToChannelAsync(string connectionId, string targetChannelId);
     Task KickUserAsync(string userId, string reason);
     Task BanUserAsync(string userId, string reason, TimeSpan? duration);
+
+    // DM Call functionality
+    bool IsInCall { get; }
+    string? CurrentCallId { get; }
+    event Action<VoiceCallDto>? OnIncomingCall;
+    event Action<VoiceCallDto>? OnCallStarted;
+    event Action<VoiceCallDto>? OnCallAnswered;
+    event Action<VoiceCallDto>? OnCallDeclined;
+    event Action<string, string>? OnCallEnded;
+    event Action<string>? OnCallFailed;
+    event Action<string, bool, double>? OnCallUserSpeaking;
+
+    Task AuthenticateForCallsAsync(string token);
+    Task StartCallAsync(string recipientId);
+    Task AnswerCallAsync(string callId, bool accept);
+    Task EndCallAsync(string callId);
 }
 
 public class VoiceUserState
@@ -223,6 +240,20 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     public event Action<string, byte[], int, int>? OnScreenFrameReceived;
     public event Action<string, bool>? OnUserScreenShareChanged;
     public event Action<ScreenShareStats>? OnScreenShareStatsUpdated;
+
+    // Call events
+    public event Action<VoiceCallDto>? OnIncomingCall;
+    public event Action<VoiceCallDto>? OnCallStarted;
+    public event Action<VoiceCallDto>? OnCallAnswered;
+    public event Action<VoiceCallDto>? OnCallDeclined;
+    public event Action<string, string>? OnCallEnded;
+    public event Action<string>? OnCallFailed;
+    public event Action<string, bool, double>? OnCallUserSpeaking;
+
+    // Call state
+    public bool IsInCall { get; private set; }
+    public string? CurrentCallId { get; private set; }
+    private VoiceCallDto? _currentCall;
 
     // Per-user volume control
     public void SetUserVolume(string connectionId, float volume)
@@ -489,6 +520,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         {
             _screenSharingManager.HandleViewerCountUpdate(count);
         });
+
+        // Register call handlers
+        RegisterCallHandlers();
     }
 
     private byte[] ApplyVolume(byte[] audioData, float volume)
@@ -915,5 +949,196 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     public async Task StopScreenShareAsync()
     {
         await _screenSharingManager.StopSharingAsync();
+    }
+
+    // === DM Call Methods ===
+
+    public async Task AuthenticateForCallsAsync(string token)
+    {
+        if (_connection == null || !IsConnected) return;
+        try
+        {
+            await _connection.InvokeAsync("AuthenticateForCalls", token);
+        }
+        catch
+        {
+            // Ignore errors
+        }
+    }
+
+    public async Task StartCallAsync(string recipientId)
+    {
+        if (_connection == null || !IsConnected) return;
+        try
+        {
+            await _connection.InvokeAsync("StartCall", recipientId);
+        }
+        catch (Exception ex)
+        {
+            OnCallFailed?.Invoke(ex.Message);
+        }
+    }
+
+    public async Task AnswerCallAsync(string callId, bool accept)
+    {
+        if (_connection == null || !IsConnected) return;
+        try
+        {
+            await _connection.InvokeAsync("AnswerCall", callId, accept);
+
+            if (accept && _currentCall != null)
+            {
+                IsInCall = true;
+                CurrentCallId = callId;
+                // Start audio for call
+                StartAudioCapture();
+            }
+        }
+        catch (Exception ex)
+        {
+            OnCallFailed?.Invoke(ex.Message);
+        }
+    }
+
+    public async Task EndCallAsync(string callId)
+    {
+        if (_connection == null || !IsConnected) return;
+        try
+        {
+            await _connection.InvokeAsync("EndCall", callId);
+            IsInCall = false;
+            CurrentCallId = null;
+            _currentCall = null;
+            StopAudioCapture();
+        }
+        catch
+        {
+            // Ignore errors
+        }
+    }
+
+    private void RegisterCallHandlers()
+    {
+        if (_connection == null) return;
+
+        _connection.On<VoiceCallDto>("IncomingCall", call =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                _currentCall = call;
+                OnIncomingCall?.Invoke(call);
+            });
+        });
+
+        _connection.On<VoiceCallDto>("CallStarted", call =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                _currentCall = call;
+                CurrentCallId = call.Id;
+                OnCallStarted?.Invoke(call);
+            });
+        });
+
+        _connection.On<VoiceCallDto>("CallAnswered", call =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                _currentCall = call;
+                CurrentCallId = call.Id;
+                IsInCall = true;
+                StartAudioCapture();
+                OnCallAnswered?.Invoke(call);
+            });
+        });
+
+        _connection.On<VoiceCallDto>("CallDeclined", call =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                IsInCall = false;
+                CurrentCallId = null;
+                _currentCall = null;
+                OnCallDeclined?.Invoke(call);
+            });
+        });
+
+        _connection.On<string, string>("CallEnded", (callId, reason) =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                IsInCall = false;
+                CurrentCallId = null;
+                _currentCall = null;
+                StopAudioCapture();
+                OnCallEnded?.Invoke(callId, reason);
+            });
+        });
+
+        _connection.On<string>("CallFailed", error =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                IsInCall = false;
+                CurrentCallId = null;
+                _currentCall = null;
+                OnCallFailed?.Invoke(error);
+            });
+        });
+
+        _connection.On("CallAuthSuccess", () =>
+        {
+            // Successfully authenticated for calls
+        });
+
+        _connection.On<string>("CallAuthFailed", error =>
+        {
+            OnCallFailed?.Invoke($"Call auth failed: {error}");
+        });
+
+        // Call audio receiving
+        _connection.On<string, byte[]>("ReceiveCallAudio", (senderConnectionId, audioData) =>
+        {
+            if (IsInCall && !IsDeafened && _bufferedWaveProvider != null)
+            {
+                // Decode and play call audio similar to voice channel audio
+                DecodeAndPlayAudio(senderConnectionId, audioData);
+            }
+        });
+
+        _connection.On<string, bool, double>("CallSpeakingState", (connectionId, isSpeaking, audioLevel) =>
+        {
+            OnCallUserSpeaking?.Invoke(connectionId, isSpeaking, audioLevel);
+        });
+    }
+
+    private void DecodeAndPlayAudio(string senderConnectionId, byte[] opusData)
+    {
+        if (IsUserMuted(senderConnectionId) || _bufferedWaveProvider == null) return;
+
+        try
+        {
+            var decoder = _userOpusDecoders.GetOrAdd(senderConnectionId, _ => new OpusDecoder(SampleRate, Channels));
+            var pcmBuffer = new short[OpusFrameSize];
+            var decodedSamples = decoder.Decode(opusData, 0, opusData.Length, pcmBuffer, 0, OpusFrameSize, false);
+
+            if (decodedSamples > 0)
+            {
+                var userVolume = GetUserVolume(senderConnectionId);
+                var pcmBytes = new byte[decodedSamples * 2];
+                for (int i = 0; i < decodedSamples; i++)
+                {
+                    var sample = (short)(pcmBuffer[i] * userVolume);
+                    var bytes = BitConverter.GetBytes(sample);
+                    pcmBytes[i * 2] = bytes[0];
+                    pcmBytes[i * 2 + 1] = bytes[1];
+                }
+                _bufferedWaveProvider.AddSamples(pcmBytes, 0, pcmBytes.Length);
+            }
+        }
+        catch
+        {
+            // Ignore decode errors
+        }
     }
 }

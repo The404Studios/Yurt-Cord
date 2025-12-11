@@ -386,6 +386,32 @@
                     <!-- Call Controls -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,32,0,0">
                         <Button Style="{StaticResource IconButton}" Width="56" Height="56"
+                                Margin="0,0,16,0"
+                                Command="{Binding ToggleMuteCommand}">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
+                                    <Setter Property="Background" Value="{StaticResource QuaternaryDarkBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsMuted}" Value="True">
+                                            <Setter Property="Background" Value="{StaticResource AccentRedBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <TextBlock FontSize="24">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="🎤"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsMuted}" Value="True">
+                                                <Setter Property="Text" Value="🔇"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Button>
+                        <Button Style="{StaticResource IconButton}" Width="56" Height="56"
                                 Background="{StaticResource AccentRedBrush}"
                                 Command="{Binding EndCallCommand}">
                             <TextBlock Text="📵" FontSize="24"/>

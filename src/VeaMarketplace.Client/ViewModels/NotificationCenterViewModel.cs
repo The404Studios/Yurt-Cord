@@ -32,9 +32,8 @@ public partial class NotificationCenterViewModel : BaseViewModel
         try
         {
             IsLoading = true;
-            // TODO: Call API to load notifications
-            // var notifications = await _apiService.GetNotificationsAsync();
-            // _allNotifications = notifications;
+            var notifications = await _apiService.GetNotificationsAsync();
+            _allNotifications = notifications;
             ApplyFilter(CurrentFilter);
             HasNotifications = Notifications.Any();
         }
@@ -53,10 +52,14 @@ public partial class NotificationCenterViewModel : BaseViewModel
     {
         try
         {
-            // TODO: Call API to mark all as read
-            // await _apiService.MarkAllNotificationsReadAsync();
+            await _apiService.MarkAllNotificationsReadAsync();
 
             foreach (var notification in Notifications)
+            {
+                notification.IsRead = true;
+                notification.ReadAt = DateTime.UtcNow;
+            }
+            foreach (var notification in _allNotifications)
             {
                 notification.IsRead = true;
                 notification.ReadAt = DateTime.UtcNow;
@@ -107,8 +110,7 @@ public partial class NotificationCenterViewModel : BaseViewModel
         {
             try
             {
-                // TODO: Call API to mark as read
-                // await _apiService.MarkNotificationReadAsync(notification.Id);
+                await _apiService.MarkNotificationReadAsync(notification.Id);
                 notification.IsRead = true;
                 notification.ReadAt = DateTime.UtcNow;
             }
@@ -118,11 +120,81 @@ public partial class NotificationCenterViewModel : BaseViewModel
             }
         }
 
-        // Navigate based on notification type
+        // Navigate based on notification type and action URL
         if (!string.IsNullOrEmpty(notification.ActionUrl))
         {
-            // Parse and navigate to the action URL
-            // TODO: Implement navigation logic
+            NavigateToAction(notification.ActionUrl);
         }
+        else
+        {
+            // Navigate based on notification type
+            switch (notification.Type)
+            {
+                case Shared.Models.NotificationType.FriendRequest:
+                    _navigationService.NavigateToFriends();
+                    break;
+                case Shared.Models.NotificationType.Message:
+                    _navigationService.NavigateToChat();
+                    break;
+                case Shared.Models.NotificationType.Order:
+                    _navigationService.NavigateToOrders();
+                    break;
+                default:
+                    // Stay on notifications page
+                    break;
+            }
+        }
+    }
+
+    private void NavigateToAction(string actionUrl)
+    {
+        // Parse action URL format: "type/id" (e.g., "product/123", "order/456", "user/789")
+        var parts = actionUrl.Split('/');
+        if (parts.Length < 2) return;
+
+        switch (parts[0].ToLower())
+        {
+            case "product":
+                _navigationService.NavigateToProduct(parts[1]);
+                break;
+            case "order":
+                _navigationService.NavigateToOrder(parts[1]);
+                break;
+            case "user":
+                _navigationService.NavigateToProfile(parts[1]);
+                break;
+            case "chat":
+                _navigationService.NavigateToChat(parts[1]);
+                break;
+            case "friends":
+                _navigationService.NavigateToFriends();
+                break;
+            default:
+                break;
+        }
+    }
+
+    [RelayCommand]
+    private async Task DeleteNotification(NotificationDto notification)
+    {
+        try
+        {
+            if (await _apiService.DeleteNotificationAsync(notification.Id))
+            {
+                _allNotifications.Remove(notification);
+                Notifications.Remove(notification);
+                HasNotifications = Notifications.Any();
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Failed to delete notification: {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private async Task RefreshNotifications()
+    {
+        await LoadNotificationsAsync();
     }
 }

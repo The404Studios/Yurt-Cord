@@ -29,6 +29,28 @@ public interface IApiService
     Task<List<CustomRoleDto>> GetAllRolesAsync();
     Task<List<UserSearchResultDto>> SearchUsersAsync(string query);
     Task<UserSearchResultDto?> LookupUserAsync(string query);
+
+    // Notifications
+    Task<List<NotificationDto>> GetNotificationsAsync();
+    Task<bool> MarkNotificationReadAsync(string notificationId);
+    Task<bool> MarkAllNotificationsReadAsync();
+    Task<bool> DeleteNotificationAsync(string notificationId);
+
+    // Wishlist
+    Task<List<WishlistItemDto>> GetWishlistAsync();
+    Task<bool> AddToWishlistAsync(string productId);
+    Task<bool> RemoveFromWishlistAsync(string productId);
+    Task<bool> ClearWishlistAsync();
+
+    // Orders
+    Task<List<OrderDto>> GetOrdersAsync();
+    Task<OrderDto?> GetOrderAsync(string orderId);
+
+    // Reviews
+    Task<ProductReviewListDto> GetProductReviewsAsync(string productId, int page = 1);
+    Task<ProductReviewDto> CreateReviewAsync(CreateReviewRequest request);
+    Task<bool> MarkReviewHelpfulAsync(string reviewId);
+    Task<bool> ReportReviewAsync(string reviewId, string reason);
 }
 
 public class ApiService : IApiService
@@ -192,5 +214,98 @@ public class ApiService : IApiService
         var response = await _httpClient.GetAsync("/api/roles").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return [];
         return await response.Content.ReadFromJsonAsync<List<CustomRoleDto>>().ConfigureAwait(false) ?? [];
+    }
+
+    // Notifications
+    public async Task<List<NotificationDto>> GetNotificationsAsync()
+    {
+        var response = await _httpClient.GetAsync("/api/notifications").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return [];
+        return await response.Content.ReadFromJsonAsync<List<NotificationDto>>().ConfigureAwait(false) ?? [];
+    }
+
+    public async Task<bool> MarkNotificationReadAsync(string notificationId)
+    {
+        var response = await _httpClient.PostAsync($"/api/notifications/{notificationId}/read", null).ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> MarkAllNotificationsReadAsync()
+    {
+        var response = await _httpClient.PostAsync("/api/notifications/read-all", null).ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> DeleteNotificationAsync(string notificationId)
+    {
+        var response = await _httpClient.DeleteAsync($"/api/notifications/{notificationId}").ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    // Wishlist
+    public async Task<List<WishlistItemDto>> GetWishlistAsync()
+    {
+        var response = await _httpClient.GetAsync("/api/wishlist").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return [];
+        return await response.Content.ReadFromJsonAsync<List<WishlistItemDto>>().ConfigureAwait(false) ?? [];
+    }
+
+    public async Task<bool> AddToWishlistAsync(string productId)
+    {
+        var response = await _httpClient.PostAsync($"/api/wishlist/{productId}", null).ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> RemoveFromWishlistAsync(string productId)
+    {
+        var response = await _httpClient.DeleteAsync($"/api/wishlist/{productId}").ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> ClearWishlistAsync()
+    {
+        var response = await _httpClient.DeleteAsync("/api/wishlist").ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    // Orders
+    public async Task<List<OrderDto>> GetOrdersAsync()
+    {
+        var response = await _httpClient.GetAsync("/api/orders").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return [];
+        return await response.Content.ReadFromJsonAsync<List<OrderDto>>().ConfigureAwait(false) ?? [];
+    }
+
+    public async Task<OrderDto?> GetOrderAsync(string orderId)
+    {
+        var response = await _httpClient.GetAsync($"/api/orders/{orderId}").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadFromJsonAsync<OrderDto>().ConfigureAwait(false);
+    }
+
+    // Reviews
+    public async Task<ProductReviewListDto> GetProductReviewsAsync(string productId, int page = 1)
+    {
+        var response = await _httpClient.GetAsync($"/api/products/{productId}/reviews?page={page}").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return new ProductReviewListDto();
+        return await response.Content.ReadFromJsonAsync<ProductReviewListDto>().ConfigureAwait(false) ?? new ProductReviewListDto();
+    }
+
+    public async Task<ProductReviewDto> CreateReviewAsync(CreateReviewRequest request)
+    {
+        var response = await _httpClient.PostAsJsonAsync("/api/reviews", request).ConfigureAwait(false);
+        return await response.Content.ReadFromJsonAsync<ProductReviewDto>().ConfigureAwait(false) ?? new ProductReviewDto();
+    }
+
+    public async Task<bool> MarkReviewHelpfulAsync(string reviewId)
+    {
+        var response = await _httpClient.PostAsync($"/api/reviews/{reviewId}/helpful", null).ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> ReportReviewAsync(string reviewId, string reason)
+    {
+        var response = await _httpClient.PostAsJsonAsync($"/api/reviews/{reviewId}/report", new { Reason = reason }).ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
     }
 }

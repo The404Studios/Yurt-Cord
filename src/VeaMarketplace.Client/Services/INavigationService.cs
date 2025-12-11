@@ -9,6 +9,7 @@ public interface INavigationService
 
     void NavigateTo(string viewName);
     void NavigateToChat();
+    void NavigateToChat(string channelId);
     void NavigateToMarketplace();
     void NavigateToProfile();
     void NavigateToProfile(string userId);
@@ -18,6 +19,10 @@ public interface INavigationService
     void NavigateToVoiceCall();
     void NavigateToProduct(string productId);
     void NavigateToDirectMessage(string userId);
+    void NavigateToOrders();
+    void NavigateToOrder(string orderId);
+    void NavigateToNotifications();
+    void NavigateToWishlist();
 }
 
 public class NavigationService : INavigationService
@@ -72,4 +77,22 @@ public class NavigationService : INavigationService
         // Navigate to DM with specific user
         NavigateTo($"DirectMessage:{userId}");
     }
+
+    public void NavigateToChat(string channelId)
+    {
+        // Navigate to specific chat channel
+        NavigateTo($"Chat:{channelId}");
+    }
+
+    public void NavigateToOrders() => NavigateTo("Orders");
+
+    public void NavigateToOrder(string orderId)
+    {
+        // Navigate to specific order
+        NavigateTo($"Order:{orderId}");
+    }
+
+    public void NavigateToNotifications() => NavigateTo("Notifications");
+
+    public void NavigateToWishlist() => NavigateTo("Wishlist");
 }

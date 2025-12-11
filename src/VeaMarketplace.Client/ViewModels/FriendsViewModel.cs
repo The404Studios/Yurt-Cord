@@ -86,6 +86,72 @@ public partial class FriendsViewModel : BaseViewModel
         {
             SetError(error);
         };
+
+        // Subscribe to voice service call events
+        _voiceService.OnIncomingCall += call =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                CurrentCall = call;
+                HasIncomingCall = true;
+                // Find the friend for the caller
+                SelectedFriend = Friends.FirstOrDefault(f => f.UserId == call.CallerId);
+            });
+        };
+
+        _voiceService.OnCallAnswered += call =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                CurrentCall = call;
+                HasIncomingCall = false;
+                IsInCall = true;
+                _callStartTime = call.AnsweredAt ?? DateTime.UtcNow;
+                _callTimer.Start();
+            });
+        };
+
+        _voiceService.OnCallDeclined += call =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                HasIncomingCall = false;
+                IsInCall = false;
+                CurrentCall = null;
+            });
+        };
+
+        _voiceService.OnCallEnded += (callId, reason) =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                IsInCall = false;
+                HasIncomingCall = false;
+                CurrentCall = null;
+                _callTimer.Stop();
+                CallDuration = "00:00";
+            });
+        };
+
+        _voiceService.OnCallFailed += error =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                IsInCall = false;
+                HasIncomingCall = false;
+                CurrentCall = null;
+                SetError(error);
+            });
+        };
+
+        _voiceService.OnCallUserSpeaking += (connectionId, isSpeaking, audioLevel) =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                IsCallUserSpeaking = isSpeaking;
+                CallUserAudioLevel = audioLevel;
+            });
+        };
     }
 
     private void CallTimer_Tick(object? sender, EventArgs e)
@@ -188,35 +254,87 @@ public partial class FriendsViewModel : BaseViewModel
     [RelayCommand]
     private async Task StartCallAsync(FriendDto friend)
     {
-        // This would connect to voice hub and start call
-        // For now just indicate call started
-        IsInCall = true;
-        _callStartTime = DateTime.UtcNow;
-        _callTimer.Start();
+        if (friend == null) return;
+
+        try
+        {
+            // Ensure voice service is connected and authenticated
+            if (!_voiceService.IsConnected)
+            {
+                await _voiceService.ConnectAsync();
+                if (_apiService.AuthToken != null)
+                {
+                    await _voiceService.AuthenticateForCallsAsync(_apiService.AuthToken);
+                }
+            }
+
+            SelectedFriend = friend;
+            await _voiceService.StartCallAsync(friend.UserId);
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to start call: {ex.Message}");
+        }
     }
 
     [RelayCommand]
-    private void AcceptCall()
+    private async Task AcceptCallAsync()
     {
-        HasIncomingCall = false;
-        IsInCall = true;
-        _callStartTime = DateTime.UtcNow;
-        _callTimer.Start();
+        if (CurrentCall == null) return;
+
+        try
+        {
+            await _voiceService.AnswerCallAsync(CurrentCall.Id, true);
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to accept call: {ex.Message}");
+        }
     }
 
     [RelayCommand]
-    private void DeclineCall()
+    private async Task DeclineCallAsync()
     {
-        HasIncomingCall = false;
-        CurrentCall = null;
+        if (CurrentCall == null) return;
+
+        try
+        {
+            await _voiceService.AnswerCallAsync(CurrentCall.Id, false);
+            HasIncomingCall = false;
+            CurrentCall = null;
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to decline call: {ex.Message}");
+        }
     }
 
     [RelayCommand]
-    private void EndCall()
+    private async Task EndCallAsync()
     {
-        IsInCall = false;
-        _callTimer.Stop();
-        CallDuration = "00:00";
-        CurrentCall = null;
+        if (CurrentCall == null && _voiceService.CurrentCallId == null) return;
+
+        try
+        {
+            var callId = CurrentCall?.Id ?? _voiceService.CurrentCallId!;
+            await _voiceService.EndCallAsync(callId);
+            IsInCall = false;
+            _callTimer.Stop();
+            CallDuration = "00:00";
+            CurrentCall = null;
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to end call: {ex.Message}");
+        }
     }
+
+    [RelayCommand]
+    private void ToggleMute()
+    {
+        _voiceService.IsMuted = !_voiceService.IsMuted;
+        OnPropertyChanged(nameof(IsMuted));
+    }
+
+    public bool IsMuted => _voiceService.IsMuted;
 }
