@@ -12,39 +12,57 @@ public interface IFriendService
     ObservableCollection<FriendRequestDto> OutgoingRequests { get; }
     ObservableCollection<ConversationDto> Conversations { get; }
     ObservableCollection<DirectMessageDto> CurrentDMHistory { get; }
+    ObservableCollection<BlockedUserDto> BlockedUsers { get; }
     string? CurrentDMPartnerId { get; }
     UserSearchResultDto? LastSearchResult { get; }
     ObservableCollection<UserSearchResultDto> SearchResults { get; }
+    string? TypingUserId { get; }
+    string? TypingUsername { get; }
 
     event Action<FriendDto>? OnFriendOnline;
     event Action<string>? OnFriendOffline;
     event Action<FriendRequestDto>? OnNewFriendRequest;
     event Action<string>? OnFriendRequestAccepted;
+    event Action<string>? OnFriendRequestDeclined;
+    event Action<string>? OnFriendRequestCancelled;
     event Action<DirectMessageDto>? OnDirectMessageReceived;
-    event Action<string>? OnUserTypingDM;
+    event Action<string, string>? OnUserTypingDM;
+    event Action<string>? OnUserStoppedTypingDM;
     event Action<string>? OnError;
+    event Action<string>? OnSuccess;
     event Action<UserSearchResultDto?>? OnUserSearchResult;
     event Action<List<UserSearchResultDto>>? OnUserSearchResults;
     event Action<FriendDto>? OnFriendProfileUpdated;
+    event Action<FriendDto>? OnFriendRemoved;
+    event Action<BlockedUserDto>? OnUserBlocked;
+    event Action<string>? OnUserUnblocked;
+    event Action? OnConversationsUpdated;
 
     Task ConnectAsync(string token);
     Task DisconnectAsync();
     Task SendFriendRequestAsync(string username);
     Task SendFriendRequestByIdAsync(string userId);
     Task RespondToFriendRequestAsync(string requestId, bool accept);
+    Task CancelFriendRequestAsync(string requestId);
     Task RemoveFriendAsync(string friendId);
+    Task BlockUserAsync(string userId, string? reason = null);
+    Task UnblockUserAsync(string userId);
+    Task GetBlockedUsersAsync();
     Task GetDMHistoryAsync(string partnerId);
     Task SendDirectMessageAsync(string recipientId, string content);
     Task MarkMessagesReadAsync(string partnerId);
     Task SendTypingDMAsync(string recipientId);
+    Task StopTypingDMAsync(string recipientId);
     Task SearchUserAsync(string query);
     Task SearchUsersAsync(string query);
+    Task RefreshConversationsAsync();
 }
 
 public class FriendService : IFriendService, IAsyncDisposable
 {
     private HubConnection? _connection;
     private const string HubUrl = "http://162.248.94.23:5000/hubs/friends";
+    private System.Timers.Timer? _typingTimer;
 
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
     public ObservableCollection<FriendDto> Friends { get; } = new();
@@ -53,19 +71,30 @@ public class FriendService : IFriendService, IAsyncDisposable
     public ObservableCollection<ConversationDto> Conversations { get; } = new();
     public ObservableCollection<DirectMessageDto> CurrentDMHistory { get; } = new();
     public ObservableCollection<UserSearchResultDto> SearchResults { get; } = new();
+    public ObservableCollection<BlockedUserDto> BlockedUsers { get; } = new();
     public string? CurrentDMPartnerId { get; private set; }
     public UserSearchResultDto? LastSearchResult { get; private set; }
+    public string? TypingUserId { get; private set; }
+    public string? TypingUsername { get; private set; }
 
     public event Action<FriendDto>? OnFriendOnline;
     public event Action<string>? OnFriendOffline;
     public event Action<FriendRequestDto>? OnNewFriendRequest;
     public event Action<string>? OnFriendRequestAccepted;
+    public event Action<string>? OnFriendRequestDeclined;
+    public event Action<string>? OnFriendRequestCancelled;
     public event Action<DirectMessageDto>? OnDirectMessageReceived;
-    public event Action<string>? OnUserTypingDM;
+    public event Action<string, string>? OnUserTypingDM;
+    public event Action<string>? OnUserStoppedTypingDM;
     public event Action<string>? OnError;
+    public event Action<string>? OnSuccess;
     public event Action<UserSearchResultDto?>? OnUserSearchResult;
     public event Action<List<UserSearchResultDto>>? OnUserSearchResults;
     public event Action<FriendDto>? OnFriendProfileUpdated;
+    public event Action<FriendDto>? OnFriendRemoved;
+    public event Action<BlockedUserDto>? OnUserBlocked;
+    public event Action<string>? OnUserUnblocked;
+    public event Action? OnConversationsUpdated;
 
     public async Task ConnectAsync(string token)
     {
@@ -183,14 +212,112 @@ public class FriendService : IFriendService, IAsyncDisposable
             OnFriendRequestAccepted?.Invoke(userId);
         });
 
-        _connection.On<string>("UserTypingDM", userId =>
+        _connection.On<string, string>("UserTypingDM", (userId, username) =>
         {
-            OnUserTypingDM?.Invoke(userId);
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                TypingUserId = userId;
+                TypingUsername = username;
+                OnUserTypingDM?.Invoke(userId, username);
+
+                // Auto-clear typing indicator after 3 seconds
+                _typingTimer?.Stop();
+                _typingTimer?.Dispose();
+                _typingTimer = new System.Timers.Timer(3000);
+                _typingTimer.Elapsed += (s, e) =>
+                {
+                    System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+                    {
+                        TypingUserId = null;
+                        TypingUsername = null;
+                        OnUserStoppedTypingDM?.Invoke(userId);
+                    });
+                    _typingTimer?.Stop();
+                };
+                _typingTimer.AutoReset = false;
+                _typingTimer.Start();
+            });
+        });
+
+        _connection.On<string>("UserStoppedTypingDM", userId =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                if (TypingUserId == userId)
+                {
+                    TypingUserId = null;
+                    TypingUsername = null;
+                }
+                OnUserStoppedTypingDM?.Invoke(userId);
+            });
+        });
+
+        _connection.On<string>("FriendRequestDeclined", userId =>
+        {
+            OnFriendRequestDeclined?.Invoke(userId);
+        });
+
+        _connection.On<string>("FriendRequestCancelled", requestId =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                var request = PendingRequests.FirstOrDefault(r => r.Id == requestId);
+                if (request != null)
+                    PendingRequests.Remove(request);
+            });
+            OnFriendRequestCancelled?.Invoke(requestId);
+        });
+
+        _connection.On<FriendDto>("FriendRemoved", friend =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                var existing = Friends.FirstOrDefault(f => f.UserId == friend.UserId);
+                if (existing != null)
+                    Friends.Remove(existing);
+            });
+            OnFriendRemoved?.Invoke(friend);
+        });
+
+        _connection.On<List<BlockedUserDto>>("BlockedUsers", users =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                BlockedUsers.Clear();
+                foreach (var user in users)
+                    BlockedUsers.Add(user);
+            });
+        });
+
+        _connection.On<BlockedUserDto>("UserBlocked", user =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                BlockedUsers.Add(user);
+                // Remove from friends if blocked
+                var friend = Friends.FirstOrDefault(f => f.UserId == user.UserId);
+                if (friend != null)
+                    Friends.Remove(friend);
+            });
+            OnUserBlocked?.Invoke(user);
+        });
+
+        _connection.On<string>("UserUnblocked", userId =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                var user = BlockedUsers.FirstOrDefault(u => u.UserId == userId);
+                if (user != null)
+                    BlockedUsers.Remove(user);
+            });
+            OnUserUnblocked?.Invoke(userId);
         });
 
         _connection.On<string>("FriendRequestError", error => OnError?.Invoke(error));
         _connection.On<string>("FriendError", error => OnError?.Invoke(error));
         _connection.On<string>("DMError", error => OnError?.Invoke(error));
+        _connection.On<string>("BlockError", error => OnError?.Invoke(error));
+        _connection.On<string>("Success", message => OnSuccess?.Invoke(message));
 
         // User search handlers
         _connection.On<UserSearchResultDto?>("UserSearchResult", result =>
@@ -259,10 +386,42 @@ public class FriendService : IFriendService, IAsyncDisposable
             await _connection.InvokeAsync("RespondToFriendRequest", requestId, accept).ConfigureAwait(false);
     }
 
+    public async Task CancelFriendRequestAsync(string requestId)
+    {
+        if (_connection != null && IsConnected)
+        {
+            await _connection.InvokeAsync("CancelFriendRequest", requestId).ConfigureAwait(false);
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                var request = OutgoingRequests.FirstOrDefault(r => r.Id == requestId);
+                if (request != null)
+                    OutgoingRequests.Remove(request);
+            });
+        }
+    }
+
     public async Task RemoveFriendAsync(string friendId)
     {
         if (_connection != null && IsConnected)
             await _connection.InvokeAsync("RemoveFriend", friendId).ConfigureAwait(false);
+    }
+
+    public async Task BlockUserAsync(string userId, string? reason = null)
+    {
+        if (_connection != null && IsConnected)
+            await _connection.InvokeAsync("BlockUser", userId, reason).ConfigureAwait(false);
+    }
+
+    public async Task UnblockUserAsync(string userId)
+    {
+        if (_connection != null && IsConnected)
+            await _connection.InvokeAsync("UnblockUser", userId).ConfigureAwait(false);
+    }
+
+    public async Task GetBlockedUsersAsync()
+    {
+        if (_connection != null && IsConnected)
+            await _connection.InvokeAsync("GetBlockedUsers").ConfigureAwait(false);
     }
 
     public async Task GetDMHistoryAsync(string partnerId)
@@ -287,6 +446,21 @@ public class FriendService : IFriendService, IAsyncDisposable
     {
         if (_connection != null && IsConnected)
             await _connection.InvokeAsync("StartTypingDM", recipientId).ConfigureAwait(false);
+    }
+
+    public async Task StopTypingDMAsync(string recipientId)
+    {
+        if (_connection != null && IsConnected)
+            await _connection.InvokeAsync("StopTypingDM", recipientId).ConfigureAwait(false);
+    }
+
+    public async Task RefreshConversationsAsync()
+    {
+        if (_connection != null && IsConnected)
+        {
+            await _connection.InvokeAsync("GetConversations").ConfigureAwait(false);
+            OnConversationsUpdated?.Invoke();
+        }
     }
 
     public async Task DisconnectAsync()

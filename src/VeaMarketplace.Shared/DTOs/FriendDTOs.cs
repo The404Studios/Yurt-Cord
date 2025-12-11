@@ -114,3 +114,40 @@ public class CallResponseDto
     public string CallId { get; set; } = string.Empty;
     public bool Accept { get; set; }
 }
+
+public class BlockedUserDto
+{
+    public string Id { get; set; } = string.Empty;
+    public string UserId { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
+    public string AvatarUrl { get; set; } = string.Empty;
+    public DateTime BlockedAt { get; set; }
+    public string? Reason { get; set; }
+}
+
+public class BlockUserRequest
+{
+    public string UserId { get; set; } = string.Empty;
+    public string? Reason { get; set; }
+}
+
+public class CancelFriendRequestDto
+{
+    public string RequestId { get; set; } = string.Empty;
+}
+
+public class TypingIndicatorDto
+{
+    public string UserId { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
+    public bool IsTyping { get; set; }
+    public DateTime Timestamp { get; set; }
+}
+
+public class MessageReactionDto
+{
+    public string MessageId { get; set; } = string.Empty;
+    public string Emoji { get; set; } = string.Empty;
+    public string UserId { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
+}

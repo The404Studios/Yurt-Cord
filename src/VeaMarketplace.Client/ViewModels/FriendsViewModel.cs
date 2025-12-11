@@ -34,7 +34,7 @@ public partial class FriendsViewModel : BaseViewModel
     private bool _isInDMView;
 
     [ObservableProperty]
-    private string _currentView = "Friends"; // Friends, Pending, Add
+    private string _currentView = "Friends"; // Friends, Pending, Add, Blocked, Conversations
 
     // Call state
     [ObservableProperty]
@@ -55,11 +55,38 @@ public partial class FriendsViewModel : BaseViewModel
     [ObservableProperty]
     private double _callUserAudioLevel;
 
+    // Typing indicator
+    [ObservableProperty]
+    private bool _isPartnerTyping;
+
+    [ObservableProperty]
+    private string? _typingUsername;
+
+    // Block dialog
+    [ObservableProperty]
+    private bool _isBlockDialogOpen;
+
+    [ObservableProperty]
+    private FriendDto? _userToBlock;
+
+    [ObservableProperty]
+    private string _blockReason = string.Empty;
+
+    // Context menu
+    [ObservableProperty]
+    private FriendDto? _contextMenuFriend;
+
     public ObservableCollection<FriendDto> Friends => _friendService.Friends;
     public ObservableCollection<FriendRequestDto> PendingRequests => _friendService.PendingRequests;
     public ObservableCollection<FriendRequestDto> OutgoingRequests => _friendService.OutgoingRequests;
     public ObservableCollection<ConversationDto> Conversations => _friendService.Conversations;
     public ObservableCollection<DirectMessageDto> CurrentDMHistory => _friendService.CurrentDMHistory;
+    public ObservableCollection<BlockedUserDto> BlockedUsers => _friendService.BlockedUsers;
+
+    public int OnlineFriendsCount => Friends.Count(f => f.IsOnline);
+    public int TotalFriendsCount => Friends.Count;
+    public int PendingRequestsCount => PendingRequests.Count;
+    public int UnreadConversationsCount => Conversations.Count(c => c.UnreadCount > 0);
 
     public FriendsViewModel(IFriendService friendService, IApiService apiService, IVoiceService voiceService)
     {
@@ -85,6 +112,78 @@ public partial class FriendsViewModel : BaseViewModel
         _friendService.OnError += error =>
         {
             SetError(error);
+        };
+
+        _friendService.OnSuccess += message =>
+        {
+            // Could show toast notification
+            ClearError();
+        };
+
+        _friendService.OnUserTypingDM += (userId, username) =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                if (SelectedFriend?.UserId == userId)
+                {
+                    IsPartnerTyping = true;
+                    TypingUsername = username;
+                }
+            });
+        };
+
+        _friendService.OnUserStoppedTypingDM += userId =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                if (SelectedFriend?.UserId == userId)
+                {
+                    IsPartnerTyping = false;
+                    TypingUsername = null;
+                }
+            });
+        };
+
+        _friendService.OnFriendRemoved += friend =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnPropertyChanged(nameof(TotalFriendsCount));
+                OnPropertyChanged(nameof(OnlineFriendsCount));
+            });
+        };
+
+        _friendService.OnUserBlocked += user =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnPropertyChanged(nameof(TotalFriendsCount));
+                OnPropertyChanged(nameof(OnlineFriendsCount));
+            });
+        };
+
+        _friendService.OnFriendOnline += friend =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnPropertyChanged(nameof(OnlineFriendsCount));
+            });
+        };
+
+        _friendService.OnFriendOffline += userId =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnPropertyChanged(nameof(OnlineFriendsCount));
+            });
+        };
+
+        _friendService.OnConversationsUpdated += () =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnPropertyChanged(nameof(UnreadConversationsCount));
+            });
         };
 
         // Subscribe to voice service call events
@@ -337,4 +436,119 @@ public partial class FriendsViewModel : BaseViewModel
     }
 
     public bool IsMuted => _voiceService.IsMuted;
+
+    // Cancel friend request
+    [RelayCommand]
+    private async Task CancelFriendRequestAsync(FriendRequestDto request)
+    {
+        await _friendService.CancelFriendRequestAsync(request.Id);
+    }
+
+    // Block functionality
+    [RelayCommand]
+    private void OpenBlockDialog(FriendDto friend)
+    {
+        UserToBlock = friend;
+        BlockReason = string.Empty;
+        IsBlockDialogOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseBlockDialog()
+    {
+        IsBlockDialogOpen = false;
+        UserToBlock = null;
+        BlockReason = string.Empty;
+    }
+
+    [RelayCommand]
+    private async Task ConfirmBlockAsync()
+    {
+        if (UserToBlock == null) return;
+
+        try
+        {
+            await _friendService.BlockUserAsync(UserToBlock.UserId, string.IsNullOrWhiteSpace(BlockReason) ? null : BlockReason);
+            IsBlockDialogOpen = false;
+            UserToBlock = null;
+            BlockReason = string.Empty;
+
+            // Close DM if blocking current chat partner
+            if (SelectedFriend?.UserId == UserToBlock?.UserId)
+            {
+                CloseDM();
+            }
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to block user: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private async Task UnblockUserAsync(BlockedUserDto user)
+    {
+        try
+        {
+            await _friendService.UnblockUserAsync(user.UserId);
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to unblock user: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private async Task LoadBlockedUsersAsync()
+    {
+        await _friendService.GetBlockedUsersAsync();
+    }
+
+    // Refresh conversations
+    [RelayCommand]
+    private async Task RefreshConversationsAsync()
+    {
+        await _friendService.RefreshConversationsAsync();
+    }
+
+    // View friend profile
+    [RelayCommand]
+    private void ViewFriendProfile(FriendDto friend)
+    {
+        // Could navigate to profile view
+        ContextMenuFriend = friend;
+    }
+
+    // Send typing indicator
+    [RelayCommand]
+    private async Task SendTypingAsync()
+    {
+        if (SelectedFriend != null)
+        {
+            await _friendService.SendTypingDMAsync(SelectedFriend.UserId);
+        }
+    }
+
+    // Mark messages as read when opening a conversation
+    partial void OnSelectedFriendChanged(FriendDto? value)
+    {
+        if (value != null)
+        {
+            _ = _friendService.MarkMessagesReadAsync(value.UserId);
+            IsPartnerTyping = false;
+            TypingUsername = null;
+        }
+    }
+
+    partial void OnCurrentViewChanged(string value)
+    {
+        if (value == "Blocked")
+        {
+            _ = LoadBlockedUsersAsync();
+        }
+        else if (value == "Conversations")
+        {
+            _ = RefreshConversationsAsync();
+        }
+    }
 }
