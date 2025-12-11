@@ -93,7 +93,46 @@
                                Foreground="White" Margin="0,0,0,8"/>
                     <Button Content="📷 Upload Images" Style="{StaticResource SecondaryButton}"
                             Command="{Binding UploadImagesCommand}"
-                            HorizontalAlignment="Left" Padding="15,8"/>
+                            IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBoolConverter}}"
+                            HorizontalAlignment="Left" Padding="15,8" Margin="0,0,0,10"/>
+
+                    <!-- Uploaded Images Preview -->
+                    <ItemsControl ItemsSource="{Binding UploadedImageUrls}" Margin="0,0,0,10">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{StaticResource TertiaryDark}" CornerRadius="4"
+                                        Margin="0,0,8,8" Padding="4">
+                                    <Grid>
+                                        <Image Source="{Binding}" Width="80" Height="80"
+                                               Stretch="UniformToFill"/>
+                                        <Button Content="✕" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                Style="{StaticResource IconButton}"
+                                                Command="{Binding DataContext.RemoveImageCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"
+                                                Width="20" Height="20" FontSize="10"
+                                                Background="#E04444" Margin="-4,-4,0,0"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Error Message -->
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="#E04444" FontSize="12"
+                               Visibility="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}}"
+                               Margin="0,0,0,10" TextWrapping="Wrap"/>
+
+                    <!-- Loading Indicator -->
+                    <StackPanel Orientation="Horizontal" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}"
+                                Margin="0,10,0,0">
+                        <TextBlock Text="⏳" FontSize="16" Margin="0,0,8,0"/>
+                        <TextBlock Text="Processing..." Foreground="{StaticResource MutedText}" FontSize="12"/>
+                    </StackPanel>
                 </StackPanel>
             </ScrollViewer>
 
@@ -107,10 +146,27 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
+                    <!-- Validation hint -->
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center"
+                               Foreground="{StaticResource MutedText}" FontSize="11">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value=""/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CanSubmit}" Value="False">
+                                        <Setter Property="Text" Value="Rating, title (5+ chars), and review (20+ chars) required"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
                     <Button Grid.Column="1" Content="Cancel" Style="{StaticResource SecondaryButton}"
-                            Click="CloseButton_Click" Padding="20,10" Margin="0,0,10,0"/>
+                            Command="{Binding CancelCommand}" Padding="20,10" Margin="0,0,10,0"
+                            IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBoolConverter}}"/>
                     <Button Grid.Column="2" Content="Submit Review" Style="{StaticResource AccentButton}"
-                            Command="{Binding SubmitReviewCommand}" Padding="20,10"/>
+                            Command="{Binding SubmitReviewCommand}" Padding="20,10"
+                            IsEnabled="{Binding CanSubmit}"/>
                 </Grid>
             </Border>
         </Grid>
