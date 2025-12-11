@@ -153,8 +153,12 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     // Screen sharing
     private bool _isScreenSharing;
     private CancellationTokenSource? _screenShareCts;
-    private Task? _screenShareTask;
+    private Task? _screenCaptureTask;
+    private Task? _screenSendTask;
     private DisplayInfo? _selectedDisplay;
+    private readonly ConcurrentQueue<byte[]> _frameQueue = new();
+    private const int TargetFps = 30;
+    private const int FrameIntervalMs = 1000 / TargetFps;
 
     // Audio send queue - prevents blocking audio callback with network operations
     private readonly ConcurrentQueue<byte[]> _audioSendQueue = new();
@@ -994,6 +998,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         _isScreenSharing = true;
         _screenShareCts = new CancellationTokenSource();
 
+        // Clear any old frames
+        while (_frameQueue.TryDequeue(out _)) { }
+
         // Notify others that we started screen sharing
         try
         {
@@ -1006,8 +1013,11 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             // Continue anyway - the frame sending will still work
         }
 
-        // Start capture task
-        _screenShareTask = Task.Run(() => CaptureScreenLoop(_screenShareCts.Token), _screenShareCts.Token);
+        // Start capture task (captures frames into queue)
+        _screenCaptureTask = Task.Run(() => ScreenCaptureLoop(_screenShareCts.Token), _screenShareCts.Token);
+
+        // Start send task (sends frames from queue at constant rate)
+        _screenSendTask = Task.Run(() => ScreenSendLoop(_screenShareCts.Token), _screenShareCts.Token);
     }
 
     public async Task StopScreenShareAsync()
@@ -1017,18 +1027,28 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         _screenShareCts?.Cancel();
         _isScreenSharing = false;
 
-        if (_screenShareTask != null)
+        // Wait for both tasks to complete
+        var tasks = new List<Task>();
+        if (_screenCaptureTask != null) tasks.Add(_screenCaptureTask);
+        if (_screenSendTask != null) tasks.Add(_screenSendTask);
+
+        if (tasks.Count > 0)
         {
             try
             {
-                await _screenShareTask.ConfigureAwait(false);
+                await Task.WhenAll(tasks).ConfigureAwait(false);
             }
             catch (OperationCanceledException) { }
+            catch { }
         }
 
-        _screenShareTask = null;
+        _screenCaptureTask = null;
+        _screenSendTask = null;
         _screenShareCts?.Dispose();
         _screenShareCts = null;
+
+        // Clear frame queue
+        while (_frameQueue.TryDequeue(out _)) { }
 
         // Notify others that we stopped screen sharing
         if (_connection != null && IsConnected)
@@ -1041,67 +1061,59 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         }
     }
 
-    private async Task CaptureScreenLoop(CancellationToken cancellationToken)
+    /// <summary>
+    /// Captures screen frames and adds them to the queue.
+    /// Runs independently of network sending for consistent capture rate.
+    /// </summary>
+    private async Task ScreenCaptureLoop(CancellationToken cancellationToken)
     {
-        // Use reasonable defaults for SignalR streaming
-        // 30 FPS is more practical for SignalR than 60
-        const int targetFps = 30;
-        const int frameDelayMs = 1000 / targetFps;
         const int targetWidth = 1280;
         const int targetHeight = 720;
+        const int maxFrameSize = 64 * 1024; // 64KB max
 
-        // Track failed sends to implement backoff
-        int consecutiveFailures = 0;
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var lastCaptureTime = stopwatch.ElapsedMilliseconds;
 
-        while (!cancellationToken.IsCancellationRequested && _connection != null && IsConnected)
+        while (!cancellationToken.IsCancellationRequested)
         {
             try
             {
-                var frameStart = DateTime.UtcNow;
+                var now = stopwatch.ElapsedMilliseconds;
+                var elapsed = now - lastCaptureTime;
 
-                // Capture screen using GDI+ (cross-compatible approach)
-                var frameData = CaptureScreen(targetWidth, targetHeight);
-
-                if (frameData != null && frameData.Length > 0 && _connection != null && IsConnected)
+                if (elapsed >= FrameIntervalMs)
                 {
-                    // SignalR default max message size is 32KB, we'll target smaller frames
-                    const int maxFrameSize = 64 * 1024; // 64KB max
+                    lastCaptureTime = now;
 
-                    byte[] dataToSend = frameData;
+                    // Capture screen
+                    var frameData = CaptureScreen(targetWidth, targetHeight);
 
-                    // If frame is too large, compress more
-                    if (frameData.Length > maxFrameSize)
+                    if (frameData != null && frameData.Length > 0)
                     {
-                        dataToSend = CompressFrame(frameData, targetWidth, targetHeight, 25);
-                    }
-
-                    // Only send if frame is reasonable size
-                    if (dataToSend.Length <= maxFrameSize * 2)
-                    {
-                        try
+                        // Compress if too large
+                        if (frameData.Length > maxFrameSize)
                         {
-                            // Use SendAsync for fire-and-forget - don't wait for server response
-                            // This prevents frame capture from blocking on network
-                            await _connection.SendAsync("SendScreenFrame", dataToSend, targetWidth, targetHeight, cancellationToken).ConfigureAwait(false);
-                            consecutiveFailures = 0;
+                            frameData = CompressFrame(frameData, targetWidth, targetHeight, 25);
                         }
-                        catch
+
+                        // Only queue if reasonable size and queue isn't backed up
+                        // Keep max 3 frames (100ms buffer) to prevent memory buildup
+                        if (frameData.Length <= maxFrameSize * 2 && _frameQueue.Count < 3)
                         {
-                            consecutiveFailures++;
-                            // If we're failing repeatedly, back off
-                            if (consecutiveFailures > 5)
-                            {
-                                await Task.Delay(500, cancellationToken).ConfigureAwait(false);
-                            }
+                            _frameQueue.Enqueue(frameData);
                         }
                     }
                 }
 
-                // Maintain target framerate
-                var elapsed = (DateTime.UtcNow - frameStart).TotalMilliseconds;
-                if (elapsed < frameDelayMs)
+                // Sleep for remaining time
+                var remaining = FrameIntervalMs - (stopwatch.ElapsedMilliseconds - lastCaptureTime);
+                if (remaining > 2)
                 {
-                    await Task.Delay((int)(frameDelayMs - elapsed), cancellationToken).ConfigureAwait(false);
+                    await Task.Delay((int)(remaining - 1), cancellationToken).ConfigureAwait(false);
+                }
+                else if (remaining > 0)
+                {
+                    Thread.SpinWait(100);
                 }
             }
             catch (OperationCanceledException)
@@ -1110,8 +1122,83 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             }
             catch
             {
-                // Continue on errors, but add small delay
-                await Task.Delay(100, cancellationToken).ConfigureAwait(false);
+                // Continue on errors
+                await Task.Delay(10, cancellationToken).ConfigureAwait(false);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Sends frames from the queue at a constant rate.
+    /// Uses Stopwatch for precise timing to ensure constant bitrate.
+    /// </summary>
+    private async Task ScreenSendLoop(CancellationToken cancellationToken)
+    {
+        const int targetWidth = 1280;
+        const int targetHeight = 720;
+
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var lastSendTime = stopwatch.ElapsedMilliseconds;
+        int consecutiveFailures = 0;
+
+        while (!cancellationToken.IsCancellationRequested && _connection != null && IsConnected)
+        {
+            try
+            {
+                var now = stopwatch.ElapsedMilliseconds;
+                var elapsed = now - lastSendTime;
+
+                if (elapsed >= FrameIntervalMs)
+                {
+                    lastSendTime = now;
+
+                    // Get latest frame, skip old ones if backed up
+                    byte[]? frameToSend = null;
+                    while (_frameQueue.TryDequeue(out var frame))
+                    {
+                        frameToSend = frame;
+                        // If queue is empty after this, we got the latest
+                        if (_frameQueue.IsEmpty) break;
+                    }
+
+                    if (frameToSend != null && _connection != null && IsConnected)
+                    {
+                        try
+                        {
+                            await _connection.SendAsync("SendScreenFrame", frameToSend, targetWidth, targetHeight, cancellationToken).ConfigureAwait(false);
+                            consecutiveFailures = 0;
+                        }
+                        catch
+                        {
+                            consecutiveFailures++;
+                            // Exponential backoff on repeated failures
+                            if (consecutiveFailures > 5)
+                            {
+                                await Task.Delay(Math.Min(500, consecutiveFailures * 50), cancellationToken).ConfigureAwait(false);
+                            }
+                        }
+                    }
+                }
+
+                // Sleep for remaining time
+                var remaining = FrameIntervalMs - (stopwatch.ElapsedMilliseconds - lastSendTime);
+                if (remaining > 2)
+                {
+                    await Task.Delay((int)(remaining - 1), cancellationToken).ConfigureAwait(false);
+                }
+                else if (remaining > 0)
+                {
+                    Thread.SpinWait(100);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch
+            {
+                // Continue on errors
+                await Task.Delay(10, cancellationToken).ConfigureAwait(false);
             }
         }
     }
