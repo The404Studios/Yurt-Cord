@@ -11,6 +11,7 @@ public partial class ChatViewModel : BaseViewModel
     private readonly IChatService _chatService;
     private readonly IVoiceService _voiceService;
     private readonly IApiService _apiService;
+    private readonly INavigationService _navigationService;
     private DateTime _lastTypingSent = DateTime.MinValue;
 
     [ObservableProperty]
@@ -46,11 +47,12 @@ public partial class ChatViewModel : BaseViewModel
     [ObservableProperty]
     private bool _isDeafened;
 
-    public ChatViewModel(IChatService chatService, IVoiceService voiceService, IApiService apiService)
+    public ChatViewModel(IChatService chatService, IVoiceService voiceService, IApiService apiService, INavigationService navigationService)
     {
         _chatService = chatService;
         _voiceService = voiceService;
         _apiService = apiService;
+        _navigationService = navigationService;
 
         RegisterEventHandlers();
     }
@@ -230,6 +232,9 @@ public partial class ChatViewModel : BaseViewModel
             await _voiceService.JoinVoiceChannelAsync(channelId, user.Id, user.Username, user.AvatarUrl);
             IsInVoiceChannel = true;
             CurrentVoiceChannel = channelId;
+
+            // Navigate to voice call dashboard
+            _navigationService.NavigateToVoiceCall();
         }
     }
 
@@ -240,6 +245,9 @@ public partial class ChatViewModel : BaseViewModel
         IsInVoiceChannel = false;
         CurrentVoiceChannel = null;
         VoiceUsers.Clear();
+
+        // Navigate back to chat
+        _navigationService.NavigateToChat();
     }
 
     [RelayCommand]

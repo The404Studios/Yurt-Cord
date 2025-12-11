@@ -11,6 +11,7 @@ public interface INavigationService
     void NavigateToProfile();
     void NavigateToSettings();
     void NavigateToFriends();
+    void NavigateToVoiceCall();
 }
 
 public class NavigationService : INavigationService
@@ -29,4 +30,5 @@ public class NavigationService : INavigationService
     public void NavigateToProfile() => NavigateTo("Profile");
     public void NavigateToSettings() => NavigateTo("Settings");
     public void NavigateToFriends() => NavigateTo("Friends");
+    public void NavigateToVoiceCall() => NavigateTo("VoiceCall");
 }

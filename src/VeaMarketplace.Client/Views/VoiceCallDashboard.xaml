@@ -1,0 +1,283 @@
+<UserControl x:Class="VeaMarketplace.Client.Views.VoiceCallDashboard"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:VeaMarketplace.Client.Views"
+             Background="#1E1F22">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Colors.xaml"/>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+            <local:AudioLevelToHeightConverter x:Key="AudioLevelToHeightConverter"/>
+
+            <!-- User Tile Context Menu -->
+            <ContextMenu x:Key="UserTileContextMenu" Style="{StaticResource ModernContextMenu}">
+                <MenuItem Header="Mute User (for me)" Style="{StaticResource ModernMenuItem}"
+                          Click="MuteUser_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🔇" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Adjust Volume" Style="{StaticResource ModernMenuItem}"
+                          Click="AdjustVolume_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🔊" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator Style="{StaticResource MenuSeparator}"/>
+                <MenuItem Header="Watch Screen" Style="{StaticResource ModernMenuItem}"
+                          Click="WatchScreen_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🖥" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator Style="{StaticResource MenuSeparator}"/>
+                <MenuItem Header="View Profile" Style="{StaticResource ModernMenuItem}"
+                          Click="ViewProfile_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="👤" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+            </ContextMenu>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#2B2D31" Padding="16,12">
+            <Grid>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="🔊" FontSize="20" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <StackPanel>
+                        <TextBlock x:Name="ChannelNameText" Text="Voice Channel" FontSize="16"
+                                   Foreground="White" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="ParticipantCountText" Text="0 participants" FontSize="12"
+                                   Foreground="#B5BAC1"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <!-- Screen Share Button -->
+                    <Button x:Name="ScreenShareBtn" Style="{StaticResource IconButton}"
+                            Width="40" Height="40" Click="ScreenShare_Click"
+                            ToolTip="Share Screen" Margin="0,0,8,0">
+                        <TextBlock x:Name="ScreenShareIcon" Text="🖥" FontSize="18"/>
+                    </Button>
+                    <!-- Mute Button -->
+                    <Button x:Name="MuteBtn" Style="{StaticResource IconButton}"
+                            Width="40" Height="40" Click="Mute_Click"
+                            ToolTip="Mute" Margin="0,0,8,0">
+                        <TextBlock x:Name="MuteIcon" Text="🎤" FontSize="18"/>
+                    </Button>
+                    <!-- Deafen Button -->
+                    <Button x:Name="DeafenBtn" Style="{StaticResource IconButton}"
+                            Width="40" Height="40" Click="Deafen_Click"
+                            ToolTip="Deafen" Margin="0,0,8,0">
+                        <TextBlock x:Name="DeafenIcon" Text="🔊" FontSize="18"/>
+                    </Button>
+                    <!-- Leave Button -->
+                    <Button Style="{StaticResource IconButton}"
+                            Width="40" Height="40" Click="Leave_Click"
+                            ToolTip="Leave Voice" Background="#ED4245">
+                        <TextBlock Text="📞" FontSize="18" RenderTransformOrigin="0.5,0.5">
+                            <TextBlock.RenderTransform>
+                                <RotateTransform Angle="135"/>
+                            </TextBlock.RenderTransform>
+                        </TextBlock>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main Content Area -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Screen Share / Main View Area -->
+            <Border Grid.Column="0" Background="#000000" Margin="8">
+                <Grid>
+                    <!-- Screen Share View -->
+                    <Image x:Name="ScreenShareImage" Stretch="Uniform"
+                           RenderOptions.BitmapScalingMode="HighQuality"
+                           Visibility="Collapsed"/>
+
+                    <!-- No Stream Message -->
+                    <StackPanel x:Name="NoStreamPanel" VerticalAlignment="Center"
+                                HorizontalAlignment="Center">
+                        <TextBlock Text="📺" FontSize="64" HorizontalAlignment="Center"
+                                   Margin="0,0,0,12" Foreground="#5865F2"/>
+                        <TextBlock Text="No one is sharing their screen" FontSize="16"
+                                   Foreground="#B5BAC1" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Click 🖥 to share yours" FontSize="13"
+                                   Foreground="#72767D" HorizontalAlignment="Center"
+                                   Margin="0,8,0,0"/>
+                    </StackPanel>
+
+                    <!-- Stream Info Overlay -->
+                    <Border x:Name="StreamInfoPanel" Background="#80000000"
+                            VerticalAlignment="Top" HorizontalAlignment="Left"
+                            Padding="8,4" Margin="8" CornerRadius="4"
+                            Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock x:Name="StreamerNameText" Foreground="White"
+                                       FontSize="12" Margin="0,0,12,0"/>
+                            <TextBlock x:Name="StreamFpsText" Foreground="#B5BAC1"
+                                       FontSize="12"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Participants Panel -->
+            <Border Grid.Column="1" Background="#2B2D31" Width="280" Margin="0,8,8,8"
+                    CornerRadius="8">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Panel Header -->
+                    <Border Grid.Row="0" Background="#1E1F22" Padding="12,10"
+                            CornerRadius="8,8,0,0">
+                        <TextBlock Text="PARTICIPANTS" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="#B5BAC1"/>
+                    </Border>
+
+                    <!-- Participants List -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl x:Name="ParticipantsItemsControl">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="4" Padding="8" CornerRadius="4"
+                                            Background="#36393F" Cursor="Hand"
+                                            ContextMenu="{StaticResource UserTileContextMenu}"
+                                            Tag="{Binding}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Avatar with Speaking Indicator -->
+                                            <Grid Grid.Column="0" Margin="0,0,10,0">
+                                                <Ellipse Width="40" Height="40">
+                                                    <Ellipse.Fill>
+                                                        <ImageBrush ImageSource="{Binding AvatarUrl}"
+                                                                    Stretch="UniformToFill"/>
+                                                    </Ellipse.Fill>
+                                                </Ellipse>
+                                                <!-- Speaking Ring -->
+                                                <Ellipse Width="44" Height="44"
+                                                         Stroke="#43B581" StrokeThickness="2"
+                                                         Visibility="{Binding IsSpeaking, Converter={StaticResource BoolToVis}}"/>
+                                            </Grid>
+
+                                            <!-- User Info -->
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Username}"
+                                                           Foreground="White" FontSize="14"
+                                                           FontWeight="Medium"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                    <!-- Muted Icon -->
+                                                    <TextBlock Text="🔇" FontSize="11" Margin="0,0,4,0"
+                                                               Visibility="{Binding IsMuted, Converter={StaticResource BoolToVis}}"
+                                                               Foreground="#ED4245"/>
+                                                    <!-- Deafened Icon -->
+                                                    <TextBlock Text="🔈" FontSize="11" Margin="0,0,4,0"
+                                                               Visibility="{Binding IsDeafened, Converter={StaticResource BoolToVis}}"
+                                                               Foreground="#ED4245"/>
+                                                    <!-- Screen Sharing Icon -->
+                                                    <TextBlock Text="🖥" FontSize="11"
+                                                               Visibility="{Binding IsScreenSharing, Converter={StaticResource BoolToVis}}"
+                                                               Foreground="#43B581"/>
+                                                </StackPanel>
+                                            </StackPanel>
+
+                                            <!-- Audio Level Bar -->
+                                            <Grid Grid.Column="2" Width="4" VerticalAlignment="Stretch"
+                                                  Margin="8,0,0,0">
+                                                <Border Background="#40444B" CornerRadius="2"/>
+                                                <Border Background="#43B581" CornerRadius="2"
+                                                        VerticalAlignment="Bottom"
+                                                        Height="{Binding AudioLevel, Converter={StaticResource AudioLevelToHeightConverter}}"/>
+                                            </Grid>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Bottom Controls / Audio Level -->
+        <Border Grid.Row="2" Background="#2B2D31" Padding="16,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Self View -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <Border Width="36" Height="36" CornerRadius="18" Margin="0,0,10,0">
+                        <Border.Background>
+                            <ImageBrush x:Name="SelfAvatarBrush" Stretch="UniformToFill"/>
+                        </Border.Background>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock x:Name="SelfUsernameText" Foreground="White"
+                                   FontSize="14" FontWeight="Medium"/>
+                        <TextBlock x:Name="SelfStatusText" Text="Connected" FontSize="11"
+                                   Foreground="#43B581"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Audio Level Meter -->
+                <Grid Grid.Column="1" Margin="20,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="MicLevelIcon" Text="🎤" FontSize="14"
+                               Foreground="#B5BAC1" VerticalAlignment="Center"
+                               Margin="0,0,8,0"/>
+                    <Border Grid.Column="1" Background="#40444B" CornerRadius="3"
+                            Height="6" VerticalAlignment="Center">
+                        <Border x:Name="MicLevelBar" Background="#43B581"
+                                CornerRadius="3" HorizontalAlignment="Left" Width="0"/>
+                    </Border>
+                </Grid>
+
+                <!-- Volume Control -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <TextBlock Text="🔊" FontSize="14" Foreground="#B5BAC1"
+                               VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <Slider x:Name="VolumeSlider" Width="100" Minimum="0" Maximum="100"
+                            Value="100" VerticalAlignment="Center"
+                            ValueChanged="VolumeSlider_ValueChanged"/>
+                    <TextBlock x:Name="VolumeText" Text="100%" FontSize="12"
+                               Foreground="#B5BAC1" VerticalAlignment="Center"
+                               Margin="8,0,0,0" Width="35"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
