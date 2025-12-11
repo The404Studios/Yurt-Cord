@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 using System.Collections.Concurrent;
+using System.IO;
 using System.Windows.Input;
 
 namespace VeaMarketplace.Client.Services;
@@ -92,8 +93,6 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     private readonly ConcurrentDictionary<string, float> _userVolumes = new();
     private readonly ConcurrentDictionary<string, bool> _mutedUsers = new();
     private readonly ConcurrentDictionary<string, BufferedWaveProvider> _userAudioBuffers = new();
-    private MixingWaveProvider32? _mixer;
-    private float _masterVolume = 1.0f;
 
     // Audio device configuration
     private int _inputDeviceNumber = 0;

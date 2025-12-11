@@ -10,8 +10,8 @@ namespace VeaMarketplace.Client.Views;
 
 public partial class VoiceCallDashboard : UserControl
 {
-    private readonly IVoiceService _voiceService;
-    private readonly IApiService _apiService;
+    private readonly IVoiceService _voiceService = null!;
+    private readonly IApiService _apiService = null!;
     private readonly ObservableCollection<VoiceParticipant> _participants = new();
     private bool _isMuted;
     private bool _isDeafened;
@@ -489,22 +489,3 @@ public class VoiceParticipant : INotifyPropertyChanged
     }
 }
 
-/// <summary>
-/// Converter for audio level to bar height
-/// </summary>
-public class AudioLevelToHeightConverter : System.Windows.Data.IValueConverter
-{
-    public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-    {
-        if (value is double level)
-        {
-            return level * 40; // Max height of 40
-        }
-        return 0;
-    }
-
-    public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
-}

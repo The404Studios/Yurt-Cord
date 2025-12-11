@@ -12,8 +12,8 @@ public class Product
     public decimal Price { get; set; }
     public ProductCategory Category { get; set; }
     public ProductStatus Status { get; set; } = ProductStatus.Active;
-    public List<string> ImageUrls { get; set; } = new();
-    public List<string> Tags { get; set; } = new();
+    public List<string> ImageUrls { get; set; } = [];
+    public List<string> Tags { get; set; } = [];
     public int ViewCount { get; set; } = 0;
     public int LikeCount { get; set; } = 0;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

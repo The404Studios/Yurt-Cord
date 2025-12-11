@@ -136,7 +136,7 @@ public class ApiService : IApiService
     public async Task<List<ProductDto>> GetMyProductsAsync()
     {
         var response = await _httpClient.GetAsync("/api/products/my");
-        return await response.Content.ReadFromJsonAsync<List<ProductDto>>() ?? new List<ProductDto>();
+        return await response.Content.ReadFromJsonAsync<List<ProductDto>>() ?? [];
     }
 
     public async Task<UserDto?> GetUserAsync(string userId)
@@ -159,14 +159,14 @@ public class ApiService : IApiService
     public async Task<List<CustomRoleDto>> GetUserRolesAsync(string userId)
     {
         var response = await _httpClient.GetAsync($"/api/users/{userId}/roles");
-        if (!response.IsSuccessStatusCode) return new List<CustomRoleDto>();
-        return await response.Content.ReadFromJsonAsync<List<CustomRoleDto>>() ?? new List<CustomRoleDto>();
+        if (!response.IsSuccessStatusCode) return [];
+        return await response.Content.ReadFromJsonAsync<List<CustomRoleDto>>() ?? [];
     }
 
     public async Task<List<CustomRoleDto>> GetAllRolesAsync()
     {
         var response = await _httpClient.GetAsync("/api/roles");
-        if (!response.IsSuccessStatusCode) return new List<CustomRoleDto>();
-        return await response.Content.ReadFromJsonAsync<List<CustomRoleDto>>() ?? new List<CustomRoleDto>();
+        if (!response.IsSuccessStatusCode) return [];
+        return await response.Content.ReadFromJsonAsync<List<CustomRoleDto>>() ?? [];
     }
 }
