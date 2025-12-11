@@ -339,12 +339,13 @@ public partial class VoiceCallDashboard : UserControl
 
             if (picker.ShowDialog() == true && picker.SelectedDisplay != null)
             {
-                // Start screen sharing with the selected display
-                await _voiceService.StartScreenShareAsync(picker.SelectedDisplay);
+                // Start screen sharing with the selected display and settings
+                var settings = picker.GetSettings();
+                await _voiceService.StartScreenShareAsync(picker.SelectedDisplay, settings);
                 ScreenShareIcon.Text = "🛑";
                 ScreenShareBtn.Background = new System.Windows.Media.SolidColorBrush(
                     System.Windows.Media.Color.FromRgb(67, 181, 129));
-                ScreenShareBtn.ToolTip = $"Stop Sharing ({picker.SelectedDisplay.FriendlyName})";
+                ScreenShareBtn.ToolTip = $"Stop Sharing ({picker.SelectedDisplay.FriendlyName}) - {settings.TargetWidth}x{settings.TargetHeight} @ {settings.TargetFps}fps";
             }
         }
     }

@@ -179,13 +179,23 @@ public class VoiceHub : Hub
     }
 
     // Screen Sharing
-    private static readonly ConcurrentDictionary<string, bool> _screenSharers = new(); // connectionId -> isSharing
+    private static readonly ConcurrentDictionary<string, ScreenShareState> _screenSharers = new(); // connectionId -> state
+    private static readonly ConcurrentDictionary<string, HashSet<string>> _screenShareViewers = new(); // sharerConnectionId -> viewer connectionIds
 
     public async Task StartScreenShare()
     {
         if (_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
         {
-            _screenSharers[Context.ConnectionId] = true;
+            var shareState = new ScreenShareState
+            {
+                SharerConnectionId = Context.ConnectionId,
+                SharerUsername = userState.Username,
+                ChannelId = userState.ChannelId,
+                StartedAt = DateTime.UtcNow
+            };
+
+            _screenSharers[Context.ConnectionId] = shareState;
+            _screenShareViewers[Context.ConnectionId] = new HashSet<string>();
             userState.IsScreenSharing = true;
 
             // Update in channel state too
@@ -200,12 +210,17 @@ public class VoiceHub : Hub
             // Notify all users in the channel (including self for UI update)
             await Clients.Group($"voice_{userState.ChannelId}")
                 .SendAsync("UserScreenShareChanged", Context.ConnectionId, true);
+
+            // Send detailed info about the new screen share
+            await Clients.Group($"voice_{userState.ChannelId}")
+                .SendAsync("ScreenShareStarted", Context.ConnectionId, userState.Username, userState.ChannelId);
         }
     }
 
     public async Task StopScreenShare()
     {
         _screenSharers.TryRemove(Context.ConnectionId, out _);
+        _screenShareViewers.TryRemove(Context.ConnectionId, out _);
 
         if (_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
         {
@@ -222,6 +237,9 @@ public class VoiceHub : Hub
 
             await Clients.Group($"voice_{userState.ChannelId}")
                 .SendAsync("UserScreenShareChanged", Context.ConnectionId, false);
+
+            await Clients.Group($"voice_{userState.ChannelId}")
+                .SendAsync("ScreenShareStopped", Context.ConnectionId);
         }
     }
 
@@ -229,9 +247,88 @@ public class VoiceHub : Hub
     {
         if (_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
         {
+            // Update frame stats
+            if (_screenSharers.TryGetValue(Context.ConnectionId, out var shareState))
+            {
+                shareState.FramesSent++;
+                shareState.LastWidth = width;
+                shareState.LastHeight = height;
+                shareState.LastFrameTime = DateTime.UtcNow;
+            }
+
             // Broadcast screen frame to all OTHER users in the channel
             await Clients.OthersInGroup($"voice_{userState.ChannelId}")
                 .SendAsync("ReceiveScreenFrame", Context.ConnectionId, frameData, width, height);
+        }
+    }
+
+    // Viewer joins a screen share
+    public async Task JoinScreenShare(string sharerConnectionId)
+    {
+        if (_screenShareViewers.TryGetValue(sharerConnectionId, out var viewers))
+        {
+            lock (viewers)
+            {
+                viewers.Add(Context.ConnectionId);
+            }
+
+            // Notify the sharer of viewer count update
+            await Clients.Client(sharerConnectionId)
+                .SendAsync("ViewerCountUpdated", viewers.Count);
+
+            // Notify the viewer they joined successfully
+            if (_screenSharers.TryGetValue(sharerConnectionId, out var shareState))
+            {
+                await Clients.Caller.SendAsync("JoinedScreenShare", sharerConnectionId, shareState.SharerUsername);
+            }
+        }
+    }
+
+    // Viewer leaves a screen share
+    public async Task LeaveScreenShare(string sharerConnectionId)
+    {
+        if (_screenShareViewers.TryGetValue(sharerConnectionId, out var viewers))
+        {
+            lock (viewers)
+            {
+                viewers.Remove(Context.ConnectionId);
+            }
+
+            // Notify the sharer of viewer count update
+            await Clients.Client(sharerConnectionId)
+                .SendAsync("ViewerCountUpdated", viewers.Count);
+        }
+    }
+
+    // Get list of active screen shares in channel
+    public async Task GetActiveScreenShares()
+    {
+        if (_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
+        {
+            var activeShares = _screenSharers.Values
+                .Where(s => s.ChannelId == userState.ChannelId)
+                .Select(s => new
+                {
+                    s.SharerConnectionId,
+                    s.SharerUsername,
+                    s.StartedAt,
+                    ViewerCount = _screenShareViewers.TryGetValue(s.SharerConnectionId, out var v) ? v.Count : 0,
+                    s.LastWidth,
+                    s.LastHeight
+                })
+                .ToList();
+
+            await Clients.Caller.SendAsync("ActiveScreenShares", activeShares);
+        }
+    }
+
+    // Request specific quality from a sharer (for future adaptive streaming)
+    public async Task RequestScreenQuality(string sharerConnectionId, string quality)
+    {
+        if (_screenSharers.ContainsKey(sharerConnectionId))
+        {
+            await Clients.Client(sharerConnectionId)
+                .SendAsync("QualityRequested", Context.ConnectionId, quality);
         }
     }
 
@@ -494,4 +591,16 @@ public class VoiceUserState
     public bool IsSpeaking { get; set; }
     public double AudioLevel { get; set; }
     public bool IsScreenSharing { get; set; }
+}
+
+public class ScreenShareState
+{
+    public string SharerConnectionId { get; set; } = string.Empty;
+    public string SharerUsername { get; set; } = string.Empty;
+    public string ChannelId { get; set; } = string.Empty;
+    public DateTime StartedAt { get; set; }
+    public int FramesSent { get; set; }
+    public int LastWidth { get; set; }
+    public int LastHeight { get; set; }
+    public DateTime LastFrameTime { get; set; }
 }
