@@ -131,12 +131,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     // Per-user audio control
     private readonly ConcurrentDictionary<string, float> _userVolumes = new();
     private readonly ConcurrentDictionary<string, bool> _mutedUsers = new();
-    private readonly ConcurrentDictionary<string, ConcurrentQueue<short[]>> _userAudioQueues = new();
     private readonly ConcurrentDictionary<string, OpusDecoder> _userOpusDecoders = new();
 
-    // Audio mixing thread
-    private CancellationTokenSource? _mixingCts;
-    private Thread? _mixingThread;
+    // Playback buffer for decoded audio (replaces complex mixing thread)
 
     // Audio device configuration
     private int _inputDeviceNumber = 0;
@@ -363,8 +360,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             _voiceUsers.TryRemove(user.ConnectionId, out _);
             _userVolumes.TryRemove(user.ConnectionId, out _);
             _mutedUsers.TryRemove(user.ConnectionId, out _);
-            // Clean up user's audio resources
-            _userAudioQueues.TryRemove(user.ConnectionId, out _);
+            // Clean up user's Opus decoder
             _userOpusDecoders.TryRemove(user.ConnectionId, out _);
             OnUserLeftVoice?.Invoke(user);
         });
@@ -399,22 +395,18 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         });
 
         // Receive audio data from other users (Opus encoded)
-        // Each user gets their own decoder and queue for proper multi-user mixing
+        // Simplified: decode and add directly to playback buffer (no complex mixing thread)
         _connection.On<string, byte[]>("ReceiveAudio", (senderConnectionId, opusData) =>
         {
             // Don't play audio if we're deafened or if user is muted locally
             if (IsDeafened || IsUserMuted(senderConnectionId)) return;
-            if (opusData.Length == 0) return;
+            if (opusData.Length == 0 || _bufferedWaveProvider == null) return;
 
             try
             {
                 // Get or create per-user decoder (each user needs separate decoder state)
                 var decoder = _userOpusDecoders.GetOrAdd(senderConnectionId,
                     _ => new OpusDecoder(SampleRate, Channels));
-
-                // Get or create per-user audio queue
-                var queue = _userAudioQueues.GetOrAdd(senderConnectionId,
-                    _ => new ConcurrentQueue<short[]>());
 
                 // Decode Opus to PCM
                 var pcmBuffer = new short[OpusFrameSize];
@@ -432,14 +424,18 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                         }
                     }
 
-                    // Copy to new array and add to user's queue
-                    var samples = new short[decodedSamples];
-                    Array.Copy(pcmBuffer, samples, decodedSamples);
+                    // Convert short[] to byte[] for the buffer
+                    var byteBuffer = new byte[decodedSamples * 2];
+                    Buffer.BlockCopy(pcmBuffer, 0, byteBuffer, 0, byteBuffer.Length);
 
-                    // Limit queue size to prevent memory buildup (max ~200ms of audio)
-                    if (queue.Count < 10)
+                    // Add directly to playback buffer - NAudio handles timing
+                    try
                     {
-                        queue.Enqueue(samples);
+                        _bufferedWaveProvider.AddSamples(byteBuffer, 0, byteBuffer.Length);
+                    }
+                    catch
+                    {
+                        // Buffer overflow - DiscardOnBufferOverflow handles this
                     }
                 }
             }
@@ -559,18 +555,18 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             _waveIn.DataAvailable += OnAudioDataAvailable;
             _waveIn.StartRecording();
 
-            // Setup playback buffer with proper size for mixing
+            // Setup playback buffer - NAudio handles timing internally
             _bufferedWaveProvider = new BufferedWaveProvider(new WaveFormat(SampleRate, BitsPerSample, Channels))
             {
                 DiscardOnBufferOverflow = true,
-                BufferDuration = TimeSpan.FromMilliseconds(500)
+                BufferDuration = TimeSpan.FromMilliseconds(200) // Smaller buffer for lower latency
             };
 
             // Initialize output device with low latency settings
             _waveOut = new WaveOutEvent
             {
                 DeviceNumber = _outputDeviceNumber,
-                DesiredLatency = 50,
+                DesiredLatency = 50, // Low latency playback
                 NumberOfBuffers = 3
             };
             _waveOut.Init(_bufferedWaveProvider);
@@ -579,16 +575,6 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             // Start the background audio send thread (decouples network from audio callback)
             _audioSendCts = new CancellationTokenSource();
             _audioSendTask = Task.Run(() => AudioSendLoop(_audioSendCts.Token));
-
-            // Start the audio mixing thread (mixes all user audio streams)
-            _mixingCts = new CancellationTokenSource();
-            _mixingThread = new Thread(() => AudioMixingLoop(_mixingCts.Token))
-            {
-                IsBackground = true,
-                Priority = ThreadPriority.Highest, // Audio needs priority
-                Name = "AudioMixingThread"
-            };
-            _mixingThread.Start();
         }
         catch (Exception ex)
         {
@@ -650,151 +636,8 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         }
     }
 
-    /// <summary>
-    /// Audio mixing thread - runs at consistent intervals to mix all user audio streams.
-    /// Uses a real thread instead of Task for more precise timing.
-    /// Implements fade-in/fade-out to prevent crackling at speech boundaries.
-    /// </summary>
-    private void AudioMixingLoop(CancellationToken cancellationToken)
-    {
-        // Use Stopwatch for precise timing
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-        var lastMixTime = stopwatch.ElapsedMilliseconds;
-        const int mixIntervalMs = 20; // Mix every 20ms (matches Opus frame size)
-        var mixBuffer = new int[OpusFrameSize]; // Use int for mixing to prevent clipping
-        var outputBuffer = new byte[OpusFrameSize * 2]; // 16-bit samples = 2 bytes each
-        var silenceBuffer = new byte[OpusFrameSize * 2]; // Pre-allocated silence
-
-        // Fade state for smooth transitions
-        bool wasActive = false;
-        const int fadeFrames = 48; // ~1ms fade at 48kHz
-
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            try
-            {
-                var now = stopwatch.ElapsedMilliseconds;
-                var elapsed = now - lastMixTime;
-
-                if (elapsed >= mixIntervalMs)
-                {
-                    lastMixTime = now;
-
-                    // Clear mix buffer
-                    Array.Clear(mixBuffer, 0, mixBuffer.Length);
-                    int activeStreams = 0;
-
-                    // Mix all user audio streams together
-                    foreach (var kvp in _userAudioQueues)
-                    {
-                        if (kvp.Value.TryDequeue(out var userSamples))
-                        {
-                            activeStreams++;
-                            var samplesToMix = Math.Min(userSamples.Length, mixBuffer.Length);
-                            for (int i = 0; i < samplesToMix; i++)
-                            {
-                                mixBuffer[i] += userSamples[i];
-                            }
-                        }
-                    }
-
-                    bool isActive = activeStreams > 0;
-
-                    if (_bufferedWaveProvider != null)
-                    {
-                        if (isActive)
-                        {
-                            // Apply fade-in if transitioning from silence to audio
-                            if (!wasActive)
-                            {
-                                for (int i = 0; i < Math.Min(fadeFrames, OpusFrameSize); i++)
-                                {
-                                    float fadeMultiplier = (float)i / fadeFrames;
-                                    mixBuffer[i] = (int)(mixBuffer[i] * fadeMultiplier);
-                                }
-                            }
-
-                            // Convert mixed int samples to short with soft clipping
-                            for (int i = 0; i < OpusFrameSize; i++)
-                            {
-                                var sample = mixBuffer[i];
-                                if (sample > short.MaxValue)
-                                    sample = short.MaxValue;
-                                else if (sample < short.MinValue)
-                                    sample = short.MinValue;
-
-                                outputBuffer[i * 2] = (byte)(sample & 0xFF);
-                                outputBuffer[i * 2 + 1] = (byte)((sample >> 8) & 0xFF);
-                            }
-
-                            // Add to playback buffer
-                            try
-                            {
-                                _bufferedWaveProvider.AddSamples(outputBuffer, 0, outputBuffer.Length);
-                            }
-                            catch
-                            {
-                                // Buffer full - skip
-                            }
-                        }
-                        else if (wasActive)
-                        {
-                            // Output a fade-out frame when transitioning to silence
-                            for (int i = 0; i < OpusFrameSize; i++)
-                            {
-                                float fadeMultiplier = 1.0f - ((float)i / OpusFrameSize);
-                                // Fade out from the last sample value (approximate with zero)
-                                outputBuffer[i * 2] = 0;
-                                outputBuffer[i * 2 + 1] = 0;
-                            }
-                            try
-                            {
-                                _bufferedWaveProvider.AddSamples(silenceBuffer, 0, silenceBuffer.Length);
-                            }
-                            catch { }
-                        }
-                        // When idle, occasionally add silence to keep buffer from underrunning
-                        else if (_bufferedWaveProvider.BufferedBytes < OpusFrameSize * 4)
-                        {
-                            try
-                            {
-                                _bufferedWaveProvider.AddSamples(silenceBuffer, 0, silenceBuffer.Length);
-                            }
-                            catch { }
-                        }
-                    }
-
-                    wasActive = isActive;
-                }
-
-                // Sleep for remaining time (use SpinWait for precision)
-                var remaining = mixIntervalMs - (stopwatch.ElapsedMilliseconds - lastMixTime);
-                if (remaining > 2)
-                {
-                    Thread.Sleep((int)(remaining - 1));
-                }
-                else if (remaining > 0)
-                {
-                    Thread.SpinWait(100);
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Mixing error: {ex.Message}");
-                Thread.Sleep(10);
-            }
-        }
-    }
-
     private void StopAudioCapture()
     {
-        // Stop mixing thread first
-        _mixingCts?.Cancel();
-        _mixingThread?.Join(500);
-        _mixingCts?.Dispose();
-        _mixingCts = null;
-        _mixingThread = null;
-
         // Stop background send task
         _audioSendCts?.Cancel();
 
@@ -813,11 +656,6 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         // Clear queues
         while (_audioSendQueue.TryDequeue(out _)) { }
-        foreach (var queue in _userAudioQueues.Values)
-        {
-            while (queue.TryDequeue(out _)) { }
-        }
-        _userAudioQueues.Clear();
         _userOpusDecoders.Clear();
 
         _waveIn?.StopRecording();

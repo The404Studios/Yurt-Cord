@@ -34,7 +34,11 @@ public class FriendService
                     Id = friendship.Id,
                     UserId = friend.Id,
                     Username = friend.Username,
+                    DisplayName = friend.DisplayName,
                     AvatarUrl = friend.AvatarUrl,
+                    Bio = friend.Bio,
+                    StatusMessage = friend.StatusMessage,
+                    AccentColor = friend.AccentColor,
                     Role = friend.Role,
                     Rank = friend.Rank,
                     IsOnline = friend.IsOnline,
@@ -106,6 +110,15 @@ public class FriendService
         if (addressee == null)
             return (false, "User not found", null);
 
+        return SendFriendRequestById(requesterId, addressee.Id);
+    }
+
+    public (bool Success, string Message, Friendship? Friendship) SendFriendRequestById(string requesterId, string addresseeId)
+    {
+        var addressee = _db.Users.FindById(addresseeId);
+        if (addressee == null)
+            return (false, "User not found", null);
+
         if (addressee.Id == requesterId)
             return (false, "You cannot add yourself as a friend", null);
 
@@ -134,6 +147,30 @@ public class FriendService
 
         _db.Friendships.Insert(friendship);
         return (true, "Friend request sent", friendship);
+    }
+
+    public User? SearchUserByIdOrUsername(string query)
+    {
+        // Try to find by exact ID first
+        var user = _db.Users.FindById(query);
+        if (user != null) return user;
+
+        // Try by exact username (case-insensitive)
+        user = _db.Users.FindOne(u => u.Username.ToLower() == query.ToLower());
+        return user;
+    }
+
+    public List<User> SearchUsers(string query, int limit = 20)
+    {
+        if (string.IsNullOrWhiteSpace(query)) return new List<User>();
+
+        var queryLower = query.ToLower();
+        return _db.Users
+            .Find(u => u.Username.ToLower().Contains(queryLower) ||
+                       u.DisplayName.ToLower().Contains(queryLower) ||
+                       u.Id == query)
+            .Take(limit)
+            .ToList();
     }
 
     public (bool Success, string Message) RespondToFriendRequest(string userId, string requestId, bool accept)

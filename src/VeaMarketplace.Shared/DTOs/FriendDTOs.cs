@@ -8,11 +8,35 @@ public class FriendDto
     public string Id { get; set; } = string.Empty;
     public string UserId { get; set; } = string.Empty;
     public string Username { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
     public string AvatarUrl { get; set; } = string.Empty;
+    public string Bio { get; set; } = string.Empty;
+    public string StatusMessage { get; set; } = string.Empty;
+    public string AccentColor { get; set; } = "#5865F2";
     public UserRole Role { get; set; }
     public UserRank Rank { get; set; }
     public bool IsOnline { get; set; }
     public DateTime FriendsSince { get; set; }
+
+    // Helper to get display name or username
+    public string GetDisplayName() => string.IsNullOrEmpty(DisplayName) ? Username : DisplayName;
+}
+
+public class UserSearchResultDto
+{
+    public string UserId { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string AvatarUrl { get; set; } = string.Empty;
+    public string Bio { get; set; } = string.Empty;
+    public string StatusMessage { get; set; } = string.Empty;
+    public UserRole Role { get; set; }
+    public UserRank Rank { get; set; }
+    public bool IsOnline { get; set; }
+    public bool IsFriend { get; set; }
+
+    // Helper to get display name or username
+    public string GetDisplayName() => string.IsNullOrEmpty(DisplayName) ? Username : DisplayName;
 }
 
 public class FriendRequestDto

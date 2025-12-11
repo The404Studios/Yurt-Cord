@@ -13,6 +13,8 @@ public interface IFriendService
     ObservableCollection<ConversationDto> Conversations { get; }
     ObservableCollection<DirectMessageDto> CurrentDMHistory { get; }
     string? CurrentDMPartnerId { get; }
+    UserSearchResultDto? LastSearchResult { get; }
+    ObservableCollection<UserSearchResultDto> SearchResults { get; }
 
     event Action<FriendDto>? OnFriendOnline;
     event Action<string>? OnFriendOffline;
@@ -21,16 +23,22 @@ public interface IFriendService
     event Action<DirectMessageDto>? OnDirectMessageReceived;
     event Action<string>? OnUserTypingDM;
     event Action<string>? OnError;
+    event Action<UserSearchResultDto?>? OnUserSearchResult;
+    event Action<List<UserSearchResultDto>>? OnUserSearchResults;
+    event Action<FriendDto>? OnFriendProfileUpdated;
 
     Task ConnectAsync(string token);
     Task DisconnectAsync();
     Task SendFriendRequestAsync(string username);
+    Task SendFriendRequestByIdAsync(string userId);
     Task RespondToFriendRequestAsync(string requestId, bool accept);
     Task RemoveFriendAsync(string friendId);
     Task GetDMHistoryAsync(string partnerId);
     Task SendDirectMessageAsync(string recipientId, string content);
     Task MarkMessagesReadAsync(string partnerId);
     Task SendTypingDMAsync(string recipientId);
+    Task SearchUserAsync(string query);
+    Task SearchUsersAsync(string query);
 }
 
 public class FriendService : IFriendService, IAsyncDisposable
@@ -44,7 +52,9 @@ public class FriendService : IFriendService, IAsyncDisposable
     public ObservableCollection<FriendRequestDto> OutgoingRequests { get; } = new();
     public ObservableCollection<ConversationDto> Conversations { get; } = new();
     public ObservableCollection<DirectMessageDto> CurrentDMHistory { get; } = new();
+    public ObservableCollection<UserSearchResultDto> SearchResults { get; } = new();
     public string? CurrentDMPartnerId { get; private set; }
+    public UserSearchResultDto? LastSearchResult { get; private set; }
 
     public event Action<FriendDto>? OnFriendOnline;
     public event Action<string>? OnFriendOffline;
@@ -53,6 +63,9 @@ public class FriendService : IFriendService, IAsyncDisposable
     public event Action<DirectMessageDto>? OnDirectMessageReceived;
     public event Action<string>? OnUserTypingDM;
     public event Action<string>? OnError;
+    public event Action<UserSearchResultDto?>? OnUserSearchResult;
+    public event Action<List<UserSearchResultDto>>? OnUserSearchResults;
+    public event Action<FriendDto>? OnFriendProfileUpdated;
 
     public async Task ConnectAsync(string token)
     {
@@ -178,12 +191,66 @@ public class FriendService : IFriendService, IAsyncDisposable
         _connection.On<string>("FriendRequestError", error => OnError?.Invoke(error));
         _connection.On<string>("FriendError", error => OnError?.Invoke(error));
         _connection.On<string>("DMError", error => OnError?.Invoke(error));
+
+        // User search handlers
+        _connection.On<UserSearchResultDto?>("UserSearchResult", result =>
+        {
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            {
+                LastSearchResult = result;
+                OnUserSearchResult?.Invoke(result);
+            });
+        });
+
+        _connection.On<List<UserSearchResultDto>>("UserSearchResults", results =>
+        {
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            {
+                SearchResults.Clear();
+                foreach (var result in results)
+                    SearchResults.Add(result);
+                OnUserSearchResults?.Invoke(results);
+            });
+        });
+
+        // Friend profile update handler
+        _connection.On<FriendDto>("FriendProfileUpdated", friend =>
+        {
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            {
+                var existing = Friends.FirstOrDefault(f => f.UserId == friend.UserId);
+                if (existing != null)
+                {
+                    var index = Friends.IndexOf(existing);
+                    Friends[index] = friend;
+                }
+                OnFriendProfileUpdated?.Invoke(friend);
+            });
+        });
     }
 
     public async Task SendFriendRequestAsync(string username)
     {
         if (_connection != null && IsConnected)
             await _connection.InvokeAsync("SendFriendRequest", username).ConfigureAwait(false);
+    }
+
+    public async Task SendFriendRequestByIdAsync(string userId)
+    {
+        if (_connection != null && IsConnected)
+            await _connection.InvokeAsync("SendFriendRequestById", userId).ConfigureAwait(false);
+    }
+
+    public async Task SearchUserAsync(string query)
+    {
+        if (_connection != null && IsConnected)
+            await _connection.InvokeAsync("SearchUser", query).ConfigureAwait(false);
+    }
+
+    public async Task SearchUsersAsync(string query)
+    {
+        if (_connection != null && IsConnected)
+            await _connection.InvokeAsync("SearchUsers", query).ConfigureAwait(false);
     }
 
     public async Task RespondToFriendRequestAsync(string requestId, bool accept)

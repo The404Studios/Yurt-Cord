@@ -89,6 +89,7 @@ app.MapControllers();
 app.MapHub<ChatHub>("/hubs/chat");
 app.MapHub<VoiceHub>("/hubs/voice");
 app.MapHub<FriendHub>("/hubs/friends");
+app.MapHub<ProfileHub>("/hubs/profile");
 
 // Ensure data directory exists
 Directory.CreateDirectory("Data");
