@@ -636,8 +636,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             ThreadPool.QueueUserWorkItem(_ => OnSpeakingChanged?.Invoke(_isSpeaking));
         }
 
-        // Send speaking state updates (fire-and-forget on thread pool)
-        if (_isSpeaking != wasSpeaking || (DateTime.Now - _lastSpeakingUpdate).TotalMilliseconds > 100)
+        // Send speaking state updates ONLY when state actually changes
+        // This prevents flooding the server with constant updates
+        if (_isSpeaking != wasSpeaking)
         {
             _lastSpeakingUpdate = DateTime.Now;
             var speakingState = _isSpeaking;
@@ -650,7 +651,26 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                 {
                     if (_connection != null && IsConnected)
                     {
-                        await _connection.InvokeAsync("UpdateSpeakingState", speakingState, level).ConfigureAwait(false);
+                        // Use SendAsync for fire-and-forget instead of InvokeAsync
+                        await _connection.SendAsync("UpdateSpeakingState", speakingState, level).ConfigureAwait(false);
+                    }
+                }
+                catch { }
+            });
+        }
+        // Send periodic level updates only while actively speaking (every 500ms)
+        else if (_isSpeaking && (DateTime.Now - _lastSpeakingUpdate).TotalMilliseconds > 500)
+        {
+            _lastSpeakingUpdate = DateTime.Now;
+            var level = audioLevel;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    if (_connection != null && IsConnected)
+                    {
+                        await _connection.SendAsync("UpdateSpeakingState", true, level).ConfigureAwait(false);
                     }
                 }
                 catch { }
