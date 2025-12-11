@@ -1,0 +1,119 @@
+<![CDATA[<Window x:Class="VeaMarketplace.Client.Views.WriteReviewDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Write Review" Height="600" Width="500"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        WindowStartupLocation="CenterOwner">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Styles/Colors.xaml"/>
+                <ResourceDictionary Source="/Styles/Buttons.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border Background="{StaticResource SecondaryDark}" CornerRadius="10"
+            BorderBrush="{StaticResource Blurple}" BorderThickness="1">
+        <Border.Effect>
+            <DropShadowEffect Color="Black" Opacity="0.5" BlurRadius="20" ShadowDepth="0"/>
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Border Grid.Row="0" Background="{StaticResource TertiaryDark}"
+                    CornerRadius="10,10,0,0" Padding="20">
+                <Grid>
+                    <TextBlock Text="Write a Review" FontSize="18" FontWeight="Bold" Foreground="White"/>
+                    <Button Content="✕" HorizontalAlignment="Right"
+                            Style="{StaticResource IconButton}"
+                            Click="CloseButton_Click"
+                            Width="30" Height="30" FontSize="16"/>
+                </Grid>
+            </Border>
+
+            <!-- Content -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="20">
+                <StackPanel>
+                    <!-- Product Info -->
+                    <Border Background="{StaticResource TertiaryDark}" CornerRadius="6" Padding="12" Margin="0,0,0,20">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{Binding ProductImage}" Width="50" Height="50" Stretch="UniformToFill"/>
+                            <TextBlock Text="{Binding ProductTitle}" FontSize="14" FontWeight="SemiBold"
+                                       Foreground="White" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Rating -->
+                    <TextBlock Text="Your Rating" FontSize="14" FontWeight="SemiBold"
+                               Foreground="White" Margin="0,0,0,8"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                        <Button Content="★" Style="{StaticResource IconButton}" FontSize="32"
+                                Tag="1" Click="StarButton_Click"/>
+                        <Button Content="★" Style="{StaticResource IconButton}" FontSize="32"
+                                Tag="2" Click="StarButton_Click"/>
+                        <Button Content="★" Style="{StaticResource IconButton}" FontSize="32"
+                                Tag="3" Click="StarButton_Click"/>
+                        <Button Content="★" Style="{StaticResource IconButton}" FontSize="32"
+                                Tag="4" Click="StarButton_Click"/>
+                        <Button Content="★" Style="{StaticResource IconButton}" FontSize="32"
+                                Tag="5" Click="StarButton_Click"/>
+                    </StackPanel>
+
+                    <!-- Title -->
+                    <TextBlock Text="Review Title" FontSize="14" FontWeight="SemiBold"
+                               Foreground="White" Margin="0,0,0,8"/>
+                    <TextBox Text="{Binding ReviewTitle, UpdateSourceTrigger=PropertyChanged}"
+                             Height="40" Padding="10" FontSize="14" MaxLength="100"
+                             Background="{StaticResource TertiaryDark}"
+                             Foreground="White" BorderBrush="{StaticResource Blurple}"
+                             BorderThickness="1" Margin="0,0,0,20"/>
+
+                    <!-- Content -->
+                    <TextBlock Text="Your Review" FontSize="14" FontWeight="SemiBold"
+                               Foreground="White" Margin="0,0,0,8"/>
+                    <TextBox Text="{Binding ReviewContent, UpdateSourceTrigger=PropertyChanged}"
+                             Height="150" Padding="10" FontSize="14"
+                             TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
+                             Background="{StaticResource TertiaryDark}"
+                             Foreground="White" BorderBrush="{StaticResource Blurple}"
+                             BorderThickness="1" Margin="0,0,0,20"/>
+
+                    <!-- Add Images -->
+                    <TextBlock Text="Add Photos (Optional)" FontSize="14" FontWeight="SemiBold"
+                               Foreground="White" Margin="0,0,0,8"/>
+                    <Button Content="📷 Upload Images" Style="{StaticResource SecondaryButton}"
+                            Command="{Binding UploadImagesCommand}"
+                            HorizontalAlignment="Left" Padding="15,8"/>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Footer -->
+            <Border Grid.Row="2" Background="{StaticResource TertiaryDark}"
+                    CornerRadius="0,0,10,10" Padding="20">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="1" Content="Cancel" Style="{StaticResource SecondaryButton}"
+                            Click="CloseButton_Click" Padding="20,10" Margin="0,0,10,0"/>
+                    <Button Grid.Column="2" Content="Submit Review" Style="{StaticResource AccentButton}"
+                            Command="{Binding SubmitReviewCommand}" Padding="20,10"/>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>
+]]>
