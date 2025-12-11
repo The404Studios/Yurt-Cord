@@ -28,11 +28,10 @@ public partial class WishlistViewModel : BaseViewModel
         try
         {
             IsLoading = true;
-            // TODO: Call API to load wishlist
-            // var items = await _apiService.GetWishlistAsync();
-            // WishlistItems.Clear();
-            // foreach (var item in items)
-            //     WishlistItems.Add(item);
+            var items = await _apiService.GetWishlistAsync();
+            WishlistItems.Clear();
+            foreach (var item in items)
+                WishlistItems.Add(item);
 
             IsWishlistEmpty = WishlistItems.Count == 0;
         }
@@ -51,8 +50,12 @@ public partial class WishlistViewModel : BaseViewModel
     {
         try
         {
-            // TODO: Add to cart functionality
-            // await _apiService.AddToCartAsync(item.ProductId);
+            // Purchase the product directly (simplified flow)
+            if (await _apiService.PurchaseProductAsync(item.ProductId))
+            {
+                // Optionally remove from wishlist after purchase
+                await RemoveFromWishlist(item);
+            }
         }
         catch (Exception ex)
         {
@@ -71,10 +74,11 @@ public partial class WishlistViewModel : BaseViewModel
     {
         try
         {
-            // TODO: Call API to remove from wishlist
-            // await _apiService.RemoveFromWishlistAsync(item.Id);
-            WishlistItems.Remove(item);
-            IsWishlistEmpty = WishlistItems.Count == 0;
+            if (await _apiService.RemoveFromWishlistAsync(item.ProductId))
+            {
+                WishlistItems.Remove(item);
+                IsWishlistEmpty = WishlistItems.Count == 0;
+            }
         }
         catch (Exception ex)
         {
@@ -87,13 +91,13 @@ public partial class WishlistViewModel : BaseViewModel
     {
         if (WishlistItems.Count == 0) return;
 
-        // TODO: Show confirmation dialog
         try
         {
-            // TODO: Call API to clear wishlist
-            // await _apiService.ClearWishlistAsync();
-            WishlistItems.Clear();
-            IsWishlistEmpty = true;
+            if (await _apiService.ClearWishlistAsync())
+            {
+                WishlistItems.Clear();
+                IsWishlistEmpty = true;
+            }
         }
         catch (Exception ex)
         {
@@ -105,5 +109,11 @@ public partial class WishlistViewModel : BaseViewModel
     private void BrowseMarketplace()
     {
         _navigationService.NavigateToMarketplace();
+    }
+
+    [RelayCommand]
+    private async Task RefreshWishlist()
+    {
+        await LoadWishlistAsync();
     }
 }

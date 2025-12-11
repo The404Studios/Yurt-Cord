@@ -2,25 +2,25 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- Discord-like Dark Theme Colors -->
-    <Color x:Key="PrimaryDark">#202225</Color>
-    <Color x:Key="SecondaryDark">#2F3136</Color>
-    <Color x:Key="TertiaryDark">#36393F</Color>
-    <Color x:Key="QuaternaryDark">#40444B</Color>
+    <Color x:Key="PrimaryDarkColor">#202225</Color>
+    <Color x:Key="SecondaryDarkColor">#2F3136</Color>
+    <Color x:Key="TertiaryDarkColor">#36393F</Color>
+    <Color x:Key="QuaternaryDarkColor">#40444B</Color>
 
     <!-- Accent Colors -->
-    <Color x:Key="AccentBlurple">#5865F2</Color>
-    <Color x:Key="AccentGreen">#57F287</Color>
-    <Color x:Key="AccentYellow">#FEE75C</Color>
-    <Color x:Key="AccentRed">#ED4245</Color>
-    <Color x:Key="AccentPink">#EB459E</Color>
-    <Color x:Key="AccentOrange">#F47B67</Color>
-    <Color x:Key="AccentCyan">#00AFF4</Color>
+    <Color x:Key="AccentBlurpleColor">#5865F2</Color>
+    <Color x:Key="AccentGreenColor">#57F287</Color>
+    <Color x:Key="AccentYellowColor">#FEE75C</Color>
+    <Color x:Key="AccentRedColor">#ED4245</Color>
+    <Color x:Key="AccentPinkColor">#EB459E</Color>
+    <Color x:Key="AccentOrangeColor">#F47B67</Color>
+    <Color x:Key="AccentCyanColor">#00AFF4</Color>
 
     <!-- Text Colors -->
-    <Color x:Key="TextPrimary">#FFFFFF</Color>
-    <Color x:Key="TextSecondary">#B9BBBE</Color>
-    <Color x:Key="TextMuted">#72767D</Color>
-    <Color x:Key="TextLink">#00AFF4</Color>
+    <Color x:Key="TextPrimaryColor">#FFFFFF</Color>
+    <Color x:Key="TextSecondaryColor">#B9BBBE</Color>
+    <Color x:Key="TextMutedColor">#72767D</Color>
+    <Color x:Key="TextLinkColor">#00AFF4</Color>
 
     <!-- Role Colors -->
     <Color x:Key="RoleOwner">#FFD700</Color>
@@ -39,33 +39,57 @@
     <Color x:Key="RankSilver">#C0C0C0</Color>
     <Color x:Key="RankBronze">#CD7F32</Color>
 
-    <!-- Brushes -->
-    <SolidColorBrush x:Key="PrimaryDarkBrush" Color="{StaticResource PrimaryDark}"/>
-    <SolidColorBrush x:Key="SecondaryDarkBrush" Color="{StaticResource SecondaryDark}"/>
-    <SolidColorBrush x:Key="TertiaryDarkBrush" Color="{StaticResource TertiaryDark}"/>
-    <SolidColorBrush x:Key="QuaternaryDarkBrush" Color="{StaticResource QuaternaryDark}"/>
+    <!-- Dark Theme Brushes (simple names for XAML usage) -->
+    <SolidColorBrush x:Key="PrimaryDark" Color="{StaticResource PrimaryDarkColor}"/>
+    <SolidColorBrush x:Key="SecondaryDark" Color="{StaticResource SecondaryDarkColor}"/>
+    <SolidColorBrush x:Key="TertiaryDark" Color="{StaticResource TertiaryDarkColor}"/>
+    <SolidColorBrush x:Key="QuaternaryDark" Color="{StaticResource QuaternaryDarkColor}"/>
 
-    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentBlurple}"/>
-    <SolidColorBrush x:Key="AccentGreenBrush" Color="{StaticResource AccentGreen}"/>
-    <SolidColorBrush x:Key="AccentYellowBrush" Color="{StaticResource AccentYellow}"/>
-    <SolidColorBrush x:Key="AccentRedBrush" Color="{StaticResource AccentRed}"/>
-    <SolidColorBrush x:Key="AccentPinkBrush" Color="{StaticResource AccentPink}"/>
-    <SolidColorBrush x:Key="AccentCyanBrush" Color="{StaticResource AccentCyan}"/>
+    <!-- Legacy Brush Names (for backwards compatibility) -->
+    <SolidColorBrush x:Key="PrimaryDarkBrush" Color="{StaticResource PrimaryDarkColor}"/>
+    <SolidColorBrush x:Key="SecondaryDarkBrush" Color="{StaticResource SecondaryDarkColor}"/>
+    <SolidColorBrush x:Key="TertiaryDarkBrush" Color="{StaticResource TertiaryDarkColor}"/>
+    <SolidColorBrush x:Key="QuaternaryDarkBrush" Color="{StaticResource QuaternaryDarkColor}"/>
 
-    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimary}"/>
-    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondary}"/>
-    <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMuted}"/>
-    <SolidColorBrush x:Key="TextLinkBrush" Color="{StaticResource TextLink}"/>
+    <!-- Accent Brushes (simple names) -->
+    <SolidColorBrush x:Key="Blurple" Color="{StaticResource AccentBlurpleColor}"/>
+    <SolidColorBrush x:Key="Green" Color="{StaticResource AccentGreenColor}"/>
+    <SolidColorBrush x:Key="Yellow" Color="{StaticResource AccentYellowColor}"/>
+    <SolidColorBrush x:Key="Red" Color="{StaticResource AccentRedColor}"/>
+    <SolidColorBrush x:Key="Pink" Color="{StaticResource AccentPinkColor}"/>
+    <SolidColorBrush x:Key="Orange" Color="{StaticResource AccentOrangeColor}"/>
+    <SolidColorBrush x:Key="Cyan" Color="{StaticResource AccentCyanColor}"/>
+
+    <!-- Legacy Accent Brush Names -->
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentBlurpleColor}"/>
+    <SolidColorBrush x:Key="AccentGreenBrush" Color="{StaticResource AccentGreenColor}"/>
+    <SolidColorBrush x:Key="AccentYellowBrush" Color="{StaticResource AccentYellowColor}"/>
+    <SolidColorBrush x:Key="AccentRedBrush" Color="{StaticResource AccentRedColor}"/>
+    <SolidColorBrush x:Key="AccentPinkBrush" Color="{StaticResource AccentPinkColor}"/>
+    <SolidColorBrush x:Key="AccentOrangeBrush" Color="{StaticResource AccentOrangeColor}"/>
+    <SolidColorBrush x:Key="AccentCyanBrush" Color="{StaticResource AccentCyanColor}"/>
+
+    <!-- Text Brushes (simple names) -->
+    <SolidColorBrush x:Key="TextPrimary" Color="{StaticResource TextPrimaryColor}"/>
+    <SolidColorBrush x:Key="TextSecondary" Color="{StaticResource TextSecondaryColor}"/>
+    <SolidColorBrush x:Key="TextMuted" Color="{StaticResource TextMutedColor}"/>
+    <SolidColorBrush x:Key="TextLink" Color="{StaticResource TextLinkColor}"/>
+
+    <!-- Legacy Text Brush Names -->
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}"/>
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}"/>
+    <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMutedColor}"/>
+    <SolidColorBrush x:Key="TextLinkBrush" Color="{StaticResource TextLinkColor}"/>
 
     <!-- Gradient Backgrounds -->
     <LinearGradientBrush x:Key="AccentGradient" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="{StaticResource AccentBlurple}" Offset="0"/>
-        <GradientStop Color="{StaticResource AccentPink}" Offset="1"/>
+        <GradientStop Color="{StaticResource AccentBlurpleColor}" Offset="0"/>
+        <GradientStop Color="{StaticResource AccentPinkColor}" Offset="1"/>
     </LinearGradientBrush>
 
     <LinearGradientBrush x:Key="VoiceActiveGradient" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="{StaticResource AccentGreen}" Offset="0"/>
-        <GradientStop Color="{StaticResource AccentCyan}" Offset="1"/>
+        <GradientStop Color="{StaticResource AccentGreenColor}" Offset="0"/>
+        <GradientStop Color="{StaticResource AccentCyanColor}" Offset="1"/>
     </LinearGradientBrush>
 
     <!-- Effects -->
@@ -76,6 +100,6 @@
                       Color="Black" Opacity="0.3" Direction="270"/>
 
     <DropShadowEffect x:Key="GlowEffect" BlurRadius="15" ShadowDepth="0"
-                      Color="{StaticResource AccentBlurple}" Opacity="0.6"/>
+                      Color="{StaticResource AccentBlurpleColor}" Opacity="0.6"/>
 
 </ResourceDictionary>

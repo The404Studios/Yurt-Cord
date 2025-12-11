@@ -61,11 +61,9 @@
 
             <!-- Content Area -->
             <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="24">
-                <ContentControl Content="{Binding CurrentView}">
-                    <ContentControl.ContentTemplate>
-                        <DataTemplate>
-                            <!-- Dashboard View -->
-                            <Grid Visibility="{Binding CurrentSection, Converter={StaticResource EqualityToVisibilityConverter}, ConverterParameter='Dashboard'}">
+                <Grid>
+                    <!-- Dashboard View -->
+                    <Grid Visibility="{Binding CurrentSection, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter='Dashboard'}">
                                 <StackPanel>
                                     <TextBlock Text="Moderation Dashboard" FontSize="24" FontWeight="Bold" Foreground="White" Margin="0,0,0,20"/>
 
@@ -169,11 +167,11 @@
                                             </ItemsControl>
                                         </StackPanel>
                                     </Border>
-                                </StackPanel>
-                            </Grid>
+                        </StackPanel>
+                    </Grid>
 
-                            <!-- Bans View -->
-                            <Grid Visibility="{Binding CurrentSection, Converter={StaticResource EqualityToVisibilityConverter}, ConverterParameter='Bans'}">
+                    <!-- Bans View -->
+                    <Grid Visibility="{Binding CurrentSection, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter='Bans'}">
                                 <StackPanel>
                                     <Grid Margin="0,0,0,20">
                                         <Grid.ColumnDefinitions>
@@ -236,11 +234,11 @@
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-                                </StackPanel>
-                            </Grid>
+                        </StackPanel>
+                    </Grid>
 
-                            <!-- Reports View -->
-                            <Grid Visibility="{Binding CurrentSection, Converter={StaticResource EqualityToVisibilityConverter}, ConverterParameter='Reports'}">
+                    <!-- Reports View -->
+                    <Grid Visibility="{Binding CurrentSection, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter='Reports'}">
                                 <StackPanel>
                                     <TextBlock Text="User Reports" FontSize="24" FontWeight="Bold" Foreground="White" Margin="0,0,0,20"/>
 
@@ -285,7 +283,7 @@
                                                             </Grid.ColumnDefinitions>
 
                                                             <Button Grid.Column="0" Content="Take Action" Style="{StaticResource AccentButton}"
-                                                                    Command="{Binding DataContext.TakeActionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                    Command="{Binding DataContext.OpenActionDialogCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                     CommandParameter="{Binding}" Padding="16,8" Margin="0,0,8,0"/>
                                                             <Button Grid.Column="1" Content="Dismiss" Style="{StaticResource SecondaryButton}"
                                                                     Command="{Binding DataContext.DismissReportCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -296,12 +294,121 @@
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-                                </StackPanel>
-                            </Grid>
-                        </DataTemplate>
-                    </ContentControl.ContentTemplate>
-                </ContentControl>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
             </ScrollViewer>
+
+            <!-- Ban Dialog Overlay -->
+            <Grid Grid.Column="1" Visibility="{Binding IsBanDialogOpen, Converter={StaticResource BoolToVisibilityConverter}}"
+                  Background="#80000000">
+                <Border Background="{StaticResource SecondaryDark}" CornerRadius="10" Padding="24"
+                        VerticalAlignment="Center" HorizontalAlignment="Center" Width="400">
+                    <StackPanel>
+                        <TextBlock Text="Ban User" FontSize="20" FontWeight="Bold" Foreground="White" Margin="0,0,0,20"/>
+
+                        <TextBlock Text="User ID" FontSize="14" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
+                        <TextBox Text="{Binding BanUserId, UpdateSourceTrigger=PropertyChanged}"
+                                 Background="{StaticResource TertiaryDark}" Foreground="White"
+                                 BorderBrush="{StaticResource Blurple}" Padding="12,10"
+                                 Margin="0,0,0,16"/>
+
+                        <TextBlock Text="Reason" FontSize="14" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
+                        <TextBox Text="{Binding BanReason, UpdateSourceTrigger=PropertyChanged}"
+                                 Background="{StaticResource TertiaryDark}" Foreground="White"
+                                 BorderBrush="{StaticResource Blurple}" Padding="12,10"
+                                 TextWrapping="Wrap" AcceptsReturn="True" Height="80"
+                                 Margin="0,0,0,16"/>
+
+                        <CheckBox IsChecked="{Binding IsPermanentBan}" Foreground="White" Margin="0,0,0,12">
+                            <TextBlock Text="Permanent Ban" FontSize="14"/>
+                        </CheckBox>
+
+                        <StackPanel Visibility="{Binding IsPermanentBan, Converter={StaticResource InverseBoolToVisibilityConverter}}"
+                                    Margin="0,0,0,16">
+                            <TextBlock Text="Expires On" FontSize="14" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
+                            <DatePicker SelectedDate="{Binding BanExpiryDate}"
+                                        Background="{StaticResource TertiaryDark}" Foreground="White"/>
+                        </StackPanel>
+
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Button Grid.Column="1" Content="Cancel" Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding CloseBanDialogCommand}" Padding="20,10" Margin="0,0,8,0"/>
+                            <Button Grid.Column="2" Content="Ban User" Style="{StaticResource DangerButton}"
+                                    Command="{Binding SubmitBanCommand}" Padding="20,10"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Action Dialog Overlay -->
+            <Grid Grid.Column="1" Visibility="{Binding IsActionDialogOpen, Converter={StaticResource BoolToVisibilityConverter}}"
+                  Background="#80000000">
+                <Border Background="{StaticResource SecondaryDark}" CornerRadius="10" Padding="24"
+                        VerticalAlignment="Center" HorizontalAlignment="Center" Width="450">
+                    <StackPanel>
+                        <TextBlock Text="Take Moderation Action" FontSize="20" FontWeight="Bold" Foreground="White" Margin="0,0,0,16"/>
+
+                        <Border Background="{StaticResource TertiaryDark}" CornerRadius="6" Padding="16" Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="Reported User" FontSize="12" Foreground="{StaticResource TextSecondary}"/>
+                                <TextBlock Text="{Binding SelectedReport.ReportedUsername}" FontSize="16" FontWeight="SemiBold"
+                                           Foreground="{StaticResource Red}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Text="Reason (Optional)" FontSize="14" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
+                        <TextBox Text="{Binding ActionReason, UpdateSourceTrigger=PropertyChanged}"
+                                 Background="{StaticResource TertiaryDark}" Foreground="White"
+                                 BorderBrush="{StaticResource Blurple}" Padding="12,10"
+                                 TextWrapping="Wrap" AcceptsReturn="True" Height="60"
+                                 Margin="0,0,0,20"/>
+
+                        <TextBlock Text="Select Action" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,12"/>
+
+                        <UniformGrid Columns="2" Rows="2" Margin="0,0,0,16">
+                            <Button Content="🗑️ Delete Message" Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding TakeActionCommand}" CommandParameter="delete"
+                                    Padding="12,16" Margin="0,0,4,4"/>
+                            <Button Content="⚠️ Warn User" Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding TakeActionCommand}" CommandParameter="warn"
+                                    Padding="12,16" Margin="4,0,0,4"/>
+                            <Button Content="🔇 Mute User (1h)" Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding TakeActionCommand}" CommandParameter="mute"
+                                    Padding="12,16" Margin="0,4,4,0"/>
+                            <Button Content="🚫 Ban User" Style="{StaticResource DangerButton}"
+                                    Command="{Binding TakeActionCommand}" CommandParameter="ban"
+                                    Padding="12,16" Margin="4,4,0,0"/>
+                        </UniformGrid>
+
+                        <Button Content="Cancel" Style="{StaticResource SecondaryButton}"
+                                Command="{Binding CloseActionDialogCommand}" Padding="20,10"
+                                HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
         </Grid>
+
+        <!-- Loading Overlay -->
+        <Grid Grid.RowSpan="2" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}"
+              Background="#80000000">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="⏳" FontSize="40" HorizontalAlignment="Center"/>
+                <TextBlock Text="Loading..." FontSize="16" Foreground="White" Margin="0,12,0,0"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Error Message -->
+        <Border Grid.Row="0" VerticalAlignment="Bottom"
+                Visibility="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}}"
+                Background="{StaticResource Red}" Padding="16,10" Margin="24,0">
+            <TextBlock Text="{Binding ErrorMessage}" FontSize="14" Foreground="White" TextWrapping="Wrap"/>
+        </Border>
     </Grid>
 </UserControl>

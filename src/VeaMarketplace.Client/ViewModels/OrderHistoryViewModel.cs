@@ -9,6 +9,7 @@ public partial class OrderHistoryViewModel : BaseViewModel
 {
     private readonly Services.IApiService _apiService;
     private readonly Services.INavigationService _navigationService;
+    private List<OrderDto> _allOrders = [];
 
     [ObservableProperty]
     private ObservableCollection<OrderDto> _orders = new();
@@ -28,6 +29,12 @@ public partial class OrderHistoryViewModel : BaseViewModel
     [ObservableProperty]
     private string _searchQuery = string.Empty;
 
+    [ObservableProperty]
+    private OrderDto? _selectedOrder;
+
+    [ObservableProperty]
+    private bool _isOrderDetailsOpen;
+
     public OrderHistoryViewModel(Services.IApiService apiService, Services.INavigationService navigationService)
     {
         _apiService = apiService;
@@ -40,16 +47,15 @@ public partial class OrderHistoryViewModel : BaseViewModel
         try
         {
             IsLoading = true;
-            // TODO: Call API to load orders
-            // var orderHistory = await _apiService.GetOrderHistoryAsync();
-            // Orders.Clear();
-            // foreach (var order in orderHistory.Orders)
-            //     Orders.Add(order);
+            _allOrders = await _apiService.GetOrdersAsync();
+            Orders.Clear();
+            foreach (var order in _allOrders)
+                Orders.Add(order);
 
-            // TotalOrders = orderHistory.TotalOrders;
-            // TotalSpent = orderHistory.TotalSpent;
-            // PendingOrders = orderHistory.PendingOrders;
-            // CompletedOrders = orderHistory.CompletedOrders;
+            TotalOrders = _allOrders.Count;
+            TotalSpent = _allOrders.Sum(o => o.Amount);
+            PendingOrders = _allOrders.Count(o => o.Status == Shared.Enums.OrderStatus.Pending || o.Status == Shared.Enums.OrderStatus.Processing);
+            CompletedOrders = _allOrders.Count(o => o.Status == Shared.Enums.OrderStatus.Completed);
         }
         catch (Exception ex)
         {
@@ -64,20 +70,26 @@ public partial class OrderHistoryViewModel : BaseViewModel
     [RelayCommand]
     private void ViewOrderDetails(OrderDto order)
     {
-        // TODO: Open order details dialog or navigate to details page
+        SelectedOrder = order;
+        IsOrderDetailsOpen = true;
     }
 
     [RelayCommand]
-    private async Task ContactSeller(OrderDto order)
+    private void CloseOrderDetails()
     {
-        // TODO: Open chat with seller
-        // _navigationService.NavigateToDirectMessage(order.SellerId);
+        IsOrderDetailsOpen = false;
+        SelectedOrder = null;
+    }
+
+    [RelayCommand]
+    private void ContactSeller(OrderDto order)
+    {
+        _navigationService.NavigateToDirectMessage(order.SellerId);
     }
 
     [RelayCommand]
     private void LeaveReview(OrderDto order)
     {
-        // Open review dialog
         var dialog = new Views.WriteReviewDialog
         {
             DataContext = new WriteReviewViewModel(_apiService, order.ProductId, order.ProductTitle)
@@ -87,22 +99,36 @@ public partial class OrderHistoryViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    private async Task OpenDispute(OrderDto order)
+    private void OpenDispute(OrderDto order)
     {
-        // TODO: Open dispute dialog
-        // Show confirmation and reason input
+        // For now, navigate to contact seller with dispute intent
+        // In a full implementation, this would open a dispute dialog
+        _navigationService.NavigateToDirectMessage(order.SellerId);
+    }
+
+    [RelayCommand]
+    private void ViewProduct(string productId)
+    {
+        _navigationService.NavigateToProduct(productId);
+    }
+
+    [RelayCommand]
+    private async Task RefreshOrders()
+    {
+        await LoadOrdersAsync();
     }
 
     partial void OnSearchQueryChanged(string value)
     {
-        // Filter orders based on search query
         if (string.IsNullOrWhiteSpace(value))
         {
-            _ = LoadOrdersAsync();
+            Orders.Clear();
+            foreach (var order in _allOrders)
+                Orders.Add(order);
         }
         else
         {
-            var filtered = Orders.Where(o =>
+            var filtered = _allOrders.Where(o =>
                 o.ProductTitle.Contains(value, StringComparison.OrdinalIgnoreCase) ||
                 o.SellerUsername.Contains(value, StringComparison.OrdinalIgnoreCase) ||
                 o.Id.Contains(value, StringComparison.OrdinalIgnoreCase)

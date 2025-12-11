@@ -110,16 +110,28 @@ public class NullToVisibilityConverter : IValueConverter
 }
 
 /// <summary>
-/// Converts string to Visibility (null/empty = Collapsed, has value = Visible)
-/// Alias for NullToVisibilityConverter
+/// Converts string to Visibility
+/// When parameter is null: checks if value is null/empty (null/empty = Collapsed, has value = Visible)
+/// When parameter is provided: compares value to parameter (match = Visible, no match = Collapsed)
 /// </summary>
 public class StringToVisibilityConverter : IValueConverter
 {
-    private readonly NullToVisibilityConverter _converter = new();
+    private readonly NullToVisibilityConverter _nullConverter = new();
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return _converter.Convert(value, targetType, parameter, culture);
+        // If parameter is provided, do string comparison
+        if (parameter is string targetValue)
+        {
+            if (value is string currentValue)
+            {
+                return currentValue == targetValue ? Visibility.Visible : Visibility.Collapsed;
+            }
+            return Visibility.Collapsed;
+        }
+
+        // Otherwise, just check for null/empty
+        return _nullConverter.Convert(value, targetType, parameter, culture);
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
