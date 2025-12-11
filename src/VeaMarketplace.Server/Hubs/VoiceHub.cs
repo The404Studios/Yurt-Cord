@@ -178,6 +178,63 @@ public class VoiceHub : Hub
         // Note: Actual ban persistence would require a database - this is just the immediate disconnect
     }
 
+    // Screen Sharing
+    private static readonly ConcurrentDictionary<string, bool> _screenSharers = new(); // connectionId -> isSharing
+
+    public async Task StartScreenShare()
+    {
+        if (_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
+        {
+            _screenSharers[Context.ConnectionId] = true;
+            userState.IsScreenSharing = true;
+
+            // Update in channel state too
+            if (_voiceChannels.TryGetValue(userState.ChannelId, out var channel))
+            {
+                if (channel.Users.TryGetValue(Context.ConnectionId, out var channelUser))
+                {
+                    channelUser.IsScreenSharing = true;
+                }
+            }
+
+            // Notify all users in the channel (including self for UI update)
+            await Clients.Group($"voice_{userState.ChannelId}")
+                .SendAsync("UserScreenShareChanged", Context.ConnectionId, true);
+        }
+    }
+
+    public async Task StopScreenShare()
+    {
+        _screenSharers.TryRemove(Context.ConnectionId, out _);
+
+        if (_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
+        {
+            userState.IsScreenSharing = false;
+
+            // Update in channel state too
+            if (_voiceChannels.TryGetValue(userState.ChannelId, out var channel))
+            {
+                if (channel.Users.TryGetValue(Context.ConnectionId, out var channelUser))
+                {
+                    channelUser.IsScreenSharing = false;
+                }
+            }
+
+            await Clients.Group($"voice_{userState.ChannelId}")
+                .SendAsync("UserScreenShareChanged", Context.ConnectionId, false);
+        }
+    }
+
+    public async Task SendScreenFrame(byte[] frameData, int width, int height)
+    {
+        if (_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
+        {
+            // Broadcast screen frame to all OTHER users in the channel
+            await Clients.OthersInGroup($"voice_{userState.ChannelId}")
+                .SendAsync("ReceiveScreenFrame", Context.ConnectionId, frameData, width, height);
+        }
+    }
+
     // WebRTC Signaling
     public async Task SendOffer(string targetConnectionId, string offer)
     {
@@ -436,4 +493,5 @@ public class VoiceUserState
     public bool IsDeafened { get; set; }
     public bool IsSpeaking { get; set; }
     public double AudioLevel { get; set; }
+    public bool IsScreenSharing { get; set; }
 }

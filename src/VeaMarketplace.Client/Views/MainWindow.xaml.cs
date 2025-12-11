@@ -54,6 +54,7 @@ public partial class MainWindow : Window
         ProfileViewControl.Visibility = view == "Profile" ? Visibility.Visible : Visibility.Collapsed;
         SettingsViewControl.Visibility = view == "Settings" ? Visibility.Visible : Visibility.Collapsed;
         FriendsViewControl.Visibility = view == "Friends" ? Visibility.Visible : Visibility.Collapsed;
+        VoiceCallDashboardControl.Visibility = view == "VoiceCall" ? Visibility.Visible : Visibility.Collapsed;
 
         // Update sidebar button states
         UpdateButtonStates();

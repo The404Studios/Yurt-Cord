@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.SignalR.Client;
 using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 using System.Collections.Concurrent;
 using System.Windows.Input;
 
@@ -26,6 +27,12 @@ public interface IVoiceService
     void SetUserMuted(string connectionId, bool muted);
     bool IsUserMuted(string connectionId);
 
+    // Screen sharing
+    bool IsScreenSharing { get; }
+    event Action<string, byte[], int, int>? OnScreenFrameReceived;
+    Task StartScreenShareAsync();
+    Task StopScreenShareAsync();
+
     event Action<VoiceUserState>? OnUserJoinedVoice;
     event Action<VoiceUserState>? OnUserLeftVoice;
     event Action<string, string, bool, double>? OnUserSpeaking;
@@ -34,6 +41,7 @@ public interface IVoiceService
     event Action<bool>? OnSpeakingChanged;
     event Action<string>? OnUserDisconnectedByAdmin;
     event Action<string, string>? OnUserMovedToChannel;
+    event Action<string, bool>? OnUserScreenShareChanged;
 
     Task ConnectAsync();
     Task DisconnectAsync();
@@ -66,6 +74,7 @@ public class VoiceUserState
     public bool IsDeafened { get; set; }
     public bool IsSpeaking { get; set; }
     public double AudioLevel { get; set; }
+    public bool IsScreenSharing { get; set; }
 }
 
 public class VoiceService : IVoiceService, IAsyncDisposable
@@ -97,6 +106,19 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     private bool _isPushToTalkActive;
     private Key _pushToTalkKey = Key.V;
 
+    // Audio quality settings - FIXED for smoother audio
+    private const int SampleRate = 48000;
+    private const int BitsPerSample = 16;
+    private const int Channels = 1;
+    private const int CaptureBufferMs = 40; // Larger capture buffer (was 20)
+    private const int PlaybackLatencyMs = 150; // Higher latency for smoother playback
+    private const int JitterBufferMs = 100; // Jitter buffer to handle network variation
+
+    // Screen sharing
+    private bool _isScreenSharing;
+    private CancellationTokenSource? _screenShareCts;
+    private Task? _screenShareTask;
+
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
     public bool IsInVoiceChannel { get; private set; }
     public bool IsMuted { get; set; }
@@ -104,6 +126,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     public bool IsSpeaking => _isSpeaking;
     public double CurrentAudioLevel => _currentAudioLevel;
     public string? CurrentChannelId { get; private set; }
+    public bool IsScreenSharing => _isScreenSharing;
 
     // Push-to-talk properties
     public bool PushToTalkEnabled
@@ -128,6 +151,8 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     public event Action<bool>? OnSpeakingChanged;
     public event Action<string>? OnUserDisconnectedByAdmin;
     public event Action<string, string>? OnUserMovedToChannel;
+    public event Action<string, byte[], int, int>? OnScreenFrameReceived;
+    public event Action<string, bool>? OnUserScreenShareChanged;
 
     // Per-user volume control
     public void SetUserVolume(string connectionId, float volume)
@@ -292,6 +317,21 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             CurrentChannelId = newChannelId;
             OnUserMovedToChannel?.Invoke(newChannelId, movedBy);
         });
+
+        // Screen sharing handlers
+        _connection.On<string, byte[], int, int>("ReceiveScreenFrame", (senderConnectionId, frameData, width, height) =>
+        {
+            OnScreenFrameReceived?.Invoke(senderConnectionId, frameData, width, height);
+        });
+
+        _connection.On<string, bool>("UserScreenShareChanged", (connectionId, isSharing) =>
+        {
+            if (_voiceUsers.TryGetValue(connectionId, out var user))
+            {
+                // Could add IsScreenSharing to VoiceUserState
+            }
+            OnUserScreenShareChanged?.Invoke(connectionId, isSharing);
+        });
     }
 
     private byte[] ApplyVolume(byte[] audioData, float volume)
@@ -337,25 +377,35 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     {
         try
         {
+            // Configure audio capture with larger buffer for stability
             _waveIn = new WaveInEvent
             {
                 DeviceNumber = _inputDeviceNumber,
-                WaveFormat = new WaveFormat(48000, 16, 1),
-                BufferMilliseconds = 20
+                WaveFormat = new WaveFormat(SampleRate, BitsPerSample, Channels),
+                BufferMilliseconds = CaptureBufferMs, // Larger buffer (40ms) for more stable capture
+                NumberOfBuffers = 3 // Multiple buffers to reduce underruns
             };
 
             _waveIn.DataAvailable += OnAudioDataAvailable;
             _waveIn.StartRecording();
 
-            // Setup playback
-            _bufferedWaveProvider = new BufferedWaveProvider(new WaveFormat(48000, 16, 1))
+            // Setup playback with jitter buffer for network variation
+            _bufferedWaveProvider = new BufferedWaveProvider(new WaveFormat(SampleRate, BitsPerSample, Channels))
             {
-                DiscardOnBufferOverflow = true
+                DiscardOnBufferOverflow = true,
+                BufferDuration = TimeSpan.FromMilliseconds(500), // Larger buffer capacity
+                ReadFully = false // Don't wait for full buffer - reduces latency
             };
+
+            // Pre-fill buffer with silence to create jitter buffer
+            var silenceBytes = new byte[SampleRate * (BitsPerSample / 8) * Channels * JitterBufferMs / 1000];
+            _bufferedWaveProvider.AddSamples(silenceBytes, 0, silenceBytes.Length);
 
             _waveOut = new WaveOutEvent
             {
-                DeviceNumber = _outputDeviceNumber
+                DeviceNumber = _outputDeviceNumber,
+                DesiredLatency = PlaybackLatencyMs, // Higher latency for smoother playback
+                NumberOfBuffers = 3 // Multiple buffers to reduce clicks
             };
             _waveOut.Init(_bufferedWaveProvider);
             _waveOut.Play();
@@ -517,6 +567,207 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         catch
         {
             // Ignore errors
+        }
+    }
+
+    // Screen sharing implementation
+    public async Task StartScreenShareAsync()
+    {
+        if (_connection == null || !IsConnected || _isScreenSharing) return;
+
+        _isScreenSharing = true;
+        _screenShareCts = new CancellationTokenSource();
+
+        // Notify others that we started screen sharing
+        try
+        {
+            await _connection.InvokeAsync("StartScreenShare");
+        }
+        catch
+        {
+            _isScreenSharing = false;
+            return;
+        }
+
+        // Start capture task
+        _screenShareTask = Task.Run(() => CaptureScreenLoop(_screenShareCts.Token), _screenShareCts.Token);
+    }
+
+    public async Task StopScreenShareAsync()
+    {
+        if (!_isScreenSharing) return;
+
+        _screenShareCts?.Cancel();
+        _isScreenSharing = false;
+
+        if (_screenShareTask != null)
+        {
+            try
+            {
+                await _screenShareTask;
+            }
+            catch (OperationCanceledException) { }
+        }
+
+        _screenShareTask = null;
+        _screenShareCts?.Dispose();
+        _screenShareCts = null;
+
+        // Notify others that we stopped screen sharing
+        if (_connection != null && IsConnected)
+        {
+            try
+            {
+                await _connection.InvokeAsync("StopScreenShare");
+            }
+            catch { }
+        }
+    }
+
+    private async Task CaptureScreenLoop(CancellationToken cancellationToken)
+    {
+        const int targetFps = 60;
+        const int frameDelayMs = 1000 / targetFps;
+        const int targetWidth = 1920;
+        const int targetHeight = 1080;
+
+        while (!cancellationToken.IsCancellationRequested && _connection != null && IsConnected)
+        {
+            try
+            {
+                var frameStart = DateTime.UtcNow;
+
+                // Capture screen using GDI+ (cross-compatible approach)
+                var frameData = CaptureScreen(targetWidth, targetHeight);
+
+                if (frameData != null && frameData.Length > 0)
+                {
+                    // Send frame in chunks if needed (SignalR has message size limits)
+                    const int chunkSize = 64 * 1024; // 64KB chunks
+
+                    if (frameData.Length <= chunkSize)
+                    {
+                        await _connection.InvokeAsync("SendScreenFrame", frameData, targetWidth, targetHeight);
+                    }
+                    else
+                    {
+                        // For large frames, compress more aggressively or skip
+                        // This is a simplified version - production would use proper streaming
+                        var compressedData = CompressFrame(frameData, targetWidth, targetHeight, 30); // Lower quality for large frames
+                        if (compressedData.Length <= chunkSize * 4) // Allow up to 256KB
+                        {
+                            await _connection.InvokeAsync("SendScreenFrame", compressedData, targetWidth, targetHeight);
+                        }
+                    }
+                }
+
+                // Maintain target framerate
+                var elapsed = (DateTime.UtcNow - frameStart).TotalMilliseconds;
+                if (elapsed < frameDelayMs)
+                {
+                    await Task.Delay((int)(frameDelayMs - elapsed), cancellationToken);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch
+            {
+                // Continue on errors, but add small delay
+                await Task.Delay(100, cancellationToken);
+            }
+        }
+    }
+
+    private byte[]? CaptureScreen(int targetWidth, int targetHeight)
+    {
+        try
+        {
+            // Get primary screen bounds
+            var screenWidth = (int)System.Windows.SystemParameters.PrimaryScreenWidth;
+            var screenHeight = (int)System.Windows.SystemParameters.PrimaryScreenHeight;
+
+            using var bitmap = new System.Drawing.Bitmap(screenWidth, screenHeight);
+            using var graphics = System.Drawing.Graphics.FromImage(bitmap);
+
+            // Capture the screen
+            graphics.CopyFromScreen(0, 0, 0, 0, new System.Drawing.Size(screenWidth, screenHeight));
+
+            // Resize if needed
+            System.Drawing.Bitmap finalBitmap;
+            if (screenWidth != targetWidth || screenHeight != targetHeight)
+            {
+                finalBitmap = new System.Drawing.Bitmap(targetWidth, targetHeight);
+                using var resizeGraphics = System.Drawing.Graphics.FromImage(finalBitmap);
+                resizeGraphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Bilinear;
+                resizeGraphics.DrawImage(bitmap, 0, 0, targetWidth, targetHeight);
+            }
+            else
+            {
+                finalBitmap = bitmap;
+            }
+
+            // Compress to JPEG
+            using var ms = new MemoryStream();
+            var encoder = System.Drawing.Imaging.ImageCodecInfo.GetImageEncoders()
+                .FirstOrDefault(e => e.MimeType == "image/jpeg");
+
+            if (encoder != null)
+            {
+                var encoderParams = new System.Drawing.Imaging.EncoderParameters(1);
+                encoderParams.Param[0] = new System.Drawing.Imaging.EncoderParameter(
+                    System.Drawing.Imaging.Encoder.Quality, 50L); // 50% quality for balance
+
+                finalBitmap.Save(ms, encoder, encoderParams);
+            }
+            else
+            {
+                finalBitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
+            }
+
+            if (finalBitmap != bitmap)
+            {
+                finalBitmap.Dispose();
+            }
+
+            return ms.ToArray();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private byte[] CompressFrame(byte[] frameData, int width, int height, int quality)
+    {
+        try
+        {
+            using var inputMs = new MemoryStream(frameData);
+            using var image = System.Drawing.Image.FromStream(inputMs);
+            using var outputMs = new MemoryStream();
+
+            var encoder = System.Drawing.Imaging.ImageCodecInfo.GetImageEncoders()
+                .FirstOrDefault(e => e.MimeType == "image/jpeg");
+
+            if (encoder != null)
+            {
+                var encoderParams = new System.Drawing.Imaging.EncoderParameters(1);
+                encoderParams.Param[0] = new System.Drawing.Imaging.EncoderParameter(
+                    System.Drawing.Imaging.Encoder.Quality, (long)quality);
+
+                image.Save(outputMs, encoder, encoderParams);
+            }
+            else
+            {
+                image.Save(outputMs, System.Drawing.Imaging.ImageFormat.Jpeg);
+            }
+
+            return outputMs.ToArray();
+        }
+        catch
+        {
+            return frameData;
         }
     }
 }

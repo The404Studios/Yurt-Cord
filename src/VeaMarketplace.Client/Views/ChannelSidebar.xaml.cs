@@ -180,6 +180,26 @@ public partial class ChannelSidebar : UserControl
         await _viewModel.LeaveVoiceChannelCommand.ExecuteAsync(null);
     }
 
+    private async void ScreenShare_Click(object sender, RoutedEventArgs e)
+    {
+        if (_voiceService == null) return;
+
+        if (_voiceService.IsScreenSharing)
+        {
+            await _voiceService.StopScreenShareAsync();
+            ScreenShareIcon.Text = "🖥";
+            ScreenShareButton.Background = null;
+            ScreenShareButton.ToolTip = "Share Screen";
+        }
+        else
+        {
+            await _voiceService.StartScreenShareAsync();
+            ScreenShareIcon.Text = "🛑";
+            ScreenShareButton.Background = (System.Windows.Media.Brush)FindResource("AccentGreenBrush");
+            ScreenShareButton.ToolTip = "Stop Sharing";
+        }
+    }
+
     #region Voice User Context Menu Handlers
 
     private VoiceUserState? GetVoiceUserFromSender(object sender)
@@ -274,6 +294,15 @@ public partial class ChannelSidebar : UserControl
             MessageBox.Show($"Set {user.Username}'s volume to {volume}%", "Volume Adjusted",
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
+    }
+
+    private void VoiceWatchScreen_Click(object sender, RoutedEventArgs e)
+    {
+        var user = GetVoiceUserFromSender(sender);
+        if (user == null || _voiceService == null) return;
+
+        var viewer = new ScreenShareViewer(_voiceService, user.ConnectionId, user.Username);
+        viewer.Show();
     }
 
     private async void MoveToChannel_Click(object sender, RoutedEventArgs e)

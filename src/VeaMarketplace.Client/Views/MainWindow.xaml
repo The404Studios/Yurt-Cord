@@ -139,6 +139,7 @@
                         <views:ProfileView x:Name="ProfileViewControl" Visibility="Collapsed"/>
                         <views:SettingsView x:Name="SettingsViewControl" Visibility="Collapsed"/>
                         <views:FriendsView x:Name="FriendsViewControl" Visibility="Collapsed"/>
+                        <views:VoiceCallDashboard x:Name="VoiceCallDashboardControl" Visibility="Collapsed"/>
                     </Grid>
                 </Border>
 
