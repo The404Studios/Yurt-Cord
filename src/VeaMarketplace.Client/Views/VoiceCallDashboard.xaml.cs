@@ -84,6 +84,16 @@ public partial class VoiceCallDashboard : UserControl
                 foreach (var user in users)
                 {
                     _participants.Add(new VoiceParticipant(user));
+
+                    // Auto-watch if someone is already screen sharing
+                    if (user.IsScreenSharing && _currentScreenSharerConnectionId == null)
+                    {
+                        _currentScreenSharerConnectionId = user.ConnectionId;
+                        StreamerNameText.Text = user.Username;
+                        StreamInfoPanel.Visibility = Visibility.Visible;
+                        NoStreamPanel.Visibility = Visibility.Collapsed;
+                        ScreenShareImage.Visibility = Visibility.Visible;
+                    }
                 }
                 UpdateParticipantCount();
                 UpdateChannelName();
@@ -171,9 +181,31 @@ public partial class VoiceCallDashboard : UserControl
                     participant.IsScreenSharing = isSharing;
                 }
 
-                if (!isSharing && _currentScreenSharerConnectionId == connectionId)
+                if (isSharing)
                 {
-                    ClearScreenShare();
+                    // Auto-watch new screen share if not currently watching anyone
+                    // or switch to the new sharer
+                    _currentScreenSharerConnectionId = connectionId;
+                    StreamerNameText.Text = participant?.Username ?? "Unknown";
+                    StreamInfoPanel.Visibility = Visibility.Visible;
+                    NoStreamPanel.Visibility = Visibility.Collapsed;
+                    ScreenShareImage.Visibility = Visibility.Visible;
+                    _frameCount = 0;
+                    _lastFpsUpdate = DateTime.Now;
+                }
+                else if (_currentScreenSharerConnectionId == connectionId)
+                {
+                    // Find another active sharer if available
+                    var otherSharer = _participants.FirstOrDefault(p => p.IsScreenSharing && p.ConnectionId != connectionId);
+                    if (otherSharer != null)
+                    {
+                        _currentScreenSharerConnectionId = otherSharer.ConnectionId;
+                        StreamerNameText.Text = otherSharer.Username;
+                    }
+                    else
+                    {
+                        ClearScreenShare();
+                    }
                 }
             });
         };
@@ -446,6 +478,7 @@ public class VoiceParticipant : INotifyPropertyChanged
         IsMuted = state.IsMuted;
         IsDeafened = state.IsDeafened;
         AudioLevel = state.AudioLevel;
+        IsScreenSharing = state.IsScreenSharing;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

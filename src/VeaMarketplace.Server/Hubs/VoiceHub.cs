@@ -186,9 +186,19 @@ public class VoiceHub : Hub
         if (_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
         {
             _screenSharers[Context.ConnectionId] = true;
+            userState.IsScreenSharing = true;
 
-            // Notify all users in the channel
-            await Clients.OthersInGroup($"voice_{userState.ChannelId}")
+            // Update in channel state too
+            if (_voiceChannels.TryGetValue(userState.ChannelId, out var channel))
+            {
+                if (channel.Users.TryGetValue(Context.ConnectionId, out var channelUser))
+                {
+                    channelUser.IsScreenSharing = true;
+                }
+            }
+
+            // Notify all users in the channel (including self for UI update)
+            await Clients.Group($"voice_{userState.ChannelId}")
                 .SendAsync("UserScreenShareChanged", Context.ConnectionId, true);
         }
     }
@@ -199,7 +209,18 @@ public class VoiceHub : Hub
 
         if (_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
         {
-            await Clients.OthersInGroup($"voice_{userState.ChannelId}")
+            userState.IsScreenSharing = false;
+
+            // Update in channel state too
+            if (_voiceChannels.TryGetValue(userState.ChannelId, out var channel))
+            {
+                if (channel.Users.TryGetValue(Context.ConnectionId, out var channelUser))
+                {
+                    channelUser.IsScreenSharing = false;
+                }
+            }
+
+            await Clients.Group($"voice_{userState.ChannelId}")
                 .SendAsync("UserScreenShareChanged", Context.ConnectionId, false);
         }
     }
@@ -472,4 +493,5 @@ public class VoiceUserState
     public bool IsDeafened { get; set; }
     public bool IsSpeaking { get; set; }
     public double AudioLevel { get; set; }
+    public bool IsScreenSharing { get; set; }
 }

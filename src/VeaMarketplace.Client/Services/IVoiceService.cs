@@ -74,6 +74,7 @@ public class VoiceUserState
     public bool IsDeafened { get; set; }
     public bool IsSpeaking { get; set; }
     public double AudioLevel { get; set; }
+    public bool IsScreenSharing { get; set; }
 }
 
 public class VoiceService : IVoiceService, IAsyncDisposable
