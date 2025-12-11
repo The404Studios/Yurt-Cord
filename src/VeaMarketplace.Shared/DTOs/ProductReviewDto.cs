@@ -39,3 +39,24 @@ public class ReviewSummaryDto
     public int TwoStarCount { get; set; }
     public int OneStarCount { get; set; }
 }
+
+public class ProductReviewListDto
+{
+    public List<ProductReviewDto> Reviews { get; set; } = new();
+    public int TotalCount { get; set; }
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+
+    // Summary properties (flattened for convenience)
+    public double AverageRating { get; set; }
+    public int TotalReviews { get; set; }
+    public string? ProductTitle { get; set; }
+    public bool HasMore { get; set; }
+
+    // Star breakdown
+    public int FiveStarCount { get; set; }
+    public int FourStarCount { get; set; }
+    public int ThreeStarCount { get; set; }
+    public int TwoStarCount { get; set; }
+    public int OneStarCount { get; set; }
+}

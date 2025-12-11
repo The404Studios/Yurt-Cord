@@ -30,6 +30,8 @@ public class ProductDto
     public int LikeCount { get; set; }
     public DateTime CreatedAt { get; set; }
     public bool IsFeatured { get; set; }
+    public double AverageRating { get; set; }
+    public int ReviewCount { get; set; }
 }
 
 public class ProductListResponse

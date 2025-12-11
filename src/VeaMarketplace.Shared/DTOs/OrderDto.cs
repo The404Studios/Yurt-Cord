@@ -16,6 +16,7 @@ public class OrderDto
     public decimal ListingFee { get; set; }
     public decimal SalesFee { get; set; }
     public decimal TotalAmount { get; set; }
+    public decimal Amount => TotalAmount; // Alias for compatibility
     public OrderStatus Status { get; set; }
     public PaymentMethod PaymentMethod { get; set; }
     public string? PaymentTransactionId { get; set; }

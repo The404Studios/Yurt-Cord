@@ -17,6 +17,7 @@
             <converters:AudioLevelToHeightConverter x:Key="AudioLevelToHeightConverter"/>
             <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
             <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
+            <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
             <converters:TimeAgoConverter x:Key="TimeAgoConverter"/>
             <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
             <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
@@ -26,6 +27,10 @@
             <converters:SliderWidthConverter x:Key="SliderWidthConverter"/>
             <converters:RoleToColorConverter x:Key="RoleToColorConverter"/>
             <converters:RankToBadgeConverter x:Key="RankToBadgeConverter"/>
+
+            <!-- Converter Aliases -->
+            <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
+            <converters:StringToVisibilityConverter x:Key="StringToVisConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

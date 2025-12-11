@@ -11,7 +11,8 @@ public enum NotificationType
     System = 6,
     Moderation = 7,
     Achievement = 8,
-    Other = 9
+    Other = 9,
+    Order = 10
 }
 
 public class Notification

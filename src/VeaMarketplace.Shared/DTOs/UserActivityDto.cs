@@ -40,13 +40,6 @@ public class ProfileThemeDto
     public bool IsActive { get; set; } = false;
 }
 
-public class CustomStatusDto
-{
-    public string Text { get; set; } = string.Empty;
-    public string? Emoji { get; set; }
-    public DateTime? ExpiresAt { get; set; }
-}
-
 public class UpdateProfileThemeRequest
 {
     public string? ThemeId { get; set; }
@@ -56,9 +49,3 @@ public class UpdateProfileThemeRequest
     public string? BackgroundUrl { get; set; }
 }
 
-public class SetCustomStatusRequest
-{
-    public string Text { get; set; } = string.Empty;
-    public string? Emoji { get; set; }
-    public DateTime? ExpiresAt { get; set; }
-}

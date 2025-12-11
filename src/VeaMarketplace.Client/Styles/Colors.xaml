@@ -16,6 +16,10 @@
     <Color x:Key="AccentOrangeColor">#F47B67</Color>
     <Color x:Key="AccentCyanColor">#00AFF4</Color>
 
+    <!-- Accent Color Aliases (short names for GradientStops) -->
+    <Color x:Key="AccentBlurple">#5865F2</Color>
+    <Color x:Key="AccentPink">#EB459E</Color>
+
     <!-- Text Colors -->
     <Color x:Key="TextPrimaryColor">#FFFFFF</Color>
     <Color x:Key="TextSecondaryColor">#B9BBBE</Color>
@@ -80,6 +84,9 @@
     <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}"/>
     <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMutedColor}"/>
     <SolidColorBrush x:Key="TextLinkBrush" Color="{StaticResource TextLinkColor}"/>
+
+    <!-- Additional Text Aliases -->
+    <SolidColorBrush x:Key="MutedText" Color="{StaticResource TextMutedColor}"/>
 
     <!-- Gradient Backgrounds -->
     <LinearGradientBrush x:Key="AccentGradient" StartPoint="0,0" EndPoint="1,1">

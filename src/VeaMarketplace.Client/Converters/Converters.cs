@@ -30,6 +30,30 @@ public class BoolToVisibilityConverter : IValueConverter
 }
 
 /// <summary>
+/// Inverts a boolean value (true = false, false = true)
+/// </summary>
+public class InverseBoolConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is bool boolValue)
+        {
+            return !boolValue;
+        }
+        return false;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is bool boolValue)
+        {
+            return !boolValue;
+        }
+        return false;
+    }
+}
+
+/// <summary>
 /// Converts bool to Visibility inversely (true = Collapsed, false = Visible)
 /// </summary>
 public class InverseBoolToVisibilityConverter : IValueConverter
