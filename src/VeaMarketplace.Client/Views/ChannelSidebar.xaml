@@ -33,16 +33,10 @@
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator Style="{StaticResource MenuSeparator}"/>
-                <MenuItem Header="Mute User" Style="{StaticResource ModernMenuItem}"
+                <MenuItem Header="Mute User (for me)" Style="{StaticResource ModernMenuItem}"
                           Click="VoiceMuteUser_Click">
                     <MenuItem.Icon>
                         <TextBlock Text="🔇" FontSize="14"/>
-                    </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem Header="Deafen User" Style="{StaticResource ModernMenuItem}"
-                          Click="VoiceDeafenUser_Click">
-                    <MenuItem.Icon>
-                        <TextBlock Text="🔈" FontSize="14"/>
                     </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem Header="Adjust Volume" Style="{StaticResource ModernMenuItem}"
@@ -63,10 +57,23 @@
                     <MenuItem Header="Marketplace Deals" Style="{StaticResource ModernMenuItem}"
                               Click="MoveToChannel_Click" Tag="marketplace-voice"/>
                 </MenuItem>
-                <MenuItem Header="Disconnect" Style="{StaticResource DangerMenuItem}"
+                <MenuItem Header="Disconnect User" Style="{StaticResource DangerMenuItem}"
                           Click="VoiceDisconnectUser_Click">
                     <MenuItem.Icon>
                         <TextBlock Text="🚫" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator Style="{StaticResource MenuSeparator}"/>
+                <MenuItem Header="Kick from Server" Style="{StaticResource DangerMenuItem}"
+                          Click="VoiceKickUser_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="👢" FontSize="14"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Ban from Server" Style="{StaticResource DangerMenuItem}"
+                          Click="VoiceBanUser_Click">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🔨" FontSize="14"/>
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator Style="{StaticResource MenuSeparator}"/>
@@ -113,6 +120,8 @@
             <RowDefinition Height="48"/>
             <!-- Channels List -->
             <RowDefinition Height="*"/>
+            <!-- Voice Connected Panel -->
+            <RowDefinition Height="Auto"/>
             <!-- User Panel -->
             <RowDefinition Height="52"/>
         </Grid.RowDefinitions>
@@ -253,8 +262,59 @@
             </StackPanel>
         </ScrollViewer>
 
+        <!-- Voice Connected Panel - Shows when in voice channel -->
+        <Border x:Name="VoiceConnectedPanel" Grid.Row="2" Background="#1A1B1E"
+                BorderBrush="{StaticResource PrimaryDarkBrush}" BorderThickness="0,1,0,0"
+                Visibility="Collapsed">
+            <Grid Margin="8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Voice Status -->
+                <StackPanel Grid.Row="0" Grid.Column="0">
+                    <TextBlock Text="Voice Connected" FontSize="12" FontWeight="SemiBold"
+                               Foreground="{StaticResource AccentGreenBrush}"/>
+                    <TextBlock x:Name="VoiceChannelNameText" FontSize="11"
+                               Foreground="{StaticResource TextMutedBrush}"/>
+                </StackPanel>
+
+                <!-- Disconnect Button -->
+                <Button Grid.Row="0" Grid.Column="1" Style="{StaticResource IconButton}"
+                        Width="28" Height="28" Click="DisconnectVoice_Click"
+                        ToolTip="Disconnect from Voice"
+                        Background="#ED4245" Margin="4,0,0,0">
+                    <TextBlock Text="📞" FontSize="14" RenderTransformOrigin="0.5,0.5">
+                        <TextBlock.RenderTransform>
+                            <RotateTransform Angle="135"/>
+                        </TextBlock.RenderTransform>
+                    </TextBlock>
+                </Button>
+
+                <!-- Audio Level Indicator -->
+                <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,6,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="AudioLevelIcon" Text="🎤" FontSize="12"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <Border Grid.Column="1" Background="#2F3136" CornerRadius="2" Height="4">
+                        <Border x:Name="AudioLevelBar" Background="{StaticResource AccentGreenBrush}"
+                                CornerRadius="2" HorizontalAlignment="Left" Width="0"/>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Border>
+
         <!-- User Panel -->
-        <Border Grid.Row="2" Background="{StaticResource PrimaryDarkBrush}">
+        <Border Grid.Row="3" Background="{StaticResource PrimaryDarkBrush}">
             <Grid Margin="8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>

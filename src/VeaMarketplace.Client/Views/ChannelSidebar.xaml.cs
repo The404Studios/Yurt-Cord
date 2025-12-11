@@ -17,6 +17,14 @@ public partial class ChannelSidebar : UserControl
     private bool _isMuted;
     private bool _isDeafened;
 
+    // Channel name mapping for display
+    private static readonly Dictionary<string, string> ChannelDisplayNames = new()
+    {
+        { "general-voice", "General Voice" },
+        { "music-voice", "Music" },
+        { "marketplace-voice", "Marketplace Deals" }
+    };
+
     public ChannelSidebar()
     {
         InitializeComponent();
@@ -35,19 +43,65 @@ public partial class ChannelSidebar : UserControl
         // Update user panel when logged in
         Loaded += (s, e) => UpdateUserPanel();
 
-        // Show voice users when in a voice channel
+        // Show/hide voice connected panel and users when in a voice channel
         _viewModel.PropertyChanged += (s, e) =>
         {
             if (e.PropertyName == nameof(ChatViewModel.IsInVoiceChannel))
             {
                 Dispatcher.Invoke(() =>
                 {
-                    VoiceUsersPanel.Visibility = _viewModel.IsInVoiceChannel
-                        ? Visibility.Visible
-                        : Visibility.Collapsed;
+                    var isInVoice = _viewModel.IsInVoiceChannel;
+                    VoiceUsersPanel.Visibility = isInVoice ? Visibility.Visible : Visibility.Collapsed;
+                    VoiceConnectedPanel.Visibility = isInVoice ? Visibility.Visible : Visibility.Collapsed;
+
+                    if (isInVoice && _viewModel.CurrentVoiceChannel != null)
+                    {
+                        VoiceChannelNameText.Text = ChannelDisplayNames.TryGetValue(
+                            _viewModel.CurrentVoiceChannel, out var name) ? name : _viewModel.CurrentVoiceChannel;
+                    }
                 });
             }
         };
+
+        // Subscribe to audio level updates
+        if (_voiceService != null)
+        {
+            _voiceService.OnLocalAudioLevel += level =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    // Update audio level bar (max width is about 150px based on panel width)
+                    var maxWidth = 150.0;
+                    AudioLevelBar.Width = level * maxWidth;
+
+                    // Change icon based on mute state
+                    AudioLevelIcon.Text = _isMuted ? "🔇" : "🎤";
+                    AudioLevelIcon.Foreground = _isMuted
+                        ? (System.Windows.Media.Brush)FindResource("TextMutedBrush")
+                        : (level > 0.1
+                            ? (System.Windows.Media.Brush)FindResource("AccentGreenBrush")
+                            : (System.Windows.Media.Brush)FindResource("TextMutedBrush"));
+                });
+            };
+
+            _voiceService.OnUserDisconnectedByAdmin += reason =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    MessageBox.Show(reason, "Disconnected", MessageBoxButton.OK, MessageBoxImage.Warning);
+                });
+            };
+
+            _voiceService.OnUserMovedToChannel += (channelId, movedBy) =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    var channelName = ChannelDisplayNames.TryGetValue(channelId, out var name) ? name : channelId;
+                    VoiceChannelNameText.Text = channelName;
+                    MessageBox.Show($"You were moved to {channelName}", "Moved", MessageBoxButton.OK, MessageBoxImage.Information);
+                });
+            };
+        }
     }
 
     private void UpdateUserPanel()
@@ -120,6 +174,12 @@ public partial class ChannelSidebar : UserControl
         _navigationService?.NavigateToSettings();
     }
 
+    private async void DisconnectVoice_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel == null) return;
+        await _viewModel.LeaveVoiceChannelCommand.ExecuteAsync(null);
+    }
+
     #region Voice User Context Menu Handlers
 
     private VoiceUserState? GetVoiceUserFromSender(object sender)
@@ -185,47 +245,58 @@ public partial class ChannelSidebar : UserControl
     private void VoiceMuteUser_Click(object sender, RoutedEventArgs e)
     {
         var user = GetVoiceUserFromSender(sender);
-        if (user == null) return;
+        if (user == null || _voiceService == null) return;
 
-        MessageBox.Show($"Muted {user.Username} for yourself", "User Muted",
-            MessageBoxButton.OK, MessageBoxImage.Information);
-    }
+        var isMuted = _voiceService.IsUserMuted(user.ConnectionId);
+        _voiceService.SetUserMuted(user.ConnectionId, !isMuted);
 
-    private void VoiceDeafenUser_Click(object sender, RoutedEventArgs e)
-    {
-        var user = GetVoiceUserFromSender(sender);
-        if (user == null) return;
-
-        MessageBox.Show($"Deafened {user.Username}", "User Deafened",
+        var action = isMuted ? "Unmuted" : "Muted";
+        MessageBox.Show($"{action} {user.Username} for yourself", $"User {action}",
             MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     private void VoiceAdjustVolume_Click(object sender, RoutedEventArgs e)
     {
         var user = GetVoiceUserFromSender(sender);
-        if (user == null) return;
+        if (user == null || _voiceService == null) return;
 
-        // Could open a volume slider dialog
-        MessageBox.Show($"Adjust volume for {user.Username}", "Volume",
-            MessageBoxButton.OK, MessageBoxImage.Information);
+        // Show a simple input dialog for volume (0-200%)
+        var currentVolume = _voiceService.GetUserVolume(user.ConnectionId) * 100;
+        var input = InputDialog.Show(
+            "Adjust User Volume",
+            $"Enter volume percentage for {user.Username} (0-200):",
+            currentVolume.ToString("F0"));
+
+        if (!string.IsNullOrEmpty(input) && float.TryParse(input, out var volume))
+        {
+            volume = Math.Clamp(volume, 0, 200);
+            _voiceService.SetUserVolume(user.ConnectionId, volume / 100f);
+            MessageBox.Show($"Set {user.Username}'s volume to {volume}%", "Volume Adjusted",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
     }
 
-    private void MoveToChannel_Click(object sender, RoutedEventArgs e)
+    private async void MoveToChannel_Click(object sender, RoutedEventArgs e)
     {
         var user = GetVoiceUserFromSender(sender);
-        if (user == null) return;
+        if (user == null || _voiceService == null) return;
 
         var menuItem = sender as MenuItem;
         var channelId = menuItem?.Tag?.ToString();
 
-        MessageBox.Show($"Moving {user.Username} to {channelId}", "Move User",
-            MessageBoxButton.OK, MessageBoxImage.Information);
+        if (!string.IsNullOrEmpty(channelId))
+        {
+            await _voiceService.MoveUserToChannelAsync(user.ConnectionId, channelId);
+            var channelName = ChannelDisplayNames.TryGetValue(channelId, out var name) ? name : channelId;
+            MessageBox.Show($"Moved {user.Username} to {channelName}", "User Moved",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
     }
 
-    private void VoiceDisconnectUser_Click(object sender, RoutedEventArgs e)
+    private async void VoiceDisconnectUser_Click(object sender, RoutedEventArgs e)
     {
         var user = GetVoiceUserFromSender(sender);
-        if (user == null) return;
+        if (user == null || _voiceService == null) return;
 
         var result = MessageBox.Show(
             $"Disconnect {user.Username} from voice?",
@@ -235,8 +306,73 @@ public partial class ChannelSidebar : UserControl
 
         if (result == MessageBoxResult.Yes)
         {
-            MessageBox.Show($"Disconnected {user.Username}", "User Disconnected",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            await _voiceService.DisconnectUserAsync(user.ConnectionId);
+        }
+    }
+
+    private async void VoiceKickUser_Click(object sender, RoutedEventArgs e)
+    {
+        var user = GetVoiceUserFromSender(sender);
+        if (user == null || _voiceService == null) return;
+
+        var reason = InputDialog.Show(
+            "Kick User",
+            $"Enter reason for kicking {user.Username}:",
+            "Violation of rules");
+
+        if (!string.IsNullOrEmpty(reason))
+        {
+            var result = MessageBox.Show(
+                $"Kick {user.Username} from the server?\nReason: {reason}",
+                "Confirm Kick",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                await _voiceService.KickUserAsync(user.UserId, reason);
+                MessageBox.Show($"Kicked {user.Username}", "User Kicked",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+    }
+
+    private async void VoiceBanUser_Click(object sender, RoutedEventArgs e)
+    {
+        var user = GetVoiceUserFromSender(sender);
+        if (user == null || _voiceService == null) return;
+
+        var reason = InputDialog.Show(
+            "Ban User",
+            $"Enter reason for banning {user.Username}:",
+            "Violation of rules");
+
+        if (!string.IsNullOrEmpty(reason))
+        {
+            var durationInput = InputDialog.Show(
+                "Ban Duration",
+                "Enter ban duration in minutes (leave empty for permanent):",
+                "");
+
+            TimeSpan? duration = null;
+            if (!string.IsNullOrEmpty(durationInput) && double.TryParse(durationInput, out var minutes))
+            {
+                duration = TimeSpan.FromMinutes(minutes);
+            }
+
+            var durationText = duration.HasValue ? $" for {duration.Value.TotalMinutes} minutes" : " permanently";
+            var result = MessageBox.Show(
+                $"Ban {user.Username}{durationText}?\nReason: {reason}",
+                "Confirm Ban",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                await _voiceService.BanUserAsync(user.UserId, reason, duration);
+                MessageBox.Show($"Banned {user.Username}", "User Banned",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
         }
     }
 
@@ -246,6 +382,8 @@ public partial class ChannelSidebar : UserControl
         if (user == null) return;
 
         Clipboard.SetText(user.UserId);
+        MessageBox.Show("User ID copied to clipboard", "Copied",
+            MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     #endregion
