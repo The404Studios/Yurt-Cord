@@ -14,9 +14,14 @@
 
             <!-- Converters -->
             <converters:AudioLevelConverter x:Key="AudioLevelConverter"/>
-            <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
-            <converters:SliderWidthConverter x:Key="SliderWidthConverter"/>
-            <converters:StringToVisibilityConverter x:Key="StringToVisConverter"/>
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+            <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
+            <converters:TimeAgoConverter x:Key="TimeAgoConverter"/>
+            <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+            <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+            <converters:EqualityToVisibilityConverter x:Key="EqualityToVisibilityConverter"/>
+            <converters:BanTypeConverter x:Key="BanTypeConverter"/>
+            <converters:TimestampConverter x:Key="TimestampConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
