@@ -436,9 +436,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                     var samples = new short[decodedSamples];
                     Array.Copy(pcmBuffer, samples, decodedSamples);
 
-                    // Limit queue size to prevent memory buildup (max ~500ms of audio)
-                    // Larger queue handles network jitter better
-                    if (queue.Count < 25)
+                    // Limit queue size to prevent memory buildup (max ~1 second of audio)
+                    // Large queue handles network jitter and latency better
+                    if (queue.Count < 50)
                     {
                         queue.Enqueue(samples);
                     }
@@ -568,31 +568,36 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                 SignalType = OpusSignal.OPUS_SIGNAL_VOICE
             };
 
-            // Configure audio capture with balanced buffer for smooth audio
+            // Configure audio capture with larger buffer for stability
             _waveIn = new WaveInEvent
             {
                 DeviceNumber = _inputDeviceNumber,
                 WaveFormat = new WaveFormat(SampleRate, BitsPerSample, Channels),
-                BufferMilliseconds = 40, // 40ms buffers - better stability
-                NumberOfBuffers = 4      // More buffers for smoother capture
+                BufferMilliseconds = 60, // 60ms buffers for stability
+                NumberOfBuffers = 6      // More buffers for smoother capture
             };
 
             _waveIn.DataAvailable += OnAudioDataAvailable;
             _waveIn.StartRecording();
 
-            // Setup playback buffer with larger size for smooth playback
+            // Setup playback buffer with large size for smooth playback
             _bufferedWaveProvider = new BufferedWaveProvider(new WaveFormat(SampleRate, BitsPerSample, Channels))
             {
                 DiscardOnBufferOverflow = true,
-                BufferDuration = TimeSpan.FromMilliseconds(1000) // 1 second buffer
+                BufferDuration = TimeSpan.FromMilliseconds(2000) // 2 second buffer capacity
             };
 
-            // Initialize output device with balanced latency settings
+            // Pre-fill buffer with silence to prevent initial underruns
+            // This adds ~200ms of latency but prevents crackling at start
+            var silenceBuffer = new byte[SampleRate * 2 / 5]; // 200ms of silence (48000 * 2 bytes * 0.2)
+            _bufferedWaveProvider.AddSamples(silenceBuffer, 0, silenceBuffer.Length);
+
+            // Initialize output device with higher latency for stability
             _waveOut = new WaveOutEvent
             {
                 DeviceNumber = _outputDeviceNumber,
-                DesiredLatency = 100,    // 100ms latency - smoother playback
-                NumberOfBuffers = 4      // More buffers for stability
+                DesiredLatency = 200,    // 200ms latency for smooth playback
+                NumberOfBuffers = 6      // More buffers for stability
             };
             _waveOut.Init(_bufferedWaveProvider);
             _waveOut.Play();
@@ -686,11 +691,17 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         var outputBuffer = new byte[OpusFrameSize * 2]; // 16-bit samples = 2 bytes each
         var silenceBuffer = new byte[OpusFrameSize * 2]; // Pre-allocated silence
 
+        // Larger silence buffer for filling gaps
+        var largeSilenceBuffer = new byte[OpusFrameSize * 2 * 5]; // 100ms of silence
+
         // Fade state for smooth transitions
         bool wasActive = false;
-        const int fadeFrames = 240; // ~5ms fade at 48kHz - longer fade for smoother transitions
+        const int fadeFrames = 480; // ~10ms fade at 48kHz - longer fade for smoother transitions
         short[] lastOutputSamples = new short[OpusFrameSize]; // Track last samples for fade-out
-        int silenceFrameCount = 0; // Track consecutive silence frames
+
+        // Buffer health tracking
+        const int minBufferBytes = SampleRate * 2 / 5; // Minimum 200ms of buffer (48000 * 2 bytes * 0.2)
+        const int targetBufferBytes = SampleRate * 2 / 2; // Target 500ms of buffer
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -725,10 +736,10 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
                     if (_bufferedWaveProvider != null)
                     {
+                        var currentBufferedBytes = _bufferedWaveProvider.BufferedBytes;
+
                         if (isActive)
                         {
-                            silenceFrameCount = 0;
-
                             // Apply fade-in if transitioning from silence to audio
                             if (!wasActive)
                             {
@@ -783,26 +794,33 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                             // Clear last samples after fade
                             Array.Clear(lastOutputSamples, 0, lastOutputSamples.Length);
                         }
-                        else
+
+                        // Always maintain minimum buffer level to prevent underruns
+                        // This is critical for preventing crackling
+                        if (currentBufferedBytes < minBufferBytes)
                         {
-                            silenceFrameCount++;
-                            // When idle, add silence to keep buffer healthy (not underrunning)
-                            // But limit how much silence we add to avoid buffer bloat
-                            if (_bufferedWaveProvider.BufferedBytes < OpusFrameSize * 8 && silenceFrameCount < 50)
+                            try
                             {
-                                try
-                                {
-                                    _bufferedWaveProvider.AddSamples(silenceBuffer, 0, silenceBuffer.Length);
-                                }
-                                catch { }
+                                // Add a larger chunk of silence when buffer is critically low
+                                _bufferedWaveProvider.AddSamples(largeSilenceBuffer, 0, largeSilenceBuffer.Length);
                             }
+                            catch { }
+                        }
+                        else if (currentBufferedBytes < targetBufferBytes / 2)
+                        {
+                            // Add regular silence to maintain healthy buffer
+                            try
+                            {
+                                _bufferedWaveProvider.AddSamples(silenceBuffer, 0, silenceBuffer.Length);
+                            }
+                            catch { }
                         }
                     }
 
                     wasActive = isActive;
                 }
 
-                // Sleep for remaining time (use SpinWait for precision)
+                // Sleep for remaining time
                 var remaining = mixIntervalMs - (stopwatch.ElapsedMilliseconds - lastMixTime);
                 if (remaining > 2)
                 {
