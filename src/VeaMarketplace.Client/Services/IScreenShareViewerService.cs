@@ -92,9 +92,9 @@ public class ScreenShareViewerService : IScreenShareViewerService
     private DispatcherTimer? _playbackTimer;
     private readonly object _timerLock = new();
 
-    // Buffer settings - tuned for 60fps (16.67ms per frame)
-    private const int TargetBufferSize = 4; // Buffer 4 frames (~66ms at 60fps) for jitter tolerance
-    private const int MaxBufferSize = 10;   // Don't buffer more than this to prevent memory growth
+    // Buffer settings - tuned for smooth playback with memory trade-off
+    private const int TargetBufferSize = 3; // Buffer 3 frames before starting playback
+    private const int MaxBufferSize = 15;   // ~50MB at 720p (3.5MB per decoded frame)
     private const int PlaybackIntervalMs = 16; // ~60fps playback rate
 
     public ObservableCollection<ScreenShareDto> ActiveScreenShares { get; } = new();
@@ -132,30 +132,49 @@ public class ScreenShareViewerService : IScreenShareViewerService
             var buffer = _frameBuffers.GetOrAdd(sharerConnectionId, _ => new ConcurrentQueue<BufferedFrame>());
 
             // Drop oldest frames if buffer is full to prevent memory growth
+            // Each decoded 720p frame is ~3.5MB, so 15 frames = ~50MB per stream
             while (buffer.Count >= MaxBufferSize)
             {
                 buffer.TryDequeue(out _);
             }
 
-            // Store raw frame data - decode lazily during playback to spread CPU load
-            // This reduces peak CPU by not decoding all frames immediately
-            buffer.Enqueue(new BufferedFrame
+            // Pre-decode frame NOW to trade memory for CPU
+            // Decoding happens on UI thread via InvokeAsync (non-blocking)
+            // Decoded bitmap is cached in memory for instant playback (no CPU during display)
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
-                RawData = frameData,
-                Width = width,
-                Height = height,
-                ReceivedAt = Stopwatch.GetTimestamp()
-            });
+                try
+                {
+                    var bitmap = new BitmapImage();
+                    bitmap.BeginInit();
+                    bitmap.StreamSource = new System.IO.MemoryStream(frameData);
+                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmap.EndInit();
+                    bitmap.Freeze(); // Thread-safe, keeps decoded pixels in memory
 
-            // Update screen share info
-            if (_screenShares.TryGetValue(sharerConnectionId, out var share))
-            {
-                share.Width = width;
-                share.Height = height;
-            }
+                    buffer.Enqueue(new BufferedFrame
+                    {
+                        DecodedBitmap = bitmap, // ~3.5MB per 720p frame in memory
+                        Width = width,
+                        Height = height,
+                        ReceivedAt = Stopwatch.GetTimestamp()
+                    });
 
-            // Ensure playback timer is running
-            EnsurePlaybackTimerRunning();
+                    // Update screen share info
+                    if (_screenShares.TryGetValue(sharerConnectionId, out var share))
+                    {
+                        share.Width = width;
+                        share.Height = height;
+                    }
+
+                    // Ensure playback timer is running
+                    EnsurePlaybackTimerRunning();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error decoding frame: {ex.Message}");
+                }
+            }, DispatcherPriority.Background); // Background priority to not block UI
         }
         catch (Exception ex)
         {
@@ -198,39 +217,23 @@ public class ScreenShareViewerService : IScreenShareViewerService
             // This prevents playing back immediately and allows jitter absorption
             if (buffer.Count < TargetBufferSize && buffer.Count > 0)
             {
-                // If we have some frames but not enough, only play if buffer has been waiting
-                // This prevents indefinite waiting if sender FPS is lower than expected
                 continue;
             }
 
             if (buffer.TryDequeue(out var frame))
             {
-                try
+                // Frame is already decoded - just display it (zero CPU, uses ~3.5MB memory per frame)
+                if (frame.DecodedBitmap != null)
                 {
-                    // Decode frame lazily during playback - spreads CPU load over time
-                    if (frame.RawData != null && frame.RawData.Length > 0)
+                    _latestFrames[sharerConnectionId] = frame.DecodedBitmap;
+
+                    // Track FPS
+                    if (_screenShares.TryGetValue(sharerConnectionId, out var share))
                     {
-                        var bitmap = new BitmapImage();
-                        bitmap.BeginInit();
-                        bitmap.StreamSource = new System.IO.MemoryStream(frame.RawData);
-                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                        bitmap.EndInit();
-                        bitmap.Freeze();
-
-                        _latestFrames[sharerConnectionId] = bitmap;
-
-                        // Track FPS
-                        if (_screenShares.TryGetValue(sharerConnectionId, out var share))
-                        {
-                            share.Fps++;
-                        }
-
-                        OnFrameReceived?.Invoke(sharerConnectionId, bitmap);
+                        share.Fps++;
                     }
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error decoding frame: {ex.Message}");
+
+                    OnFrameReceived?.Invoke(sharerConnectionId, frame.DecodedBitmap);
                 }
             }
         }
@@ -333,7 +336,7 @@ public class ScreenShareViewerService : IScreenShareViewerService
 
     private class BufferedFrame
     {
-        public byte[]? RawData { get; set; } // Raw JPEG data - decode during playback
+        public BitmapImage? DecodedBitmap { get; set; } // Pre-decoded bitmap (~3.5MB per 720p frame)
         public int Width { get; set; }
         public int Height { get; set; }
         public long ReceivedAt { get; set; }
