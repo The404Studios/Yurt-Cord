@@ -1,13 +1,14 @@
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using VeaMarketplace.Client.Services;
 using VeaMarketplace.Shared.DTOs;
 using VeaMarketplace.Shared.Enums;
 using VeaMarketplace.Shared.Models;
+using WpfImage = System.Windows.Controls.Image;
+using WpfCursors = System.Windows.Input.Cursors;
 
 namespace VeaMarketplace.Client.Controls;
 
@@ -199,11 +200,11 @@ public partial class ChatMessageControl : UserControl
             Margin = new Thickness(0, 0, 8, 8),
             MaxWidth = 400,
             MaxHeight = 300,
-            Cursor = Cursors.Hand,
+            Cursor = WpfCursors.Hand,
             Tag = attachment.FileUrl
         };
 
-        var image = new Image
+        var image = new WpfImage
         {
             Stretch = Stretch.Uniform,
             StretchDirection = StretchDirection.DownOnly
@@ -249,7 +250,7 @@ public partial class ChatMessageControl : UserControl
             CornerRadius = new CornerRadius(6),
             Padding = new Thickness(12, 8, 12, 8),
             Margin = new Thickness(0, 0, 8, 8),
-            Cursor = Cursors.Hand,
+            Cursor = WpfCursors.Hand,
             Tag = attachment.FileUrl
         };
 

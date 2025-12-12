@@ -602,7 +602,7 @@ public partial class MarketplaceViewModel : BaseViewModel
         var uploadedUrls = new List<string>();
         var fileUploadService = (IFileUploadService?)App.ServiceProvider.GetService(typeof(IFileUploadService));
 
-        if (fileUploadService == null || string.IsNullOrEmpty(_apiService.Token))
+        if (fileUploadService == null || string.IsNullOrEmpty(_apiService.AuthToken))
         {
             SetError("File upload service not available");
             return uploadedUrls;
@@ -614,7 +614,7 @@ public partial class MarketplaceViewModel : BaseViewModel
         {
             try
             {
-                var result = await fileUploadService.UploadAttachmentAsync(filePath, _apiService.Token);
+                var result = await fileUploadService.UploadAttachmentAsync(filePath, _apiService.AuthToken);
                 if (result.Success && !string.IsNullOrEmpty(result.FileUrl))
                 {
                     uploadedUrls.Add(result.FileUrl);
