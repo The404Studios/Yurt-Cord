@@ -62,6 +62,7 @@ public interface IVoiceService
     DisplayInfo? SelectedDisplay { get; set; }
     IScreenSharingManager ScreenSharingManager { get; }
     event Action<string, byte[], int, int>? OnScreenFrameReceived;
+    event Action<byte[], int, int>? OnLocalScreenFrameReady;
     event Action<ScreenShareStats>? OnScreenShareStatsUpdated;
     Task StartScreenShareAsync();
     Task StartScreenShareAsync(DisplayInfo display);
@@ -193,6 +194,10 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         {
             OnScreenFrameReceived?.Invoke(frame.SenderConnectionId, frame.Data, frame.Width, frame.Height);
         };
+        _screenSharingManager.OnLocalFrameReady += (data, width, height) =>
+        {
+            OnLocalScreenFrameReady?.Invoke(data, width, height);
+        };
         _screenSharingManager.OnStatsUpdated += stats =>
         {
             OnScreenShareStatsUpdated?.Invoke(stats);
@@ -238,6 +243,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     public event Action<string>? OnUserDisconnectedByAdmin;
     public event Action<string, string>? OnUserMovedToChannel;
     public event Action<string, byte[], int, int>? OnScreenFrameReceived;
+    public event Action<byte[], int, int>? OnLocalScreenFrameReady;
     public event Action<string, bool>? OnUserScreenShareChanged;
     public event Action<ScreenShareStats>? OnScreenShareStatsUpdated;
 
