@@ -61,9 +61,15 @@ public class ScreenSharingManager : IScreenSharingManager
     private Graphics? _captureGraphics;
     private Graphics? _resizeGraphics;
 
-    // JPEG encoder
+    // JPEG encoder (fallback)
     private ImageCodecInfo? _jpegEncoder;
     private EncoderParameters? _encoderParams;
+
+    // Hardware encoder (H.264 with NVENC/AMF/QSV)
+    private HardwareVideoEncoder? _hardwareEncoder;
+    private bool _useHardwareEncoding;
+    public bool IsHardwareEncodingEnabled => _useHardwareEncoding && _hardwareEncoder != null;
+    public string EncoderName => _hardwareEncoder?.EncoderName ?? "jpeg";
 
     public bool IsSharing => _isSharing;
     public bool IsConnected => _isConnected;
@@ -358,10 +364,36 @@ public class ScreenSharingManager : IScreenSharingManager
         _resizeGraphics.CompositingQuality = CompositingQuality.HighSpeed;
         _resizeGraphics.SmoothingMode = SmoothingMode.HighSpeed;
 
-        // Initialize encoder params
+        // Initialize encoder params (for JPEG fallback)
         if (_encoderParams != null)
         {
             _encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, (long)_settings.JpegQuality);
+        }
+
+        // Try to initialize hardware encoder (H.264 with GPU acceleration)
+        try
+        {
+            _hardwareEncoder?.Dispose();
+            _hardwareEncoder = new HardwareVideoEncoder();
+
+            if (_hardwareEncoder.Initialize(_settings.TargetWidth, _settings.TargetHeight, _settings.TargetFps, _settings.BitrateKbps))
+            {
+                _useHardwareEncoding = true;
+                Debug.WriteLine($"Hardware encoding enabled: {_hardwareEncoder.EncoderName} (GPU: {_hardwareEncoder.IsHardwareAccelerated})");
+            }
+            else
+            {
+                _useHardwareEncoding = false;
+                _hardwareEncoder.Dispose();
+                _hardwareEncoder = null;
+                Debug.WriteLine("Hardware encoding unavailable, using JPEG fallback");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to initialize hardware encoder: {ex.Message}");
+            _useHardwareEncoding = false;
+            _hardwareEncoder = null;
         }
     }
 
@@ -375,6 +407,11 @@ public class ScreenSharingManager : IScreenSharingManager
         _resizeGraphics = null;
         _resizeBitmap?.Dispose();
         _resizeBitmap = null;
+
+        // Cleanup hardware encoder
+        _hardwareEncoder?.Dispose();
+        _hardwareEncoder = null;
+        _useHardwareEncoding = false;
     }
 
     /// <summary>
@@ -452,7 +489,7 @@ public class ScreenSharingManager : IScreenSharingManager
     }
 
     /// <summary>
-    /// Captures screen and encodes to JPEG
+    /// Captures screen and encodes using hardware H.264 or JPEG fallback
     /// </summary>
     private byte[]? CaptureAndEncode()
     {
@@ -486,7 +523,18 @@ public class ScreenSharingManager : IScreenSharingManager
                 bitmapToEncode = _captureBitmap;
             }
 
-            // Encode to JPEG
+            // Try hardware encoding first (H.264 with NVENC/AMF/QSV)
+            if (_useHardwareEncoding && _hardwareEncoder != null)
+            {
+                var h264Data = _hardwareEncoder.EncodeFrame(bitmapToEncode, _frameNumber);
+                if (h264Data != null && h264Data.Length > 0)
+                {
+                    return h264Data;
+                }
+                // Fall through to JPEG if hardware encoding fails
+            }
+
+            // Fallback: Encode to JPEG
             using var ms = new MemoryStream();
             if (_jpegEncoder != null && _encoderParams != null)
             {

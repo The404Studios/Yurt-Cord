@@ -92,6 +92,9 @@ public class ScreenShareViewerService : IScreenShareViewerService
     private DispatcherTimer? _playbackTimer;
     private readonly object _timerLock = new();
 
+    // Hardware decoders for H.264 streams (one per sharer)
+    private readonly ConcurrentDictionary<string, HardwareVideoDecoder> _h264Decoders = new();
+
     // Buffer settings - tuned for smooth playback with memory trade-off
     private const int TargetBufferSize = 3; // Buffer 3 frames before starting playback
     private const int MaxBufferSize = 15;   // ~50MB at 720p (3.5MB per decoded frame)
@@ -138,48 +141,112 @@ public class ScreenShareViewerService : IScreenShareViewerService
                 buffer.TryDequeue(out _);
             }
 
-            // Pre-decode frame NOW to trade memory for CPU
-            // Decoding happens on UI thread via InvokeAsync (non-blocking)
-            // Decoded bitmap is cached in memory for instant playback (no CPU during display)
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            // Detect frame type: JPEG starts with 0xFF 0xD8, H.264 NAL units start with 0x00 0x00
+            var isJpeg = frameData.Length >= 2 && frameData[0] == 0xFF && frameData[1] == 0xD8;
+            var isH264 = frameData.Length >= 4 &&
+                        ((frameData[0] == 0x00 && frameData[1] == 0x00 && frameData[2] == 0x00 && frameData[3] == 0x01) ||
+                         (frameData[0] == 0x00 && frameData[1] == 0x00 && frameData[2] == 0x01));
+
+            if (isH264)
             {
-                try
-                {
-                    var bitmap = new BitmapImage();
-                    bitmap.BeginInit();
-                    bitmap.StreamSource = new System.IO.MemoryStream(frameData);
-                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmap.EndInit();
-                    bitmap.Freeze(); // Thread-safe, keeps decoded pixels in memory
-
-                    buffer.Enqueue(new BufferedFrame
-                    {
-                        DecodedBitmap = bitmap, // ~3.5MB per 720p frame in memory
-                        Width = width,
-                        Height = height,
-                        ReceivedAt = Stopwatch.GetTimestamp()
-                    });
-
-                    // Update screen share info
-                    if (_screenShares.TryGetValue(sharerConnectionId, out var share))
-                    {
-                        share.Width = width;
-                        share.Height = height;
-                    }
-
-                    // Ensure playback timer is running
-                    EnsurePlaybackTimerRunning();
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error decoding frame: {ex.Message}");
-                }
-            }, DispatcherPriority.Background); // Background priority to not block UI
+                // Decode H.264 using hardware decoder (GPU accelerated)
+                DecodeH264Frame(sharerConnectionId, frameData, width, height, buffer);
+            }
+            else
+            {
+                // Decode JPEG on UI thread
+                DecodeJpegFrame(sharerConnectionId, frameData, width, height, buffer);
+            }
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Error handling frame: {ex.Message}");
         }
+    }
+
+    private void DecodeJpegFrame(string sharerConnectionId, byte[] frameData, int width, int height, ConcurrentQueue<BufferedFrame> buffer)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            try
+            {
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.StreamSource = new System.IO.MemoryStream(frameData);
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.EndInit();
+                bitmap.Freeze();
+
+                EnqueueDecodedFrame(sharerConnectionId, bitmap, width, height, buffer);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error decoding JPEG frame: {ex.Message}");
+            }
+        }, DispatcherPriority.Background);
+    }
+
+    private void DecodeH264Frame(string sharerConnectionId, byte[] frameData, int width, int height, ConcurrentQueue<BufferedFrame> buffer)
+    {
+        // H.264 decoding can happen on background thread (hardware accelerated)
+        System.Threading.Tasks.Task.Run(() =>
+        {
+            try
+            {
+                // Get or create decoder for this sharer
+                var decoder = _h264Decoders.GetOrAdd(sharerConnectionId, _ =>
+                {
+                    var d = new HardwareVideoDecoder();
+                    d.Initialize();
+                    Debug.WriteLine($"Created H.264 decoder for {sharerConnectionId}: {d.DecoderName}");
+                    return d;
+                });
+
+                // Decode frame
+                var decodedBitmap = decoder.DecodeFrame(frameData);
+                if (decodedBitmap != null)
+                {
+                    // Must dispatch to UI thread to create WPF bitmap
+                    System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+                    {
+                        EnqueueDecodedFrame(sharerConnectionId, decodedBitmap, width, height, buffer);
+                    }, DispatcherPriority.Background);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error decoding H.264 frame: {ex.Message}");
+            }
+        });
+    }
+
+    private void EnqueueDecodedFrame(string sharerConnectionId, ImageSource bitmap, int width, int height, ConcurrentQueue<BufferedFrame> buffer)
+    {
+        if (bitmap is not BitmapSource bitmapSource) return;
+
+        // Freeze if not already frozen
+        if (!bitmapSource.IsFrozen)
+        {
+            bitmapSource.Freeze();
+        }
+
+        buffer.Enqueue(new BufferedFrame
+        {
+            DecodedBitmap = bitmapSource,
+            Width = width,
+            Height = height,
+            ReceivedAt = Stopwatch.GetTimestamp()
+        });
+
+        // Update screen share info
+        if (_screenShares.TryGetValue(sharerConnectionId, out var share))
+        {
+            share.Width = width;
+            share.Height = height;
+        }
+
+        // Ensure playback timer is running
+        EnsurePlaybackTimerRunning();
     }
 
     private void EnsurePlaybackTimerRunning()
@@ -295,6 +362,12 @@ public class ScreenShareViewerService : IScreenShareViewerService
         _latestFrames.TryRemove(connectionId, out _);
         _frameBuffers.TryRemove(connectionId, out _); // Clear frame buffer
 
+        // Dispose H.264 decoder for this sharer
+        if (_h264Decoders.TryRemove(connectionId, out var decoder))
+        {
+            decoder.Dispose();
+        }
+
         if (_viewingConnectionId == connectionId)
         {
             _viewingConnectionId = null;
@@ -328,6 +401,13 @@ public class ScreenShareViewerService : IScreenShareViewerService
         StopPlaybackTimer();
         _frameBuffers.Clear();
 
+        // Dispose all H.264 decoders
+        foreach (var decoder in _h264Decoders.Values)
+        {
+            decoder.Dispose();
+        }
+        _h264Decoders.Clear();
+
         System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
         {
             ActiveScreenShares.Clear();
@@ -336,7 +416,7 @@ public class ScreenShareViewerService : IScreenShareViewerService
 
     private class BufferedFrame
     {
-        public BitmapImage? DecodedBitmap { get; set; } // Pre-decoded bitmap (~3.5MB per 720p frame)
+        public BitmapSource? DecodedBitmap { get; set; } // Pre-decoded bitmap (~3.5MB per 720p frame)
         public int Width { get; set; }
         public int Height { get; set; }
         public long ReceivedAt { get; set; }
