@@ -259,7 +259,7 @@ public unsafe class HardwareVideoEncoder : IDisposable
 
                 // Lock bitmap and get pointer to pixel data
                 var bitmapData = bitmap.LockBits(
-                    new Rectangle(0, 0, bitmap.Width, bitmap.Height),
+                    new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height),
                     ImageLockMode.ReadOnly,
                     PixelFormat.Format24bppRgb);
 
