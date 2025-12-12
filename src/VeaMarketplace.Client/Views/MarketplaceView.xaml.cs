@@ -253,4 +253,186 @@ public partial class MarketplaceView : UserControl
             _ => Color.FromRgb(185, 187, 190)
         };
     }
+
+    // Product action buttons
+    private void AddToCart_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel == null || _selectedProduct == null) return;
+        _viewModel.AddToCartCommand.Execute(_selectedProduct);
+        ShowToast("Added to cart!");
+    }
+
+    private void ShareProduct_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedProduct == null) return;
+        ShowShareDialog(_selectedProduct);
+    }
+
+    private void AddToWishlist_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel == null || _selectedProduct == null) return;
+        _viewModel.AddToWishlistCommand.Execute(_selectedProduct);
+    }
+
+    private void ViewSeller_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel == null || _selectedProduct == null) return;
+        _viewModel.ViewSellerProfileCommand.Execute(_selectedProduct);
+    }
+
+    private void ReportProduct_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel == null || _selectedProduct == null) return;
+        _viewModel.ReportProductCommand.Execute(_selectedProduct);
+    }
+
+    // Share dialog
+    private void ShowShareDialog(ProductDto product)
+    {
+        ShareProductTitle.Text = product.Title;
+        ShareProductPrice.Text = $"${product.Price:F2}";
+        ShareLinkBox.Text = $"vea://marketplace/product/{product.Id}";
+        ShareDialog.Visibility = Visibility.Visible;
+    }
+
+    private void CloseShareDialog_Click(object sender, RoutedEventArgs e)
+    {
+        ShareDialog.Visibility = Visibility.Collapsed;
+    }
+
+    private void ShareDialogOverlay_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.OriginalSource == ShareDialog)
+            ShareDialog.Visibility = Visibility.Collapsed;
+    }
+
+    private void CopyShareLink_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            Clipboard.SetText(ShareLinkBox.Text);
+            ShowToast("Link copied to clipboard!");
+            ShareDialog.Visibility = Visibility.Collapsed;
+        }
+        catch
+        {
+            ShowToast("Failed to copy link");
+        }
+    }
+
+    private void ShareToFriend_Click(object sender, RoutedEventArgs e)
+    {
+        ShowToast("Share to friend feature coming soon!");
+        ShareDialog.Visibility = Visibility.Collapsed;
+    }
+
+    // My Listings
+    private async void MyListingsButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel == null) return;
+
+        await _viewModel.LoadMyProductsCommand.ExecuteAsync(null);
+        MyListingsItemsControl.ItemsSource = _viewModel.MyProducts;
+        MyListingsCountText.Text = $"{_viewModel.MyProducts.Count} active listing{(_viewModel.MyProducts.Count == 1 ? "" : "s")}";
+        NoListingsPanel.Visibility = _viewModel.MyProducts.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        MyListingsPanel.Visibility = Visibility.Visible;
+    }
+
+    private void CloseMyListings_Click(object sender, RoutedEventArgs e)
+    {
+        MyListingsPanel.Visibility = Visibility.Collapsed;
+    }
+
+    private void MyListingsOverlay_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.OriginalSource == MyListingsPanel)
+            MyListingsPanel.Visibility = Visibility.Collapsed;
+    }
+
+    private void EditListing_Click(object sender, RoutedEventArgs e)
+    {
+        var button = (Button)sender;
+        if (button.Tag is ProductDto product && _viewModel != null)
+        {
+            _viewModel.EditProductCommand.Execute(product);
+            MyListingsPanel.Visibility = Visibility.Collapsed;
+
+            // Pre-fill the create form for editing
+            NewTitleBox.Text = product.Title;
+            NewDescriptionBox.Text = product.Description;
+            NewPriceBox.Text = product.Price.ToString("F2");
+            NewTagsBox.Text = string.Join(", ", product.Tags ?? []);
+            NewImageBox.Text = product.ImageUrls?.FirstOrDefault() ?? "";
+
+            // Set category
+            for (int i = 0; i < NewCategoryBox.Items.Count; i++)
+            {
+                if (NewCategoryBox.Items[i] is ComboBoxItem item &&
+                    item.Tag?.ToString() == product.Category.ToString())
+                {
+                    NewCategoryBox.SelectedIndex = i;
+                    break;
+                }
+            }
+
+            CreateListingModal.Visibility = Visibility.Visible;
+        }
+    }
+
+    private void ShareListing_Click(object sender, RoutedEventArgs e)
+    {
+        var button = (Button)sender;
+        if (button.Tag is ProductDto product)
+        {
+            ShowShareDialog(product);
+        }
+    }
+
+    private async void DeleteListing_Click(object sender, RoutedEventArgs e)
+    {
+        var button = (Button)sender;
+        if (button.Tag is ProductDto product && _viewModel != null)
+        {
+            var result = MessageBox.Show(
+                $"Are you sure you want to delete '{product.Title}'?",
+                "Delete Listing",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                _viewModel.ShowDeleteConfirmCommand.Execute(product);
+                await _viewModel.ConfirmDeleteCommand.ExecuteAsync(null);
+
+                // Refresh listings
+                await _viewModel.LoadMyProductsCommand.ExecuteAsync(null);
+                MyListingsItemsControl.ItemsSource = _viewModel.MyProducts;
+                MyListingsCountText.Text = $"{_viewModel.MyProducts.Count} active listing{(_viewModel.MyProducts.Count == 1 ? "" : "s")}";
+                NoListingsPanel.Visibility = _viewModel.MyProducts.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+                ShowToast("Listing deleted successfully");
+            }
+        }
+    }
+
+    // Toast notification
+    private System.Windows.Threading.DispatcherTimer? _toastTimer;
+
+    private void ShowToast(string message)
+    {
+        ToastText.Text = message;
+        ToastNotification.Visibility = Visibility.Visible;
+
+        _toastTimer?.Stop();
+        _toastTimer = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(3)
+        };
+        _toastTimer.Tick += (s, e) =>
+        {
+            _toastTimer.Stop();
+            ToastNotification.Visibility = Visibility.Collapsed;
+        };
+        _toastTimer.Start();
+    }
 }

@@ -34,9 +34,12 @@
                     </StackPanel>
                 </StackPanel>
 
-                <Button Content="+ Create Listing" Style="{StaticResource PrimaryButton}"
-                        HorizontalAlignment="Right" VerticalAlignment="Center"
-                        Click="CreateListingButton_Click"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button x:Name="MyListingsBtn" Content="📦 My Listings" Style="{StaticResource SecondaryButton}"
+                            Margin="0,0,12,0" Click="MyListingsButton_Click"/>
+                    <Button Content="+ Create Listing" Style="{StaticResource PrimaryButton}"
+                            Click="CreateListingButton_Click"/>
+                </StackPanel>
             </Grid>
         </Border>
 
@@ -269,11 +272,56 @@
                                                FontSize="12"/>
                                 </StackPanel>
 
-                                <Button Grid.Column="1" Content="🛒 Buy Now"
-                                        Style="{StaticResource PrimaryButton}"
-                                        Click="BuyNow_Click"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Button Content="🛒 Buy Now"
+                                            Style="{StaticResource PrimaryButton}"
+                                            Click="BuyNow_Click" Margin="0,0,8,0"/>
+                                    <Button Content="🛒" Style="{StaticResource SecondaryButton}"
+                                            ToolTip="Add to Cart" Click="AddToCart_Click"
+                                            Width="40" Padding="0"/>
+                                </StackPanel>
                             </Grid>
                         </Border>
+
+                        <!-- Action Buttons -->
+                        <Grid Margin="0,16,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Button Grid.Column="0" Style="{StaticResource SecondaryButton}"
+                                    Click="ShareProduct_Click" Margin="0,0,4,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="🔗" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Share"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Grid.Column="1" Style="{StaticResource SecondaryButton}"
+                                    Click="AddToWishlist_Click" Margin="4,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock x:Name="WishlistIcon" Text="🤍" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Wishlist"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Grid.Column="2" Style="{StaticResource SecondaryButton}"
+                                    Click="ViewSeller_Click" Margin="4,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="👤" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Seller"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Grid.Column="3" Style="{StaticResource SecondaryButton}"
+                                    Click="ReportProduct_Click" Margin="4,0,0,0"
+                                    Foreground="{StaticResource AccentRedBrush}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="⚠" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Report"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
                     </StackPanel>
                 </ScrollViewer>
             </Border>
@@ -303,6 +351,227 @@
                 </Border>
                 <TextBlock Text="Loading..." Foreground="White" Margin="0,16,0,0"/>
             </StackPanel>
+        </Border>
+
+        <!-- Share Dialog -->
+        <Border x:Name="ShareDialog" Grid.RowSpan="4" Visibility="Collapsed"
+                Background="#80000000" MouseDown="ShareDialogOverlay_MouseDown">
+            <Border Background="{StaticResource SecondaryDarkBrush}"
+                    CornerRadius="8" Width="400" Padding="24"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel>
+                    <Grid Margin="0,0,0,16">
+                        <TextBlock Text="Share Product" FontSize="18" FontWeight="Bold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <Button Content="✕" Style="{StaticResource IconButton}"
+                                HorizontalAlignment="Right" Click="CloseShareDialog_Click"/>
+                    </Grid>
+
+                    <!-- Product Preview -->
+                    <Border Background="{StaticResource QuaternaryDarkBrush}"
+                            CornerRadius="4" Padding="12" Margin="0,0,0,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Width="50" Height="50" CornerRadius="4"
+                                    Background="{StaticResource PrimaryDarkBrush}" Margin="0,0,12,0">
+                                <TextBlock Text="📦" FontSize="24" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock x:Name="ShareProductTitle" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                           TextTrimming="CharacterEllipsis"/>
+                                <TextBlock x:Name="ShareProductPrice"
+                                           Foreground="{StaticResource AccentGreenBrush}"
+                                           FontSize="12"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Share Link -->
+                    <TextBlock Text="SHARE LINK" FontSize="11" FontWeight="Bold"
+                               Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,8"/>
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="ShareLinkBox" Grid.Column="0"
+                                 Style="{StaticResource ModernTextBox}"
+                                 IsReadOnly="True" Margin="0,0,8,0"/>
+                        <Button Grid.Column="1" Content="📋 Copy"
+                                Style="{StaticResource PrimaryButton}"
+                                Click="CopyShareLink_Click"/>
+                    </Grid>
+
+                    <!-- Share Options -->
+                    <TextBlock Text="OR SHARE TO" FontSize="11" FontWeight="Bold"
+                               Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,12"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Style="{StaticResource SecondaryButton}"
+                                Click="ShareToFriend_Click" Margin="0,0,4,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="💬" Margin="0,0,8,0"/>
+                                <TextBlock Text="Send to Friend"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="1" Style="{StaticResource SecondaryButton}"
+                                Click="CopyShareLink_Click" Margin="4,0,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🔗" Margin="0,0,8,0"/>
+                                <TextBlock Text="Copy Link"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- My Listings Panel -->
+        <Border x:Name="MyListingsPanel" Grid.RowSpan="4" Visibility="Collapsed"
+                Background="#80000000" MouseDown="MyListingsOverlay_MouseDown">
+            <Border Background="{StaticResource SecondaryDarkBrush}"
+                    CornerRadius="8" Width="700" MaxHeight="600" Padding="24"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📦" FontSize="24" Margin="0,0,12,0"/>
+                            <StackPanel>
+                                <TextBlock Text="My Listings" FontSize="18" FontWeight="Bold"
+                                           Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <TextBlock x:Name="MyListingsCountText" Text="0 active listings"
+                                           FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <Button Content="✕" Style="{StaticResource IconButton}"
+                                HorizontalAlignment="Right" VerticalAlignment="Top"
+                                Click="CloseMyListings_Click"/>
+                    </Grid>
+
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl x:Name="MyListingsItemsControl">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource QuaternaryDarkBrush}"
+                                            CornerRadius="4" Padding="12" Margin="0,0,0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Product Image -->
+                                            <Border Grid.Column="0" Width="60" Height="60"
+                                                    CornerRadius="4" Margin="0,0,12,0"
+                                                    Background="{StaticResource PrimaryDarkBrush}">
+                                                <TextBlock Text="📦" FontSize="24"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"/>
+                                            </Border>
+
+                                            <!-- Product Info -->
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold"
+                                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                    <TextBlock Text="{Binding Price, StringFormat='${0:F2}'}"
+                                                               Foreground="{StaticResource AccentGreenBrush}"
+                                                               FontWeight="Bold" Margin="0,0,12,0"/>
+                                                    <TextBlock Text="{Binding Category}"
+                                                               Foreground="{StaticResource TextMutedBrush}"
+                                                               FontSize="12"/>
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                    <TextBlock Text="👁" FontSize="11" Margin="0,0,4,0"/>
+                                                    <TextBlock Text="{Binding ViewCount}" FontSize="11"
+                                                               Foreground="{StaticResource TextMutedBrush}"
+                                                               Margin="0,0,12,0"/>
+                                                    <TextBlock Text="⭐" FontSize="11" Margin="0,0,4,0"/>
+                                                    <TextBlock Text="{Binding AverageRating, StringFormat='{}{0:F1}'}"
+                                                               FontSize="11"
+                                                               Foreground="{StaticResource TextMutedBrush}"/>
+                                                </StackPanel>
+                                            </StackPanel>
+
+                                            <!-- Stats -->
+                                            <StackPanel Grid.Column="2" VerticalAlignment="Center"
+                                                        Margin="0,0,16,0">
+                                                <TextBlock Text="{Binding SalesCount, StringFormat='{}{0} sales'}"
+                                                           FontSize="12"
+                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           HorizontalAlignment="Right"/>
+                                            </StackPanel>
+
+                                            <!-- Actions -->
+                                            <StackPanel Grid.Column="3" Orientation="Horizontal"
+                                                        VerticalAlignment="Center">
+                                                <Button Content="✏️" Style="{StaticResource IconButton}"
+                                                        Width="32" Height="32" Margin="0,0,4,0"
+                                                        ToolTip="Edit" Tag="{Binding}"
+                                                        Click="EditListing_Click"/>
+                                                <Button Content="🔗" Style="{StaticResource IconButton}"
+                                                        Width="32" Height="32" Margin="0,0,4,0"
+                                                        ToolTip="Share" Tag="{Binding}"
+                                                        Click="ShareListing_Click"/>
+                                                <Button Content="🗑️" Style="{StaticResource IconButton}"
+                                                        Width="32" Height="32" ToolTip="Delete"
+                                                        Tag="{Binding}" Click="DeleteListing_Click"
+                                                        Foreground="{StaticResource AccentRedBrush}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <!-- Empty State -->
+                    <StackPanel x:Name="NoListingsPanel" Grid.Row="1"
+                                HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Visibility="Collapsed">
+                        <TextBlock Text="📭" FontSize="48" HorizontalAlignment="Center"
+                                   Margin="0,0,0,12"/>
+                        <TextBlock Text="You don't have any listings yet"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   HorizontalAlignment="Center"/>
+                        <Button Content="+ Create Your First Listing"
+                                Style="{StaticResource PrimaryButton}"
+                                Margin="0,16,0,0" Click="CreateListingButton_Click"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Border>
+
+        <!-- Toast Notification -->
+        <Border x:Name="ToastNotification" Grid.RowSpan="4"
+                VerticalAlignment="Bottom" HorizontalAlignment="Center"
+                Margin="0,0,0,80" Visibility="Collapsed">
+            <Border Background="{StaticResource QuaternaryDarkBrush}"
+                    CornerRadius="8" Padding="16,12">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="✓" FontSize="16" Foreground="{StaticResource AccentGreenBrush}"
+                               Margin="0,0,10,0" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="ToastText" FontSize="14"
+                               Foreground="{StaticResource TextPrimaryBrush}"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+            </Border>
         </Border>
     </Grid>
 </UserControl>

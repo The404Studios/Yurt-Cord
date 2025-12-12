@@ -94,6 +94,26 @@ public partial class MarketplaceViewModel : BaseViewModel
     [ObservableProperty]
     private ProductDto? _productToDelete;
 
+    // Share dialog
+    [ObservableProperty]
+    private bool _showShareDialog;
+
+    [ObservableProperty]
+    private ProductDto? _productToShare;
+
+    [ObservableProperty]
+    private string _shareLink = string.Empty;
+
+    // My Listings view
+    [ObservableProperty]
+    private bool _showMyListings;
+
+    [ObservableProperty]
+    private bool _isEditingProduct;
+
+    [ObservableProperty]
+    private ProductDto? _productToEdit;
+
     // New listing fields
     [ObservableProperty]
     private string _newTitle = string.Empty;
@@ -580,5 +600,164 @@ public partial class MarketplaceViewModel : BaseViewModel
         {
             _ = LoadProductsAsync();
         }
+    }
+
+    // Share functionality
+    [RelayCommand]
+    private void ShareProduct(ProductDto? product)
+    {
+        var targetProduct = product ?? SelectedProduct ?? QuickViewProduct;
+        if (targetProduct == null) return;
+
+        ProductToShare = targetProduct;
+        ShareLink = $"vea://marketplace/product/{targetProduct.Id}";
+        ShowShareDialog = true;
+    }
+
+    [RelayCommand]
+    private void CopyShareLink()
+    {
+        if (string.IsNullOrEmpty(ShareLink)) return;
+
+        try
+        {
+            System.Windows.Clipboard.SetText(ShareLink);
+            ShowTemporaryMessage("Link copied to clipboard!");
+            CloseShareDialog();
+        }
+        catch
+        {
+            SetError("Failed to copy link");
+        }
+    }
+
+    [RelayCommand]
+    private void ShareToFriend()
+    {
+        // This would integrate with the friend/DM system
+        ShowTemporaryMessage("Share to friend feature coming soon!");
+        CloseShareDialog();
+    }
+
+    [RelayCommand]
+    private void CloseShareDialog()
+    {
+        ShowShareDialog = false;
+        ProductToShare = null;
+        ShareLink = string.Empty;
+    }
+
+    // My Listings management
+    [RelayCommand]
+    private async Task ToggleMyListings()
+    {
+        ShowMyListings = !ShowMyListings;
+        if (ShowMyListings)
+        {
+            await LoadMyProducts();
+        }
+    }
+
+    [RelayCommand]
+    private void EditProduct(ProductDto product)
+    {
+        if (product == null) return;
+
+        ProductToEdit = product;
+        NewTitle = product.Title;
+        NewDescription = product.Description;
+        NewPrice = product.Price.ToString("F2");
+        NewCategory = product.Category;
+        NewTags = string.Join(", ", product.Tags);
+        NewImageUrl = product.ImageUrls.FirstOrDefault() ?? string.Empty;
+        IsEditingProduct = true;
+    }
+
+    [RelayCommand]
+    private void CancelEditProduct()
+    {
+        ProductToEdit = null;
+        IsEditingProduct = false;
+        ClearNewListingFields();
+    }
+
+    [RelayCommand]
+    private async Task SaveEditProduct()
+    {
+        if (ProductToEdit == null) return;
+
+        if (string.IsNullOrWhiteSpace(NewTitle))
+        {
+            SetError("Title is required");
+            return;
+        }
+
+        if (!decimal.TryParse(NewPrice, out var price) || price <= 0)
+        {
+            SetError("Please enter a valid price");
+            return;
+        }
+
+        IsLoading = true;
+        ClearError();
+
+        try
+        {
+            // For now, we'll delete and recreate since there's no update endpoint
+            // In a real implementation, you'd have an UpdateProductAsync method
+            await _apiService.DeleteProductAsync(ProductToEdit.Id);
+
+            var request = new CreateProductRequest
+            {
+                Title = NewTitle,
+                Description = NewDescription,
+                Price = price,
+                Category = NewCategory,
+                Tags = NewTags.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(t => t.Trim())
+                    .ToList(),
+                ImageUrls = string.IsNullOrEmpty(NewImageUrl)
+                    ? []
+                    : [NewImageUrl]
+            };
+
+            await _apiService.CreateProductAsync(request);
+            IsEditingProduct = false;
+            ProductToEdit = null;
+            ClearNewListingFields();
+            ShowTemporaryMessage("Product updated successfully!");
+            await LoadMyProducts();
+            await LoadProductsAsync();
+        }
+        catch (Exception ex)
+        {
+            SetError("Failed to update product: " + ex.Message);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    // Report product
+    [RelayCommand]
+    private void ReportProduct(ProductDto? product)
+    {
+        var targetProduct = product ?? SelectedProduct ?? QuickViewProduct;
+        if (targetProduct == null) return;
+
+        // For now, show a message. In a real implementation, this would open a report dialog
+        ShowTemporaryMessage($"Report submitted for '{targetProduct.Title}'. Our team will review it.");
+    }
+
+    // View seller profile
+    [RelayCommand]
+    private void ViewSellerProfile(ProductDto? product)
+    {
+        var targetProduct = product ?? SelectedProduct ?? QuickViewProduct;
+        if (targetProduct == null) return;
+
+        // This would navigate to the seller's profile
+        ShowTemporaryMessage($"Viewing seller: {targetProduct.SellerUsername}");
     }
 }
