@@ -128,59 +128,34 @@ public class ScreenShareViewerService : IScreenShareViewerService
 
         try
         {
-            // Decode frame ONCE on background thread to save CPU during playback
-            // This trades memory for CPU - decoded bitmap is larger but playback is faster
-            Task.Run(() =>
+            // Get or create buffer for this sharer
+            var buffer = _frameBuffers.GetOrAdd(sharerConnectionId, _ => new ConcurrentQueue<BufferedFrame>());
+
+            // Drop oldest frames if buffer is full to prevent memory growth
+            while (buffer.Count >= MaxBufferSize)
             {
-                try
-                {
-                    BitmapImage? decodedBitmap = null;
-                    System.Windows.Application.Current?.Dispatcher.Invoke(() =>
-                    {
-                        var bitmap = new BitmapImage();
-                        bitmap.BeginInit();
-                        bitmap.StreamSource = new System.IO.MemoryStream(frameData);
-                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                        bitmap.EndInit();
-                        bitmap.Freeze(); // Make thread-safe
-                        decodedBitmap = bitmap;
-                    });
+                buffer.TryDequeue(out _);
+            }
 
-                    if (decodedBitmap == null) return;
-
-                    // Get or create buffer for this sharer
-                    var buffer = _frameBuffers.GetOrAdd(sharerConnectionId, _ => new ConcurrentQueue<BufferedFrame>());
-
-                    // Drop oldest frames if buffer is full to prevent memory growth
-                    while (buffer.Count >= MaxBufferSize)
-                    {
-                        buffer.TryDequeue(out _);
-                    }
-
-                    // Store pre-decoded bitmap for fast playback (memory trade-off for CPU)
-                    buffer.Enqueue(new BufferedFrame
-                    {
-                        DecodedBitmap = decodedBitmap,
-                        Width = width,
-                        Height = height,
-                        ReceivedAt = Stopwatch.GetTimestamp()
-                    });
-
-                    // Update screen share info
-                    if (_screenShares.TryGetValue(sharerConnectionId, out var share))
-                    {
-                        share.Width = width;
-                        share.Height = height;
-                    }
-
-                    // Ensure playback timer is running
-                    EnsurePlaybackTimerRunning();
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error decoding frame: {ex.Message}");
-                }
+            // Store raw frame data - decode lazily during playback to spread CPU load
+            // This reduces peak CPU by not decoding all frames immediately
+            buffer.Enqueue(new BufferedFrame
+            {
+                RawData = frameData,
+                Width = width,
+                Height = height,
+                ReceivedAt = Stopwatch.GetTimestamp()
             });
+
+            // Update screen share info
+            if (_screenShares.TryGetValue(sharerConnectionId, out var share))
+            {
+                share.Width = width;
+                share.Height = height;
+            }
+
+            // Ensure playback timer is running
+            EnsurePlaybackTimerRunning();
         }
         catch (Exception ex)
         {
@@ -230,18 +205,32 @@ public class ScreenShareViewerService : IScreenShareViewerService
 
             if (buffer.TryDequeue(out var frame))
             {
-                // Frame is already decoded - just display it (low CPU, uses memory)
-                if (frame.DecodedBitmap != null)
+                try
                 {
-                    _latestFrames[sharerConnectionId] = frame.DecodedBitmap;
-
-                    // Track FPS
-                    if (_screenShares.TryGetValue(sharerConnectionId, out var share))
+                    // Decode frame lazily during playback - spreads CPU load over time
+                    if (frame.RawData != null && frame.RawData.Length > 0)
                     {
-                        share.Fps++;
-                    }
+                        var bitmap = new BitmapImage();
+                        bitmap.BeginInit();
+                        bitmap.StreamSource = new System.IO.MemoryStream(frame.RawData);
+                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                        bitmap.EndInit();
+                        bitmap.Freeze();
 
-                    OnFrameReceived?.Invoke(sharerConnectionId, frame.DecodedBitmap);
+                        _latestFrames[sharerConnectionId] = bitmap;
+
+                        // Track FPS
+                        if (_screenShares.TryGetValue(sharerConnectionId, out var share))
+                        {
+                            share.Fps++;
+                        }
+
+                        OnFrameReceived?.Invoke(sharerConnectionId, bitmap);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error decoding frame: {ex.Message}");
                 }
             }
         }
@@ -344,7 +333,7 @@ public class ScreenShareViewerService : IScreenShareViewerService
 
     private class BufferedFrame
     {
-        public BitmapImage? DecodedBitmap { get; set; } // Pre-decoded for low CPU playback
+        public byte[]? RawData { get; set; } // Raw JPEG data - decode during playback
         public int Width { get; set; }
         public int Height { get; set; }
         public long ReceivedAt { get; set; }
