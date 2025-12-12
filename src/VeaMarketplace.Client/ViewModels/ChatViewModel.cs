@@ -13,6 +13,8 @@ public partial class ChatViewModel : BaseViewModel
     private readonly IApiService _apiService;
     private readonly INavigationService _navigationService;
     private DateTime _lastTypingSent = DateTime.MinValue;
+    private static bool _eventHandlersRegistered = false;
+    private static readonly object _registrationLock = new();
 
     [ObservableProperty]
     private ObservableCollection<ChatMessageDto> _messages = [];
@@ -59,13 +61,24 @@ public partial class ChatViewModel : BaseViewModel
 
     private void RegisterEventHandlers()
     {
+        // Prevent duplicate event handler registration (can happen if ViewModel is created multiple times)
+        lock (_registrationLock)
+        {
+            if (_eventHandlersRegistered) return;
+            _eventHandlersRegistered = true;
+        }
+
         _chatService.OnMessageReceived += message =>
         {
             System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 if (message.Channel == CurrentChannel)
                 {
-                    Messages.Add(message);
+                    // Check for duplicates to prevent double messages
+                    if (!Messages.Any(m => m.Id == message.Id))
+                    {
+                        Messages.Add(message);
+                    }
                 }
             });
         };

@@ -55,7 +55,19 @@ public class FileService
         _files = _db.StoredFiles;
 
         // Get configuration for file storage
-        _uploadPath = configuration.GetValue<string>("FileStorage:UploadPath") ?? "uploads";
+        var configuredPath = configuration.GetValue<string>("FileStorage:UploadPath") ?? "uploads";
+
+        // Ensure the upload path is absolute to avoid issues when serving files
+        if (Path.IsPathRooted(configuredPath))
+        {
+            _uploadPath = configuredPath;
+        }
+        else
+        {
+            // Convert relative path to absolute based on current directory
+            _uploadPath = Path.GetFullPath(configuredPath);
+        }
+
         _baseUrl = configuration.GetValue<string>("FileStorage:BaseUrl") ?? "http://162.248.94.23:5000/api/files";
 
         // Ensure upload directories exist
