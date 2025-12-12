@@ -1,7 +1,9 @@
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using VeaMarketplace.Shared.DTOs;
 
 namespace VeaMarketplace.Client.Services;
@@ -84,6 +86,17 @@ public class ScreenShareViewerService : IScreenShareViewerService
     private string? _viewingConnectionId;
     private string? _ownConnectionId;
 
+    // Jitter buffer for smooth playback - holds frames and releases at steady rate
+    private readonly ConcurrentDictionary<string, ConcurrentQueue<BufferedFrame>> _frameBuffers = new();
+    private readonly ConcurrentDictionary<string, int> _targetFps = new();
+    private DispatcherTimer? _playbackTimer;
+    private readonly object _timerLock = new();
+
+    // Buffer settings - tuned for 60fps (16.67ms per frame)
+    private const int TargetBufferSize = 4; // Buffer 4 frames (~66ms at 60fps) for jitter tolerance
+    private const int MaxBufferSize = 10;   // Don't buffer more than this to prevent memory growth
+    private const int PlaybackIntervalMs = 16; // ~60fps playback rate
+
     public ObservableCollection<ScreenShareDto> ActiveScreenShares { get; } = new();
     public ScreenShareDto? CurrentlyViewing => _viewingConnectionId != null && _screenShares.TryGetValue(_viewingConnectionId, out var share) ? share : null;
     public ScreenShareDto? OwnScreenShare => _ownConnectionId != null && _screenShares.TryGetValue(_ownConnectionId, out var share) ? share : null;
@@ -115,39 +128,142 @@ public class ScreenShareViewerService : IScreenShareViewerService
 
         try
         {
-            // Convert to BitmapImage on UI thread
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            // Decode frame ONCE on background thread to save CPU during playback
+            // This trades memory for CPU - decoded bitmap is larger but playback is faster
+            Task.Run(() =>
             {
                 try
                 {
-                    var bitmap = new BitmapImage();
-                    bitmap.BeginInit();
-                    bitmap.StreamSource = new System.IO.MemoryStream(frameData);
-                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmap.EndInit();
-                    bitmap.Freeze(); // Make thread-safe
+                    BitmapImage? decodedBitmap = null;
+                    System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                    {
+                        var bitmap = new BitmapImage();
+                        bitmap.BeginInit();
+                        bitmap.StreamSource = new System.IO.MemoryStream(frameData);
+                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                        bitmap.EndInit();
+                        bitmap.Freeze(); // Make thread-safe
+                        decodedBitmap = bitmap;
+                    });
 
-                    _latestFrames[sharerConnectionId] = bitmap;
+                    if (decodedBitmap == null) return;
+
+                    // Get or create buffer for this sharer
+                    var buffer = _frameBuffers.GetOrAdd(sharerConnectionId, _ => new ConcurrentQueue<BufferedFrame>());
+
+                    // Drop oldest frames if buffer is full to prevent memory growth
+                    while (buffer.Count >= MaxBufferSize)
+                    {
+                        buffer.TryDequeue(out _);
+                    }
+
+                    // Store pre-decoded bitmap for fast playback (memory trade-off for CPU)
+                    buffer.Enqueue(new BufferedFrame
+                    {
+                        DecodedBitmap = decodedBitmap,
+                        Width = width,
+                        Height = height,
+                        ReceivedAt = Stopwatch.GetTimestamp()
+                    });
 
                     // Update screen share info
                     if (_screenShares.TryGetValue(sharerConnectionId, out var share))
                     {
                         share.Width = width;
                         share.Height = height;
-                        share.Fps++;
                     }
 
-                    OnFrameReceived?.Invoke(sharerConnectionId, bitmap);
+                    // Ensure playback timer is running
+                    EnsurePlaybackTimerRunning();
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Error processing frame: {ex.Message}");
+                    Debug.WriteLine($"Error decoding frame: {ex.Message}");
                 }
             });
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error handling frame: {ex.Message}");
+            Debug.WriteLine($"Error handling frame: {ex.Message}");
+        }
+    }
+
+    private void EnsurePlaybackTimerRunning()
+    {
+        if (_playbackTimer != null) return;
+
+        lock (_timerLock)
+        {
+            if (_playbackTimer != null) return;
+
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                if (_playbackTimer != null) return;
+
+                _playbackTimer = new DispatcherTimer(DispatcherPriority.Render)
+                {
+                    Interval = TimeSpan.FromMilliseconds(PlaybackIntervalMs)
+                };
+                _playbackTimer.Tick += PlaybackTimer_Tick;
+                _playbackTimer.Start();
+                Debug.WriteLine("Started screen share playback timer");
+            });
+        }
+    }
+
+    private void PlaybackTimer_Tick(object? sender, EventArgs e)
+    {
+        // Process one frame from each active buffer at steady rate
+        foreach (var kvp in _frameBuffers)
+        {
+            var sharerConnectionId = kvp.Key;
+            var buffer = kvp.Value;
+
+            // Wait until we have enough frames buffered for smooth playback
+            // This prevents playing back immediately and allows jitter absorption
+            if (buffer.Count < TargetBufferSize && buffer.Count > 0)
+            {
+                // If we have some frames but not enough, only play if buffer has been waiting
+                // This prevents indefinite waiting if sender FPS is lower than expected
+                continue;
+            }
+
+            if (buffer.TryDequeue(out var frame))
+            {
+                // Frame is already decoded - just display it (low CPU, uses memory)
+                if (frame.DecodedBitmap != null)
+                {
+                    _latestFrames[sharerConnectionId] = frame.DecodedBitmap;
+
+                    // Track FPS
+                    if (_screenShares.TryGetValue(sharerConnectionId, out var share))
+                    {
+                        share.Fps++;
+                    }
+
+                    OnFrameReceived?.Invoke(sharerConnectionId, frame.DecodedBitmap);
+                }
+            }
+        }
+
+        // Stop timer if no active buffers
+        if (_frameBuffers.IsEmpty || _frameBuffers.All(kvp => kvp.Value.IsEmpty))
+        {
+            StopPlaybackTimer();
+        }
+    }
+
+    private void StopPlaybackTimer()
+    {
+        lock (_timerLock)
+        {
+            if (_playbackTimer != null)
+            {
+                _playbackTimer.Stop();
+                _playbackTimer.Tick -= PlaybackTimer_Tick;
+                _playbackTimer = null;
+                Debug.WriteLine("Stopped screen share playback timer");
+            }
         }
     }
 
@@ -185,6 +301,7 @@ public class ScreenShareViewerService : IScreenShareViewerService
     {
         _screenShares.TryRemove(connectionId, out _);
         _latestFrames.TryRemove(connectionId, out _);
+        _frameBuffers.TryRemove(connectionId, out _); // Clear frame buffer
 
         if (_viewingConnectionId == connectionId)
         {
@@ -215,9 +332,21 @@ public class ScreenShareViewerService : IScreenShareViewerService
         _latestFrames.Clear();
         _screenShares.Clear();
 
+        // Stop playback and clear buffers
+        StopPlaybackTimer();
+        _frameBuffers.Clear();
+
         System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
         {
             ActiveScreenShares.Clear();
         });
+    }
+
+    private class BufferedFrame
+    {
+        public BitmapImage? DecodedBitmap { get; set; } // Pre-decoded for low CPU playback
+        public int Width { get; set; }
+        public int Height { get; set; }
+        public long ReceivedAt { get; set; }
     }
 }

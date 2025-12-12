@@ -544,40 +544,70 @@ public class ScreenSharingManager : IScreenSharingManager
     /// <summary>
     /// Send loop running as async task for network I/O
     /// Yields to voice audio to prevent choppy audio during screen sharing
+    /// Sends frames at a steady rate to prevent burst/lag issues
     /// </summary>
     private async Task SendLoop(CancellationToken cancellationToken)
     {
         var sendTimer = new Stopwatch();
+        var frameIntervalStopwatch = Stopwatch.StartNew();
+        long lastSendTime = 0;
 
         while (!cancellationToken.IsCancellationRequested && _isSharing)
         {
             try
             {
+                // Calculate frame interval for pacing - send at target FPS rate
+                var frameIntervalMs = 1000.0 / _settings.TargetFps;
+                var now = frameIntervalStopwatch.ElapsedMilliseconds;
+                var elapsed = now - lastSendTime;
+
                 // VOICE PRIORITY: When voice is active, add small delays between frames
                 // to give audio packets a chance to be sent first
                 if (_voiceActive)
                 {
-                    await Task.Delay(5, cancellationToken).ConfigureAwait(false);
+                    await Task.Delay(3, cancellationToken).ConfigureAwait(false);
                 }
 
-                // Get latest frame (skip old ones)
+                // Wait for next frame interval to maintain steady send rate
+                if (elapsed < frameIntervalMs)
+                {
+                    var waitTime = (int)(frameIntervalMs - elapsed);
+                    if (waitTime > 1)
+                    {
+                        await Task.Delay(waitTime - 1, cancellationToken).ConfigureAwait(false);
+                    }
+                }
+
+                // Get next frame from queue - don't skip all frames, just keep queue manageable
+                // Only skip if queue is backing up significantly (>3 frames)
                 CapturedFrame? frameToSend = null;
-                while (_frameQueue.TryDequeue(out var frame))
+                if (_frameQueue.TryDequeue(out var frame))
                 {
                     frameToSend = frame;
-                    if (_frameQueue.IsEmpty) break;
+                    // If queue is too backed up, skip some to catch up (but not all)
+                    if (_frameQueue.Count > 3)
+                    {
+                        // Skip half the backlog, not all of it
+                        var skipCount = _frameQueue.Count / 2;
+                        for (int i = 0; i < skipCount && _frameQueue.TryDequeue(out var skipped); i++)
+                        {
+                            frameToSend = skipped; // Use the newer frame
+                            _framesDroppedThisSecond++;
+                        }
+                    }
                 }
 
                 if (frameToSend != null && _sendFrameFunc != null && _isConnected)
                 {
+                    lastSendTime = frameIntervalStopwatch.ElapsedMilliseconds;
                     sendTimer.Restart();
 
                     try
                     {
-                        // Use timeout to prevent blocking if network is congested
-                        // This allows audio to continue flowing
+                        // Use longer timeout to allow network latency without dropping
                         var sendTask = _sendFrameFunc(frameToSend.Data, frameToSend.Width, frameToSend.Height);
-                        var completed = await Task.WhenAny(sendTask, Task.Delay(100, cancellationToken)).ConfigureAwait(false);
+                        var timeoutTask = Task.Delay(200, cancellationToken);
+                        var completed = await Task.WhenAny(sendTask, timeoutTask).ConfigureAwait(false);
 
                         sendTimer.Stop();
                         var sendTimeMs = sendTimer.Elapsed.TotalMilliseconds;
