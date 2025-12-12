@@ -522,6 +522,12 @@ public partial class FriendsViewModel : BaseViewModel
     [RelayCommand]
     private async Task ToggleScreenShareAsync()
     {
+        // Screen sharing is only supported in voice channels, not DM calls
+        if (!_voiceService.IsInVoiceChannel)
+        {
+            return; // Screen share not available in DM calls
+        }
+
         if (IsScreenSharing)
         {
             await _voiceService.StopScreenShareAsync();

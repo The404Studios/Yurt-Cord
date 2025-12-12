@@ -319,6 +319,7 @@ public class FriendService : IFriendService, IAsyncDisposable
         _connection.On<string>("DMError", error => OnError?.Invoke(error));
         _connection.On<string>("BlockError", error => OnError?.Invoke(error));
         _connection.On<string>("Success", message => OnSuccess?.Invoke(message));
+        _connection.On<string>("FriendRequestSent", message => OnSuccess?.Invoke(message));
 
         // User search handlers
         _connection.On<UserSearchResultDto?>("UserSearchResult", result =>
@@ -359,14 +360,16 @@ public class FriendService : IFriendService, IAsyncDisposable
 
     public async Task SendFriendRequestAsync(string username)
     {
-        if (_connection != null && IsConnected)
-            await _connection.InvokeAsync("SendFriendRequest", username).ConfigureAwait(false);
+        if (_connection == null || !IsConnected)
+            throw new InvalidOperationException("Not connected to friend service");
+        await _connection.InvokeAsync("SendFriendRequest", username).ConfigureAwait(false);
     }
 
     public async Task SendFriendRequestByIdAsync(string userId)
     {
-        if (_connection != null && IsConnected)
-            await _connection.InvokeAsync("SendFriendRequestById", userId).ConfigureAwait(false);
+        if (_connection == null || !IsConnected)
+            throw new InvalidOperationException("Not connected to friend service");
+        await _connection.InvokeAsync("SendFriendRequestById", userId).ConfigureAwait(false);
     }
 
     public async Task SearchUserAsync(string query)

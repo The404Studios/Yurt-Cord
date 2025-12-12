@@ -229,7 +229,7 @@ public partial class ChannelSidebar : UserControl
         var user = GetVoiceUserFromSender(sender);
         if (user == null) return;
 
-        _navigationService?.NavigateToProfile();
+        _navigationService?.NavigateToProfile(user.UserId);
     }
 
     private void VoiceSendMessage_Click(object sender, RoutedEventArgs e)
