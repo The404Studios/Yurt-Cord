@@ -27,10 +27,12 @@
             <converters:SliderWidthConverter x:Key="SliderWidthConverter"/>
             <converters:RoleToColorConverter x:Key="RoleToColorConverter"/>
             <converters:RankToBadgeConverter x:Key="RankToBadgeConverter"/>
+            <converters:DefaultAvatarConverter x:Key="DefaultAvatarConverter"/>
 
             <!-- Converter Aliases -->
             <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
             <converters:StringToVisibilityConverter x:Key="StringToVisConverter"/>
+            <converters:NullToVisibilityConverter x:Key="NullToVisibility"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

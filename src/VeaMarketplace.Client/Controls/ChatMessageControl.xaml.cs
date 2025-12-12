@@ -366,7 +366,7 @@ public partial class ChatMessageControl : UserControl
             var chatService = (IChatService?)App.ServiceProvider.GetService(typeof(IChatService));
             if (chatService != null)
             {
-                await chatService.DeleteMessageAsync(_currentMessage.Id);
+                await chatService.DeleteMessageAsync(_currentMessage.Id, _currentMessage.Channel);
             }
         }
     }

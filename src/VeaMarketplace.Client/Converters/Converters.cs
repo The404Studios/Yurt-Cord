@@ -229,3 +229,25 @@ public class TimestampConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
+/// <summary>
+/// Returns a default avatar URL if the provided URL is null or empty
+/// </summary>
+public class DefaultAvatarConverter : IValueConverter
+{
+    private const string DefaultAvatarUrl = "https://cdn.discordapp.com/embed/avatars/0.png";
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is string url && !string.IsNullOrWhiteSpace(url))
+        {
+            return url;
+        }
+        return parameter as string ?? DefaultAvatarUrl;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
