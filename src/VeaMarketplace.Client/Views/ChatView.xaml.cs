@@ -394,7 +394,7 @@ public partial class ChatView : UserControl
     {
         var uploadedAttachments = new List<MessageAttachmentDto>();
 
-        if (_fileUploadService == null || _apiService?.Token == null)
+        if (_fileUploadService == null || _apiService?.AuthToken == null)
             return uploadedAttachments;
 
         UploadProgressPanel.Visibility = Visibility.Visible;
@@ -412,7 +412,7 @@ public partial class ChatView : UserControl
             current++;
             UploadProgressBar.Value = (current * 100.0) / total;
 
-            var result = await _fileUploadService.UploadAttachmentAsync(pending.FilePath, _apiService.Token);
+            var result = await _fileUploadService.UploadAttachmentAsync(pending.FilePath, _apiService.AuthToken);
             if (result.Success && result.FileId != null)
             {
                 var attachment = new MessageAttachmentDto

@@ -130,9 +130,9 @@ public partial class CreateOutletRoomDialog : Window
         {
             // Upload icon if selected
             string? iconUrl = null;
-            if (!string.IsNullOrEmpty(_selectedIconPath) && _fileUploadService != null && _apiService?.Token != null)
+            if (!string.IsNullOrEmpty(_selectedIconPath) && _fileUploadService != null && _apiService?.AuthToken != null)
             {
-                var uploadResult = await _fileUploadService.UploadAttachmentAsync(_selectedIconPath, _apiService.Token);
+                var uploadResult = await _fileUploadService.UploadAttachmentAsync(_selectedIconPath, _apiService.AuthToken);
                 if (uploadResult.Success)
                 {
                     iconUrl = uploadResult.FileUrl;
