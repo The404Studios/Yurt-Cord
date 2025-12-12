@@ -8,10 +8,12 @@ namespace VeaMarketplace.Server.Services;
 public class ChatService
 {
     private readonly DatabaseService _db;
+    private readonly FileService? _fileService;
 
-    public ChatService(DatabaseService db)
+    public ChatService(DatabaseService db, FileService? fileService = null)
     {
         _db = db;
+        _fileService = fileService;
     }
 
     public List<ChannelDto> GetChannels(UserRole userRole)
@@ -61,12 +63,37 @@ public class ChatService
             SenderRank = user.Rank,
             Content = request.Content,
             Channel = request.Channel,
-            Timestamp = DateTime.UtcNow
+            Timestamp = DateTime.UtcNow,
+            AttachmentIds = request.AttachmentIds ?? new List<string>()
         };
 
         _db.Messages.Insert(message);
 
         return MapToDto(message, user);
+    }
+
+    public ChatMessageDto SaveMessageWithAttachments(string userId, SendMessageRequest request, List<MessageAttachmentDto> attachments)
+    {
+        var user = _db.Users.FindById(userId);
+        if (user == null) throw new Exception("User not found");
+
+        var message = new ChatMessage
+        {
+            SenderId = userId,
+            SenderUsername = user.Username,
+            SenderRole = user.Role,
+            SenderRank = user.Rank,
+            Content = request.Content,
+            Channel = request.Channel,
+            Timestamp = DateTime.UtcNow,
+            AttachmentIds = attachments.Select(a => a.Id).ToList()
+        };
+
+        _db.Messages.Insert(message);
+
+        var dto = MapToDto(message, user);
+        dto.Attachments = attachments;
+        return dto;
     }
 
     public ChatMessageDto CreateSystemMessage(string channel, string content, MessageType type = MessageType.System)

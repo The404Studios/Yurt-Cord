@@ -39,6 +39,8 @@ public partial class App : Application
         services.AddSingleton<IFriendService, FriendService>();
         services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<IToastNotificationService, ToastNotificationService>();
+        services.AddSingleton<IFileUploadService, FileUploadService>();
+        services.AddSingleton<IImageCacheService, ImageCacheService>();
 
         // ViewModels
         services.AddTransient<LoginViewModel>();

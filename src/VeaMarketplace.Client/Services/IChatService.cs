@@ -16,14 +16,17 @@ public interface IChatService
     event Action<string>? OnMessageDeleted;
     event Action<UserDto>? OnAuthenticated;
     event Action<string>? OnAuthenticationFailed;
+    event Action<OnlineUserDto>? OnUserProfileUpdated;
 
     Task ConnectAsync(string token);
     Task DisconnectAsync();
     Task JoinChannelAsync(string channelName);
     Task LeaveChannelAsync(string channelName);
     Task SendMessageAsync(string content, string channel = "general");
+    Task SendMessageWithAttachmentsAsync(string content, string channel, List<MessageAttachmentDto> attachments);
     Task DeleteMessageAsync(string messageId, string channel = "general");
     Task SendTypingAsync(string channel);
+    Task UpdateProfileAsync(string? avatarUrl = null, string? bannerUrl = null);
 }
 
 public class ChatService : IChatService, IAsyncDisposable
@@ -49,6 +52,7 @@ public class ChatService : IChatService, IAsyncDisposable
     public event Action<string>? OnMessageDeleted;
     public event Action<UserDto>? OnAuthenticated;
     public event Action<string>? OnAuthenticationFailed;
+    public event Action<OnlineUserDto>? OnUserProfileUpdated;
 
     public async Task ConnectAsync(string token)
     {
@@ -102,6 +106,9 @@ public class ChatService : IChatService, IAsyncDisposable
 
         _connection.On<string>("AuthenticationFailed", error =>
             OnAuthenticationFailed?.Invoke(error));
+
+        _connection.On<OnlineUserDto>("UserProfileUpdated", user =>
+            OnUserProfileUpdated?.Invoke(user));
     }
 
     public async Task DisconnectAsync()
@@ -142,6 +149,25 @@ public class ChatService : IChatService, IAsyncDisposable
     {
         if (_connection != null && IsConnected)
             await _connection.InvokeAsync("SendTyping", channel).ConfigureAwait(false);
+    }
+
+    public async Task SendMessageWithAttachmentsAsync(string content, string channel, List<MessageAttachmentDto> attachments)
+    {
+        if (_connection != null && IsConnected)
+            await _connection.InvokeAsync("SendMessageWithAttachments", content, channel, attachments).ConfigureAwait(false);
+    }
+
+    public async Task UpdateProfileAsync(string? avatarUrl = null, string? bannerUrl = null)
+    {
+        if (_connection != null && IsConnected)
+        {
+            var request = new UpdateProfileRequest
+            {
+                AvatarUrl = avatarUrl,
+                BannerUrl = bannerUrl
+            };
+            await _connection.InvokeAsync("UpdateUserProfile", request).ConfigureAwait(false);
+        }
     }
 
     public async ValueTask DisposeAsync()

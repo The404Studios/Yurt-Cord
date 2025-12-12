@@ -119,8 +119,80 @@
 
         <!-- Message Input Area -->
         <Grid Grid.Row="3" Margin="16,8,16,16">
-            <Border Background="{StaticResource QuaternaryDarkBrush}"
-                    CornerRadius="8" Padding="4">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Attachment Preview Area -->
+            <Border x:Name="AttachmentPreviewArea" Grid.Row="0" Visibility="Collapsed"
+                    Background="{StaticResource QuaternaryDarkBrush}"
+                    CornerRadius="8,8,0,0" Padding="8" Margin="0,0,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <ItemsControl x:Name="AttachmentPreviewList" Grid.Column="0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="#2B2D31" CornerRadius="6" Padding="8" Margin="4"
+                                        MaxWidth="200">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- File Type Icon/Preview -->
+                                        <Border Grid.Column="0" Width="48" Height="48" CornerRadius="4"
+                                                Background="#1E1F22" Margin="0,0,8,0">
+                                            <Image x:Name="PreviewImage" Stretch="UniformToFill"
+                                                   Source="{Binding ThumbnailPath}"/>
+                                        </Border>
+
+                                        <!-- File Info -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding FileName}" FontSize="12"
+                                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                                       TextTrimming="CharacterEllipsis" MaxWidth="100"/>
+                                            <TextBlock Text="{Binding FileSizeText}" FontSize="10"
+                                                       Foreground="{StaticResource TextMutedBrush}"/>
+                                        </StackPanel>
+
+                                        <!-- Remove Button -->
+                                        <Button Grid.Column="2" Style="{StaticResource IconButton}"
+                                                Width="24" Height="24" VerticalAlignment="Top"
+                                                Click="RemoveAttachment_Click" Tag="{Binding}">
+                                            <TextBlock Text="X" FontSize="12" Foreground="#ED4245"/>
+                                        </Button>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Upload Progress -->
+                    <StackPanel x:Name="UploadProgressPanel" Grid.Column="1"
+                                VerticalAlignment="Center" Visibility="Collapsed" Margin="8,0">
+                        <TextBlock Text="Uploading..." FontSize="11"
+                                   Foreground="{StaticResource TextMutedBrush}"/>
+                        <ProgressBar x:Name="UploadProgressBar" Width="100" Height="4"
+                                     Background="#2B2D31" Foreground="{StaticResource AccentBrush}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="1" Background="{StaticResource QuaternaryDarkBrush}"
+                    CornerRadius="8" Padding="4"
+                    x:Name="InputBorder">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -130,7 +202,8 @@
 
                     <!-- Add Attachment Button -->
                     <Button Grid.Column="0" Style="{StaticResource IconButton}"
-                            Width="44" Height="44">
+                            Width="44" Height="44" x:Name="AddAttachmentButton"
+                            Click="AddAttachment_Click" ToolTip="Add Attachment">
                         <TextBlock Text="➕" FontSize="20" Foreground="{StaticResource TextMutedBrush}"/>
                     </Button>
 

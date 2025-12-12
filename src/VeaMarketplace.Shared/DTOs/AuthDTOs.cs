@@ -93,11 +93,14 @@ public class OnlineUserDto
     public string Id { get; set; } = string.Empty;
     public string Username { get; set; } = string.Empty;
     public string AvatarUrl { get; set; } = string.Empty;
+    public string? BannerUrl { get; set; }
     public UserRole Role { get; set; }
     public UserRank Rank { get; set; }
     public string? StatusMessage { get; set; }
     public string? Bio { get; set; }
     public string? AccentColor { get; set; }
+    public string? DisplayName { get; set; }
+    public DateTime? LastUpdated { get; set; }
 }
 
 public enum ActivityType

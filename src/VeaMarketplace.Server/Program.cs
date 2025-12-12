@@ -45,6 +45,7 @@ builder.Services.AddScoped<DirectMessageService>();
 builder.Services.AddScoped<VoiceCallService>();
 builder.Services.AddScoped<RoleService>();
 builder.Services.AddScoped<RoomService>();
+builder.Services.AddScoped<FileService>();
 
 // JWT Authentication
 var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "YurtCordSuperSecretKey12345678901234567890";
@@ -115,6 +116,13 @@ app.MapHub<RoomHub>("/hubs/rooms");
 
 // Ensure data directory exists
 Directory.CreateDirectory("Data");
+
+// Ensure upload directories exist
+Directory.CreateDirectory("uploads");
+Directory.CreateDirectory("uploads/avatars");
+Directory.CreateDirectory("uploads/banners");
+Directory.CreateDirectory("uploads/attachments");
+Directory.CreateDirectory("uploads/thumbnails");
 
 Console.WriteLine(@"
 ╔═══════════════════════════════════════════════════════════════╗

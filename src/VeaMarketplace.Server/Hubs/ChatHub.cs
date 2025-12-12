@@ -13,11 +13,62 @@ public class ChatHub : Hub
     private readonly AuthService _authService;
     private static readonly ConcurrentDictionary<string, OnlineUserDto> _onlineUsers = new();
     private static readonly ConcurrentDictionary<string, string> _connectionUserMap = new();
+    private static readonly ConcurrentDictionary<string, List<string>> _userConnectionsMap = new(); // userId -> list of connectionIds
 
     public ChatHub(ChatService chatService, AuthService authService)
     {
         _chatService = chatService;
         _authService = authService;
+    }
+
+    /// <summary>
+    /// Updates a user's profile across all connected clients.
+    /// Called when a user changes their avatar, banner, or other profile info.
+    /// </summary>
+    public async Task UpdateUserProfile(UpdateProfileRequest request)
+    {
+        if (!_connectionUserMap.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        // Get fresh user data from database
+        var user = _authService.GetUserById(userId);
+        if (user == null) return;
+
+        // Update the cached online user
+        if (_onlineUsers.TryGetValue(userId, out var onlineUser))
+        {
+            onlineUser.AvatarUrl = user.AvatarUrl ?? onlineUser.AvatarUrl;
+            onlineUser.BannerUrl = user.BannerUrl;
+            onlineUser.Username = user.Username;
+            onlineUser.DisplayName = user.DisplayName;
+            onlineUser.StatusMessage = user.StatusMessage;
+            onlineUser.Bio = user.Bio;
+            onlineUser.AccentColor = user.AccentColor;
+            onlineUser.LastUpdated = DateTime.UtcNow;
+
+            // Broadcast the profile update to all connected clients
+            await Clients.All.SendAsync("UserProfileUpdated", onlineUser);
+        }
+    }
+
+    /// <summary>
+    /// Static method to broadcast profile updates from other services (e.g., ProfileHub, REST API)
+    /// </summary>
+    public static async Task BroadcastProfileUpdate(IHubContext<ChatHub> hubContext, User user)
+    {
+        if (_onlineUsers.TryGetValue(user.Id, out var onlineUser))
+        {
+            onlineUser.AvatarUrl = user.AvatarUrl ?? onlineUser.AvatarUrl;
+            onlineUser.BannerUrl = user.BannerUrl;
+            onlineUser.Username = user.Username;
+            onlineUser.DisplayName = user.DisplayName;
+            onlineUser.StatusMessage = user.StatusMessage;
+            onlineUser.Bio = user.Bio;
+            onlineUser.AccentColor = user.AccentColor;
+            onlineUser.LastUpdated = DateTime.UtcNow;
+
+            await hubContext.Clients.All.SendAsync("UserProfileUpdated", onlineUser);
+        }
     }
 
     public async Task Authenticate(string token)
@@ -33,9 +84,15 @@ public class ChatHub : Hub
         {
             Id = user.Id,
             Username = user.Username,
-            AvatarUrl = user.AvatarUrl,
+            AvatarUrl = user.AvatarUrl ?? string.Empty,
+            BannerUrl = user.BannerUrl,
+            DisplayName = user.DisplayName,
             Role = user.Role,
-            Rank = user.Rank
+            Rank = user.Rank,
+            StatusMessage = user.StatusMessage,
+            Bio = user.Bio,
+            AccentColor = user.AccentColor,
+            LastUpdated = DateTime.UtcNow
         };
 
         _onlineUsers[user.Id] = onlineUser;
@@ -105,6 +162,24 @@ public class ChatHub : Hub
         };
 
         var message = _chatService.SaveMessage(userId, request);
+        await Clients.Group(channel).SendAsync("ReceiveMessage", message);
+    }
+
+    /// <summary>
+    /// Send a message with file attachments
+    /// </summary>
+    public async Task SendMessageWithAttachments(string content, string channel, List<MessageAttachmentDto> attachments)
+    {
+        if (!_connectionUserMap.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        var request = new SendMessageRequest
+        {
+            Content = content,
+            Channel = channel
+        };
+
+        var message = _chatService.SaveMessageWithAttachments(userId, request, attachments);
         await Clients.Group(channel).SendAsync("ReceiveMessage", message);
     }
 
