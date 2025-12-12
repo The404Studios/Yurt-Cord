@@ -61,6 +61,27 @@ public class FileUploadService : IFileUploadService
             var response = await _httpClient.SendAsync(request);
             var json = await response.Content.ReadAsStringAsync();
 
+            // Handle empty or non-JSON responses
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return new FileUploadResponse
+                {
+                    Success = false,
+                    Message = $"Server returned empty response (HTTP {(int)response.StatusCode})"
+                };
+            }
+
+            // Check if response is JSON (should start with { or [)
+            var trimmed = json.TrimStart();
+            if (!trimmed.StartsWith("{") && !trimmed.StartsWith("["))
+            {
+                return new FileUploadResponse
+                {
+                    Success = false,
+                    Message = $"Server error (HTTP {(int)response.StatusCode}): {json.Substring(0, Math.Min(200, json.Length))}"
+                };
+            }
+
             return JsonSerializer.Deserialize<FileUploadResponse>(json, JsonOptions)
                 ?? new FileUploadResponse { Success = false, Message = "Failed to parse response" };
         }
@@ -111,6 +132,27 @@ public class FileUploadService : IFileUploadService
 
             var response = await _httpClient.SendAsync(request);
             var json = await response.Content.ReadAsStringAsync();
+
+            // Handle empty or non-JSON responses
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return new ProfileImageUploadResponse
+                {
+                    Success = false,
+                    Message = $"Server returned empty response (HTTP {(int)response.StatusCode})"
+                };
+            }
+
+            // Check if response is JSON (should start with { or [)
+            var trimmed = json.TrimStart();
+            if (!trimmed.StartsWith("{") && !trimmed.StartsWith("["))
+            {
+                return new ProfileImageUploadResponse
+                {
+                    Success = false,
+                    Message = $"Server error (HTTP {(int)response.StatusCode}): {json.Substring(0, Math.Min(200, json.Length))}"
+                };
+            }
 
             return JsonSerializer.Deserialize<ProfileImageUploadResponse>(json, JsonOptions)
                 ?? new ProfileImageUploadResponse { Success = false, Message = "Failed to parse response" };

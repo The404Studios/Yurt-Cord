@@ -54,6 +54,9 @@ public interface IVoiceService
     Key PushToTalkKey { get; set; }
     bool IsPushToTalkActive { get; }
 
+    // Master volume control (0.0 to 2.0, 1.0 = 100%)
+    float MasterVolume { get; set; }
+
     // Per-user volume control
     void SetUserVolume(string connectionId, float volume);
     float GetUserVolume(string connectionId);
@@ -177,6 +180,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     private readonly ConcurrentDictionary<string, bool> _mutedUsers = new();
     private readonly ConcurrentDictionary<string, OpusDecoder> _userOpusDecoders = new();
 
+    // Master volume control
+    private float _masterVolume = 1.0f;
+
     // Playback buffer for decoded audio (replaces complex mixing thread)
 
     // Audio device configuration
@@ -236,6 +242,11 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     public bool IsDeafened { get; set; }
     public bool IsSpeaking => _isSpeaking;
     public double CurrentAudioLevel => _currentAudioLevel;
+    public float MasterVolume
+    {
+        get => _masterVolume;
+        set => _masterVolume = Math.Clamp(value, 0f, 2f);
+    }
     public string? CurrentChannelId { get; private set; }
     public bool IsScreenSharing => _screenSharingManager.IsSharing;
     public IScreenSharingManager ScreenSharingManager => _screenSharingManager;
@@ -506,13 +517,14 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
                 if (decodedSamples > 0)
                 {
-                    // Apply per-user volume
-                    var volume = GetUserVolume(senderConnectionId);
-                    if (Math.Abs(volume - 1.0f) > 0.01f)
+                    // Apply combined volume (per-user * master)
+                    var userVolume = GetUserVolume(senderConnectionId);
+                    var combinedVolume = userVolume * _masterVolume;
+                    if (Math.Abs(combinedVolume - 1.0f) > 0.01f)
                     {
                         for (int i = 0; i < decodedSamples; i++)
                         {
-                            pcmBuffer[i] = (short)Math.Clamp(pcmBuffer[i] * volume, short.MinValue, short.MaxValue);
+                            pcmBuffer[i] = (short)Math.Clamp(pcmBuffer[i] * combinedVolume, short.MinValue, short.MaxValue);
                         }
                     }
 
