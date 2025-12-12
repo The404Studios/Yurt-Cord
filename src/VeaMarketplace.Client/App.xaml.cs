@@ -37,6 +37,7 @@ public partial class App : Application
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<IAudioDeviceService, AudioDeviceService>();
         services.AddSingleton<IFriendService, FriendService>();
+        services.AddSingleton<IProfileService, ProfileService>();
         services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<IToastNotificationService, ToastNotificationService>();
         services.AddSingleton<IFileUploadService, FileUploadService>();
