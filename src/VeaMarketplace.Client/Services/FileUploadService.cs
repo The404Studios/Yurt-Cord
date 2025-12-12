@@ -2,6 +2,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using VeaMarketplace.Shared.DTOs;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace VeaMarketplace.Client.Services;
 
@@ -19,6 +20,13 @@ public class FileUploadService : IFileUploadService
 {
     private readonly HttpClient _httpClient;
     private const string BaseUrl = "http://162.248.94.23:5000/api/files";
+
+    // Shared JSON options for consistent serialization
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
 
     public FileUploadService()
     {
@@ -53,10 +61,8 @@ public class FileUploadService : IFileUploadService
             var response = await _httpClient.SendAsync(request);
             var json = await response.Content.ReadAsStringAsync();
 
-            return JsonSerializer.Deserialize<FileUploadResponse>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            }) ?? new FileUploadResponse { Success = false, Message = "Failed to parse response" };
+            return JsonSerializer.Deserialize<FileUploadResponse>(json, JsonOptions)
+                ?? new FileUploadResponse { Success = false, Message = "Failed to parse response" };
         }
         catch (Exception ex)
         {
@@ -106,10 +112,8 @@ public class FileUploadService : IFileUploadService
             var response = await _httpClient.SendAsync(request);
             var json = await response.Content.ReadAsStringAsync();
 
-            return JsonSerializer.Deserialize<ProfileImageUploadResponse>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            }) ?? new ProfileImageUploadResponse { Success = false, Message = "Failed to parse response" };
+            return JsonSerializer.Deserialize<ProfileImageUploadResponse>(json, JsonOptions)
+                ?? new ProfileImageUploadResponse { Success = false, Message = "Failed to parse response" };
         }
         catch (Exception ex)
         {

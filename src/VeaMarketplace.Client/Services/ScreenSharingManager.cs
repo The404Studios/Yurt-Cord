@@ -42,12 +42,14 @@ public class ScreenSharingManager : IScreenSharingManager
     private DateTime _lastStatsUpdate = DateTime.Now;
     private int _frameNumber;
 
-    // Adaptive quality
+    // Adaptive quality - only adjusts JPEG quality, NEVER reduces FPS for smooth streaming
     private readonly Queue<double> _sendTimeHistory = new();
     private const int SendTimeHistorySize = 30;
     private int _consecutiveSlowFrames;
     private int _consecutiveFastFrames;
     private const int AdaptiveThreshold = 10;
+    private int _initialTargetFps; // Store initial FPS to maintain steady framerate
+    private int _initialJpegQuality; // Store initial quality for reference
 
     // Bitmap reuse for capture efficiency
     private Bitmap? _captureBitmap;
@@ -171,6 +173,10 @@ public class ScreenSharingManager : IScreenSharingManager
         _settings = settings ?? new ScreenShareSettings();
         _isSharing = true;
         _frameNumber = 0;
+
+        // Store initial settings for maintaining steady framerate
+        _initialTargetFps = _settings.TargetFps;
+        _initialJpegQuality = _settings.JpegQuality;
 
         // Reset stats
         _stats = new ScreenShareStats
@@ -403,8 +409,8 @@ public class ScreenSharingManager : IScreenSharingManager
 
                     if (frameData != null && frameData.Length > 0)
                     {
-                        // Queue frame (limit queue size to prevent memory buildup)
-                        if (_frameQueue.Count < 4)
+                        // Queue frame with larger buffer to handle network jitter for steady FPS
+                        if (_frameQueue.Count < 10)
                         {
                             _frameQueue.Enqueue(new CapturedFrame
                             {
@@ -642,8 +648,11 @@ public class ScreenSharingManager : IScreenSharingManager
     {
         lock (_settingsLock)
         {
-            // First try reducing quality
-            if (_settings.JpegQuality > 25)
+            // IMPORTANT: Never reduce FPS to maintain steady framerate - only adjust quality/resolution
+            // This ensures smooth 60fps streaming without stuttering
+
+            // First try reducing JPEG quality (most impact on bitrate with least visual impact)
+            if (_settings.JpegQuality > 20)
             {
                 _settings.JpegQuality -= 5;
                 _stats.CurrentQuality = _settings.JpegQuality;
@@ -653,23 +662,24 @@ public class ScreenSharingManager : IScreenSharingManager
                 }
                 Debug.WriteLine($"Adaptive: Reduced quality to {_settings.JpegQuality}");
             }
-            // Then try reducing FPS
-            else if (_settings.TargetFps > 15)
-            {
-                _settings.TargetFps = Math.Max(15, _settings.TargetFps - 10);
-                _stats.TargetFps = _settings.TargetFps;
-                Debug.WriteLine($"Adaptive: Reduced FPS to {_settings.TargetFps}");
-            }
-            // Finally reduce resolution
+            // If quality is already minimum, reduce resolution instead
             else if (_settings.TargetWidth > 854)
             {
                 _settings.TargetWidth = 854;
                 _settings.TargetHeight = 480;
                 _stats.CurrentWidth = _settings.TargetWidth;
                 _stats.CurrentHeight = _settings.TargetHeight;
+                // Reset quality since resolution reduced
+                _settings.JpegQuality = Math.Max(40, _initialJpegQuality - 10);
+                _stats.CurrentQuality = _settings.JpegQuality;
+                if (_encoderParams != null)
+                {
+                    _encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, (long)_settings.JpegQuality);
+                }
                 ReinitializeResizeBitmap();
                 Debug.WriteLine("Adaptive: Reduced resolution to 480p");
             }
+            // FPS stays constant at initialTargetFps for smooth streaming
         }
     }
 
@@ -677,10 +687,10 @@ public class ScreenSharingManager : IScreenSharingManager
     {
         lock (_settingsLock)
         {
-            // Increase quality if below initial setting
-            if (_settings.JpegQuality < 55)
+            // Increase JPEG quality if below initial setting (never modify FPS)
+            if (_settings.JpegQuality < _initialJpegQuality)
             {
-                _settings.JpegQuality += 5;
+                _settings.JpegQuality = Math.Min(_initialJpegQuality, _settings.JpegQuality + 5);
                 _stats.CurrentQuality = _settings.JpegQuality;
                 if (_encoderParams != null)
                 {
@@ -688,12 +698,7 @@ public class ScreenSharingManager : IScreenSharingManager
                 }
                 Debug.WriteLine($"Adaptive: Increased quality to {_settings.JpegQuality}");
             }
-            else if (_settings.TargetFps < 60)
-            {
-                _settings.TargetFps = Math.Min(60, _settings.TargetFps + 10);
-                _stats.TargetFps = _settings.TargetFps;
-                Debug.WriteLine($"Adaptive: Increased FPS to {_settings.TargetFps}");
-            }
+            // FPS is always kept constant at _initialTargetFps
         }
     }
 
