@@ -1,0 +1,353 @@
+<UserControl x:Class="VeaMarketplace.Client.Views.ServerBrowserView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:VeaMarketplace.Client.Views"
+             xmlns:converters="clr-namespace:VeaMarketplace.Client.Converters"
+             Background="#1E1F22">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Colors.xaml"/>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+            <converters:NullToVisibilityConverter x:Key="NullToVisibility"/>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#2B2D31" Padding="20,16">
+            <Grid>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Server Browser" FontSize="24" FontWeight="Bold"
+                               Foreground="White"/>
+                    <TextBlock x:Name="RoomCountText" Text=" (0 active)" FontSize="24"
+                               Foreground="#B5BAC1" Margin="4,0,0,0"/>
+                </StackPanel>
+
+                <Button x:Name="CreateRoomBtn" Style="{StaticResource PrimaryButton}"
+                        Content="+ Create Room" Padding="16,8" HorizontalAlignment="Right"
+                        Click="CreateRoom_Click"/>
+            </Grid>
+        </Border>
+
+        <!-- Search and Filters -->
+        <Border Grid.Row="1" Background="#2B2D31" Padding="20,12" Margin="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Search Box -->
+                <Border Grid.Column="0" Background="#1E1F22" CornerRadius="4"
+                        Padding="12,8" Margin="0,0,16,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="🔍" FontSize="14" Foreground="#72767D"
+                                   VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBox x:Name="SearchBox" Grid.Column="1"
+                                 Background="Transparent" BorderThickness="0"
+                                 Foreground="White" FontSize="14"
+                                 VerticalAlignment="Center"
+                                 KeyDown="SearchBox_KeyDown">
+                            <TextBox.Style>
+                                <Style TargetType="TextBox">
+                                    <Setter Property="CaretBrush" Value="White"/>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+                        <TextBlock x:Name="SearchPlaceholder" Grid.Column="1" Text="Search rooms..."
+                                   Foreground="#72767D" FontSize="14"
+                                   VerticalAlignment="Center" IsHitTestVisible="False"/>
+                    </Grid>
+                </Border>
+
+                <!-- Category Filter -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button x:Name="AllCategoryBtn" Content="All" Tag=""
+                            Style="{StaticResource SecondaryButton}"
+                            Margin="0,0,4,0" Click="CategoryFilter_Click"/>
+                    <Button Content="Gaming" Tag="Gaming"
+                            Style="{StaticResource SecondaryButton}"
+                            Margin="0,0,4,0" Click="CategoryFilter_Click"/>
+                    <Button Content="Music" Tag="Music"
+                            Style="{StaticResource SecondaryButton}"
+                            Margin="0,0,4,0" Click="CategoryFilter_Click"/>
+                    <Button Content="Study" Tag="Study"
+                            Style="{StaticResource SecondaryButton}"
+                            Margin="0,0,4,0" Click="CategoryFilter_Click"/>
+                    <Button Content="Social" Tag="Social"
+                            Style="{StaticResource SecondaryButton}"
+                            Margin="0,0,4,0" Click="CategoryFilter_Click"/>
+                    <Button Content="Work" Tag="Work"
+                            Style="{StaticResource SecondaryButton}"
+                            Click="CategoryFilter_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Room List -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="20">
+            <Grid>
+                <!-- No Rooms Message -->
+                <StackPanel x:Name="NoRoomsPanel" VerticalAlignment="Center"
+                            HorizontalAlignment="Center" Visibility="Collapsed">
+                    <TextBlock Text="🔊" FontSize="64" HorizontalAlignment="Center"
+                               Foreground="#5865F2" Margin="0,0,0,16"/>
+                    <TextBlock Text="No active voice rooms" FontSize="18"
+                               Foreground="#B5BAC1" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Be the first to create one!" FontSize="14"
+                               Foreground="#72767D" HorizontalAlignment="Center"
+                               Margin="0,8,0,0"/>
+                </StackPanel>
+
+                <!-- Room Grid -->
+                <ItemsControl x:Name="RoomsItemsControl">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Width="320" Margin="0,0,16,16" CornerRadius="8"
+                                    Background="#2B2D31" Cursor="Hand"
+                                    MouseLeftButtonUp="RoomCard_Click" Tag="{Binding}">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="8" ShadowDepth="2"
+                                                      Opacity="0.3" Color="Black"/>
+                                </Border.Effect>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Room Header -->
+                                    <Border Grid.Row="0" Background="#36393F"
+                                            CornerRadius="8,8,0,0" Padding="16,12">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Name}"
+                                                           FontSize="16" FontWeight="SemiBold"
+                                                           Foreground="White"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                    <TextBlock Text="{Binding Category}"
+                                                               FontSize="11" Foreground="#5865F2"
+                                                               Margin="0,0,8,0"/>
+                                                    <TextBlock Text="🔒" FontSize="11"
+                                                               Visibility="{Binding Password, Converter={StaticResource NullToVisibility}}"
+                                                               Foreground="#FFA500"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                                        VerticalAlignment="Center">
+                                                <TextBlock Text="👥" FontSize="14" Margin="0,0,4,0"/>
+                                                <TextBlock FontSize="14" Foreground="#B5BAC1">
+                                                    <TextBlock.Text>
+                                                        <MultiBinding StringFormat="{}{0}/{1}">
+                                                            <Binding Path="CurrentParticipants"/>
+                                                            <Binding Path="MaxParticipants"/>
+                                                        </MultiBinding>
+                                                    </TextBlock.Text>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Room Info -->
+                                    <StackPanel Grid.Row="1" Margin="16,12">
+                                        <TextBlock Text="{Binding Description}"
+                                                   FontSize="13" Foreground="#B5BAC1"
+                                                   TextWrapping="Wrap" MaxHeight="40"
+                                                   TextTrimming="CharacterEllipsis"/>
+
+                                        <!-- Host Info -->
+                                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                            <Border Width="24" Height="24" CornerRadius="12">
+                                                <Border.Background>
+                                                    <ImageBrush ImageSource="{Binding HostAvatarUrl}"
+                                                                Stretch="UniformToFill"/>
+                                                </Border.Background>
+                                            </Border>
+                                            <TextBlock Text="{Binding HostUsername}"
+                                                       FontSize="12" Foreground="#72767D"
+                                                       VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                            <TextBlock Text="(Host)" FontSize="11"
+                                                       Foreground="#5865F2" VerticalAlignment="Center"
+                                                       Margin="4,0,0,0"/>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Join Button -->
+                                    <Border Grid.Row="2" Background="#36393F"
+                                            CornerRadius="0,0,8,8" Padding="16,10">
+                                        <Button Style="{StaticResource PrimaryButton}"
+                                                Content="Join Room" HorizontalAlignment="Stretch"
+                                                Click="JoinRoom_Click" Tag="{Binding}"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- Create Room Modal -->
+        <Border x:Name="CreateRoomModal" Grid.RowSpan="3" Background="#80000000"
+                Visibility="Collapsed" MouseDown="Modal_MouseDown">
+            <Border Background="#2B2D31" CornerRadius="8" Width="450"
+                    VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Padding="24">
+                <StackPanel>
+                    <TextBlock Text="Create Voice Room" FontSize="20" FontWeight="Bold"
+                               Foreground="White" Margin="0,0,0,20"/>
+
+                    <!-- Room Name -->
+                    <TextBlock Text="ROOM NAME" FontSize="11" FontWeight="SemiBold"
+                               Foreground="#B5BAC1" Margin="0,0,0,8"/>
+                    <TextBox x:Name="NewRoomNameBox" Background="#1E1F22"
+                             Foreground="White" BorderThickness="0" Padding="12,10"
+                             FontSize="14" Margin="0,0,0,16"/>
+
+                    <!-- Description -->
+                    <TextBlock Text="DESCRIPTION" FontSize="11" FontWeight="SemiBold"
+                               Foreground="#B5BAC1" Margin="0,0,0,8"/>
+                    <TextBox x:Name="NewRoomDescBox" Background="#1E1F22"
+                             Foreground="White" BorderThickness="0" Padding="12,10"
+                             FontSize="14" Margin="0,0,0,16" Height="60"
+                             TextWrapping="Wrap" AcceptsReturn="True"/>
+
+                    <!-- Category -->
+                    <TextBlock Text="CATEGORY" FontSize="11" FontWeight="SemiBold"
+                               Foreground="#B5BAC1" Margin="0,0,0,8"/>
+                    <ComboBox x:Name="NewRoomCategoryBox" Background="#1E1F22"
+                              Foreground="White" BorderThickness="0" Padding="12,10"
+                              FontSize="14" Margin="0,0,0,16">
+                        <ComboBoxItem Content="General" Tag="General" IsSelected="True"/>
+                        <ComboBoxItem Content="Gaming" Tag="Gaming"/>
+                        <ComboBoxItem Content="Music" Tag="Music"/>
+                        <ComboBoxItem Content="Study" Tag="Study"/>
+                        <ComboBoxItem Content="Work" Tag="Work"/>
+                        <ComboBoxItem Content="Social" Tag="Social"/>
+                        <ComboBoxItem Content="Movies" Tag="Movies"/>
+                        <ComboBoxItem Content="Sports" Tag="Sports"/>
+                        <ComboBoxItem Content="Other" Tag="Other"/>
+                    </ComboBox>
+
+                    <!-- Settings Row -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Max Participants -->
+                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                            <TextBlock Text="MAX PARTICIPANTS" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="#B5BAC1" Margin="0,0,0,8"/>
+                            <TextBox x:Name="NewRoomMaxBox" Background="#1E1F22"
+                                     Foreground="White" BorderThickness="0" Padding="12,10"
+                                     FontSize="14" Text="10"/>
+                        </StackPanel>
+
+                        <!-- Visibility -->
+                        <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                            <TextBlock Text="VISIBILITY" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="#B5BAC1" Margin="0,0,0,8"/>
+                            <ComboBox x:Name="NewRoomVisibilityBox" Background="#1E1F22"
+                                      Foreground="White" BorderThickness="0" Padding="12,10"
+                                      FontSize="14">
+                                <ComboBoxItem Content="Public" Tag="Public" IsSelected="True"/>
+                                <ComboBoxItem Content="Private" Tag="Private"/>
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Password (for private) -->
+                    <StackPanel x:Name="PasswordSection" Visibility="Collapsed">
+                        <TextBlock Text="PASSWORD (optional)" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="#B5BAC1" Margin="0,0,0,8"/>
+                        <PasswordBox x:Name="NewRoomPasswordBox" Background="#1E1F22"
+                                     Foreground="White" BorderThickness="0" Padding="12,10"
+                                     FontSize="14" Margin="0,0,0,16"/>
+                    </StackPanel>
+
+                    <!-- Screen Share Toggle -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                        <CheckBox x:Name="AllowScreenShareCheck" IsChecked="True"/>
+                        <TextBlock Text="Allow screen sharing" FontSize="13"
+                                   Foreground="#B5BAC1" Margin="8,0,0,0"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Buttons -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Cancel" Style="{StaticResource SecondaryButton}"
+                                Padding="20,10" Margin="0,0,12,0"
+                                Click="CancelCreateRoom_Click"/>
+                        <Button Content="Create Room" Style="{StaticResource PrimaryButton}"
+                                Padding="20,10" Click="ConfirmCreateRoom_Click"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- Password Entry Modal -->
+        <Border x:Name="PasswordModal" Grid.RowSpan="3" Background="#80000000"
+                Visibility="Collapsed" MouseDown="Modal_MouseDown">
+            <Border Background="#2B2D31" CornerRadius="8" Width="350"
+                    VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Padding="24">
+                <StackPanel>
+                    <TextBlock Text="🔒 Password Required" FontSize="18" FontWeight="Bold"
+                               Foreground="White" Margin="0,0,0,16"/>
+                    <TextBlock x:Name="PasswordRoomNameText" FontSize="14"
+                               Foreground="#B5BAC1" Margin="0,0,0,16"/>
+
+                    <TextBlock Text="ENTER PASSWORD" FontSize="11" FontWeight="SemiBold"
+                               Foreground="#B5BAC1" Margin="0,0,0,8"/>
+                    <PasswordBox x:Name="JoinPasswordBox" Background="#1E1F22"
+                                 Foreground="White" BorderThickness="0" Padding="12,10"
+                                 FontSize="14" Margin="0,0,0,16"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Cancel" Style="{StaticResource SecondaryButton}"
+                                Padding="20,10" Margin="0,0,12,0"
+                                Click="CancelPassword_Click"/>
+                        <Button Content="Join" Style="{StaticResource PrimaryButton}"
+                                Padding="20,10" Click="ConfirmPassword_Click"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- Loading Overlay -->
+        <Border x:Name="LoadingOverlay" Grid.RowSpan="3" Background="#80000000"
+                Visibility="Collapsed">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <TextBlock Text="Loading rooms..." FontSize="16" Foreground="White"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>
