@@ -9,31 +9,52 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Header -->
         <Border Grid.Row="0" Background="#2B2D31" Padding="12,8">
             <Grid>
                 <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="LIVE" FontSize="10" Foreground="White" FontWeight="Bold"
+                               VerticalAlignment="Center" Margin="0,0,8,0">
+                        <TextBlock.Background>
+                            <SolidColorBrush Color="#ED4245"/>
+                        </TextBlock.Background>
+                    </TextBlock>
+                    <Border Background="#ED4245" CornerRadius="3" Padding="6,2" Margin="0,0,8,0"
+                            x:Name="LiveBadge">
+                        <TextBlock Text="LIVE" FontSize="10" Foreground="White" FontWeight="Bold"/>
+                    </Border>
                     <TextBlock Text="🖥" FontSize="18" VerticalAlignment="Center" Margin="0,0,8,0"/>
                     <TextBlock x:Name="SharerNameText" Text="Screen Share" FontSize="14"
                                Foreground="White" VerticalAlignment="Center" FontWeight="SemiBold"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <!-- Quality Indicator -->
+                    <Border x:Name="QualityBadge" CornerRadius="3" Padding="6,2" Margin="0,0,8,0"
+                            Background="#57F287">
+                        <TextBlock x:Name="QualityText" Text="HD" FontSize="10"
+                                   Foreground="White" FontWeight="Bold"/>
+                    </Border>
                     <TextBlock x:Name="ResolutionText" Text="1920x1080" FontSize="12"
                                Foreground="#B5BAC1" VerticalAlignment="Center" Margin="0,0,12,0"/>
                     <TextBlock x:Name="FpsText" Text="0 FPS" FontSize="12"
                                Foreground="#B5BAC1" VerticalAlignment="Center" Margin="0,0,12,0"/>
-                    <Button Content="Fullscreen" Click="Fullscreen_Click"
-                            Background="#5865F2" Foreground="White"
-                            BorderThickness="0" Padding="12,6"/>
+                    <TextBlock x:Name="BitrateText" Text="0 Mbps" FontSize="12"
+                               Foreground="#B5BAC1" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                    <Button Content="⛶" ToolTip="Fullscreen (F11)" Click="Fullscreen_Click"
+                            Background="#5865F2" Foreground="White" FontSize="16"
+                            BorderThickness="0" Padding="10,4" Cursor="Hand"/>
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- Screen Content -->
         <Border Grid.Row="1" Background="#000000">
-            <Image x:Name="ScreenImage" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+            <Image x:Name="ScreenImage" Stretch="Uniform"
+                   RenderOptions.BitmapScalingMode="NearestNeighbor"
+                   RenderOptions.EdgeMode="Aliased"/>
         </Border>
 
         <!-- No Stream Message -->
@@ -42,6 +63,23 @@
             <TextBlock Text="📺" FontSize="64" HorizontalAlignment="Center" Margin="0,0,0,12"/>
             <TextBlock Text="Waiting for screen share..." FontSize="18"
                        Foreground="#B5BAC1" HorizontalAlignment="Center"/>
+            <TextBlock x:Name="ConnectionStatusText" Text="Connecting..." FontSize="12"
+                       Foreground="#72767D" HorizontalAlignment="Center" Margin="0,8,0,0"/>
         </StackPanel>
+
+        <!-- Stats Panel (bottom overlay) -->
+        <Border Grid.Row="2" Background="#2B2D31" Padding="8,4"
+                x:Name="StatsPanel" Visibility="Collapsed">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <TextBlock x:Name="FrameBufferText" Text="Buffer: 0" FontSize="11"
+                           Foreground="#72767D" Margin="0,0,16,0"/>
+                <TextBlock x:Name="DroppedFramesText" Text="Dropped: 0" FontSize="11"
+                           Foreground="#72767D" Margin="0,0,16,0"/>
+                <TextBlock x:Name="LatencyText" Text="Latency: 0ms" FontSize="11"
+                           Foreground="#72767D" Margin="0,0,16,0"/>
+                <TextBlock x:Name="TotalBytesText" Text="Received: 0 MB" FontSize="11"
+                           Foreground="#72767D"/>
+            </StackPanel>
+        </Border>
     </Grid>
 </Window>

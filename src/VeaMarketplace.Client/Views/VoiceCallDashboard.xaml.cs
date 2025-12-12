@@ -19,11 +19,12 @@ public partial class VoiceCallDashboard : UserControl
     private bool _isDeafened;
     private string? _currentScreenSharerConnectionId;
     private int _frameCount;
-    private DateTime _lastFpsUpdate = DateTime.Now;
+    private int _lastWidth;
+    private int _lastHeight;
     private bool _isViewingSelfPreview;
     private bool _previewHidden;
     private int _selfPreviewFrameCount;
-    private DateTime _lastSelfFpsUpdate = DateTime.Now;
+    private System.Windows.Threading.DispatcherTimer? _statsTimer;
 
     // Channel name mapping
     private static readonly Dictionary<string, string> ChannelDisplayNames = new()
@@ -49,6 +50,22 @@ public partial class VoiceCallDashboard : UserControl
         SetupEventHandlers();
         UpdateSelfInfo();
         LoadOutputDevices();
+
+        // Stats timer for FPS display (update once per second, not on every frame)
+        _statsTimer = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(1)
+        };
+        _statsTimer.Tick += (s, e) =>
+        {
+            if (_lastWidth > 0 && _lastHeight > 0)
+            {
+                StreamFpsText.Text = $"{_frameCount} FPS | {_lastWidth}x{_lastHeight}";
+            }
+            _frameCount = 0;
+            _selfPreviewFrameCount = 0;
+        };
+        _statsTimer.Start();
     }
 
     private void LoadOutputDevices()
@@ -175,34 +192,33 @@ public partial class VoiceCallDashboard : UserControl
 
         _voiceService.OnScreenFrameReceived += (senderConnectionId, frameData, width, height) =>
         {
-            // Use BeginInvoke for non-blocking async UI updates to prevent stuttering
+            // Track stats without UI update
+            _frameCount++;
+            _lastWidth = width;
+            _lastHeight = height;
+
+            // Use BeginInvoke for non-blocking async UI updates
             Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Render, () =>
             {
                 try
                 {
-                    // Update FPS counter
-                    _frameCount++;
-                    var now = DateTime.Now;
-                    if ((now - _lastFpsUpdate).TotalSeconds >= 1)
+                    // Only update stream info UI when switching streams (not every frame)
+                    if (_currentScreenSharerConnectionId != senderConnectionId)
                     {
-                        StreamFpsText.Text = $"{_frameCount} FPS | {width}x{height}";
-                        _frameCount = 0;
-                        _lastFpsUpdate = now;
+                        _currentScreenSharerConnectionId = senderConnectionId;
+                        var sharer = _participants.FirstOrDefault(p => p.ConnectionId == senderConnectionId);
+                        StreamerNameText.Text = sharer?.Username ?? "Unknown";
+                        StreamInfoPanel.Visibility = Visibility.Visible;
+                        NoStreamPanel.Visibility = Visibility.Collapsed;
+                        ScreenShareImage.Visibility = Visibility.Visible;
                     }
 
-                    // Show stream info
-                    _currentScreenSharerConnectionId = senderConnectionId;
-                    var sharer = _participants.FirstOrDefault(p => p.ConnectionId == senderConnectionId);
-                    StreamerNameText.Text = sharer?.Username ?? "Unknown";
-                    StreamInfoPanel.Visibility = Visibility.Visible;
-                    NoStreamPanel.Visibility = Visibility.Collapsed;
-                    ScreenShareImage.Visibility = Visibility.Visible;
-
-                    // Display frame
+                    // Display frame directly
                     using var ms = new MemoryStream(frameData);
                     var bitmap = new BitmapImage();
                     bitmap.BeginInit();
                     bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmap.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
                     bitmap.StreamSource = ms;
                     bitmap.EndInit();
                     bitmap.Freeze();
@@ -248,7 +264,6 @@ public partial class VoiceCallDashboard : UserControl
                         NoStreamPanel.Visibility = Visibility.Collapsed;
                         ScreenShareImage.Visibility = Visibility.Visible;
                         _frameCount = 0;
-                        _lastFpsUpdate = DateTime.Now;
                     }
                 }
                 else
@@ -305,45 +320,40 @@ public partial class VoiceCallDashboard : UserControl
         // Subscribe to local screen share frames for self-preview
         _voiceService.OnLocalScreenFrameReady += (frameData, width, height) =>
         {
-            // Use BeginInvoke for non-blocking async UI updates to prevent stuttering
+            // Track stats
+            _selfPreviewFrameCount++;
+
+            // Only process if we're viewing self preview and not hidden
+            if (!_voiceService.IsScreenSharing || !_isViewingSelfPreview || _previewHidden)
+                return;
+
+            // Use BeginInvoke for non-blocking async UI updates
             Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Render, () =>
             {
                 try
                 {
-                    // Update self preview frame count
-                    _selfPreviewFrameCount++;
-                    var now = DateTime.Now;
-                    if ((now - _lastSelfFpsUpdate).TotalSeconds >= 1)
-                    {
-                        _lastSelfFpsUpdate = now;
-                        _selfPreviewFrameCount = 0;
-                    }
-
-                    // Show self preview toggle if we're sharing
-                    if (_voiceService.IsScreenSharing)
+                    // Update visibility only once when starting preview
+                    if (SelfSharePreviewToggle.Visibility != Visibility.Visible)
                     {
                         SelfSharePreviewToggle.Visibility = Visibility.Visible;
                         UpdateActiveSharesVisibility();
-
-                        // Display self preview if viewing self and not hidden
-                        if (_isViewingSelfPreview && !_previewHidden)
-                        {
-                            using var ms = new MemoryStream(frameData);
-                            var bitmap = new BitmapImage();
-                            bitmap.BeginInit();
-                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                            bitmap.StreamSource = ms;
-                            bitmap.EndInit();
-                            bitmap.Freeze();
-
-                            ScreenShareImage.Source = bitmap;
-                            ScreenShareImage.Visibility = Visibility.Visible;
-                            NoStreamPanel.Visibility = Visibility.Collapsed;
-                            StreamInfoPanel.Visibility = Visibility.Visible;
-                            StreamerNameText.Text = "You (Preview)";
-                            StreamFpsText.Text = $"SHARING | {width}x{height}";
-                        }
+                        ScreenShareImage.Visibility = Visibility.Visible;
+                        NoStreamPanel.Visibility = Visibility.Collapsed;
+                        StreamInfoPanel.Visibility = Visibility.Visible;
+                        StreamerNameText.Text = "You (Preview)";
                     }
+
+                    // Display frame
+                    using var ms = new MemoryStream(frameData);
+                    var bitmap = new BitmapImage();
+                    bitmap.BeginInit();
+                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmap.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
+                    bitmap.StreamSource = ms;
+                    bitmap.EndInit();
+                    bitmap.Freeze();
+
+                    ScreenShareImage.Source = bitmap;
                 }
                 catch
                 {
@@ -548,7 +558,11 @@ public partial class VoiceCallDashboard : UserControl
         {
             VolumeText.Text = $"{(int)e.NewValue}%";
         }
-        // Note: Would need to implement master volume in VoiceService
+        // Set master volume (slider 0-100 maps to 0.0-1.0)
+        if (_voiceService != null)
+        {
+            _voiceService.MasterVolume = (float)(e.NewValue / 100.0);
+        }
     }
 
     #endregion
@@ -635,7 +649,6 @@ public partial class VoiceCallDashboard : UserControl
             NoStreamPanel.Visibility = Visibility.Collapsed;
             ScreenShareImage.Visibility = Visibility.Visible;
             _frameCount = 0;
-            _lastFpsUpdate = DateTime.Now;
         }
     }
 

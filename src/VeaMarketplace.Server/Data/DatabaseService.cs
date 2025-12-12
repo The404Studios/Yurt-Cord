@@ -22,7 +22,11 @@ public class DatabaseService : IDisposable
 
     public DatabaseService(IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("LiteDb") ?? "Data/marketplace.db";
+        var configuredPath = configuration.GetConnectionString("LiteDb") ?? "Data/marketplace.db";
+
+        // Build connection string with shared mode for concurrent access
+        // This prevents "use EnterTransaction() before EnterLock(name)" errors
+        var connectionString = $"Filename={configuredPath};Connection=Shared";
         _database = new LiteDatabase(connectionString);
 
         // Ensure indexes

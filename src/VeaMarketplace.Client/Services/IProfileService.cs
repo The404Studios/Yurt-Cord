@@ -34,6 +34,7 @@ public class ProfileService : IProfileService, IAsyncDisposable
 {
     private HubConnection? _connection;
     private const string HubUrl = "http://162.248.94.23:5000/hubs/profile";
+    private string? _authToken;
 
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
     public UserDto? CurrentProfile { get; private set; }
@@ -49,6 +50,14 @@ public class ProfileService : IProfileService, IAsyncDisposable
 
     public async Task ConnectAsync(string token)
     {
+        _authToken = token;
+
+        // Dispose existing connection if any
+        if (_connection != null)
+        {
+            await _connection.DisposeAsync().ConfigureAwait(false);
+        }
+
         _connection = new HubConnectionBuilder()
             .WithUrl(HubUrl)
             .WithAutomaticReconnect()
@@ -59,6 +68,15 @@ public class ProfileService : IProfileService, IAsyncDisposable
                 options.PayloadSerializerOptions.PropertyNameCaseInsensitive = true;
             })
             .Build();
+
+        // Handle reconnection - re-authenticate when reconnected
+        _connection.Reconnected += async (connectionId) =>
+        {
+            if (_authToken != null)
+            {
+                await _connection.InvokeAsync("Authenticate", _authToken).ConfigureAwait(false);
+            }
+        };
 
         RegisterHandlers();
         await _connection.StartAsync().ConfigureAwait(false);

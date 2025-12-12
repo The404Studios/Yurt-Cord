@@ -37,6 +37,7 @@ public class ChatService : IChatService, IAsyncDisposable
     private HubConnection? _connection;
     private readonly INotificationService _notificationService;
     private const string HubUrl = "http://162.248.94.23:5000/hubs/chat";
+    private string? _authToken;
 
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
 
@@ -59,6 +60,14 @@ public class ChatService : IChatService, IAsyncDisposable
 
     public async Task ConnectAsync(string token)
     {
+        _authToken = token;
+
+        // Dispose existing connection if any
+        if (_connection != null)
+        {
+            await _connection.DisposeAsync().ConfigureAwait(false);
+        }
+
         _connection = new HubConnectionBuilder()
             .WithUrl(HubUrl)
             .WithAutomaticReconnect()
@@ -69,6 +78,15 @@ public class ChatService : IChatService, IAsyncDisposable
                 options.PayloadSerializerOptions.PropertyNameCaseInsensitive = true;
             })
             .Build();
+
+        // Handle reconnection - re-authenticate when reconnected
+        _connection.Reconnected += async (connectionId) =>
+        {
+            if (_authToken != null)
+            {
+                await _connection.InvokeAsync("Authenticate", _authToken).ConfigureAwait(false);
+            }
+        };
 
         RegisterHandlers();
 
@@ -144,8 +162,18 @@ public class ChatService : IChatService, IAsyncDisposable
 
     public async Task SendMessageAsync(string content, string channel = "general")
     {
-        if (_connection != null && IsConnected)
+        if (_connection == null) return;
+
+        // Wait briefly for connection if reconnecting
+        if (_connection.State == HubConnectionState.Reconnecting)
+        {
+            await Task.Delay(500).ConfigureAwait(false);
+        }
+
+        if (IsConnected)
+        {
             await _connection.InvokeAsync("SendMessage", content, channel).ConfigureAwait(false);
+        }
     }
 
     public async Task DeleteMessageAsync(string messageId, string channel = "general")
@@ -162,8 +190,18 @@ public class ChatService : IChatService, IAsyncDisposable
 
     public async Task SendMessageWithAttachmentsAsync(string content, string channel, List<MessageAttachmentDto> attachments)
     {
-        if (_connection != null && IsConnected)
+        if (_connection == null) return;
+
+        // Wait briefly for connection if reconnecting
+        if (_connection.State == HubConnectionState.Reconnecting)
+        {
+            await Task.Delay(500).ConfigureAwait(false);
+        }
+
+        if (IsConnected)
+        {
             await _connection.InvokeAsync("SendMessageWithAttachments", content, channel, attachments).ConfigureAwait(false);
+        }
     }
 
     public async Task UpdateProfileAsync(string? avatarUrl = null, string? bannerUrl = null)

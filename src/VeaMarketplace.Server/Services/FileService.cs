@@ -27,7 +27,8 @@ public class FileService
     // Allowed MIME types
     private static readonly HashSet<string> AllowedImageTypes = new()
     {
-        "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/bmp"
+        "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/bmp",
+        "image/x-icon", "image/vnd.microsoft.icon", "image/ico"
     };
 
     private static readonly HashSet<string> AllowedVideoTypes = new()
@@ -262,6 +263,14 @@ public class FileService
     public StoredFile? GetFile(string fileId)
     {
         return _files.FindById(fileId);
+    }
+
+    /// <summary>
+    /// Get the base upload path for file storage
+    /// </summary>
+    public string GetUploadBasePath()
+    {
+        return _uploadPath;
     }
 
     /// <summary>

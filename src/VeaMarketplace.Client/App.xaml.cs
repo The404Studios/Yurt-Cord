@@ -37,6 +37,7 @@ public partial class App : Application
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<IAudioDeviceService, AudioDeviceService>();
         services.AddSingleton<IFriendService, FriendService>();
+        services.AddSingleton<IProfileService, ProfileService>();
         services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<IToastNotificationService, ToastNotificationService>();
         services.AddSingleton<IFileUploadService, FileUploadService>();
@@ -46,7 +47,7 @@ public partial class App : Application
         services.AddTransient<LoginViewModel>();
         services.AddTransient<RegisterViewModel>();
         services.AddTransient<MainViewModel>();
-        services.AddTransient<ChatViewModel>();
+        services.AddSingleton<ChatViewModel>(); // Singleton - shared chat state across all views
         services.AddTransient<MarketplaceViewModel>();
         services.AddTransient<ProfileViewModel>();
         services.AddTransient<VoiceChannelViewModel>();
