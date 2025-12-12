@@ -187,7 +187,8 @@ public unsafe class HardwareVideoEncoder : IDisposable
             if (ret < 0)
             {
                 Debug.WriteLine($"Failed to open encoder {encoderName}: {GetErrorMessage(ret)}");
-                ffmpeg.avcodec_free_context(&_codecContext);
+                fixed (AVCodecContext** ctx = &_codecContext)
+                    ffmpeg.avcodec_free_context(ctx);
                 _codecContext = null;
                 return false;
             }
@@ -264,9 +265,9 @@ public unsafe class HardwareVideoEncoder : IDisposable
 
                 try
                 {
-                    // Setup source data for color conversion using stackalloc
-                    var srcData = stackalloc byte*[4];
-                    var srcLinesize = stackalloc int[4];
+                    // Setup source data for color conversion using FFmpeg array types
+                    var srcData = new byte_ptrArray4();
+                    var srcLinesize = new int_array4();
 
                     srcData[0] = (byte*)bitmapData.Scan0;
                     srcLinesize[0] = bitmapData.Stride;
@@ -335,8 +336,8 @@ public unsafe class HardwareVideoEncoder : IDisposable
 
                 fixed (byte* srcPtr = bgrData)
                 {
-                    var srcData = stackalloc byte*[4];
-                    var srcLinesize = stackalloc int[4];
+                    var srcData = new byte_ptrArray4();
+                    var srcLinesize = new int_array4();
 
                     srcData[0] = srcPtr;
                     srcLinesize[0] = stride;

@@ -81,7 +81,7 @@ public interface IScreenShareViewerService
 
 public class ScreenShareViewerService : IScreenShareViewerService
 {
-    private readonly ConcurrentDictionary<string, BitmapImage> _latestFrames = new();
+    private readonly ConcurrentDictionary<string, BitmapSource> _latestFrames = new();
     private readonly ConcurrentDictionary<string, ScreenShareDto> _screenShares = new();
     private string? _viewingConnectionId;
     private string? _ownConnectionId;
