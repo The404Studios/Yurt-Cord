@@ -89,11 +89,13 @@ public class ScreenShareViewerService : IScreenShareViewerService
     // Jitter buffer for smooth playback - holds frames and releases at steady rate
     private readonly ConcurrentDictionary<string, ConcurrentQueue<BufferedFrame>> _frameBuffers = new();
     private readonly ConcurrentDictionary<string, int> _targetFps = new();
-    private DispatcherTimer? _playbackTimer;
+    private volatile DispatcherTimer? _playbackTimer;  // Volatile for thread-safe double-checked locking
     private readonly object _timerLock = new();
 
     // Hardware decoders for H.264 streams (one per sharer)
+    // Use ReaderWriterLockSlim for safe concurrent read/dispose
     private readonly ConcurrentDictionary<string, HardwareVideoDecoder> _h264Decoders = new();
+    private readonly ReaderWriterLockSlim _decoderLock = new();
 
     // Buffer settings - tuned for smooth high-FPS playback with memory trade-off
     private const int TargetBufferSize = 5;   // Buffer 5 frames before starting playback (increased for stability)
@@ -191,6 +193,8 @@ public class ScreenShareViewerService : IScreenShareViewerService
         // H.264 decoding can happen on background thread (hardware accelerated)
         System.Threading.Tasks.Task.Run(() =>
         {
+            // Use read lock to prevent decoder disposal while decoding
+            _decoderLock.EnterReadLock();
             try
             {
                 // Get or create decoder for this sharer
@@ -201,6 +205,9 @@ public class ScreenShareViewerService : IScreenShareViewerService
                     Debug.WriteLine($"Created H.264 decoder for {sharerConnectionId}: {d.DecoderName}");
                     return d;
                 });
+
+                // Check if decoder is still valid (not disposed)
+                if (decoder.IsDisposed) return;
 
                 // Decode frame
                 var decodedBitmap = decoder.DecodeFrame(frameData);
@@ -213,9 +220,17 @@ public class ScreenShareViewerService : IScreenShareViewerService
                     }, DispatcherPriority.Background);
                 }
             }
+            catch (ObjectDisposedException)
+            {
+                // Decoder was disposed, ignore
+            }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error decoding H.264 frame: {ex.Message}");
+            }
+            finally
+            {
+                _decoderLock.ExitReadLock();
             }
         });
     }
@@ -362,10 +377,19 @@ public class ScreenShareViewerService : IScreenShareViewerService
         _latestFrames.TryRemove(connectionId, out _);
         _frameBuffers.TryRemove(connectionId, out _); // Clear frame buffer
 
-        // Dispose H.264 decoder for this sharer
-        if (_h264Decoders.TryRemove(connectionId, out var decoder))
+        // Dispose H.264 decoder for this sharer with write lock
+        // This ensures no decode operations are in progress
+        _decoderLock.EnterWriteLock();
+        try
         {
-            decoder.Dispose();
+            if (_h264Decoders.TryRemove(connectionId, out var decoder))
+            {
+                decoder.Dispose();
+            }
+        }
+        finally
+        {
+            _decoderLock.ExitWriteLock();
         }
 
         if (_viewingConnectionId == connectionId)

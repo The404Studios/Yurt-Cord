@@ -20,11 +20,12 @@ public unsafe class HardwareVideoDecoder : IDisposable
     private SwsContext* _swsContext;
     private byte[] _rgbBuffer = Array.Empty<byte>();
     private bool _initialized;
-    private bool _disposed;
+    private volatile bool _disposed;  // Volatile for thread-safe reads
     private readonly object _lock = new();
 
     public string DecoderName { get; private set; } = "none";
     public bool IsHardwareAccelerated { get; private set; }
+    public bool IsDisposed => _disposed;  // Public property for external checks
     public int Width { get; private set; }
     public int Height { get; private set; }
 
@@ -134,6 +135,14 @@ public unsafe class HardwareVideoDecoder : IDisposable
             _frame = ffmpeg.av_frame_alloc();
             _rgbFrame = ffmpeg.av_frame_alloc();
             _packet = ffmpeg.av_packet_alloc();
+
+            // Verify all allocations succeeded
+            if (_frame == null || _rgbFrame == null || _packet == null)
+            {
+                Debug.WriteLine("Failed to allocate FFmpeg frame/packet structures");
+                Cleanup();
+                return false;
+            }
 
             DecoderName = decoderName;
             IsHardwareAccelerated = isHardware;

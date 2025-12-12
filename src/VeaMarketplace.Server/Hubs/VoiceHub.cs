@@ -837,6 +837,9 @@ public class VoiceHub : Hub
             }
         }
 
+        // Clean up viewer quality preferences for this connection
+        _viewerQualityPrefs.TryRemove(Context.ConnectionId, out _);
+
         // Now leave voice channel
         try
         {
@@ -855,10 +858,61 @@ public class VoiceHub : Hub
             }
         }
 
+        // Clean up voice room participation
+        // Find and remove this user from any voice rooms they're in
+        foreach (var room in _voiceRooms.Values.ToArray())
+        {
+            var participant = room.Participants.Values.FirstOrDefault(p => p.ConnectionId == Context.ConnectionId);
+            if (participant != null && room.Participants.TryRemove(participant.UserId, out var removedParticipant))
+            {
+                try
+                {
+                    await Clients.Group($"room_{room.Id}").SendAsync("VoiceRoomParticipantLeft", removedParticipant.ToDto());
+
+                    // If host left, transfer to next person or close room
+                    if (removedParticipant.IsHost)
+                    {
+                        if (room.Participants.Count > 0)
+                        {
+                            var newHost = room.Participants.Values.FirstOrDefault();
+                            if (newHost != null)
+                            {
+                                newHost.IsHost = true;
+                                room.HostId = newHost.UserId;
+                                room.HostUsername = newHost.Username;
+                                room.HostAvatarUrl = newHost.AvatarUrl;
+                                await Clients.Group($"room_{room.Id}").SendAsync("VoiceRoomHostChanged", newHost.ToDto());
+                            }
+                        }
+                        else
+                        {
+                            room.IsActive = false;
+                            _voiceRooms.TryRemove(room.Id, out _);
+                            if (room.IsPublic)
+                            {
+                                await Clients.All.SendAsync("VoiceRoomRemoved", room.Id);
+                            }
+                        }
+                    }
+                    else if (room.IsActive && room.IsPublic)
+                    {
+                        await Clients.All.SendAsync("VoiceRoomUpdated", room.ToDto());
+                    }
+                }
+                catch
+                {
+                    // Ignore errors during disconnect cleanup
+                }
+            }
+        }
+
         // Handle call disconnection
         if (_connectionUsers.TryRemove(Context.ConnectionId, out var userId))
         {
             _userConnections.TryRemove(userId, out _);
+
+            // Clean up bandwidth tracking for this user
+            _bandwidthUsage.TryRemove(userId, out _);
 
             // End any active calls
             if (_callService != null)
