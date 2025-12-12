@@ -9,6 +9,7 @@ public partial class LoginViewModel : BaseViewModel
     private readonly IApiService _apiService;
     private readonly IChatService _chatService;
     private readonly IFriendService _friendService;
+    private readonly IProfileService _profileService;
     private readonly ISettingsService _settingsService;
 
     [ObservableProperty]
@@ -32,11 +33,12 @@ public partial class LoginViewModel : BaseViewModel
     public event Action? OnLoginSuccess;
     public event Action<string>? OnLoginFailed;
 
-    public LoginViewModel(IApiService apiService, IChatService chatService, IFriendService friendService, ISettingsService settingsService)
+    public LoginViewModel(IApiService apiService, IChatService chatService, IFriendService friendService, IProfileService profileService, ISettingsService settingsService)
     {
         _apiService = apiService;
         _chatService = chatService;
         _friendService = friendService;
+        _profileService = profileService;
         _settingsService = settingsService;
 
         // Load saved credentials
@@ -74,11 +76,12 @@ public partial class LoginViewModel : BaseViewModel
                     _settingsService.SaveSettings();
                 }
 
-                // Connect to real-time services
+                // Connect to all real-time SignalR services
                 if (result.Token != null)
                 {
                     await _chatService.ConnectAsync(result.Token);
                     await _friendService.ConnectAsync(result.Token);
+                    await _profileService.ConnectAsync(result.Token);
                 }
 
                 OnLoginSuccess?.Invoke();
@@ -131,11 +134,12 @@ public partial class LoginViewModel : BaseViewModel
 
             if (result.Success)
             {
-                // Connect to real-time services
+                // Connect to all real-time SignalR services
                 if (result.Token != null)
                 {
                     await _chatService.ConnectAsync(result.Token);
                     await _friendService.ConnectAsync(result.Token);
+                    await _profileService.ConnectAsync(result.Token);
                 }
 
                 OnLoginSuccess?.Invoke();
