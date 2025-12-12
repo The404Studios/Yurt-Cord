@@ -171,7 +171,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     private WaveOutEvent? _waveOut;
     private BufferedWaveProvider? _bufferedWaveProvider;
     private const string HubUrl = "http://162.248.94.23:5000/hubs/voice";
-    private bool _isSpeaking;
+    private volatile bool _isSpeaking;  // Volatile for thread-safe reads/writes
     private DateTime _lastSpeakingUpdate = DateTime.MinValue;
     private readonly ConcurrentDictionary<string, VoiceUserState> _voiceUsers = new();
 
@@ -221,7 +221,8 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
     // Voice activity tracking for receive side
     // Ensures screen share yields when we're receiving audio too
-    private DateTime _lastAudioReceiveTime = DateTime.MinValue;
+    // Using ticks with Interlocked for thread-safe DateTime operations
+    private long _lastAudioReceiveTimeTicks = DateTime.MinValue.Ticks;
     private const int AudioReceiveTimeoutMs = 200; // Consider voice inactive after 200ms of silence
 
     public VoiceService()
@@ -509,9 +510,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             if (IsDeafened || IsUserMuted(senderConnectionId)) return;
             if (opusData.Length == 0 || _bufferedWaveProvider == null) return;
 
-            // VOICE PRIORITY: Signal that we're receiving audio
-            // This makes screen share yield even when we're just listening
-            _lastAudioReceiveTime = DateTime.UtcNow;
+            // VOICE PRIORITY: Signal to orchestrator that we're receiving audio
+            StreamingOrchestrator.Instance.SignalAudioReceive();
+            Interlocked.Exchange(ref _lastAudioReceiveTimeTicks, DateTime.UtcNow.Ticks);
             UpdateVoiceActivityFromReceive();
 
             try
@@ -747,7 +748,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             {
                 if (_audioSendQueue.TryDequeue(out var pcmData))
                 {
-                    if (_connection != null && IsConnected && _opusEncoder != null)
+                    // Capture references locally to avoid race conditions
+                    var encoder = _opusEncoder;
+                    if (_connection != null && IsConnected && encoder != null && pcmData.Length >= 2)
                     {
                         // Convert byte[] PCM to short[] for Opus encoder
                         var pcmSamples = new short[pcmData.Length / 2];
@@ -755,7 +758,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
                         // Encode with Opus - dramatically reduces bandwidth
 #pragma warning disable CS0618 // Type or member is obsolete
-                        var encodedLength = _opusEncoder.Encode(pcmSamples, 0, OpusFrameSize, opusBuffer, 0, opusBuffer.Length);
+                        var encodedLength = encoder.Encode(pcmSamples, 0, OpusFrameSize, opusBuffer, 0, opusBuffer.Length);
 #pragma warning restore CS0618
 
                         if (encodedLength > 0)
@@ -765,22 +768,27 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                             Buffer.BlockCopy(opusBuffer, 0, opusData, 0, encodedLength);
 
                             // Send synchronously with timeout to ensure audio gets priority
-                            // Fire-and-forget but wait briefly to ensure it's queued
-                            try
+                            // Capture connection locally to avoid race condition
+                            var conn = _connection;
+                            if (conn != null)
                             {
-                                var sendTask = _connection.SendAsync("SendAudio", opusData, cancellationToken);
-                                // Wait up to 30ms - audio packets are small and should send fast
-                                // Shorter timeout than before to keep audio responsive
-                                sendTask.Wait(30, cancellationToken);
-                            }
-                            catch (OperationCanceledException)
-                            {
-                                break;
-                            }
-                            catch
-                            {
-                                // Send failed or timed out - continue to next packet
-                                // Don't let network issues block audio thread
+                                try
+                                {
+                                    var sendTask = conn.SendAsync("SendAudio", opusData, cancellationToken);
+                                    // Wait up to 30ms - audio packets are small and should send fast
+                                    sendTask.Wait(30, cancellationToken);
+
+                                    // Signal orchestrator that audio was sent
+                                    StreamingOrchestrator.Instance.SignalAudioSend();
+                                }
+                                catch (OperationCanceledException)
+                                {
+                                    break;
+                                }
+                                catch
+                                {
+                                    // Send failed or timed out - continue to next packet
+                                }
                             }
                         }
                     }
@@ -963,7 +971,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     private void UpdateVoiceActivity()
     {
         // Voice is active if we're speaking OR we've received audio recently
-        var isReceivingAudio = (DateTime.UtcNow - _lastAudioReceiveTime).TotalMilliseconds < AudioReceiveTimeoutMs;
+        // Use Interlocked.Read for thread-safe access to ticks
+        var lastReceiveTicks = Interlocked.Read(ref _lastAudioReceiveTimeTicks);
+        var isReceivingAudio = (DateTime.UtcNow.Ticks - lastReceiveTicks) / TimeSpan.TicksPerMillisecond < AudioReceiveTimeoutMs;
         var anyoneSpeaking = _voiceUsers.Values.Any(u => u.IsSpeaking) || _isSpeaking || isReceivingAudio;
         _screenSharingManager.SetVoiceActive(anyoneSpeaking);
     }

@@ -740,42 +740,44 @@ public class ScreenSharingManager : IScreenSharingManager
         var sendTimer = new Stopwatch();
         var frameIntervalStopwatch = Stopwatch.StartNew();
         long lastSendTime = 0;
-        var consecutiveVoiceFrames = 0; // Track how long voice has been active
+        var frameCounter = 0;
+        var orchestrator = StreamingOrchestrator.Instance;
 
         while (!cancellationToken.IsCancellationRequested && _isSharing)
         {
             try
             {
+                frameCounter++;
+
                 // Calculate frame interval for pacing - send at target FPS rate
-                var frameIntervalMs = 1000.0 / _settings.TargetFps;
+                // Use orchestrator's recommended FPS if network is congested
+                var targetFps = orchestrator.GetRecommendedFps(_settings.TargetFps);
+                var frameIntervalMs = 1000.0 / targetFps;
                 var now = frameIntervalStopwatch.ElapsedMilliseconds;
                 var elapsed = now - lastSendTime;
 
-                // VOICE PRIORITY: When voice is active, add delays between frames
-                // to give audio packets priority on the SignalR connection
-                if (_voiceActive)
+                // VOICE PRIORITY: Use orchestrator for coordinated voice/video handling
+                var voiceDelay = orchestrator.GetVideoYieldDelay();
+                if (voiceDelay > 0)
                 {
-                    consecutiveVoiceFrames++;
-
-                    // Progressive delay: start with 8ms, increase to 15ms if voice stays active
-                    // This gives audio packets a window to be sent between video frames
-                    var voiceDelay = consecutiveVoiceFrames > 10 ? 15 : 8;
                     await Task.Delay(voiceDelay, cancellationToken).ConfigureAwait(false);
-
-                    // Skip every other frame if voice has been active for a while
-                    // This significantly reduces bandwidth competition
-                    if (consecutiveVoiceFrames > 20 && consecutiveVoiceFrames % 2 == 0)
-                    {
-                        if (_frameQueue.TryDequeue(out _))
-                        {
-                            _framesDroppedThisSecond++;
-                        }
-                        continue; // Skip this iteration entirely
-                    }
                 }
-                else
+
+                // Check if this frame should be skipped (voice active or network congested)
+                if (orchestrator.ShouldSkipVideoFrame(frameCounter))
                 {
-                    consecutiveVoiceFrames = 0;
+                    if (_frameQueue.TryDequeue(out _))
+                    {
+                        _framesDroppedThisSecond++;
+                        orchestrator.SignalVideoFrameDropped();
+                    }
+                    continue;
+                }
+
+                // Also check local voice flag for backward compatibility
+                if (_voiceActive && frameCounter % 3 == 0)
+                {
+                    await Task.Delay(5, cancellationToken).ConfigureAwait(false);
                 }
 
                 // Wait for next frame interval to maintain steady send rate
@@ -823,8 +825,10 @@ public class ScreenSharingManager : IScreenSharingManager
                         var sendTimeMs = sendTimer.Elapsed.TotalMilliseconds;
                         _stats.SendTimeMs = sendTimeMs;
 
-                        // Track for adaptive quality
+                        // Track for adaptive quality and orchestrator
                         TrackSendTime(sendTimeMs);
+                        orchestrator.RecordLatency((int)sendTimeMs);
+                        orchestrator.SignalVideoFrameSent();
 
                         // Update stats
                         _framesSentThisSecond++;
@@ -837,8 +841,7 @@ public class ScreenSharingManager : IScreenSharingManager
                         OnLocalFrameReady?.Invoke(frameToSend.Data, frameToSend.Width, frameToSend.Height);
 
                         // VOICE PRIORITY: Extra yield after sending when voice active
-                        // Gives audio send thread a chance to send its packets
-                        if (_voiceActive)
+                        if (_voiceActive || orchestrator.IsVoiceActive)
                         {
                             await Task.Delay(5, cancellationToken).ConfigureAwait(false);
                         }
