@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.SignalR;
 using System.Collections.Concurrent;
 using VeaMarketplace.Server.Services;
 using VeaMarketplace.Shared.DTOs;
+using VeaMarketplace.Shared.Enums;
 using VeaMarketplace.Shared.Models;
 
 namespace VeaMarketplace.Server.Hubs;
@@ -123,7 +124,7 @@ public class VoiceHub : Hub
 
         if (!isSelfDisconnect && _authService != null)
         {
-            var caller = await _authService.GetUserAsync(callerId);
+            var caller = _authService.GetUserById(callerId);
             if (caller == null || (caller.Role != UserRole.Admin && caller.Role != UserRole.Moderator))
             {
                 await Clients.Caller.SendAsync("VoiceError", "Insufficient permissions");
@@ -162,7 +163,7 @@ public class VoiceHub : Hub
 
         if (_authService != null)
         {
-            var caller = await _authService.GetUserAsync(callerId);
+            var caller = _authService.GetUserById(callerId);
             if (caller == null || (caller.Role != UserRole.Admin && caller.Role != UserRole.Moderator))
             {
                 await Clients.Caller.SendAsync("VoiceError", "Insufficient permissions to move users");
@@ -211,7 +212,7 @@ public class VoiceHub : Hub
 
         if (_authService != null)
         {
-            var caller = await _authService.GetUserAsync(callerId);
+            var caller = _authService.GetUserById(callerId);
             if (caller == null || (caller.Role != UserRole.Admin && caller.Role != UserRole.Moderator))
             {
                 await Clients.Caller.SendAsync("VoiceError", "Insufficient permissions to kick users");
@@ -240,7 +241,7 @@ public class VoiceHub : Hub
 
         if (_authService != null)
         {
-            var caller = await _authService.GetUserAsync(callerId);
+            var caller = _authService.GetUserById(callerId);
             if (caller == null || (caller.Role != UserRole.Admin && caller.Role != UserRole.Moderator))
             {
                 await Clients.Caller.SendAsync("VoiceError", "Insufficient permissions to ban users");
