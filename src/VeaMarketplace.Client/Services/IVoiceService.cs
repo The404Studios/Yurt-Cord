@@ -552,10 +552,10 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         });
 
         // Screen sharing handlers
+        // Note: OnScreenFrameReceived is already fired through _screenSharingManager.OnFrameReceived subscription
         _connection.On<string, byte[], int, int>("ReceiveScreenFrame", (senderConnectionId, frameData, width, height) =>
         {
             _screenSharingManager.HandleFrameReceived(senderConnectionId, frameData, width, height);
-            OnScreenFrameReceived?.Invoke(senderConnectionId, frameData, width, height);
         });
 
         _connection.On<string, bool>("UserScreenShareChanged", (connectionId, isSharing) =>
