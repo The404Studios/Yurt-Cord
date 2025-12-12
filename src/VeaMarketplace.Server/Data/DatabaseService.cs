@@ -1,5 +1,6 @@
 using LiteDB;
 using VeaMarketplace.Shared.Models;
+using VeaMarketplace.Server.Services;
 
 namespace VeaMarketplace.Server.Data;
 
@@ -17,6 +18,7 @@ public class DatabaseService : IDisposable
     public ILiteCollection<VoiceCall> VoiceCalls => _database.GetCollection<VoiceCall>("voice_calls");
     public ILiteCollection<CustomRole> CustomRoles => _database.GetCollection<CustomRole>("custom_roles");
     public ILiteCollection<Room> Rooms => _database.GetCollection<Room>("rooms");
+    public ILiteCollection<StoredFile> StoredFiles => _database.GetCollection<StoredFile>("stored_files");
 
     public DatabaseService(IConfiguration configuration)
     {
