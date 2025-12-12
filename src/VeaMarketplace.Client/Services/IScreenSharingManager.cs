@@ -213,6 +213,9 @@ public interface IScreenSharingManager : IAsyncDisposable
     void UpdateSettings(ScreenShareSettings settings);
     void SetQuality(ScreenShareQuality quality);
 
+    // Voice priority - yield to audio when voice is active to prevent choppy audio
+    void SetVoiceActive(bool active);
+
     // Receiving (called by VoiceService when frames arrive)
     void HandleFrameReceived(string senderConnectionId, byte[] frameData, int width, int height);
     void HandleScreenShareStarted(string connectionId, string username);

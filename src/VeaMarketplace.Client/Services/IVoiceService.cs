@@ -452,6 +452,10 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                 user.AudioLevel = audioLevel;
             }
             OnUserSpeaking?.Invoke(connectionId, username, isSpeaking, audioLevel);
+
+            // Update screen share voice priority - yield to audio when anyone is speaking
+            var anyoneSpeaking = _voiceUsers.Values.Any(u => u.IsSpeaking) || _isSpeaking;
+            _screenSharingManager.SetVoiceActive(anyoneSpeaking);
         });
 
         _connection.On<List<VoiceUserState>>("VoiceChannelUsers", users =>
@@ -688,6 +692,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     /// Background loop that sends queued audio data to the server.
     /// This decouples network I/O from the audio callback thread.
     /// Encodes audio with Opus codec before sending.
+    /// PRIORITY: Audio is sent immediately without delays to prevent choppiness during screen share.
     /// </summary>
     private async Task AudioSendLoop(CancellationToken cancellationToken)
     {
@@ -715,15 +720,20 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                             var opusData = new byte[encodedLength];
                             Buffer.BlockCopy(opusBuffer, 0, opusData, 0, encodedLength);
 
-                            // Send the compressed audio
-                            await _connection.SendAsync("SendAudio", opusData, cancellationToken).ConfigureAwait(false);
+                            // Send the compressed audio with high priority (no ConfigureAwait to stay on same thread)
+                            // Use a timeout to prevent blocking on network congestion
+                            var sendTask = _connection.SendAsync("SendAudio", opusData, cancellationToken);
+                            var completed = await Task.WhenAny(sendTask, Task.Delay(50, cancellationToken)).ConfigureAwait(false);
+
+                            // If send didn't complete in time, it will complete in background
+                            // This prevents audio backup during screen share
                         }
                     }
                 }
                 else
                 {
-                    // No data to send, wait a bit to avoid busy-spinning
-                    await Task.Delay(5, cancellationToken).ConfigureAwait(false);
+                    // No data to send - very short wait to be ready for next audio
+                    await Task.Delay(1, cancellationToken).ConfigureAwait(false);
                 }
             }
             catch (OperationCanceledException)
@@ -733,7 +743,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             catch
             {
                 // Ignore send errors - network issues shouldn't crash audio
-                await Task.Delay(10, cancellationToken).ConfigureAwait(false);
+                // Don't delay on errors to keep audio responsive
             }
         }
     }
@@ -814,6 +824,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         if (_isSpeaking != wasSpeaking)
         {
             ThreadPool.QueueUserWorkItem(_ => OnSpeakingChanged?.Invoke(_isSpeaking));
+
+            // Notify screen share manager to yield to audio when speaking
+            _screenSharingManager.SetVoiceActive(_isSpeaking);
         }
 
         // Send speaking state updates ONLY when state actually changes

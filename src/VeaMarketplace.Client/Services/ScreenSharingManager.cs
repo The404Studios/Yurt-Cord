@@ -34,6 +34,10 @@ public class ScreenSharingManager : IScreenSharingManager
     private Func<Task>? _notifyStartFunc;
     private Func<Task>? _notifyStopFunc;
 
+    // Voice priority - yield to audio when someone is speaking to prevent choppy voice
+    private volatile bool _voiceActive;
+    public void SetVoiceActive(bool active) => _voiceActive = active;
+
     // Performance tracking
     private readonly Stopwatch _sessionStopwatch = new();
     private int _framesSentThisSecond;
@@ -539,6 +543,7 @@ public class ScreenSharingManager : IScreenSharingManager
 
     /// <summary>
     /// Send loop running as async task for network I/O
+    /// Yields to voice audio to prevent choppy audio during screen sharing
     /// </summary>
     private async Task SendLoop(CancellationToken cancellationToken)
     {
@@ -548,6 +553,13 @@ public class ScreenSharingManager : IScreenSharingManager
         {
             try
             {
+                // VOICE PRIORITY: When voice is active, add small delays between frames
+                // to give audio packets a chance to be sent first
+                if (_voiceActive)
+                {
+                    await Task.Delay(5, cancellationToken).ConfigureAwait(false);
+                }
+
                 // Get latest frame (skip old ones)
                 CapturedFrame? frameToSend = null;
                 while (_frameQueue.TryDequeue(out var frame))
@@ -562,8 +574,10 @@ public class ScreenSharingManager : IScreenSharingManager
 
                     try
                     {
-                        await _sendFrameFunc(frameToSend.Data, frameToSend.Width, frameToSend.Height)
-                            .ConfigureAwait(false);
+                        // Use timeout to prevent blocking if network is congested
+                        // This allows audio to continue flowing
+                        var sendTask = _sendFrameFunc(frameToSend.Data, frameToSend.Width, frameToSend.Height);
+                        var completed = await Task.WhenAny(sendTask, Task.Delay(100, cancellationToken)).ConfigureAwait(false);
 
                         sendTimer.Stop();
                         var sendTimeMs = sendTimer.Elapsed.TotalMilliseconds;
@@ -581,6 +595,9 @@ public class ScreenSharingManager : IScreenSharingManager
                         // Fire events for local display
                         OnFrameReady?.Invoke("self", frameToSend.Data, frameToSend.Width, frameToSend.Height);
                         OnLocalFrameReady?.Invoke(frameToSend.Data, frameToSend.Width, frameToSend.Height);
+
+                        // Give audio a chance after each frame
+                        await Task.Yield();
                     }
                     catch (Exception ex)
                     {
