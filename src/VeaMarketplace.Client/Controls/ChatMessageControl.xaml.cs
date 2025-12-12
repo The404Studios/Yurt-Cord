@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using VeaMarketplace.Client.Services;
@@ -240,8 +241,8 @@ public partial class ChatMessageControl : UserControl
         var image = new WpfImage
         {
             Stretch = Stretch.UniformToFill,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = System.Windows.VerticalAlignment.Center
         };
 
         // Create loading indicator
@@ -250,8 +251,8 @@ public partial class ChatMessageControl : UserControl
             Text = "Loading...",
             Foreground = new SolidColorBrush(Color.FromRgb(185, 187, 190)),
             FontSize = 12,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = System.Windows.VerticalAlignment.Center
         };
 
         // Add loading text initially
