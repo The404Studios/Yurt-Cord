@@ -11,7 +11,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddSignalR();
+
+// Configure SignalR with increased message size for audio data
+builder.Services.AddSignalR(options =>
+{
+    // Increase max message size to 1MB for audio/video streaming
+    options.MaximumReceiveMessageSize = 1024 * 1024; // 1MB
+    options.EnableDetailedErrors = true;
+});
 
 // Database
 builder.Services.AddSingleton<DatabaseService>();
