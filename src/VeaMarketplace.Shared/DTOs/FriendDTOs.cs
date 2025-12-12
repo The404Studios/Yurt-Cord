@@ -151,3 +151,86 @@ public class MessageReactionDto
     public string UserId { get; set; } = string.Empty;
     public string Username { get; set; } = string.Empty;
 }
+
+// Voice Room DTOs for room/server system
+public class VoiceRoomDto
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string HostId { get; set; } = string.Empty;
+    public string HostUsername { get; set; } = string.Empty;
+    public string HostAvatarUrl { get; set; } = string.Empty;
+    public bool IsPublic { get; set; } = true;
+    public string? Password { get; set; }
+    public int MaxParticipants { get; set; } = 10;
+    public int CurrentParticipants { get; set; }
+    public List<VoiceRoomParticipantDto> Participants { get; set; } = [];
+    public DateTime CreatedAt { get; set; }
+    public VoiceRoomCategory Category { get; set; } = VoiceRoomCategory.General;
+    public bool AllowScreenShare { get; set; } = true;
+    public bool IsActive { get; set; } = true;
+}
+
+public class VoiceRoomParticipantDto
+{
+    public string UserId { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
+    public string AvatarUrl { get; set; } = string.Empty;
+    public bool IsHost { get; set; }
+    public bool IsModerator { get; set; }
+    public bool IsMuted { get; set; }
+    public bool IsDeafened { get; set; }
+    public bool IsSpeaking { get; set; }
+    public bool IsScreenSharing { get; set; }
+    public DateTime JoinedAt { get; set; }
+}
+
+public class CreateVoiceRoomDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public bool IsPublic { get; set; } = true;
+    public string? Password { get; set; }
+    public int MaxParticipants { get; set; } = 10;
+    public VoiceRoomCategory Category { get; set; } = VoiceRoomCategory.General;
+    public bool AllowScreenShare { get; set; } = true;
+}
+
+public class JoinVoiceRoomDto
+{
+    public string RoomId { get; set; } = string.Empty;
+    public string? Password { get; set; }
+}
+
+public class VoiceRoomSearchDto
+{
+    public string? Query { get; set; }
+    public VoiceRoomCategory? Category { get; set; }
+    public bool OnlyWithSpace { get; set; } = false;
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 20;
+}
+
+public class NudgeDto
+{
+    public string FromUserId { get; set; } = string.Empty;
+    public string FromUsername { get; set; } = string.Empty;
+    public string FromAvatarUrl { get; set; } = string.Empty;
+    public string ToUserId { get; set; } = string.Empty;
+    public DateTime Timestamp { get; set; }
+    public string? Message { get; set; }
+}
+
+public enum VoiceRoomCategory
+{
+    General,
+    Gaming,
+    Music,
+    Study,
+    Work,
+    Social,
+    Movies,
+    Sports,
+    Other
+}
