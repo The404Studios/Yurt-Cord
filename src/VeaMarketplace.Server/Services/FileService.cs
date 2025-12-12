@@ -3,6 +3,7 @@ using VeaMarketplace.Server.Data;
 using VeaMarketplace.Shared.DTOs;
 using VeaMarketplace.Shared.Models;
 using System.Security.Cryptography;
+using System.Runtime.Versioning;
 
 namespace VeaMarketplace.Server.Services;
 
@@ -351,6 +352,7 @@ public class FileService
         return Convert.ToHexString(hashBytes);
     }
 
+    [SupportedOSPlatform("windows")]
     private (int? width, int? height) GetImageDimensions(byte[] imageData)
     {
         try
@@ -365,6 +367,7 @@ public class FileService
         }
     }
 
+    [SupportedOSPlatform("windows")]
     private async Task<string?> GenerateThumbnailAsync(byte[] imageData, string fileId, string extension)
     {
         try
@@ -385,7 +388,7 @@ public class FileService
 
             thumbnail.Save(thumbnailPath, System.Drawing.Imaging.ImageFormat.Jpeg);
 
-            return $"{_baseUrl}/thumbnails/{thumbnailFileName}";
+            return await Task.FromResult($"{_baseUrl}/thumbnails/{thumbnailFileName}");
         }
         catch
         {
