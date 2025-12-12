@@ -681,6 +681,136 @@ public partial class VoiceCallDashboard : UserControl
     }
 
     #endregion
+
+    #region Screen Share Controls
+
+    private bool _isFullscreen;
+    private Window? _fullscreenWindow;
+    private Window? _pipWindow;
+
+    private void Fullscreen_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isFullscreen)
+        {
+            ExitFullscreen();
+        }
+        else
+        {
+            EnterFullscreen();
+        }
+    }
+
+    private void EnterFullscreen()
+    {
+        _isFullscreen = true;
+        FullscreenIcon.Text = "⛏";
+
+        // Create fullscreen window
+        _fullscreenWindow = new Window
+        {
+            Title = "Screen Share - Fullscreen",
+            WindowStyle = WindowStyle.None,
+            WindowState = WindowState.Maximized,
+            Background = System.Windows.Media.Brushes.Black,
+            Topmost = true
+        };
+
+        var image = new System.Windows.Controls.Image
+        {
+            Stretch = System.Windows.Media.Stretch.Uniform,
+            Source = ScreenShareImage.Source
+        };
+
+        _fullscreenWindow.Content = image;
+        _fullscreenWindow.KeyDown += (s, e) =>
+        {
+            if (e.Key == Key.Escape)
+            {
+                ExitFullscreen();
+            }
+        };
+        _fullscreenWindow.Closed += (s, e) => ExitFullscreen();
+        _fullscreenWindow.Show();
+    }
+
+    private void ExitFullscreen()
+    {
+        _isFullscreen = false;
+        FullscreenIcon.Text = "⛶";
+
+        if (_fullscreenWindow != null)
+        {
+            _fullscreenWindow.Close();
+            _fullscreenWindow = null;
+        }
+    }
+
+    private void PictureInPicture_Click(object sender, RoutedEventArgs e)
+    {
+        if (_pipWindow != null)
+        {
+            _pipWindow.Close();
+            _pipWindow = null;
+            return;
+        }
+
+        // Create PiP window
+        _pipWindow = new Window
+        {
+            Title = "Picture in Picture",
+            Width = 400,
+            Height = 225,
+            WindowStyle = WindowStyle.ToolWindow,
+            Topmost = true,
+            Background = System.Windows.Media.Brushes.Black,
+            ResizeMode = ResizeMode.CanResizeWithGrip
+        };
+
+        var image = new System.Windows.Controls.Image
+        {
+            Stretch = System.Windows.Media.Stretch.Uniform,
+            Source = ScreenShareImage.Source
+        };
+
+        _pipWindow.Content = image;
+        _pipWindow.Closed += (s, e) => _pipWindow = null;
+        _pipWindow.Show();
+
+        // Position in bottom-right corner
+        var workArea = SystemParameters.WorkArea;
+        _pipWindow.Left = workArea.Right - _pipWindow.Width - 20;
+        _pipWindow.Top = workArea.Bottom - _pipWindow.Height - 20;
+    }
+
+    private void Quality_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (QualitySelector.SelectedItem is ComboBoxItem item && _currentScreenSharerConnectionId != null)
+        {
+            var quality = item.Tag?.ToString() ?? "Auto";
+            // Request quality change from the sharer (future implementation)
+            // _voiceService.RequestScreenQuality(_currentScreenSharerConnectionId, quality);
+        }
+    }
+
+    private void ShowStreamControls()
+    {
+        StreamControlsPanel.Visibility = Visibility.Visible;
+    }
+
+    private void HideStreamControls()
+    {
+        StreamControlsPanel.Visibility = Visibility.Collapsed;
+    }
+
+    private void UpdateViewerCount(int count)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            ViewerCountText.Text = count.ToString();
+        });
+    }
+
+    #endregion
 }
 
 /// <summary>

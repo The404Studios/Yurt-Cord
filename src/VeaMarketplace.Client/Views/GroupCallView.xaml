@@ -1,0 +1,289 @@
+<UserControl x:Class="VeaMarketplace.Client.Views.GroupCallView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:VeaMarketplace.Client.Converters"
+             Background="#1E1F22">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <converters:AudioLevelToHeightConverter x:Key="AudioLevelToHeightConverter"/>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#2B2D31" Padding="16,12">
+            <Grid>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="📞" FontSize="20" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <StackPanel>
+                        <TextBlock x:Name="CallNameText" Text="Group Call" FontSize="16"
+                                   Foreground="White" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="ParticipantCountText" Text="0 participants" FontSize="12"
+                                   Foreground="#B5BAC1"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <!-- Invite Button -->
+                    <Button Style="{StaticResource IconButton}"
+                            Width="40" Height="40" Click="Invite_Click"
+                            ToolTip="Invite Friends" Margin="0,0,8,0">
+                        <TextBlock Text="➕" FontSize="18"/>
+                    </Button>
+                    <!-- Screen Share Button -->
+                    <Button x:Name="ScreenShareBtn" Style="{StaticResource IconButton}"
+                            Width="40" Height="40" Click="ScreenShare_Click"
+                            ToolTip="Share Screen" Margin="0,0,8,0">
+                        <TextBlock x:Name="ScreenShareIcon" Text="🖥" FontSize="18"/>
+                    </Button>
+                    <!-- Mute Button -->
+                    <Button x:Name="MuteBtn" Style="{StaticResource IconButton}"
+                            Width="40" Height="40" Click="Mute_Click"
+                            ToolTip="Mute" Margin="0,0,8,0">
+                        <TextBlock x:Name="MuteIcon" Text="🎤" FontSize="18"/>
+                    </Button>
+                    <!-- Deafen Button -->
+                    <Button x:Name="DeafenBtn" Style="{StaticResource IconButton}"
+                            Width="40" Height="40" Click="Deafen_Click"
+                            ToolTip="Deafen" Margin="0,0,8,0">
+                        <TextBlock x:Name="DeafenIcon" Text="🔊" FontSize="18"/>
+                    </Button>
+                    <!-- Leave Button -->
+                    <Button Style="{StaticResource IconButton}"
+                            Width="40" Height="40" Click="Leave_Click"
+                            ToolTip="Leave Call" Background="#ED4245">
+                        <TextBlock Text="📞" FontSize="18" RenderTransformOrigin="0.5,0.5">
+                            <TextBlock.RenderTransform>
+                                <RotateTransform Angle="135"/>
+                            </TextBlock.RenderTransform>
+                        </TextBlock>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main Content - Participant Grid -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <ItemsControl x:Name="ParticipantsGrid" Margin="16">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Width="200" Height="180" Margin="8" CornerRadius="12"
+                                Background="#2B2D31" Tag="{Binding}">
+                            <Grid>
+                                <!-- Speaking Indicator Border -->
+                                <Border CornerRadius="12" BorderThickness="3"
+                                        BorderBrush="{Binding IsSpeaking, Converter={StaticResource BoolToVis}}"
+                                        Visibility="{Binding IsSpeaking, Converter={StaticResource BoolToVis}}">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSpeaking}" Value="True">
+                                                    <Setter Property="BorderBrush" Value="#43B581"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                </Border>
+
+                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <!-- Avatar -->
+                                    <Grid Width="80" Height="80" Margin="0,0,0,12">
+                                        <Ellipse>
+                                            <Ellipse.Fill>
+                                                <ImageBrush ImageSource="{Binding AvatarUrl}"
+                                                            Stretch="UniformToFill"/>
+                                            </Ellipse.Fill>
+                                        </Ellipse>
+                                        <!-- Speaking Ring -->
+                                        <Ellipse Stroke="#43B581" StrokeThickness="3"
+                                                 Visibility="{Binding IsSpeaking, Converter={StaticResource BoolToVis}}"/>
+                                    </Grid>
+
+                                    <!-- Username -->
+                                    <TextBlock Text="{Binding Username}" FontSize="14"
+                                               Foreground="White" FontWeight="Medium"
+                                               HorizontalAlignment="Center"/>
+
+                                    <!-- Status Icons -->
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                                Margin="0,4,0,0">
+                                        <TextBlock Text="🔇" FontSize="12" Margin="4,0"
+                                                   Visibility="{Binding IsMuted, Converter={StaticResource BoolToVis}}"
+                                                   Foreground="#ED4245"/>
+                                        <TextBlock Text="🔈" FontSize="12" Margin="4,0"
+                                                   Visibility="{Binding IsDeafened, Converter={StaticResource BoolToVis}}"
+                                                   Foreground="#ED4245"/>
+                                        <TextBlock Text="🖥" FontSize="12" Margin="4,0"
+                                                   Visibility="{Binding IsScreenSharing, Converter={StaticResource BoolToVis}}"
+                                                   Foreground="#43B581"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Status Badge -->
+                                <Border VerticalAlignment="Top" HorizontalAlignment="Right"
+                                        Margin="8" Padding="6,2" CornerRadius="4"
+                                        Visibility="{Binding IsHost, Converter={StaticResource BoolToVis}}">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#5865F2"/>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="HOST" FontSize="9" FontWeight="Bold"
+                                               Foreground="White"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- Bottom Controls -->
+        <Border Grid.Row="2" Background="#2B2D31" Padding="16,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Self View -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <Border Width="36" Height="36" CornerRadius="18" Margin="0,0,10,0">
+                        <Border.Background>
+                            <ImageBrush x:Name="SelfAvatarBrush" Stretch="UniformToFill"/>
+                        </Border.Background>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock x:Name="SelfUsernameText" Foreground="White"
+                                   FontSize="14" FontWeight="Medium"/>
+                        <TextBlock x:Name="SelfStatusText" Text="In call" FontSize="11"
+                                   Foreground="#43B581"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Audio Level -->
+                <Grid Grid.Column="1" Margin="20,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="MicLevelIcon" Text="🎤" FontSize="14"
+                               Foreground="#B5BAC1" VerticalAlignment="Center"
+                               Margin="0,0,8,0"/>
+                    <Border Grid.Column="1" Background="#40444B" CornerRadius="3"
+                            Height="6" VerticalAlignment="Center">
+                        <Border x:Name="MicLevelBar" Background="#43B581"
+                                CornerRadius="3" HorizontalAlignment="Left" Width="0"/>
+                    </Border>
+                </Grid>
+
+                <!-- Call Duration -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <TextBlock Text="⏱" FontSize="14" Foreground="#B5BAC1"
+                               VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock x:Name="DurationText" Text="00:00" FontSize="14"
+                               Foreground="White" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Invite Modal -->
+        <Grid x:Name="InviteModal" Visibility="Collapsed" Grid.RowSpan="3"
+              Background="#80000000" MouseDown="InviteModal_MouseDown">
+            <Border Background="#2B2D31" CornerRadius="12" Padding="24"
+                    Width="400" Height="500" VerticalAlignment="Center"
+                    HorizontalAlignment="Center">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Invite Friends" FontSize="20" FontWeight="Bold"
+                               Foreground="White" Margin="0,0,0,16"/>
+
+                    <!-- Search -->
+                    <Border Grid.Row="1" Background="#1E1F22" CornerRadius="8"
+                            Padding="12" Margin="0,0,0,12">
+                        <Grid>
+                            <TextBlock Text="Search friends..." Foreground="#72767D"
+                                       x:Name="InviteSearchPlaceholder"/>
+                            <TextBox x:Name="InviteSearchBox" Background="Transparent"
+                                     BorderThickness="0" Foreground="White"
+                                     TextChanged="InviteSearch_TextChanged"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Friends List -->
+                    <ScrollViewer Grid.Row="2">
+                        <ItemsControl x:Name="FriendsListControl">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="0,4" Padding="12" CornerRadius="8"
+                                            Background="#36393F" Cursor="Hand"
+                                            MouseLeftButtonUp="Friend_Click" Tag="{Binding}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <Ellipse Width="40" Height="40" Margin="0,0,12,0">
+                                                <Ellipse.Fill>
+                                                    <ImageBrush ImageSource="{Binding AvatarUrl}"
+                                                                Stretch="UniformToFill"/>
+                                                </Ellipse.Fill>
+                                            </Ellipse>
+
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Username}" FontSize="14"
+                                                           Foreground="White" FontWeight="Medium"/>
+                                                <TextBlock FontSize="12" Foreground="#72767D">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Text" Value="Offline"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsOnline}" Value="True">
+                                                                    <Setter Property="Text" Value="Online"/>
+                                                                    <Setter Property="Foreground" Value="#43B581"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </StackPanel>
+
+                                            <Button Grid.Column="2" Content="Invite"
+                                                    Style="{StaticResource PrimaryButton}"
+                                                    Padding="12,6" Click="InviteFriend_Click"
+                                                    Tag="{Binding}"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <!-- Close Button -->
+                    <Button Grid.Row="3" Content="Close" Style="{StaticResource SecondaryButton}"
+                            Click="CloseInviteModal_Click" Margin="0,12,0,0"/>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

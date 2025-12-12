@@ -296,6 +296,16 @@ public partial class FriendsViewModel : BaseViewModel
                 CallUserAudioLevel = audioLevel;
             });
         };
+
+        // Update audio level indicator
+        _voiceService.OnLocalAudioLevel += level =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                // Scale to width (max 80 pixels for the audio bar)
+                AudioLevelWidth = level * 80;
+            });
+        };
     }
 
     private void CallTimer_Tick(object? sender, EventArgs e)
@@ -486,6 +496,49 @@ public partial class FriendsViewModel : BaseViewModel
     }
 
     public bool IsMuted => _voiceService.IsMuted;
+
+    // Video call properties
+    [ObservableProperty]
+    private bool _isVideoEnabled;
+
+    [ObservableProperty]
+    private bool _isScreenSharing;
+
+    [ObservableProperty]
+    private bool _isSelfPreviewEnabled = true;
+
+    [ObservableProperty]
+    private double _audioLevelWidth;
+
+    public string? SelfAvatarUrl => _apiService.CurrentUser?.AvatarUrl;
+
+    [RelayCommand]
+    private void ToggleVideo()
+    {
+        IsVideoEnabled = !IsVideoEnabled;
+        // In a full implementation, this would start/stop video capture
+    }
+
+    [RelayCommand]
+    private async Task ToggleScreenShareAsync()
+    {
+        if (IsScreenSharing)
+        {
+            await _voiceService.StopScreenShareAsync();
+            IsScreenSharing = false;
+        }
+        else
+        {
+            await _voiceService.StartScreenShareAsync();
+            IsScreenSharing = true;
+        }
+    }
+
+    [RelayCommand]
+    private void ToggleSelfPreview()
+    {
+        IsSelfPreviewEnabled = !IsSelfPreviewEnabled;
+    }
 
     // Cancel friend request
     [RelayCommand]

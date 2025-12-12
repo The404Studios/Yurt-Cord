@@ -139,6 +139,46 @@
                                        FontSize="12"/>
                         </StackPanel>
                     </Border>
+
+                    <!-- Stream Controls Overlay -->
+                    <Border x:Name="StreamControlsPanel" Background="#80000000"
+                            VerticalAlignment="Bottom" HorizontalAlignment="Center"
+                            Padding="12,8" Margin="0,0,0,12" CornerRadius="8"
+                            Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal">
+                            <!-- Fullscreen Toggle -->
+                            <Button x:Name="FullscreenBtn" Style="{StaticResource IconButton}"
+                                    Width="36" Height="36" Click="Fullscreen_Click"
+                                    ToolTip="Toggle Fullscreen" Margin="0,0,8,0">
+                                <TextBlock x:Name="FullscreenIcon" Text="⛶" FontSize="16"/>
+                            </Button>
+                            <!-- Picture-in-Picture -->
+                            <Button x:Name="PipBtn" Style="{StaticResource IconButton}"
+                                    Width="36" Height="36" Click="PictureInPicture_Click"
+                                    ToolTip="Picture in Picture" Margin="0,0,8,0">
+                                <TextBlock Text="🖼" FontSize="14"/>
+                            </Button>
+                            <!-- Quality Selector -->
+                            <ComboBox x:Name="QualitySelector" Width="100"
+                                      Background="#36393F" Foreground="White"
+                                      BorderThickness="0" Margin="0,0,8,0"
+                                      SelectionChanged="Quality_Changed">
+                                <ComboBoxItem Content="Auto" Tag="Auto" IsSelected="True"/>
+                                <ComboBoxItem Content="1080p" Tag="1080"/>
+                                <ComboBoxItem Content="720p" Tag="720"/>
+                                <ComboBoxItem Content="480p" Tag="480"/>
+                                <ComboBoxItem Content="360p" Tag="360"/>
+                            </ComboBox>
+                            <!-- Viewer Count -->
+                            <Border Background="#36393F" CornerRadius="4" Padding="8,4">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="👁" FontSize="12" Margin="0,0,4,0"/>
+                                    <TextBlock x:Name="ViewerCountText" Text="0" FontSize="12"
+                                               Foreground="White"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
                 </Grid>
             </Border>
 

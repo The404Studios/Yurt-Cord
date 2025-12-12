@@ -629,69 +629,220 @@
         <Grid Grid.ColumnSpan="2" Background="#E0202225"
               Visibility="{Binding IsInCall, Converter={StaticResource BoolToVis}}">
             <Border Background="{StaticResource SecondaryDarkBrush}"
-                    CornerRadius="16" Width="400" Height="500"
+                    CornerRadius="16" Width="500" Height="600"
                     VerticalAlignment="Center" HorizontalAlignment="Center">
-                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <!-- Call User Info -->
-                    <Grid Margin="0,0,0,24">
-                        <Ellipse Width="120" Height="120">
-                            <Ellipse.Fill>
-                                <ImageBrush ImageSource="{Binding SelectedFriend.AvatarUrl}"/>
-                            </Ellipse.Fill>
-                        </Ellipse>
-                        <!-- Voice activity ring (White indicator when speaking) -->
-                        <Ellipse Width="130" Height="130"
-                                 Stroke="White"
-                                 StrokeThickness="3"
-                                 Visibility="{Binding IsCallUserSpeaking, Converter={StaticResource BoolToVis}}"/>
-                    </Grid>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-                    <TextBlock Text="{Binding SelectedFriend.Username}"
-                               FontSize="24" FontWeight="Bold"
-                               Foreground="{StaticResource TextPrimaryBrush}"
-                               HorizontalAlignment="Center"/>
+                    <!-- Video/Avatar Area -->
+                    <Border Grid.Row="0" Background="#1A1B1E" CornerRadius="16,16,0,0">
+                        <Grid>
+                            <!-- Video Preview (when enabled) -->
+                            <Image x:Name="CallVideoPreview" Stretch="UniformToFill"
+                                   Visibility="{Binding IsVideoEnabled, Converter={StaticResource BoolToVis}}"/>
 
-                    <TextBlock Text="{Binding CallDuration}"
-                               FontSize="18"
-                               Foreground="{StaticResource AccentGreenBrush}"
-                               HorizontalAlignment="Center"
-                               Margin="0,8,0,0"/>
+                            <!-- Avatar (when video disabled) -->
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                        Visibility="{Binding IsVideoEnabled, Converter={StaticResource InverseBoolToVis}}">
+                                <Grid Margin="0,0,0,24">
+                                    <Ellipse Width="140" Height="140">
+                                        <Ellipse.Fill>
+                                            <ImageBrush ImageSource="{Binding SelectedFriend.AvatarUrl}"/>
+                                        </Ellipse.Fill>
+                                    </Ellipse>
+                                    <!-- Voice activity ring -->
+                                    <Ellipse Width="152" Height="152"
+                                             Stroke="#43B581"
+                                             StrokeThickness="3"
+                                             Visibility="{Binding IsCallUserSpeaking, Converter={StaticResource BoolToVis}}"/>
+                                </Grid>
+
+                                <TextBlock Text="{Binding SelectedFriend.Username}"
+                                           FontSize="24" FontWeight="Bold"
+                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                           HorizontalAlignment="Center"/>
+
+                                <TextBlock FontSize="14" HorizontalAlignment="Center"
+                                           Foreground="{StaticResource TextMutedBrush}"
+                                           Margin="0,8,0,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="In call"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsCallUserSpeaking}" Value="True">
+                                                    <Setter Property="Text" Value="Speaking..."/>
+                                                    <Setter Property="Foreground" Value="#43B581"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+
+                            <!-- Self Preview (picture-in-picture style) -->
+                            <Border Width="120" Height="90" CornerRadius="8"
+                                    HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                    Margin="16" Background="#2B2D31"
+                                    Visibility="{Binding IsSelfPreviewEnabled, Converter={StaticResource BoolToVis}}">
+                                <Grid>
+                                    <Image x:Name="SelfVideoPreview" Stretch="UniformToFill"/>
+                                    <Ellipse Width="48" Height="48" HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"
+                                             Visibility="{Binding IsVideoEnabled, Converter={StaticResource InverseBoolToVis}}">
+                                        <Ellipse.Fill>
+                                            <ImageBrush ImageSource="{Binding SelfAvatarUrl}"/>
+                                        </Ellipse.Fill>
+                                    </Ellipse>
+                                    <!-- Muted indicator -->
+                                    <Border HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                            Margin="4" CornerRadius="4" Padding="4,2"
+                                            Background="#ED4245"
+                                            Visibility="{Binding IsMuted, Converter={StaticResource BoolToVis}}">
+                                        <TextBlock Text="🔇" FontSize="10"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+
+                            <!-- Audio Level Indicator -->
+                            <Border HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                    Margin="16" Background="#2B2D31" CornerRadius="8"
+                                    Padding="12,8">
+                                <Grid Width="100">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="🎤" FontSize="12" Margin="0,0,8,0"
+                                               VerticalAlignment="Center"/>
+                                    <Border Grid.Column="1" Background="#40444B" CornerRadius="2"
+                                            Height="4" VerticalAlignment="Center">
+                                        <Border Background="#43B581" CornerRadius="2"
+                                                HorizontalAlignment="Left"
+                                                Width="{Binding AudioLevelWidth}"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- Call Duration -->
+                    <Border Grid.Row="1" Background="#2B2D31" Padding="16,12">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <TextBlock Text="⏱" FontSize="16" Foreground="#B5BAC1"
+                                       Margin="0,0,8,0"/>
+                            <TextBlock Text="{Binding CallDuration}"
+                                       FontSize="18" FontWeight="Medium"
+                                       Foreground="White"/>
+                        </StackPanel>
+                    </Border>
 
                     <!-- Call Controls -->
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,32,0,0">
-                        <Button Width="56" Height="56"
-                                Margin="0,0,16,0"
-                                Command="{Binding ToggleMuteCommand}">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
-                                    <Setter Property="Background" Value="{StaticResource QuaternaryDarkBrush}"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsMuted}" Value="True">
-                                            <Setter Property="Background" Value="{StaticResource AccentRedBrush}"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                            <TextBlock FontSize="24">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Text" Value="🎤"/>
+                    <Border Grid.Row="2" Background="#1E1F22" Padding="24,20"
+                            CornerRadius="0,0,16,16">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <!-- Mute Button -->
+                            <Button Width="52" Height="52" Margin="0,0,12,0"
+                                    ToolTip="Toggle Mute"
+                                    Command="{Binding ToggleMuteCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
+                                        <Setter Property="Background" Value="#4F545C"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsMuted}" Value="True">
-                                                <Setter Property="Text" Value="🔇"/>
+                                                <Setter Property="Background" Value="#ED4245"/>
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </Button>
-                        <Button Style="{StaticResource IconButton}" Width="56" Height="56"
-                                Background="{StaticResource AccentRedBrush}"
-                                Command="{Binding EndCallCommand}">
-                            <TextBlock Text="📵" FontSize="24"/>
-                        </Button>
-                    </StackPanel>
-                </StackPanel>
+                                </Button.Style>
+                                <TextBlock FontSize="20">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="🎤"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsMuted}" Value="True">
+                                                    <Setter Property="Text" Value="🔇"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Button>
+
+                            <!-- Video Toggle Button -->
+                            <Button Width="52" Height="52" Margin="0,0,12,0"
+                                    ToolTip="Toggle Video"
+                                    Command="{Binding ToggleVideoCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
+                                        <Setter Property="Background" Value="#4F545C"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsVideoEnabled}" Value="True">
+                                                <Setter Property="Background" Value="#5865F2"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <TextBlock FontSize="20">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="📷"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsVideoEnabled}" Value="False">
+                                                    <Setter Property="Text" Value="📷"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Button>
+
+                            <!-- Screen Share Button -->
+                            <Button Width="52" Height="52" Margin="0,0,12,0"
+                                    ToolTip="Share Screen"
+                                    Command="{Binding ToggleScreenShareCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
+                                        <Setter Property="Background" Value="#4F545C"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsScreenSharing}" Value="True">
+                                                <Setter Property="Background" Value="#43B581"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <TextBlock Text="🖥" FontSize="20"/>
+                            </Button>
+
+                            <!-- Self Preview Toggle -->
+                            <Button Width="52" Height="52" Margin="0,0,24,0"
+                                    ToolTip="Toggle Self Preview"
+                                    Command="{Binding ToggleSelfPreviewCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
+                                        <Setter Property="Background" Value="#4F545C"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelfPreviewEnabled}" Value="True">
+                                                <Setter Property="Background" Value="#5865F2"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <TextBlock Text="👁" FontSize="18"/>
+                            </Button>
+
+                            <!-- End Call Button -->
+                            <Button Style="{StaticResource IconButton}" Width="64" Height="52"
+                                    Background="#ED4245" ToolTip="End Call"
+                                    Command="{Binding EndCallCommand}">
+                                <TextBlock Text="📵" FontSize="22"/>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </Grid>
             </Border>
         </Grid>
 
