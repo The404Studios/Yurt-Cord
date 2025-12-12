@@ -208,7 +208,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     // Audio send queue - prevents blocking audio callback with network operations
     private readonly ConcurrentQueue<byte[]> _audioSendQueue = new();
     private CancellationTokenSource? _audioSendCts;
-    private Task? _audioSendTask;
+    private Thread? _audioSendThread;  // Dedicated high-priority thread for audio sending
 
     // Opus codec for efficient audio compression
     // Reduces bandwidth from ~768kbps to ~24kbps per user
@@ -703,9 +703,16 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             _waveOut.Init(_bufferedWaveProvider);
             _waveOut.Play();
 
-            // Start the background audio send thread (decouples network from audio callback)
+            // Start the dedicated audio send thread (decouples network from audio callback)
+            // Uses AboveNormal priority to ensure audio gets sent before screen share
             _audioSendCts = new CancellationTokenSource();
-            _audioSendTask = Task.Run(() => AudioSendLoop(_audioSendCts.Token));
+            _audioSendThread = new Thread(() => AudioSendLoopThreaded(_audioSendCts.Token))
+            {
+                IsBackground = true,
+                Priority = ThreadPriority.AboveNormal,
+                Name = "AudioSendThread"
+            };
+            _audioSendThread.Start();
         }
         catch (Exception ex)
         {
@@ -714,15 +721,16 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     }
 
     /// <summary>
-    /// Background loop that sends queued audio data to the server.
-    /// This decouples network I/O from the audio callback thread.
+    /// Dedicated thread loop that sends queued audio data to the server.
+    /// This runs on a high-priority thread to ensure audio gets sent before screen share frames.
     /// Encodes audio with Opus codec before sending.
     /// PRIORITY: Audio is sent immediately without delays to prevent choppiness during screen share.
     /// </summary>
-    private async Task AudioSendLoop(CancellationToken cancellationToken)
+    private void AudioSendLoopThreaded(CancellationToken cancellationToken)
     {
         // Buffer for Opus encoded output (max Opus frame is ~4000 bytes)
         var opusBuffer = new byte[4000];
+        var spinWait = new SpinWait();
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -747,20 +755,37 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                             var opusData = new byte[encodedLength];
                             Buffer.BlockCopy(opusBuffer, 0, opusData, 0, encodedLength);
 
-                            // Send the compressed audio with high priority (no ConfigureAwait to stay on same thread)
-                            // Use a timeout to prevent blocking on network congestion
-                            var sendTask = _connection.SendAsync("SendAudio", opusData, cancellationToken);
-                            var completed = await Task.WhenAny(sendTask, Task.Delay(50, cancellationToken)).ConfigureAwait(false);
-
-                            // If send didn't complete in time, it will complete in background
-                            // This prevents audio backup during screen share
+                            // Send synchronously with timeout to ensure audio gets priority
+                            // Fire-and-forget but wait briefly to ensure it's queued
+                            try
+                            {
+                                var sendTask = _connection.SendAsync("SendAudio", opusData, cancellationToken);
+                                // Wait up to 30ms - audio packets are small and should send fast
+                                // Shorter timeout than before to keep audio responsive
+                                sendTask.Wait(30, cancellationToken);
+                            }
+                            catch (OperationCanceledException)
+                            {
+                                break;
+                            }
+                            catch
+                            {
+                                // Send failed or timed out - continue to next packet
+                                // Don't let network issues block audio thread
+                            }
                         }
                     }
                 }
                 else
                 {
-                    // No data to send - very short wait to be ready for next audio
-                    await Task.Delay(1, cancellationToken).ConfigureAwait(false);
+                    // No data to send - short spin then yield
+                    // SpinWait is more efficient than Thread.Sleep for short waits
+                    spinWait.SpinOnce();
+                    if (spinWait.NextSpinWillYield)
+                    {
+                        Thread.Sleep(1);
+                        spinWait.Reset();
+                    }
                 }
             }
             catch (OperationCanceledException)
@@ -770,28 +795,27 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             catch
             {
                 // Ignore send errors - network issues shouldn't crash audio
-                // Don't delay on errors to keep audio responsive
             }
         }
     }
 
     private void StopAudioCapture()
     {
-        // Stop background send task
+        // Stop background send thread
         _audioSendCts?.Cancel();
 
         try
         {
-            if (_audioSendTask != null)
+            if (_audioSendThread != null)
             {
-                _audioSendTask.Wait(TimeSpan.FromMilliseconds(500));
+                _audioSendThread.Join(500);
             }
         }
         catch { }
 
         _audioSendCts?.Dispose();
         _audioSendCts = null;
-        _audioSendTask = null;
+        _audioSendThread = null;
 
         // Clear queues
         while (_audioSendQueue.TryDequeue(out _)) { }

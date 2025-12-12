@@ -739,6 +739,7 @@ public class ScreenSharingManager : IScreenSharingManager
         var sendTimer = new Stopwatch();
         var frameIntervalStopwatch = Stopwatch.StartNew();
         long lastSendTime = 0;
+        var consecutiveVoiceFrames = 0; // Track how long voice has been active
 
         while (!cancellationToken.IsCancellationRequested && _isSharing)
         {
@@ -749,11 +750,31 @@ public class ScreenSharingManager : IScreenSharingManager
                 var now = frameIntervalStopwatch.ElapsedMilliseconds;
                 var elapsed = now - lastSendTime;
 
-                // VOICE PRIORITY: When voice is active, add small delays between frames
-                // to give audio packets a chance to be sent first
+                // VOICE PRIORITY: When voice is active, add delays between frames
+                // to give audio packets priority on the SignalR connection
                 if (_voiceActive)
                 {
-                    await Task.Delay(3, cancellationToken).ConfigureAwait(false);
+                    consecutiveVoiceFrames++;
+
+                    // Progressive delay: start with 8ms, increase to 15ms if voice stays active
+                    // This gives audio packets a window to be sent between video frames
+                    var voiceDelay = consecutiveVoiceFrames > 10 ? 15 : 8;
+                    await Task.Delay(voiceDelay, cancellationToken).ConfigureAwait(false);
+
+                    // Skip every other frame if voice has been active for a while
+                    // This significantly reduces bandwidth competition
+                    if (consecutiveVoiceFrames > 20 && consecutiveVoiceFrames % 2 == 0)
+                    {
+                        if (_frameQueue.TryDequeue(out _))
+                        {
+                            _framesDroppedThisSecond++;
+                        }
+                        continue; // Skip this iteration entirely
+                    }
+                }
+                else
+                {
+                    consecutiveVoiceFrames = 0;
                 }
 
                 // Wait for next frame interval to maintain steady send rate
@@ -814,7 +835,12 @@ public class ScreenSharingManager : IScreenSharingManager
                         OnFrameReady?.Invoke("self", frameToSend.Data, frameToSend.Width, frameToSend.Height);
                         OnLocalFrameReady?.Invoke(frameToSend.Data, frameToSend.Width, frameToSend.Height);
 
-                        // Give audio a chance after each frame
+                        // VOICE PRIORITY: Extra yield after sending when voice active
+                        // Gives audio send thread a chance to send its packets
+                        if (_voiceActive)
+                        {
+                            await Task.Delay(5, cancellationToken).ConfigureAwait(false);
+                        }
                         await Task.Yield();
                     }
                     catch (Exception ex)
@@ -826,6 +852,7 @@ public class ScreenSharingManager : IScreenSharingManager
                 {
                     await Task.Delay(2, cancellationToken).ConfigureAwait(false);
                 }
+
 
                 // Update stats every second
                 UpdateStats();
