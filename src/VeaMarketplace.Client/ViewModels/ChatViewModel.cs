@@ -153,6 +153,28 @@ public partial class ChatViewModel : BaseViewModel
             });
         };
 
+        _chatService.OnUserProfileUpdated += updatedUser =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                // Update online user in the list
+                var existingUser = OnlineUsers.FirstOrDefault(u => u.Id == updatedUser.Id);
+                if (existingUser != null)
+                {
+                    var index = OnlineUsers.IndexOf(existingUser);
+                    OnlineUsers.RemoveAt(index);
+                    OnlineUsers.Insert(index, updatedUser);
+                }
+
+                // Update sender info in existing messages
+                foreach (var message in Messages.Where(m => m.SenderId == updatedUser.Id))
+                {
+                    message.SenderAvatarUrl = updatedUser.AvatarUrl;
+                    message.SenderUsername = updatedUser.Username;
+                }
+            });
+        };
+
         // Voice events
         _voiceService.OnUserJoinedVoice += user =>
         {

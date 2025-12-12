@@ -133,6 +133,12 @@ public partial class MarketplaceViewModel : BaseViewModel
     [ObservableProperty]
     private string _newImageUrl = string.Empty;
 
+    [ObservableProperty]
+    private ObservableCollection<string> _newImageUrls = [];
+
+    [ObservableProperty]
+    private bool _isUploadingImages;
+
     public List<ProductCategory> Categories { get; } = Enum.GetValues<ProductCategory>().ToList();
     public List<ProductSortOrder> SortOrders { get; } = Enum.GetValues<ProductSortOrder>().ToList();
 
@@ -552,6 +558,13 @@ public partial class MarketplaceViewModel : BaseViewModel
 
         try
         {
+            // Combine uploaded images with manually entered URL
+            var allImageUrls = NewImageUrls.ToList();
+            if (!string.IsNullOrEmpty(NewImageUrl) && !allImageUrls.Contains(NewImageUrl))
+            {
+                allImageUrls.Add(NewImageUrl);
+            }
+
             var request = new CreateProductRequest
             {
                 Title = NewTitle,
@@ -561,9 +574,7 @@ public partial class MarketplaceViewModel : BaseViewModel
                 Tags = NewTags.Split(',', StringSplitOptions.RemoveEmptyEntries)
                     .Select(t => t.Trim())
                     .ToList(),
-                ImageUrls = string.IsNullOrEmpty(NewImageUrl)
-                    ? []
-                    : [NewImageUrl]
+                ImageUrls = allImageUrls
             };
 
             await _apiService.CreateProductAsync(request);
@@ -571,6 +582,7 @@ public partial class MarketplaceViewModel : BaseViewModel
             ClearNewListingFields();
             await LoadProductsAsync();
             await LoadMyProducts();
+            ShowTemporaryMessage("Product listing created successfully!");
         }
         catch (Exception ex)
         {
@@ -582,6 +594,56 @@ public partial class MarketplaceViewModel : BaseViewModel
         }
     }
 
+    /// <summary>
+    /// Upload product images from file paths
+    /// </summary>
+    public async Task<List<string>> UploadProductImagesAsync(IEnumerable<string> filePaths)
+    {
+        var uploadedUrls = new List<string>();
+        var fileUploadService = (IFileUploadService?)App.ServiceProvider.GetService(typeof(IFileUploadService));
+
+        if (fileUploadService == null || string.IsNullOrEmpty(_apiService.Token))
+        {
+            SetError("File upload service not available");
+            return uploadedUrls;
+        }
+
+        IsUploadingImages = true;
+
+        foreach (var filePath in filePaths)
+        {
+            try
+            {
+                var result = await fileUploadService.UploadAttachmentAsync(filePath, _apiService.Token);
+                if (result.Success && !string.IsNullOrEmpty(result.FileUrl))
+                {
+                    uploadedUrls.Add(result.FileUrl);
+                    NewImageUrls.Add(result.FileUrl);
+                }
+                else
+                {
+                    ShowTemporaryMessage($"Failed to upload {System.IO.Path.GetFileName(filePath)}");
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowTemporaryMessage($"Upload error: {ex.Message}");
+            }
+        }
+
+        IsUploadingImages = false;
+        return uploadedUrls;
+    }
+
+    [RelayCommand]
+    private void RemoveProductImage(string imageUrl)
+    {
+        if (NewImageUrls.Contains(imageUrl))
+        {
+            NewImageUrls.Remove(imageUrl);
+        }
+    }
+
     private void ClearNewListingFields()
     {
         NewTitle = string.Empty;
@@ -590,6 +652,7 @@ public partial class MarketplaceViewModel : BaseViewModel
         NewCategory = ProductCategory.Other;
         NewTags = string.Empty;
         NewImageUrl = string.Empty;
+        NewImageUrls.Clear();
         ClearError();
     }
 

@@ -200,6 +200,16 @@
                        TextWrapping="Wrap"
                        MaxWidth="600"
                        HorizontalAlignment="Left"/>
+
+            <!-- Attachments Area -->
+            <ItemsControl x:Name="AttachmentsContainer" Margin="0,8,0,0"
+                          Visibility="Collapsed">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
         </StackPanel>
 
         <!-- Hover Actions -->

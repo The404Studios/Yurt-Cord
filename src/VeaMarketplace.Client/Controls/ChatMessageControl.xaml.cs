@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -6,6 +7,7 @@ using System.Windows.Media.Imaging;
 using VeaMarketplace.Client.Services;
 using VeaMarketplace.Shared.DTOs;
 using VeaMarketplace.Shared.Enums;
+using VeaMarketplace.Shared.Models;
 
 namespace VeaMarketplace.Client.Controls;
 
@@ -153,6 +155,185 @@ public partial class ChatMessageControl : UserControl
             RankBadge.Background = new SolidColorBrush(GetRankColor(message.SenderRank));
             RankText.Text = GetRankEmoji(message.SenderRank) + " " + message.SenderRank.ToString();
         }
+
+        // Display attachments
+        DisplayAttachments(message.Attachments);
+    }
+
+    private void DisplayAttachments(List<MessageAttachmentDto>? attachments)
+    {
+        AttachmentsContainer.Items.Clear();
+
+        if (attachments == null || attachments.Count == 0)
+        {
+            AttachmentsContainer.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        AttachmentsContainer.Visibility = Visibility.Visible;
+
+        foreach (var attachment in attachments)
+        {
+            var attachmentElement = CreateAttachmentElement(attachment);
+            AttachmentsContainer.Items.Add(attachmentElement);
+        }
+    }
+
+    private UIElement CreateAttachmentElement(MessageAttachmentDto attachment)
+    {
+        if (attachment.Type == AttachmentType.Image)
+        {
+            return CreateImageAttachment(attachment);
+        }
+        else
+        {
+            return CreateFileAttachment(attachment);
+        }
+    }
+
+    private UIElement CreateImageAttachment(MessageAttachmentDto attachment)
+    {
+        var border = new Border
+        {
+            CornerRadius = new CornerRadius(8),
+            Margin = new Thickness(0, 0, 8, 8),
+            MaxWidth = 400,
+            MaxHeight = 300,
+            Cursor = Cursors.Hand,
+            Tag = attachment.FileUrl
+        };
+
+        var image = new Image
+        {
+            Stretch = Stretch.Uniform,
+            StretchDirection = StretchDirection.DownOnly
+        };
+
+        try
+        {
+            var bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.UriSource = new Uri(attachment.ThumbnailUrl ?? attachment.FileUrl);
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.EndInit();
+            image.Source = bitmap;
+        }
+        catch
+        {
+            // Fallback to file icon
+            return CreateFileAttachment(attachment);
+        }
+
+        border.Child = image;
+        border.MouseLeftButtonDown += (s, e) =>
+        {
+            // Open full image in browser or viewer
+            if (s is Border b && b.Tag is string url)
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+                }
+                catch { }
+            }
+        };
+
+        return border;
+    }
+
+    private UIElement CreateFileAttachment(MessageAttachmentDto attachment)
+    {
+        var border = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(43, 45, 49)),
+            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(12, 8, 12, 8),
+            Margin = new Thickness(0, 0, 8, 8),
+            Cursor = Cursors.Hand,
+            Tag = attachment.FileUrl
+        };
+
+        var grid = new Grid();
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        // File icon
+        var iconText = new TextBlock
+        {
+            Text = GetFileTypeIcon(attachment.Type),
+            FontSize = 24,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 8, 0)
+        };
+        Grid.SetColumn(iconText, 0);
+        grid.Children.Add(iconText);
+
+        // File info
+        var infoStack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+        infoStack.Children.Add(new TextBlock
+        {
+            Text = attachment.FileName,
+            Foreground = new SolidColorBrush(Color.FromRgb(88, 101, 242)),
+            FontSize = 14,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            MaxWidth = 200
+        });
+        infoStack.Children.Add(new TextBlock
+        {
+            Text = FormatFileSize(attachment.FileSize),
+            Foreground = new SolidColorBrush(Color.FromRgb(185, 187, 190)),
+            FontSize = 11
+        });
+        Grid.SetColumn(infoStack, 1);
+        grid.Children.Add(infoStack);
+
+        // Download icon
+        var downloadIcon = new TextBlock
+        {
+            Text = "⬇",
+            FontSize = 16,
+            VerticalAlignment = VerticalAlignment.Center,
+            Foreground = new SolidColorBrush(Color.FromRgb(185, 187, 190)),
+            Margin = new Thickness(8, 0, 0, 0)
+        };
+        Grid.SetColumn(downloadIcon, 2);
+        grid.Children.Add(downloadIcon);
+
+        border.Child = grid;
+        border.MouseLeftButtonDown += (s, e) =>
+        {
+            // Download or open file
+            if (s is Border b && b.Tag is string url)
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+                }
+                catch { }
+            }
+        };
+
+        return border;
+    }
+
+    private static string GetFileTypeIcon(AttachmentType type)
+    {
+        return type switch
+        {
+            AttachmentType.Image => "🖼",
+            AttachmentType.Video => "🎬",
+            AttachmentType.Audio => "🎵",
+            AttachmentType.Document => "📄",
+            _ => "📁"
+        };
+    }
+
+    private static string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
+        return $"{bytes / (1024.0 * 1024.0):F1} MB";
     }
 
     private static Color GetRoleColor(UserRole role)
