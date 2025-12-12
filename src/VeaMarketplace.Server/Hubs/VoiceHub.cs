@@ -20,6 +20,17 @@ public class VoiceHub : Hub
     // Voice Room system
     private static readonly ConcurrentDictionary<string, VoiceRoom> _voiceRooms = new();
 
+    // Bandwidth tracking for rate limiting (userId -> (bytesUsed, lastResetTime))
+    private static readonly ConcurrentDictionary<string, (long bytesUsed, DateTime lastReset)> _bandwidthUsage = new();
+
+    // Stream quality preferences per viewer (viewerConnectionId -> preferred quality)
+    private static readonly ConcurrentDictionary<string, string> _viewerQualityPrefs = new();
+
+    // Constants for high-bandwidth streaming
+    private const long MaxUploadBytesPerSecond = 30L * 1024 * 1024; // 30 MB/s upload per user
+    private const long MaxDownloadBytesPerSecond = 50L * 1024 * 1024; // 50 MB/s download per user
+    private const int MaxConcurrentStreamsPerChannel = 10;
+
     public VoiceHub(VoiceCallService? callService = null, AuthService? authService = null)
     {
         _callService = callService;
@@ -327,22 +338,79 @@ public class VoiceHub : Hub
 
     public async Task SendScreenFrame(byte[] frameData, int width, int height)
     {
-        if (_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
+        if (!_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
+            return;
+
+        // Check bandwidth limit (30 MB/s upload)
+        if (!CheckBandwidthLimit(Context.ConnectionId, frameData.Length))
         {
-            // Update frame stats
-            if (_screenSharers.TryGetValue(Context.ConnectionId, out var shareState))
+            // Over bandwidth limit - drop frame silently
+            if (_screenSharers.TryGetValue(Context.ConnectionId, out var ss))
+                ss.FramesDropped++;
+            return;
+        }
+
+        // Update frame stats
+        if (_screenSharers.TryGetValue(Context.ConnectionId, out var shareState))
+        {
+            shareState.FramesSent++;
+            shareState.LastWidth = width;
+            shareState.LastHeight = height;
+            shareState.LastFrameTime = DateTime.UtcNow;
+            shareState.BytesSent += frameData.Length;
+        }
+
+        // Broadcast screen frame to ALL users in the channel INCLUDING the sender
+        // This allows the sharer to see their own stream for verification
+        await Clients.Group($"voice_{userState.ChannelId}")
+            .SendAsync("ReceiveScreenFrame", Context.ConnectionId, frameData, width, height);
+    }
+
+    // Bandwidth check helper
+    private bool CheckBandwidthLimit(string connectionId, long bytes)
+    {
+        var now = DateTime.UtcNow;
+
+        if (_bandwidthUsage.TryGetValue(connectionId, out var usage))
+        {
+            // Reset counter every second
+            if ((now - usage.lastReset).TotalSeconds >= 1)
             {
-                shareState.FramesSent++;
-                shareState.LastWidth = width;
-                shareState.LastHeight = height;
-                shareState.LastFrameTime = DateTime.UtcNow;
+                _bandwidthUsage[connectionId] = (bytes, now);
+                return true;
             }
 
-            // Broadcast screen frame to ALL users in the channel INCLUDING the sender
-            // This allows the sharer to see their own stream for verification
-            await Clients.Group($"voice_{userState.ChannelId}")
-                .SendAsync("ReceiveScreenFrame", Context.ConnectionId, frameData, width, height);
+            // Check if over limit
+            if (usage.bytesUsed + bytes > MaxUploadBytesPerSecond)
+                return false;
+
+            _bandwidthUsage[connectionId] = (usage.bytesUsed + bytes, usage.lastReset);
         }
+        else
+        {
+            _bandwidthUsage[connectionId] = (bytes, now);
+        }
+
+        return true;
+    }
+
+    // Viewer requests a quality level from streamer
+    public async Task RequestStreamQuality(string streamerConnectionId, string qualityPreset)
+    {
+        _viewerQualityPrefs[Context.ConnectionId] = qualityPreset;
+
+        // Notify streamer of quality request (they can choose to honor it)
+        await Clients.Client(streamerConnectionId)
+            .SendAsync("QualityChangeRequested", Context.ConnectionId, qualityPreset);
+    }
+
+    // Get available quality presets
+    public Task<string[]> GetAvailableQualities()
+    {
+        return Task.FromResult(new[]
+        {
+            "480p", "720p", "720p60", "1080p", "1080p60", "1440p", "1440p60", "4K"
+        });
     }
 
     // Viewer joins a screen share
@@ -1042,9 +1110,12 @@ public class ScreenShareState
     public string ChannelId { get; set; } = string.Empty;
     public DateTime StartedAt { get; set; }
     public int FramesSent { get; set; }
+    public int FramesDropped { get; set; }
+    public long BytesSent { get; set; }
     public int LastWidth { get; set; }
     public int LastHeight { get; set; }
     public DateTime LastFrameTime { get; set; }
+    public string CurrentQuality { get; set; } = "720p";
 }
 
 public class VoiceRoom
