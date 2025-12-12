@@ -22,12 +22,19 @@ public class ScreenSharingManager : IScreenSharingManager
     private ScreenShareStats _stats = new();
     private readonly ConcurrentDictionary<string, RemoteScreenShare> _activeShares = new();
 
-    // Threading
+    // Threading - dedicated threads for capture, encoding, and sending
     private CancellationTokenSource? _captureCts;
     private Thread? _captureThread;
+    private Thread? _encodeThread;
     private Task? _sendTask;
-    private readonly ConcurrentQueue<CapturedFrame> _frameQueue = new();
+    private readonly ConcurrentQueue<Bitmap> _captureQueue = new();  // Raw captured bitmaps
+    private readonly ConcurrentQueue<CapturedFrame> _frameQueue = new();  // Encoded frames ready to send
     private readonly object _settingsLock = new();
+    private readonly AutoResetEvent _captureSignal = new(false);  // Signal encode thread
+
+    // Performance tuning constants
+    private const int MaxCaptureQueueSize = 5;   // Raw frames waiting for encoding
+    private const int MaxFrameQueueSize = 30;    // Encoded frames waiting to send (increased from 10)
 
     // Network callbacks
     private Func<byte[], int, int, Task>? _sendFrameFunc;
@@ -126,9 +133,14 @@ public class ScreenSharingManager : IScreenSharingManager
             // Cancel and cleanup synchronously
             try { _captureCts?.Cancel(); } catch { }
 
+            // Signal encode thread to wake up
+            _captureSignal.Set();
+
             // Give threads a moment to stop
             _captureThread?.Join(500);
             _captureThread = null;
+            _encodeThread?.Join(500);
+            _encodeThread = null;
 
             // Don't wait for send task - just let it cancel
             _sendTask = null;
@@ -136,8 +148,9 @@ public class ScreenSharingManager : IScreenSharingManager
             try { _captureCts?.Dispose(); } catch { }
             _captureCts = null;
 
-            // Clear frame queue
+            // Clear both queues
             while (_frameQueue.TryDequeue(out _)) { }
+            while (_captureQueue.TryDequeue(out var bitmap)) { bitmap?.Dispose(); }
 
             // Cleanup capture resources
             CleanupCaptureResources();
@@ -201,8 +214,9 @@ public class ScreenSharingManager : IScreenSharingManager
         // Initialize capture resources
         InitializeCaptureResources();
 
-        // Clear any old frames
+        // Clear any old frames from both queues
         while (_frameQueue.TryDequeue(out _)) { }
+        while (_captureQueue.TryDequeue(out var oldBitmap)) { oldBitmap?.Dispose(); }
 
         // Notify server
         if (_notifyStartFunc != null)
@@ -217,17 +231,28 @@ public class ScreenSharingManager : IScreenSharingManager
             }
         }
 
-        // Start capture thread
+        // Start capture and encode threads
         _captureCts = new CancellationTokenSource();
+
+        // Capture thread - highest priority for consistent frame timing
         _captureThread = new Thread(() => CaptureLoop(_captureCts.Token))
         {
             IsBackground = true,
-            Priority = ThreadPriority.AboveNormal,
+            Priority = ThreadPriority.Highest,
             Name = "ScreenCaptureThread"
+        };
+
+        // Encode thread - above normal priority for fast encoding
+        _encodeThread = new Thread(() => EncodeLoop(_captureCts.Token))
+        {
+            IsBackground = true,
+            Priority = ThreadPriority.AboveNormal,
+            Name = "ScreenEncodeThread"
         };
 
         _sessionStopwatch.Restart();
         _captureThread.Start();
+        _encodeThread.Start();
 
         // Start send task
         _sendTask = Task.Run(() => SendLoop(_captureCts.Token), _captureCts.Token);
@@ -246,15 +271,27 @@ public class ScreenSharingManager : IScreenSharingManager
         }
         catch { }
 
+        // Signal encode thread to wake up and exit
+        _captureSignal.Set();
+
         // Wait for capture thread to stop with timeout
         if (_captureThread != null)
         {
             if (!_captureThread.Join(2000))
             {
-                // Thread didn't stop in time, force it
                 Debug.WriteLine("Capture thread did not stop gracefully");
             }
             _captureThread = null;
+        }
+
+        // Wait for encode thread to stop with timeout
+        if (_encodeThread != null)
+        {
+            if (!_encodeThread.Join(2000))
+            {
+                Debug.WriteLine("Encode thread did not stop gracefully");
+            }
+            _encodeThread = null;
         }
 
         // Wait for send task to complete with timeout
@@ -262,7 +299,6 @@ public class ScreenSharingManager : IScreenSharingManager
         {
             try
             {
-                // Use a timeout to prevent hanging
                 var timeoutTask = Task.Delay(2000);
                 var completedTask = await Task.WhenAny(_sendTask, timeoutTask).ConfigureAwait(false);
                 if (completedTask == timeoutTask)
@@ -286,8 +322,9 @@ public class ScreenSharingManager : IScreenSharingManager
         catch { }
         _captureCts = null;
 
-        // Clear frame queue
+        // Clear both queues
         while (_frameQueue.TryDequeue(out _)) { }
+        while (_captureQueue.TryDequeue(out var bitmap)) { bitmap?.Dispose(); }
 
         // Cleanup capture resources
         CleanupCaptureResources();
@@ -415,7 +452,8 @@ public class ScreenSharingManager : IScreenSharingManager
     }
 
     /// <summary>
-    /// Main capture loop running on dedicated thread for consistent timing
+    /// Main capture loop running on dedicated thread for consistent timing.
+    /// Only captures screen - encoding is done by separate EncodeLoop thread.
     /// </summary>
     private void CaptureLoop(CancellationToken cancellationToken)
     {
@@ -442,28 +480,29 @@ public class ScreenSharingManager : IScreenSharingManager
                     lastCaptureTime = now;
                     captureTimer.Restart();
 
-                    // Capture and encode frame
-                    var frameData = CaptureAndEncode();
+                    // Capture screen only (encoding is done by EncodeLoop)
+                    var capturedBitmap = CaptureScreen();
 
                     captureTimer.Stop();
                     _stats.CaptureTimeMs = captureTimer.Elapsed.TotalMilliseconds;
 
-                    if (frameData != null && frameData.Length > 0)
+                    if (capturedBitmap != null)
                     {
-                        // Queue frame with larger buffer to handle network jitter for steady FPS
-                        if (_frameQueue.Count < 10)
+                        // Queue captured bitmap for encoding
+                        if (_captureQueue.Count < MaxCaptureQueueSize)
                         {
-                            _frameQueue.Enqueue(new CapturedFrame
-                            {
-                                Data = frameData,
-                                Width = _settings.TargetWidth,
-                                Height = _settings.TargetHeight,
-                                FrameNumber = _frameNumber++,
-                                Timestamp = stopwatch.ElapsedMilliseconds
-                            });
+                            _captureQueue.Enqueue(capturedBitmap);
+                            _captureSignal.Set(); // Wake up encode thread
                         }
                         else
                         {
+                            // Capture queue full - drop oldest and add new
+                            if (_captureQueue.TryDequeue(out var oldBitmap))
+                            {
+                                oldBitmap.Dispose();
+                            }
+                            _captureQueue.Enqueue(capturedBitmap);
+                            _captureSignal.Set();
                             _framesDroppedThisSecond++;
                         }
                     }
@@ -489,16 +528,83 @@ public class ScreenSharingManager : IScreenSharingManager
     }
 
     /// <summary>
-    /// Captures screen and encodes using hardware H.264 or JPEG fallback
+    /// Encoding loop running on dedicated thread.
+    /// Encodes captured bitmaps and queues them for sending.
     /// </summary>
-    private byte[]? CaptureAndEncode()
+    private void EncodeLoop(CancellationToken cancellationToken)
+    {
+        var encodeTimer = new Stopwatch();
+        var stopwatch = Stopwatch.StartNew();
+
+        while (!cancellationToken.IsCancellationRequested && _isSharing)
+        {
+            try
+            {
+                // Wait for signal or timeout (16ms = ~60fps max check rate)
+                _captureSignal.WaitOne(16);
+
+                // Process all queued captures
+                while (_captureQueue.TryDequeue(out var bitmap))
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        bitmap.Dispose();
+                        break;
+                    }
+
+                    encodeTimer.Restart();
+
+                    // Encode the bitmap
+                    var frameData = EncodeBitmap(bitmap);
+                    bitmap.Dispose(); // Always dispose after encoding
+
+                    encodeTimer.Stop();
+
+                    if (frameData != null && frameData.Length > 0)
+                    {
+                        // Queue encoded frame for sending
+                        if (_frameQueue.Count < MaxFrameQueueSize)
+                        {
+                            _frameQueue.Enqueue(new CapturedFrame
+                            {
+                                Data = frameData,
+                                Width = _settings.TargetWidth,
+                                Height = _settings.TargetHeight,
+                                FrameNumber = _frameNumber++,
+                                Timestamp = stopwatch.ElapsedMilliseconds
+                            });
+                        }
+                        else
+                        {
+                            _framesDroppedThisSecond++;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Encode error: {ex.Message}");
+            }
+        }
+
+        // Cleanup remaining items
+        while (_captureQueue.TryDequeue(out var bitmap))
+        {
+            bitmap.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Captures screen and returns a new bitmap (for EncodeLoop to process).
+    /// </summary>
+    private Bitmap? CaptureScreen()
     {
         if (_currentDisplay == null || _captureBitmap == null || _captureGraphics == null)
             return null;
 
         try
         {
-            // Capture screen
+            // Capture screen to reusable bitmap
             _captureGraphics.CopyFromScreen(
                 _currentDisplay.Left,
                 _currentDisplay.Top,
@@ -506,27 +612,51 @@ public class ScreenSharingManager : IScreenSharingManager
                 new Size(_currentDisplay.Width, _currentDisplay.Height),
                 CopyPixelOperation.SourceCopy);
 
-            Bitmap bitmapToEncode;
-
-            // Resize if needed
-            if (_currentDisplay.Width != _settings.TargetWidth ||
-                _currentDisplay.Height != _settings.TargetHeight)
+            // Create a copy for the encode queue
+            int targetWidth, targetHeight;
+            lock (_settingsLock)
             {
-                if (_resizeBitmap == null || _resizeGraphics == null)
-                    return null;
+                targetWidth = _settings.TargetWidth;
+                targetHeight = _settings.TargetHeight;
+            }
 
-                _resizeGraphics.DrawImage(_captureBitmap, 0, 0, _settings.TargetWidth, _settings.TargetHeight);
-                bitmapToEncode = _resizeBitmap;
+            // Resize if needed, otherwise clone
+            if (_currentDisplay.Width != targetWidth || _currentDisplay.Height != targetHeight)
+            {
+                var resized = new Bitmap(targetWidth, targetHeight, PixelFormat.Format24bppRgb);
+                using (var g = Graphics.FromImage(resized))
+                {
+                    g.InterpolationMode = InterpolationMode.Bilinear;
+                    g.CompositingQuality = CompositingQuality.HighSpeed;
+                    g.SmoothingMode = SmoothingMode.HighSpeed;
+                    g.DrawImage(_captureBitmap, 0, 0, targetWidth, targetHeight);
+                }
+                return resized;
             }
             else
             {
-                bitmapToEncode = _captureBitmap;
+                return (Bitmap)_captureBitmap.Clone();
             }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"CaptureScreen error: {ex.Message}");
+            return null;
+        }
+    }
 
+    /// <summary>
+    /// Encodes a bitmap using hardware H.264 or JPEG fallback.
+    /// Called from EncodeLoop on dedicated encoding thread.
+    /// </summary>
+    private byte[]? EncodeBitmap(Bitmap bitmap)
+    {
+        try
+        {
             // Try hardware encoding first (H.264 with NVENC/AMF/QSV)
             if (_useHardwareEncoding && _hardwareEncoder != null)
             {
-                var h264Data = _hardwareEncoder.EncodeFrame(bitmapToEncode, _frameNumber);
+                var h264Data = _hardwareEncoder.EncodeFrame(bitmap, _frameNumber);
                 if (h264Data != null && h264Data.Length > 0)
                 {
                     return h264Data;
@@ -535,29 +665,39 @@ public class ScreenSharingManager : IScreenSharingManager
             }
 
             // Fallback: Encode to JPEG
+            int jpegQuality;
+            int maxFrameSizeKb;
+            bool adaptiveQuality;
+            lock (_settingsLock)
+            {
+                jpegQuality = _settings.JpegQuality;
+                maxFrameSizeKb = _settings.MaxFrameSizeKb;
+                adaptiveQuality = _settings.AdaptiveQuality;
+            }
+
             using var ms = new MemoryStream();
             if (_jpegEncoder != null && _encoderParams != null)
             {
-                bitmapToEncode.Save(ms, _jpegEncoder, _encoderParams);
+                bitmap.Save(ms, _jpegEncoder, _encoderParams);
             }
             else
             {
-                bitmapToEncode.Save(ms, ImageFormat.Jpeg);
+                bitmap.Save(ms, ImageFormat.Jpeg);
             }
 
             var frameData = ms.ToArray();
 
             // Adaptive quality: compress more if frame too large
-            if (_settings.AdaptiveQuality && frameData.Length > _settings.MaxFrameSizeKb * 1024)
+            if (adaptiveQuality && frameData.Length > maxFrameSizeKb * 1024)
             {
-                frameData = RecompressFrame(frameData, Math.Max(20, _settings.JpegQuality - 15));
+                frameData = RecompressFrame(frameData, Math.Max(20, jpegQuality - 15));
             }
 
             return frameData;
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"CaptureAndEncode error: {ex.Message}");
+            Debug.WriteLine($"EncodeBitmap error: {ex.Message}");
             return null;
         }
     }
@@ -897,8 +1037,10 @@ public class ScreenSharingManager : IScreenSharingManager
         CleanupCaptureResources();
 
         try { _encoderParams?.Dispose(); } catch { }
+        try { _captureSignal?.Dispose(); } catch { }
 
-        // Clear any remaining state
+        // Clear any remaining queues
+        while (_captureQueue.TryDequeue(out var bitmap)) { bitmap?.Dispose(); }
         _activeShares.Clear();
 
         GC.SuppressFinalize(this);
