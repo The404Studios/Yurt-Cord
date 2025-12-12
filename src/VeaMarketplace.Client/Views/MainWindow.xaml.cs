@@ -26,9 +26,9 @@ public partial class MainWindow : Window
         _toastService.SetContainer(ToastContainer);
 
         // Subscribe to friend service events for notifications
-        _friendService.OnFriendRequestReceived += user =>
+        _friendService.OnNewFriendRequest += request =>
         {
-            _toastService.ShowFriendRequest(user.Username);
+            _toastService.ShowFriendRequest(request.RequesterUsername);
         };
 
         _friendService.OnDirectMessageReceived += message =>

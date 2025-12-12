@@ -16,6 +16,7 @@
             <BooleanToVisibilityConverter x:Key="BoolToVis"/>
             <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
             <converters:StringToVisibilityConverter x:Key="StringToVisConverter"/>
+            <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -95,7 +96,7 @@
                                     <TextBlock Text="ADD FRIEND" FontSize="12" FontWeight="Bold"
                                                Foreground="{StaticResource TextMutedBrush}"
                                                Margin="0,0,0,8"/>
-                                    <TextBlock Text="Enter a username to send a friend request"
+                                    <TextBlock Text="You can add friends with their username"
                                                FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
                                                TextWrapping="Wrap" Margin="0,0,0,12"/>
                                     <Grid>
@@ -106,9 +107,87 @@
                                         <TextBox Grid.Column="0" Style="{StaticResource ModernTextBox}"
                                                  Text="{Binding FriendRequestUsername, UpdateSourceTrigger=PropertyChanged}"
                                                  Margin="0,0,8,0"/>
-                                        <Button Grid.Column="1" Content="Send"
+                                        <Button Grid.Column="1" Content="Send Friend Request"
                                                 Style="{StaticResource PrimaryButton}"
-                                                Command="{Binding SendFriendRequestCommand}"/>
+                                                Command="{Binding SendFriendRequestCommand}"
+                                                IsEnabled="{Binding CanSendFriendRequest}"/>
+                                    </Grid>
+
+                                    <!-- Search Status -->
+                                    <Grid Margin="0,12,0,0">
+                                        <!-- Loading Indicator -->
+                                        <StackPanel Orientation="Horizontal"
+                                                    Visibility="{Binding IsSearchingUser, Converter={StaticResource BoolToVis}}">
+                                            <TextBlock Text="Searching..." FontSize="12"
+                                                       Foreground="{StaticResource TextMutedBrush}"/>
+                                        </StackPanel>
+
+                                        <!-- User Found Card -->
+                                        <Border Background="{StaticResource QuaternaryDarkBrush}"
+                                                CornerRadius="8" Padding="12"
+                                                Visibility="{Binding SearchedUser, Converter={StaticResource NullToVisibilityConverter}}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <!-- Avatar -->
+                                                <Grid Grid.Column="0" Margin="0,0,12,0">
+                                                    <Ellipse Width="40" Height="40">
+                                                        <Ellipse.Fill>
+                                                            <ImageBrush ImageSource="{Binding SearchedUser.AvatarUrl}"/>
+                                                        </Ellipse.Fill>
+                                                    </Ellipse>
+                                                    <!-- Online status -->
+                                                    <Ellipse Width="12" Height="12"
+                                                             HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                             Stroke="{StaticResource QuaternaryDarkBrush}" StrokeThickness="2">
+                                                        <Ellipse.Style>
+                                                            <Style TargetType="Ellipse">
+                                                                <Setter Property="Fill" Value="{StaticResource TextMutedBrush}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding SearchedUser.IsOnline}" Value="True">
+                                                                        <Setter Property="Fill" Value="{StaticResource AccentGreenBrush}"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Ellipse.Style>
+                                                    </Ellipse>
+                                                </Grid>
+
+                                                <!-- User Info -->
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding SearchedUser.Username}"
+                                                               FontWeight="SemiBold" FontSize="14"
+                                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                    <TextBlock Text="{Binding SearchedUser.DisplayName}"
+                                                               FontSize="12"
+                                                               Foreground="{StaticResource TextMutedBrush}"
+                                                               Visibility="{Binding SearchedUser.DisplayName, Converter={StaticResource NullToVisibilityConverter}}"/>
+                                                </StackPanel>
+
+                                                <!-- View Profile / Already Friends Badge -->
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Button Content="Profile"
+                                                            Style="{StaticResource SecondaryButton}"
+                                                            Padding="8,4" Margin="0,0,8,0"
+                                                            Command="{Binding ViewSearchedUserProfileCommand}"/>
+                                                    <Border Background="{StaticResource AccentGreenBrush}"
+                                                            CornerRadius="4" Padding="8,4"
+                                                            Visibility="{Binding SearchedUser.IsFriend, Converter={StaticResource BoolToVis}}">
+                                                        <TextBlock Text="Friends" FontSize="11" FontWeight="SemiBold"
+                                                                   Foreground="White"/>
+                                                    </Border>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- User Not Found Message -->
+                                        <TextBlock Text="{Binding UserSearchMessage}"
+                                                   FontSize="12" Foreground="{StaticResource AccentRedBrush}"
+                                                   Visibility="{Binding UserSearchMessage, Converter={StaticResource NullToVisibilityConverter}}"/>
                                     </Grid>
                                 </StackPanel>
                             </Border>
@@ -207,6 +286,9 @@
                                                 CommandParameter="{Binding}">
                                             <Button.ContextMenu>
                                                 <ContextMenu>
+                                                    <MenuItem Header="View Profile"
+                                                              Command="{Binding DataContext.ViewFriendProfileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                              CommandParameter="{Binding}"/>
                                                     <MenuItem Header="Message"
                                                               Command="{Binding DataContext.OpenDMCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                               CommandParameter="{Binding}"/>
@@ -433,23 +515,38 @@
                                     Margin="0,0,12,0" Padding="8,4"
                                     Command="{Binding CloseDMCommand}"/>
 
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                <Ellipse Width="24" Height="24" Margin="0,0,8,0">
-                                    <Ellipse.Fill>
-                                        <ImageBrush ImageSource="{Binding SelectedFriend.AvatarUrl}"/>
-                                    </Ellipse.Fill>
-                                </Ellipse>
-                                <TextBlock Text="{Binding SelectedFriend.Username}"
-                                           FontSize="16" FontWeight="Bold"
-                                           Foreground="{StaticResource TextPrimaryBrush}"/>
-                            </StackPanel>
-
-                            <Button Grid.Column="2" Style="{StaticResource IconButton}"
-                                    Width="32" Height="32"
-                                    Command="{Binding StartCallCommand}"
+                            <Button Grid.Column="1" Style="{StaticResource ChannelButton}"
+                                    HorizontalAlignment="Left" Padding="4"
+                                    Command="{Binding ViewFriendProfileCommand}"
                                     CommandParameter="{Binding SelectedFriend}">
-                                <TextBlock Text="📞" FontSize="16"/>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Ellipse Width="24" Height="24" Margin="0,0,8,0">
+                                        <Ellipse.Fill>
+                                            <ImageBrush ImageSource="{Binding SelectedFriend.AvatarUrl}"/>
+                                        </Ellipse.Fill>
+                                    </Ellipse>
+                                    <TextBlock Text="{Binding SelectedFriend.Username}"
+                                               FontSize="16" FontWeight="Bold"
+                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                </StackPanel>
                             </Button>
+
+                            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                <Button Style="{StaticResource IconButton}"
+                                        Width="32" Height="32" Margin="0,0,4,0"
+                                        Command="{Binding ViewFriendProfileCommand}"
+                                        CommandParameter="{Binding SelectedFriend}"
+                                        ToolTip="View Profile">
+                                    <TextBlock Text="👤" FontSize="16"/>
+                                </Button>
+                                <Button Style="{StaticResource IconButton}"
+                                        Width="32" Height="32"
+                                        Command="{Binding StartCallCommand}"
+                                        CommandParameter="{Binding SelectedFriend}"
+                                        ToolTip="Start Call">
+                                    <TextBlock Text="📞" FontSize="16"/>
+                                </Button>
+                            </StackPanel>
                         </Grid>
                     </Border>
 
