@@ -46,7 +46,7 @@ public partial class App : Application
         services.AddTransient<LoginViewModel>();
         services.AddTransient<RegisterViewModel>();
         services.AddTransient<MainViewModel>();
-        services.AddTransient<ChatViewModel>();
+        services.AddSingleton<ChatViewModel>(); // Singleton - shared chat state across all views
         services.AddTransient<MarketplaceViewModel>();
         services.AddTransient<ProfileViewModel>();
         services.AddTransient<VoiceChannelViewModel>();
