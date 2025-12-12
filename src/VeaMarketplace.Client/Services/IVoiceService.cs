@@ -219,6 +219,11 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     // Mic boost - amplify input audio before sending
     private const float MicGain = 2.5f; // 2.5x boost for quiet mics
 
+    // Voice activity tracking for receive side
+    // Ensures screen share yields when we're receiving audio too
+    private DateTime _lastAudioReceiveTime = DateTime.MinValue;
+    private const int AudioReceiveTimeoutMs = 200; // Consider voice inactive after 200ms of silence
+
     public VoiceService()
     {
         _screenSharingManager = new ScreenSharingManager();
@@ -473,9 +478,8 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             }
             OnUserSpeaking?.Invoke(connectionId, username, isSpeaking, audioLevel);
 
-            // Update screen share voice priority - yield to audio when anyone is speaking
-            var anyoneSpeaking = _voiceUsers.Values.Any(u => u.IsSpeaking) || _isSpeaking;
-            _screenSharingManager.SetVoiceActive(anyoneSpeaking);
+            // Update screen share voice priority using unified method
+            UpdateVoiceActivity();
         });
 
         _connection.On<List<VoiceUserState>>("VoiceChannelUsers", users =>
@@ -504,6 +508,11 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             // Don't play audio if we're deafened or if user is muted locally
             if (IsDeafened || IsUserMuted(senderConnectionId)) return;
             if (opusData.Length == 0 || _bufferedWaveProvider == null) return;
+
+            // VOICE PRIORITY: Signal that we're receiving audio
+            // This makes screen share yield even when we're just listening
+            _lastAudioReceiveTime = DateTime.UtcNow;
+            UpdateVoiceActivityFromReceive();
 
             try
             {
@@ -704,12 +713,12 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             _waveOut.Play();
 
             // Start the dedicated audio send thread (decouples network from audio callback)
-            // Uses AboveNormal priority to ensure audio gets sent before screen share
+            // Uses HIGHEST priority - audio is more time-sensitive than video
             _audioSendCts = new CancellationTokenSource();
             _audioSendThread = new Thread(() => AudioSendLoopThreaded(_audioSendCts.Token))
             {
                 IsBackground = true,
-                Priority = ThreadPriority.AboveNormal,
+                Priority = ThreadPriority.Highest,
                 Name = "AudioSendThread"
             };
             _audioSendThread.Start();
@@ -876,8 +885,8 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         {
             ThreadPool.QueueUserWorkItem(_ => OnSpeakingChanged?.Invoke(_isSpeaking));
 
-            // Notify screen share manager to yield to audio when speaking
-            _screenSharingManager.SetVoiceActive(_isSpeaking);
+            // Update voice activity (considers both sending and receiving)
+            UpdateVoiceActivity();
         }
 
         // Send speaking state updates ONLY when state actually changes
@@ -945,6 +954,29 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                 _audioSendQueue.Enqueue(audioData);
             }
         }
+    }
+
+    /// <summary>
+    /// Updates voice activity state considering both sending and receiving audio.
+    /// Called when local speaking state changes.
+    /// </summary>
+    private void UpdateVoiceActivity()
+    {
+        // Voice is active if we're speaking OR we've received audio recently
+        var isReceivingAudio = (DateTime.UtcNow - _lastAudioReceiveTime).TotalMilliseconds < AudioReceiveTimeoutMs;
+        var anyoneSpeaking = _voiceUsers.Values.Any(u => u.IsSpeaking) || _isSpeaking || isReceivingAudio;
+        _screenSharingManager.SetVoiceActive(anyoneSpeaking);
+    }
+
+    /// <summary>
+    /// Updates voice activity when receiving audio from others.
+    /// Called from ReceiveAudio handler to ensure screen share yields for incoming audio.
+    /// </summary>
+    private void UpdateVoiceActivityFromReceive()
+    {
+        // Signal voice activity when receiving audio
+        // This ensures screen share yields even if UserSpeaking event hasn't arrived yet
+        _screenSharingManager.SetVoiceActive(true);
     }
 
     public async Task DisconnectAsync()

@@ -234,19 +234,20 @@ public class ScreenSharingManager : IScreenSharingManager
         // Start capture and encode threads
         _captureCts = new CancellationTokenSource();
 
-        // Capture thread - highest priority for consistent frame timing
+        // Capture thread - AboveNormal priority for consistent frame timing
+        // (Audio thread is Highest, so audio always wins)
         _captureThread = new Thread(() => CaptureLoop(_captureCts.Token))
         {
             IsBackground = true,
-            Priority = ThreadPriority.Highest,
+            Priority = ThreadPriority.AboveNormal,
             Name = "ScreenCaptureThread"
         };
 
-        // Encode thread - above normal priority for fast encoding
+        // Encode thread - Normal priority (CPU intensive, shouldn't starve audio)
         _encodeThread = new Thread(() => EncodeLoop(_captureCts.Token))
         {
             IsBackground = true,
-            Priority = ThreadPriority.AboveNormal,
+            Priority = ThreadPriority.Normal,
             Name = "ScreenEncodeThread"
         };
 
