@@ -145,12 +145,33 @@ public class FileController : ControllerBase
     [HttpGet("{category}/{fileName}")]
     public IActionResult GetFile(string category, string fileName)
     {
+        // For thumbnails, serve directly from disk (they're not stored in DB)
+        if (category == "thumbnails")
+        {
+            var thumbnailPath = Path.Combine("uploads", "thumbnails", fileName);
+            if (!System.IO.File.Exists(thumbnailPath))
+                return NotFound();
+
+            var stream = System.IO.File.OpenRead(thumbnailPath);
+            return File(stream, "image/jpeg", fileName);
+        }
+
         // Extract file ID from filename (remove extension)
         var fileId = Path.GetFileNameWithoutExtension(fileName);
 
-        var (stream, mimeType, originalFileName) = _fileService.GetFileStream(fileId);
-        if (stream == null || mimeType == null)
+        var (stream2, mimeType, originalFileName) = _fileService.GetFileStream(fileId);
+        if (stream2 == null || mimeType == null)
+        {
+            // Fallback: try to serve file directly from disk if not found in DB
+            var directPath = Path.Combine("uploads", category, fileName);
+            if (System.IO.File.Exists(directPath))
+            {
+                var directStream = System.IO.File.OpenRead(directPath);
+                var contentType = GetMimeType(fileName);
+                return File(directStream, contentType, fileName);
+            }
             return NotFound();
+        }
 
         // Add cache headers for profile images
         if (category == "avatars" || category == "banners")
@@ -162,7 +183,26 @@ public class FileController : ControllerBase
             Response.Headers.Append("Cache-Control", "public, max-age=86400"); // 24 hour cache for attachments
         }
 
-        return File(stream, mimeType, originalFileName);
+        return File(stream2, mimeType, originalFileName);
+    }
+
+    private static string GetMimeType(string fileName)
+    {
+        var extension = Path.GetExtension(fileName).ToLowerInvariant();
+        return extension switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".gif" => "image/gif",
+            ".webp" => "image/webp",
+            ".bmp" => "image/bmp",
+            ".mp4" => "video/mp4",
+            ".webm" => "video/webm",
+            ".mp3" => "audio/mpeg",
+            ".wav" => "audio/wav",
+            ".pdf" => "application/pdf",
+            _ => "application/octet-stream"
+        };
     }
 
     /// <summary>
