@@ -109,6 +109,71 @@ public class StartCallDto
     public string RecipientId { get; set; } = string.Empty;
 }
 
+// Group call DTOs
+public class GroupCallDto
+{
+    public string Id { get; set; } = string.Empty;
+    public string HostId { get; set; } = string.Empty;
+    public string HostUsername { get; set; } = string.Empty;
+    public string HostAvatarUrl { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public List<GroupCallParticipantDto> Participants { get; set; } = [];
+    public GroupCallStatus Status { get; set; }
+    public DateTime StartedAt { get; set; }
+    public int MaxParticipants { get; set; } = 10;
+    public bool AllowVideo { get; set; } = true;
+    public bool AllowScreenShare { get; set; } = true;
+}
+
+public class GroupCallParticipantDto
+{
+    public string UserId { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
+    public string AvatarUrl { get; set; } = string.Empty;
+    public bool IsMuted { get; set; }
+    public bool IsDeafened { get; set; }
+    public bool IsSpeaking { get; set; }
+    public bool IsScreenSharing { get; set; }
+    public bool HasVideo { get; set; }
+    public GroupCallParticipantStatus Status { get; set; }
+    public DateTime JoinedAt { get; set; }
+}
+
+public class StartGroupCallDto
+{
+    public string Name { get; set; } = string.Empty;
+    public List<string> InvitedUserIds { get; set; } = [];
+    public bool AllowVideo { get; set; } = true;
+    public bool AllowScreenShare { get; set; } = true;
+}
+
+public class GroupCallInviteDto
+{
+    public string CallId { get; set; } = string.Empty;
+    public string HostId { get; set; } = string.Empty;
+    public string HostUsername { get; set; } = string.Empty;
+    public string HostAvatarUrl { get; set; } = string.Empty;
+    public string CallName { get; set; } = string.Empty;
+    public int ParticipantCount { get; set; }
+    public DateTime InvitedAt { get; set; }
+}
+
+public enum GroupCallStatus
+{
+    Starting,
+    Active,
+    Ended
+}
+
+public enum GroupCallParticipantStatus
+{
+    Invited,
+    Ringing,
+    Joined,
+    Declined,
+    Left
+}
+
 public class CallResponseDto
 {
     public string CallId { get; set; } = string.Empty;

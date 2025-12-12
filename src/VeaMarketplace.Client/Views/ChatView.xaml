@@ -176,8 +176,8 @@
 
                     <!-- Emoji and Send Buttons -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal">
-                        <Button Style="{StaticResource IconButton}" Width="44" Height="44"
-                                ToolTip="Emoji">
+                        <Button x:Name="EmojiButton" Style="{StaticResource IconButton}" Width="44" Height="44"
+                                ToolTip="Emoji" Click="EmojiButton_Click">
                             <TextBlock Text="😊" FontSize="20"/>
                         </Button>
                         <Button x:Name="SendButton" Style="{StaticResource IconButton}"
@@ -189,6 +189,75 @@
                     </StackPanel>
                 </Grid>
             </Border>
+
+            <!-- Emoji Picker Popup -->
+            <Popup x:Name="EmojiPopup" PlacementTarget="{Binding ElementName=EmojiButton}"
+                   Placement="Top" StaysOpen="False" AllowsTransparency="True">
+                <Border Background="#2B2D31" CornerRadius="8" Padding="8"
+                        BorderBrush="#40444B" BorderThickness="1">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="10" ShadowDepth="3" Opacity="0.5"/>
+                    </Border.Effect>
+                    <Grid Width="320" Height="280">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Search -->
+                        <Border Grid.Row="0" Background="#1E1F22" CornerRadius="4"
+                                Padding="8,6" Margin="0,0,0,8">
+                            <Grid>
+                                <TextBlock Text="🔍 Search emojis..." Foreground="#72767D"
+                                           FontSize="13" x:Name="EmojiSearchPlaceholder"/>
+                                <TextBox x:Name="EmojiSearchBox" Background="Transparent"
+                                         BorderThickness="0" Foreground="White" FontSize="13"
+                                         TextChanged="EmojiSearch_TextChanged"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Category Tabs -->
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
+                            <Button Content="😀" Style="{StaticResource IconButton}" Width="32" Height="32"
+                                    Tag="Smileys" Click="EmojiCategory_Click" FontSize="16"/>
+                            <Button Content="👍" Style="{StaticResource IconButton}" Width="32" Height="32"
+                                    Tag="Gestures" Click="EmojiCategory_Click" FontSize="16"/>
+                            <Button Content="❤" Style="{StaticResource IconButton}" Width="32" Height="32"
+                                    Tag="Symbols" Click="EmojiCategory_Click" FontSize="16"/>
+                            <Button Content="🐱" Style="{StaticResource IconButton}" Width="32" Height="32"
+                                    Tag="Animals" Click="EmojiCategory_Click" FontSize="16"/>
+                            <Button Content="🍕" Style="{StaticResource IconButton}" Width="32" Height="32"
+                                    Tag="Food" Click="EmojiCategory_Click" FontSize="16"/>
+                            <Button Content="⚽" Style="{StaticResource IconButton}" Width="32" Height="32"
+                                    Tag="Activities" Click="EmojiCategory_Click" FontSize="16"/>
+                            <Button Content="🚗" Style="{StaticResource IconButton}" Width="32" Height="32"
+                                    Tag="Travel" Click="EmojiCategory_Click" FontSize="16"/>
+                            <Button Content="💡" Style="{StaticResource IconButton}" Width="32" Height="32"
+                                    Tag="Objects" Click="EmojiCategory_Click" FontSize="16"/>
+                        </StackPanel>
+
+                        <!-- Emoji Grid -->
+                        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl x:Name="EmojiGrid">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Content="{Binding}" Style="{StaticResource IconButton}"
+                                                Width="36" Height="36" FontSize="20"
+                                                Click="Emoji_Click" Tag="{Binding}"
+                                                Margin="2"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+            </Popup>
         </Border>
     </Grid>
 </UserControl>

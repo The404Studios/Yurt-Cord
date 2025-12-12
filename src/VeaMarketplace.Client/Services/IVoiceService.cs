@@ -125,6 +125,23 @@ public interface IVoiceService
     event Action<NudgeDto>? OnNudgeSent;
     event Action<string>? OnNudgeError;
     Task SendNudgeAsync(string targetUserId, string? message = null);
+
+    // Group call functionality
+    bool IsInGroupCall { get; }
+    string? CurrentGroupCallId { get; }
+    event Action<GroupCallDto>? OnGroupCallStarted;
+    event Action<GroupCallInviteDto>? OnGroupCallInvite;
+    event Action<GroupCallDto>? OnGroupCallUpdated;
+    event Action<string, GroupCallParticipantDto>? OnGroupCallParticipantJoined;
+    event Action<string, string>? OnGroupCallParticipantLeft;
+    event Action<string, string>? OnGroupCallEnded;
+    event Action<string>? OnGroupCallError;
+
+    Task StartGroupCallAsync(string name, List<string> invitedUserIds);
+    Task JoinGroupCallAsync(string callId);
+    Task LeaveGroupCallAsync(string callId);
+    Task InviteToGroupCallAsync(string callId, string userId);
+    Task DeclineGroupCallAsync(string callId);
 }
 
 public class VoiceUserState
@@ -267,10 +284,24 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     public event Action<NudgeDto>? OnNudgeSent;
     public event Action<string>? OnNudgeError;
 
+    // Group call events
+    public event Action<GroupCallDto>? OnGroupCallStarted;
+    public event Action<GroupCallInviteDto>? OnGroupCallInvite;
+    public event Action<GroupCallDto>? OnGroupCallUpdated;
+    public event Action<string, GroupCallParticipantDto>? OnGroupCallParticipantJoined;
+    public event Action<string, string>? OnGroupCallParticipantLeft;
+    public event Action<string, string>? OnGroupCallEnded;
+    public event Action<string>? OnGroupCallError;
+
     // Call state
     public bool IsInCall { get; private set; }
     public string? CurrentCallId { get; private set; }
     private VoiceCallDto? _currentCall;
+
+    // Group call state
+    public bool IsInGroupCall { get; private set; }
+    public string? CurrentGroupCallId { get; private set; }
+    private GroupCallDto? _currentGroupCall;
 
     // Per-user volume control
     public void SetUserVolume(string connectionId, float volume)
@@ -1143,6 +1174,91 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         {
             OnNudgeError?.Invoke(error);
         });
+
+        // Group call handlers
+        RegisterGroupCallHandlers();
+    }
+
+    private void RegisterGroupCallHandlers()
+    {
+        if (_connection == null) return;
+
+        _connection.On<GroupCallDto>("GroupCallStarted", call =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                _currentGroupCall = call;
+                CurrentGroupCallId = call.Id;
+                IsInGroupCall = true;
+                StartAudioCapture();
+                OnGroupCallStarted?.Invoke(call);
+            });
+        });
+
+        _connection.On<GroupCallInviteDto>("GroupCallInvite", invite =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnGroupCallInvite?.Invoke(invite);
+            });
+        });
+
+        _connection.On<GroupCallDto>("GroupCallUpdated", call =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                _currentGroupCall = call;
+                OnGroupCallUpdated?.Invoke(call);
+            });
+        });
+
+        _connection.On<string, GroupCallParticipantDto>("GroupCallParticipantJoined", (callId, participant) =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnGroupCallParticipantJoined?.Invoke(callId, participant);
+            });
+        });
+
+        _connection.On<string, string>("GroupCallParticipantLeft", (callId, userId) =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnGroupCallParticipantLeft?.Invoke(callId, userId);
+            });
+        });
+
+        _connection.On<string, string>("GroupCallEnded", (callId, reason) =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                if (CurrentGroupCallId == callId)
+                {
+                    IsInGroupCall = false;
+                    CurrentGroupCallId = null;
+                    _currentGroupCall = null;
+                    StopAudioCapture();
+                }
+                OnGroupCallEnded?.Invoke(callId, reason);
+            });
+        });
+
+        _connection.On<string>("GroupCallError", error =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnGroupCallError?.Invoke(error);
+            });
+        });
+
+        // Group call audio receiving
+        _connection.On<string, byte[]>("ReceiveGroupCallAudio", (senderConnectionId, audioData) =>
+        {
+            if (IsInGroupCall && !IsDeafened && _bufferedWaveProvider != null)
+            {
+                DecodeAndPlayAudio(senderConnectionId, audioData);
+            }
+        });
     }
 
     public async Task SendNudgeAsync(string targetUserId, string? message = null)
@@ -1156,6 +1272,100 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         catch (Exception ex)
         {
             OnNudgeError?.Invoke($"Failed to send nudge: {ex.Message}");
+        }
+    }
+
+    // === Group Call Methods ===
+
+    public async Task StartGroupCallAsync(string name, List<string> invitedUserIds)
+    {
+        if (_connection == null || !IsConnected) return;
+        if (IsInGroupCall || IsInCall)
+        {
+            OnGroupCallError?.Invoke("Already in a call");
+            return;
+        }
+
+        try
+        {
+            await _connection.InvokeAsync("StartGroupCall", name, invitedUserIds);
+        }
+        catch (Exception ex)
+        {
+            OnGroupCallError?.Invoke($"Failed to start group call: {ex.Message}");
+        }
+    }
+
+    public async Task JoinGroupCallAsync(string callId)
+    {
+        if (_connection == null || !IsConnected) return;
+        if (IsInGroupCall || IsInCall)
+        {
+            OnGroupCallError?.Invoke("Already in a call");
+            return;
+        }
+
+        try
+        {
+            await _connection.InvokeAsync("JoinGroupCall", callId);
+            IsInGroupCall = true;
+            CurrentGroupCallId = callId;
+            StartAudioCapture();
+        }
+        catch (Exception ex)
+        {
+            OnGroupCallError?.Invoke($"Failed to join group call: {ex.Message}");
+        }
+    }
+
+    public async Task LeaveGroupCallAsync(string callId)
+    {
+        if (_connection == null || !IsConnected) return;
+
+        try
+        {
+            await _connection.InvokeAsync("LeaveGroupCall", callId);
+            IsInGroupCall = false;
+            CurrentGroupCallId = null;
+            _currentGroupCall = null;
+            StopAudioCapture();
+        }
+        catch
+        {
+            // Ignore errors on leave
+        }
+    }
+
+    public async Task InviteToGroupCallAsync(string callId, string userId)
+    {
+        if (_connection == null || !IsConnected) return;
+        if (!IsInGroupCall || CurrentGroupCallId != callId)
+        {
+            OnGroupCallError?.Invoke("Not in this group call");
+            return;
+        }
+
+        try
+        {
+            await _connection.InvokeAsync("InviteToGroupCall", callId, userId);
+        }
+        catch (Exception ex)
+        {
+            OnGroupCallError?.Invoke($"Failed to invite user: {ex.Message}");
+        }
+    }
+
+    public async Task DeclineGroupCallAsync(string callId)
+    {
+        if (_connection == null || !IsConnected) return;
+
+        try
+        {
+            await _connection.InvokeAsync("DeclineGroupCall", callId);
+        }
+        catch
+        {
+            // Ignore errors
         }
     }
 

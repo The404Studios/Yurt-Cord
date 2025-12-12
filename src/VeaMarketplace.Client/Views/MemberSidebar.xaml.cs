@@ -1,6 +1,9 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using VeaMarketplace.Client.Services;
 using VeaMarketplace.Client.ViewModels;
 using VeaMarketplace.Shared.DTOs;
@@ -11,6 +14,9 @@ namespace VeaMarketplace.Client.Views;
 public partial class MemberSidebar : UserControl
 {
     private readonly ChatViewModel? _viewModel;
+    private readonly IVoiceService? _voiceService;
+    private readonly IFriendService? _friendService;
+    private OnlineUserDto? _selectedUser;
 
     public MemberSidebar()
     {
@@ -20,6 +26,8 @@ public partial class MemberSidebar : UserControl
             return;
 
         _viewModel = (ChatViewModel)App.ServiceProvider.GetService(typeof(ChatViewModel))!;
+        _voiceService = (IVoiceService)App.ServiceProvider.GetService(typeof(IVoiceService))!;
+        _friendService = (IFriendService)App.ServiceProvider.GetService(typeof(IFriendService))!;
 
         OnlineMembersControl.ItemsSource = _viewModel.OnlineUsers;
 
@@ -45,6 +53,140 @@ public partial class MemberSidebar : UserControl
                 }
             });
         };
+    }
+
+    private void StartGroupCall_Click(object sender, RoutedEventArgs e)
+    {
+        if (_friendService == null || _voiceService == null) return;
+
+        var dialog = new StartGroupCallDialog(_friendService, _voiceService);
+        dialog.Owner = Window.GetWindow(this);
+        dialog.ShowDialog();
+    }
+
+    private void Member_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is Border border && border.Tag is OnlineUserDto user)
+        {
+            ShowProfilePopup(user, border);
+        }
+    }
+
+    private void ShowProfilePopup(OnlineUserDto user, FrameworkElement target)
+    {
+        _selectedUser = user;
+
+        // Set popup content
+        PopupUsernameText.Text = user.Username;
+        PopupStatusText.Text = string.IsNullOrEmpty(user.StatusMessage) ? "Online" : user.StatusMessage;
+
+        // Set avatar
+        if (!string.IsNullOrEmpty(user.AvatarUrl))
+        {
+            try
+            {
+                PopupAvatarBrush.ImageSource = new BitmapImage(new Uri(user.AvatarUrl));
+            }
+            catch { }
+        }
+
+        // Set role badge
+        if (user.Role >= UserRole.Admin)
+        {
+            PopupRoleBadge.Visibility = Visibility.Visible;
+            PopupRoleText.Text = user.Role.ToString().ToUpper();
+            PopupRoleBadge.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#ED4245")!);
+        }
+        else if (user.Role >= UserRole.Moderator)
+        {
+            PopupRoleBadge.Visibility = Visibility.Visible;
+            PopupRoleText.Text = "MOD";
+            PopupRoleBadge.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FAA61A")!);
+        }
+        else
+        {
+            PopupRoleBadge.Visibility = Visibility.Collapsed;
+        }
+
+        // Set bio if available
+        if (!string.IsNullOrEmpty(user.Bio))
+        {
+            PopupBioSection.Visibility = Visibility.Visible;
+            PopupBioText.Text = user.Bio;
+        }
+        else
+        {
+            PopupBioSection.Visibility = Visibility.Collapsed;
+        }
+
+        // Member since (mock date for now)
+        PopupMemberSinceText.Text = "January 2024";
+
+        // Set banner color based on accent
+        if (!string.IsNullOrEmpty(user.AccentColor))
+        {
+            try
+            {
+                var color = (Color)ColorConverter.ConvertFromString(user.AccentColor)!;
+                BannerGradient1.Color = color;
+                BannerGradient2.Color = Color.FromArgb(color.A,
+                    (byte)Math.Min(255, color.R + 40),
+                    (byte)Math.Min(255, color.G + 40),
+                    (byte)Math.Min(255, color.B + 40));
+            }
+            catch { }
+        }
+
+        // Show popup
+        ProfilePopup.PlacementTarget = target;
+        ProfilePopup.IsOpen = true;
+    }
+
+    private void PopupMessage_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedUser == null) return;
+        ProfilePopup.IsOpen = false;
+
+        var navigationService = (INavigationService?)App.ServiceProvider.GetService(typeof(INavigationService));
+        navigationService?.NavigateToFriends();
+    }
+
+    private async void PopupAddFriend_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedUser == null || _friendService == null) return;
+
+        try
+        {
+            await _friendService.SendFriendRequestAsync(_selectedUser.Username);
+            MessageBox.Show($"Friend request sent to {_selectedUser.Username}!", "Success",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Failed to send friend request: {ex.Message}", "Error",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+        ProfilePopup.IsOpen = false;
+    }
+
+    private async void PopupNudge_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedUser == null || _voiceService == null) return;
+
+        try
+        {
+            await _voiceService.SendNudgeAsync(_selectedUser.Id);
+            MessageBox.Show($"Nudged {_selectedUser.Username}!", "Nudge Sent",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Failed to nudge: {ex.Message}", "Error",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+        ProfilePopup.IsOpen = false;
     }
 
     private OnlineUserDto? GetUserFromSender(object sender)
