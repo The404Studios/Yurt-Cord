@@ -1,5 +1,3 @@
-using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
@@ -11,7 +9,7 @@ using VeaMarketplace.Client.Services;
 namespace VeaMarketplace.Client.Views;
 
 /// <summary>
-/// Screen share viewer with frame buffering, performance optimizations, and statistics.
+/// Screen share viewer with real-time frame display and statistics.
 /// </summary>
 public partial class ScreenShareViewer : Window
 {
@@ -21,10 +19,11 @@ public partial class ScreenShareViewer : Window
 
     // Frame statistics
     private int _frameCount;
-    private int _droppedFrames;
+    private int _framesThisSecond;
     private long _totalBytesReceived;
     private long _bytesThisSecond;
     private DateTime _lastFpsUpdate = DateTime.Now;
+    private readonly DispatcherTimer _statsTimer;
 
     // Fullscreen state
     private bool _isFullscreen;
@@ -32,15 +31,12 @@ public partial class ScreenShareViewer : Window
     private WindowStyle _previousWindowStyle;
     private Rect _previousBounds;
 
-    // Frame buffering for smooth playback
-    private readonly ConcurrentQueue<BufferedFrame> _frameBuffer = new();
-    private const int MaxBufferSize = 3; // Keep 3 frames buffered
-    private readonly DispatcherTimer _renderTimer;
-    private bool _showStats;
-
     // Performance tracking
     private readonly Queue<double> _fpsHistory = new();
     private const int FpsHistorySize = 5;
+    private bool _showStats;
+    private int _lastWidth;
+    private int _lastHeight;
 
     public ScreenShareViewer(IVoiceService voiceService, string sharerConnectionId, string sharerUsername)
     {
@@ -57,13 +53,13 @@ public partial class ScreenShareViewer : Window
         _voiceService.OnScreenFrameReceived += OnScreenFrameReceived;
         _voiceService.OnUserScreenShareChanged += OnUserScreenShareChanged;
 
-        // Setup render timer for smooth frame display at consistent intervals
-        _renderTimer = new DispatcherTimer(DispatcherPriority.Render)
+        // Setup stats timer (update stats every second)
+        _statsTimer = new DispatcherTimer
         {
-            Interval = TimeSpan.FromMilliseconds(16) // ~60fps target render rate
+            Interval = TimeSpan.FromSeconds(1)
         };
-        _renderTimer.Tick += RenderTimer_Tick;
-        _renderTimer.Start();
+        _statsTimer.Tick += StatsTimer_Tick;
+        _statsTimer.Start();
 
         // Focus window for keyboard input
         Loaded += (s, e) => Focus();
@@ -75,96 +71,70 @@ public partial class ScreenShareViewer : Window
 
         _totalBytesReceived += frameData.Length;
         _bytesThisSecond += frameData.Length;
+        _framesThisSecond++;
+        _lastWidth = width;
+        _lastHeight = height;
 
-        // Add to buffer (drop oldest if full)
-        if (_frameBuffer.Count >= MaxBufferSize)
+        // Display frame immediately on UI thread
+        Dispatcher.BeginInvoke(DispatcherPriority.Render, () =>
         {
-            _frameBuffer.TryDequeue(out _);
-            _droppedFrames++;
-        }
+            try
+            {
+                // Hide no stream message
+                NoStreamPanel.Visibility = Visibility.Collapsed;
 
-        _frameBuffer.Enqueue(new BufferedFrame
-        {
-            Data = frameData,
-            Width = width,
-            Height = height,
-            ReceivedAt = DateTime.UtcNow
+                // Convert byte array to BitmapImage
+                using var ms = new MemoryStream(frameData);
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
+                bitmap.StreamSource = ms;
+                bitmap.EndInit();
+                bitmap.Freeze();
+
+                ScreenImage.Source = bitmap;
+            }
+            catch
+            {
+                // Ignore frame decoding errors
+            }
         });
     }
 
-    private void RenderTimer_Tick(object? sender, EventArgs e)
+    private void StatsTimer_Tick(object? sender, EventArgs e)
     {
-        // Process frame from buffer
-        if (!_frameBuffer.TryDequeue(out var frame)) return;
+        var fps = _framesThisSecond;
+        _fpsHistory.Enqueue(fps);
+        if (_fpsHistory.Count > FpsHistorySize)
+            _fpsHistory.Dequeue();
 
-        try
+        var avgFps = _fpsHistory.Count > 0 ? _fpsHistory.Average() : 0;
+
+        // Update display
+        FpsText.Text = $"{avgFps:F0} FPS";
+        if (_lastWidth > 0 && _lastHeight > 0)
+            ResolutionText.Text = $"{_lastWidth}x{_lastHeight}";
+
+        // Calculate bitrate
+        var bitrateMbps = (_bytesThisSecond * 8.0) / 1_000_000.0;
+        BitrateText.Text = bitrateMbps >= 1 ? $"{bitrateMbps:F1} Mbps" : $"{(_bytesThisSecond * 8.0 / 1000.0):F0} Kbps";
+
+        // Update quality badge based on resolution and FPS
+        UpdateQualityBadge(_lastWidth, _lastHeight, avgFps);
+
+        // Update detailed stats panel
+        if (_showStats)
         {
-            _frameCount++;
-            var latencyMs = (DateTime.UtcNow - frame.ReceivedAt).TotalMilliseconds;
-
-            // Update UI elements
-            NoStreamPanel.Visibility = Visibility.Collapsed;
-
-            // Convert byte array to BitmapImage efficiently
-            using var ms = new MemoryStream(frame.Data);
-            var bitmap = new BitmapImage();
-            bitmap.BeginInit();
-            bitmap.CacheOption = BitmapCacheOption.OnLoad;
-            bitmap.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
-            bitmap.StreamSource = ms;
-            bitmap.EndInit();
-            bitmap.Freeze();
-
-            ScreenImage.Source = bitmap;
-
-            // Update stats every second
-            UpdateStatistics(frame.Width, frame.Height, latencyMs, frame.Data.Length);
+            FrameBufferText.Text = $"Frames: {_frameCount}";
+            DroppedFramesText.Text = $"This sec: {_framesThisSecond}";
+            LatencyText.Text = $"Avg FPS: {avgFps:F1}";
+            TotalBytesText.Text = $"Received: {_totalBytesReceived / (1024.0 * 1024.0):F1} MB";
         }
-        catch
-        {
-            // Ignore frame decoding errors
-        }
-    }
 
-    private void UpdateStatistics(int width, int height, double latencyMs, int frameSize)
-    {
-        var now = DateTime.Now;
-        var elapsed = (now - _lastFpsUpdate).TotalSeconds;
-
-        if (elapsed >= 1.0)
-        {
-            var fps = _frameCount / elapsed;
-            _fpsHistory.Enqueue(fps);
-            if (_fpsHistory.Count > FpsHistorySize)
-                _fpsHistory.Dequeue();
-
-            var avgFps = _fpsHistory.Average();
-
-            // Update display
-            FpsText.Text = $"{avgFps:F0} FPS";
-            ResolutionText.Text = $"{width}x{height}";
-
-            // Calculate bitrate
-            var bitrateKbps = (_bytesThisSecond * 8.0 / 1000.0) / elapsed;
-            var bitrateMbps = bitrateKbps / 1000.0;
-            BitrateText.Text = bitrateMbps >= 1 ? $"{bitrateMbps:F1} Mbps" : $"{bitrateKbps:F0} Kbps";
-
-            // Update quality badge based on resolution and FPS
-            UpdateQualityBadge(width, height, avgFps);
-
-            // Update detailed stats panel
-            if (_showStats)
-            {
-                FrameBufferText.Text = $"Buffer: {_frameBuffer.Count}";
-                DroppedFramesText.Text = $"Dropped: {_droppedFrames}";
-                LatencyText.Text = $"Latency: {latencyMs:F0}ms";
-                TotalBytesText.Text = $"Received: {_totalBytesReceived / (1024.0 * 1024.0):F1} MB";
-            }
-
-            _frameCount = 0;
-            _bytesThisSecond = 0;
-            _lastFpsUpdate = now;
-        }
+        _frameCount += _framesThisSecond;
+        _framesThisSecond = 0;
+        _bytesThisSecond = 0;
     }
 
     private void UpdateQualityBadge(int width, int height, double fps)
@@ -192,10 +162,15 @@ public partial class ScreenShareViewer : Window
             quality = "SD";
             badgeColor = Color.FromRgb(254, 231, 92); // Yellow
         }
-        else
+        else if (fps > 0)
         {
             quality = "LOW";
             badgeColor = Color.FromRgb(237, 66, 69); // Red
+        }
+        else
+        {
+            quality = "---";
+            badgeColor = Color.FromRgb(114, 118, 125); // Gray
         }
 
         QualityText.Text = quality;
@@ -209,7 +184,7 @@ public partial class ScreenShareViewer : Window
         // Sharer stopped sharing
         Dispatcher.Invoke(() =>
         {
-            _renderTimer.Stop();
+            _statsTimer.Stop();
             MessageBox.Show($"{_sharerUsername} stopped sharing their screen.", "Screen Share Ended",
                 MessageBoxButton.OK, MessageBoxImage.Information);
             Close();
@@ -248,12 +223,9 @@ public partial class ScreenShareViewer : Window
 
     private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
     {
-        _renderTimer.Stop();
+        _statsTimer.Stop();
         _voiceService.OnScreenFrameReceived -= OnScreenFrameReceived;
         _voiceService.OnUserScreenShareChanged -= OnUserScreenShareChanged;
-
-        // Clear buffer
-        while (_frameBuffer.TryDequeue(out _)) { }
     }
 
     protected override void OnKeyDown(KeyEventArgs e)
@@ -285,13 +257,5 @@ public partial class ScreenShareViewer : Window
                 e.Handled = true;
                 break;
         }
-    }
-
-    private class BufferedFrame
-    {
-        public byte[] Data { get; set; } = Array.Empty<byte>();
-        public int Width { get; set; }
-        public int Height { get; set; }
-        public DateTime ReceivedAt { get; set; }
     }
 }

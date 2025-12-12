@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using VeaMarketplace.Server.Data;
+using VeaMarketplace.Server.Hubs;
 using VeaMarketplace.Server.Services;
 using VeaMarketplace.Shared.DTOs;
 using VeaMarketplace.Shared.Models;
@@ -13,12 +15,14 @@ public class UsersController : ControllerBase
     private readonly DatabaseService _db;
     private readonly AuthService _authService;
     private readonly FriendService _friendService;
+    private readonly IHubContext<ChatHub> _chatHubContext;
 
-    public UsersController(DatabaseService db, AuthService authService, FriendService friendService)
+    public UsersController(DatabaseService db, AuthService authService, FriendService friendService, IHubContext<ChatHub> chatHubContext)
     {
         _db = db;
         _authService = authService;
         _friendService = friendService;
+        _chatHubContext = chatHubContext;
     }
 
     [HttpGet("{id}")]
@@ -170,7 +174,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPut("profile")]
-    public ActionResult<UserDto> UpdateProfile(
+    public async Task<ActionResult<UserDto>> UpdateProfile(
         [FromHeader(Name = "Authorization")] string? authorization,
         [FromBody] UpdateProfileRequest request)
     {
@@ -181,6 +185,13 @@ public class UsersController : ControllerBase
         var result = _authService.UpdateProfile(user.Id, request);
         if (result == null)
             return BadRequest("Username already taken");
+
+        // Broadcast profile update to all connected clients via SignalR
+        var updatedUser = _db.Users.FindById(user.Id);
+        if (updatedUser != null)
+        {
+            await ChatHub.BroadcastProfileUpdate(_chatHubContext, updatedUser);
+        }
 
         return Ok(result);
     }
