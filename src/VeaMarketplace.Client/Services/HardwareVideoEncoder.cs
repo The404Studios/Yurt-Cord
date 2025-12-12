@@ -16,8 +16,6 @@ public unsafe class HardwareVideoEncoder : IDisposable
     private AVFrame* _frame;
     private AVPacket* _packet;
     private SwsContext* _swsContext;
-    private byte*[] _srcData;
-    private int[] _srcLinesize;
     private bool _initialized;
     private bool _disposed;
     private readonly object _lock = new();
@@ -224,9 +222,6 @@ public unsafe class HardwareVideoEncoder : IDisposable
                 return false;
             }
 
-            _srcData = new byte*[4];
-            _srcLinesize = new int[4];
-
             EncoderName = encoderName;
             IsHardwareAccelerated = isHardware;
 
@@ -269,18 +264,17 @@ public unsafe class HardwareVideoEncoder : IDisposable
 
                 try
                 {
-                    // Setup source data for color conversion
-                    _srcData[0] = (byte*)bitmapData.Scan0;
-                    _srcLinesize[0] = bitmapData.Stride;
+                    // Setup source data for color conversion using stackalloc
+                    var srcData = stackalloc byte*[4];
+                    var srcLinesize = stackalloc int[4];
 
-                    fixed (byte** srcDataPtr = _srcData)
-                    fixed (int* srcLinesizePtr = _srcLinesize)
-                    {
-                        // Convert BGR24 to YUV420P
-                        ffmpeg.sws_scale(_swsContext,
-                            srcDataPtr, srcLinesizePtr, 0, Height,
-                            _frame->data, _frame->linesize);
-                    }
+                    srcData[0] = (byte*)bitmapData.Scan0;
+                    srcLinesize[0] = bitmapData.Stride;
+
+                    // Convert BGR24 to YUV420P
+                    ffmpeg.sws_scale(_swsContext,
+                        srcData, srcLinesize, 0, Height,
+                        _frame->data, _frame->linesize);
                 }
                 finally
                 {
@@ -341,16 +335,15 @@ public unsafe class HardwareVideoEncoder : IDisposable
 
                 fixed (byte* srcPtr = bgrData)
                 {
-                    _srcData[0] = srcPtr;
-                    _srcLinesize[0] = stride;
+                    var srcData = stackalloc byte*[4];
+                    var srcLinesize = stackalloc int[4];
 
-                    fixed (byte** srcDataPtr = _srcData)
-                    fixed (int* srcLinesizePtr = _srcLinesize)
-                    {
-                        ffmpeg.sws_scale(_swsContext,
-                            srcDataPtr, srcLinesizePtr, 0, Height,
-                            _frame->data, _frame->linesize);
-                    }
+                    srcData[0] = srcPtr;
+                    srcLinesize[0] = stride;
+
+                    ffmpeg.sws_scale(_swsContext,
+                        srcData, srcLinesize, 0, Height,
+                        _frame->data, _frame->linesize);
                 }
 
                 _frame->pts = frameNumber;
