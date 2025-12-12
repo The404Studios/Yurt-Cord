@@ -117,7 +117,29 @@ public class ApiService : IApiService
     {
         var request = new LoginRequest { Username = username, Password = password };
         var response = await _httpClient.PostAsJsonAsync("/api/auth/login", request, JsonOptions).ConfigureAwait(false);
-        var result = await response.Content.ReadFromJsonAsync<AuthResponse>(JsonOptions).ConfigureAwait(false) ?? new AuthResponse();
+
+        // Read response body as string first to handle empty/invalid responses
+        var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return new AuthResponse { Success = false, Message = "Server returned empty response" };
+        }
+
+        AuthResponse? result;
+        try
+        {
+            result = JsonSerializer.Deserialize<AuthResponse>(content, JsonOptions);
+        }
+        catch (JsonException)
+        {
+            return new AuthResponse { Success = false, Message = $"Server error: {(int)response.StatusCode} {response.ReasonPhrase}" };
+        }
+
+        if (result == null)
+        {
+            return new AuthResponse { Success = false, Message = "Invalid response from server" };
+        }
 
         if (result.Success && result.Token != null)
         {
@@ -134,7 +156,29 @@ public class ApiService : IApiService
     {
         var request = new RegisterRequest { Username = username, Email = email, Password = password };
         var response = await _httpClient.PostAsJsonAsync("/api/auth/register", request, JsonOptions).ConfigureAwait(false);
-        var result = await response.Content.ReadFromJsonAsync<AuthResponse>(JsonOptions).ConfigureAwait(false) ?? new AuthResponse();
+
+        // Read response body as string first to handle empty/invalid responses
+        var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return new AuthResponse { Success = false, Message = "Server returned empty response" };
+        }
+
+        AuthResponse? result;
+        try
+        {
+            result = JsonSerializer.Deserialize<AuthResponse>(content, JsonOptions);
+        }
+        catch (JsonException)
+        {
+            return new AuthResponse { Success = false, Message = $"Server error: {(int)response.StatusCode} {response.ReasonPhrase}" };
+        }
+
+        if (result == null)
+        {
+            return new AuthResponse { Success = false, Message = "Invalid response from server" };
+        }
 
         if (result.Success && result.Token != null)
         {
