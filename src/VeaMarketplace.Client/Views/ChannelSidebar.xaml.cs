@@ -46,18 +46,43 @@ public partial class ChannelSidebar : UserControl
         // Show/hide voice connected panel and users when in a voice channel
         _viewModel.PropertyChanged += (s, e) =>
         {
-            if (e.PropertyName == nameof(ChatViewModel.IsInVoiceChannel))
+            if (e.PropertyName == nameof(ChatViewModel.IsInVoiceChannel) ||
+                e.PropertyName == nameof(ChatViewModel.CurrentVoiceChannel))
             {
                 Dispatcher.Invoke(() =>
                 {
                     var isInVoice = _viewModel.IsInVoiceChannel;
-                    VoiceUsersPanel.Visibility = isInVoice ? Visibility.Visible : Visibility.Collapsed;
+                    var currentChannel = _viewModel.CurrentVoiceChannel;
+
+                    // Hide all voice user panels first
+                    GeneralVoiceUsersPanel.Visibility = Visibility.Collapsed;
+                    MusicVoiceUsersPanel.Visibility = Visibility.Collapsed;
+                    MarketplaceVoiceUsersPanel.Visibility = Visibility.Collapsed;
+                    VoiceUsersPanel.Visibility = Visibility.Collapsed;
+
                     VoiceConnectedPanel.Visibility = isInVoice ? Visibility.Visible : Visibility.Collapsed;
 
-                    if (isInVoice && _viewModel.CurrentVoiceChannel != null)
+                    if (isInVoice && currentChannel != null)
                     {
                         VoiceChannelNameText.Text = ChannelDisplayNames.TryGetValue(
-                            _viewModel.CurrentVoiceChannel, out var name) ? name : _viewModel.CurrentVoiceChannel;
+                            currentChannel, out var name) ? name : currentChannel;
+
+                        // Show the correct voice users panel based on current channel
+                        switch (currentChannel)
+                        {
+                            case "general-voice":
+                                GeneralVoiceUsersPanel.Visibility = Visibility.Visible;
+                                GeneralVoiceUsersControl.ItemsSource = _viewModel.VoiceUsers;
+                                break;
+                            case "music-voice":
+                                MusicVoiceUsersPanel.Visibility = Visibility.Visible;
+                                MusicVoiceUsersControl.ItemsSource = _viewModel.VoiceUsers;
+                                break;
+                            case "marketplace-voice":
+                                MarketplaceVoiceUsersPanel.Visibility = Visibility.Visible;
+                                MarketplaceVoiceUsersControl.ItemsSource = _viewModel.VoiceUsers;
+                                break;
+                        }
                     }
                 });
             }
