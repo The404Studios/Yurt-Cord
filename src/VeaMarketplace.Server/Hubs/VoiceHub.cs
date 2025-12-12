@@ -107,10 +107,37 @@ public class VoiceHub : Hub
     // Admin: Disconnect a user from voice
     public async Task DisconnectUser(string targetConnectionId)
     {
+        // Verify caller has permission
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var callerId))
+        {
+            await Clients.Caller.SendAsync("VoiceError", "Not authenticated");
+            return;
+        }
+
+        // Check if caller is admin/moderator (or self-disconnect)
+        var callerState = _voiceUsers.Values.FirstOrDefault(u => u.UserId == callerId);
+        var targetState = _voiceUsers.GetValueOrDefault(targetConnectionId);
+
+        // Allow self-disconnect or if we have permission check via AuthService
+        var isSelfDisconnect = targetState?.UserId == callerId;
+
+        if (!isSelfDisconnect && _authService != null)
+        {
+            var caller = await _authService.GetUserAsync(callerId);
+            if (caller == null || (caller.Role != UserRole.Admin && caller.Role != UserRole.Moderator))
+            {
+                await Clients.Caller.SendAsync("VoiceError", "Insufficient permissions");
+                return;
+            }
+        }
+
         if (_voiceUsers.TryGetValue(targetConnectionId, out var targetUser))
         {
             // Notify the user they've been disconnected
-            await Clients.Client(targetConnectionId).SendAsync("DisconnectedByAdmin", "You have been disconnected by an administrator");
+            if (!isSelfDisconnect)
+            {
+                await Clients.Client(targetConnectionId).SendAsync("DisconnectedByAdmin", "You have been disconnected by an administrator");
+            }
 
             // Remove them from the channel
             if (_voiceChannels.TryGetValue(targetUser.ChannelId, out var channel))
@@ -126,6 +153,23 @@ public class VoiceHub : Hub
     // Admin: Move a user to a different channel
     public async Task MoveUserToChannel(string targetConnectionId, string targetChannelId)
     {
+        // Verify caller has permission
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var callerId))
+        {
+            await Clients.Caller.SendAsync("VoiceError", "Not authenticated");
+            return;
+        }
+
+        if (_authService != null)
+        {
+            var caller = await _authService.GetUserAsync(callerId);
+            if (caller == null || (caller.Role != UserRole.Admin && caller.Role != UserRole.Moderator))
+            {
+                await Clients.Caller.SendAsync("VoiceError", "Insufficient permissions to move users");
+                return;
+            }
+        }
+
         if (_voiceUsers.TryGetValue(targetConnectionId, out var targetUser))
         {
             var oldChannelId = targetUser.ChannelId;
@@ -144,8 +188,8 @@ public class VoiceHub : Hub
             newChannel.Users[targetConnectionId] = targetUser;
             await Groups.AddToGroupAsync(targetConnectionId, $"voice_{targetChannelId}");
 
-            // Notify old channel users
-            await Clients.Group($"voice_{targetChannelId}").SendAsync("UserJoinedVoice", targetUser);
+            // Notify NEW channel users about the join (not old channel - that was the bug)
+            await Clients.OthersInGroup($"voice_{targetChannelId}").SendAsync("UserJoinedVoice", targetUser);
 
             // Notify the moved user
             await Clients.Client(targetConnectionId).SendAsync("MovedToChannel", targetChannelId, "Administrator");
@@ -158,6 +202,23 @@ public class VoiceHub : Hub
     // Admin: Kick user (just disconnects with a kick message)
     public async Task KickUser(string userId, string reason)
     {
+        // Verify caller has permission
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var callerId))
+        {
+            await Clients.Caller.SendAsync("VoiceError", "Not authenticated");
+            return;
+        }
+
+        if (_authService != null)
+        {
+            var caller = await _authService.GetUserAsync(callerId);
+            if (caller == null || (caller.Role != UserRole.Admin && caller.Role != UserRole.Moderator))
+            {
+                await Clients.Caller.SendAsync("VoiceError", "Insufficient permissions to kick users");
+                return;
+            }
+        }
+
         // Find connection ID by user ID
         var targetEntry = _voiceUsers.FirstOrDefault(kvp => kvp.Value.UserId == userId);
         if (targetEntry.Value != null)
@@ -170,6 +231,23 @@ public class VoiceHub : Hub
     // Admin: Ban user from voice channels
     public async Task BanUser(string userId, string reason, double? durationMinutes)
     {
+        // Verify caller has permission
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var callerId))
+        {
+            await Clients.Caller.SendAsync("VoiceError", "Not authenticated");
+            return;
+        }
+
+        if (_authService != null)
+        {
+            var caller = await _authService.GetUserAsync(callerId);
+            if (caller == null || (caller.Role != UserRole.Admin && caller.Role != UserRole.Moderator))
+            {
+                await Clients.Caller.SendAsync("VoiceError", "Insufficient permissions to ban users");
+                return;
+            }
+        }
+
         // Find and kick the user first
         var targetEntry = _voiceUsers.FirstOrDefault(kvp => kvp.Value.UserId == userId);
         if (targetEntry.Value != null)

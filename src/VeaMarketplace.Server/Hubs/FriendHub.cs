@@ -199,6 +199,11 @@ public class FriendHub : Hub
                 {
                     await Clients.Client(requesterConnId).SendAsync("FriendRequestAccepted", userId);
                 }
+                else
+                {
+                    // Notify requester that their request was declined
+                    await Clients.Client(requesterConnId).SendAsync("FriendRequestDeclined", userId);
+                }
             }
 
             await Clients.Caller.SendAsync("FriendRequestResponded", accept ? "accepted" : "declined");

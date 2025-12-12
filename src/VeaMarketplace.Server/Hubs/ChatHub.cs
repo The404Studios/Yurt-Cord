@@ -108,14 +108,15 @@ public class ChatHub : Hub
         await Clients.Group(channel).SendAsync("ReceiveMessage", message);
     }
 
-    public async Task DeleteMessage(string messageId)
+    public async Task DeleteMessage(string messageId, string channel = "general")
     {
         if (!_connectionUserMap.TryGetValue(Context.ConnectionId, out var userId))
             return;
 
         if (_chatService.DeleteMessage(messageId, userId))
         {
-            await Clients.All.SendAsync("MessageDeleted", messageId);
+            // Only notify users in the same channel, not all connected clients
+            await Clients.Group(channel).SendAsync("MessageDeleted", messageId);
         }
     }
 

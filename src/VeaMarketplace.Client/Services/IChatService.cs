@@ -22,7 +22,7 @@ public interface IChatService
     Task JoinChannelAsync(string channelName);
     Task LeaveChannelAsync(string channelName);
     Task SendMessageAsync(string content, string channel = "general");
-    Task DeleteMessageAsync(string messageId);
+    Task DeleteMessageAsync(string messageId, string channel = "general");
     Task SendTypingAsync(string channel);
 }
 
@@ -132,10 +132,10 @@ public class ChatService : IChatService, IAsyncDisposable
             await _connection.InvokeAsync("SendMessage", content, channel).ConfigureAwait(false);
     }
 
-    public async Task DeleteMessageAsync(string messageId)
+    public async Task DeleteMessageAsync(string messageId, string channel = "general")
     {
         if (_connection != null && IsConnected)
-            await _connection.InvokeAsync("DeleteMessage", messageId).ConfigureAwait(false);
+            await _connection.InvokeAsync("DeleteMessage", messageId, channel).ConfigureAwait(false);
     }
 
     public async Task SendTypingAsync(string channel)
