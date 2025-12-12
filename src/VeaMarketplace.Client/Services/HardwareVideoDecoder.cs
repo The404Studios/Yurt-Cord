@@ -116,7 +116,8 @@ public unsafe class HardwareVideoDecoder : IDisposable
             if (ret < 0)
             {
                 Debug.WriteLine($"Failed to open decoder {decoderName}: {GetErrorMessage(ret)}");
-                ffmpeg.avcodec_free_context(&_codecContext);
+                fixed (AVCodecContext** ctx = &_codecContext)
+                    ffmpeg.avcodec_free_context(ctx);
                 _codecContext = null;
                 return false;
             }
@@ -293,7 +294,8 @@ public unsafe class HardwareVideoDecoder : IDisposable
 
         if (_rgbFrame->data[0] != null)
         {
-            ffmpeg.av_freep(&_rgbFrame->data[0]);
+            ffmpeg.av_free(_rgbFrame->data[0]);
+            _rgbFrame->data[0] = null;
         }
 
         var bufferSize = ffmpeg.av_image_get_buffer_size(AVPixelFormat.AV_PIX_FMT_BGR24, Width, Height, 1);
@@ -336,7 +338,8 @@ public unsafe class HardwareVideoDecoder : IDisposable
         {
             if (_rgbFrame->data[0] != null)
             {
-                ffmpeg.av_freep(&_rgbFrame->data[0]);
+                ffmpeg.av_free(_rgbFrame->data[0]);
+                _rgbFrame->data[0] = null;
             }
             fixed (AVFrame** f = &_rgbFrame)
                 ffmpeg.av_frame_free(f);
@@ -352,7 +355,8 @@ public unsafe class HardwareVideoDecoder : IDisposable
         {
             if (_codecContext->extradata != null)
             {
-                ffmpeg.av_freep(&_codecContext->extradata);
+                ffmpeg.av_free(_codecContext->extradata);
+                _codecContext->extradata = null;
             }
             fixed (AVCodecContext** c = &_codecContext)
                 ffmpeg.avcodec_free_context(c);
