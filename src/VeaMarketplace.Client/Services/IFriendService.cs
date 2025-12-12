@@ -56,6 +56,7 @@ public interface IFriendService
     Task SearchUserAsync(string query);
     Task SearchUsersAsync(string query);
     Task RefreshConversationsAsync();
+    Task<List<FriendDto>> GetFriendsAsync();
 }
 
 public class FriendService : IFriendService, IAsyncDisposable
@@ -461,6 +462,12 @@ public class FriendService : IFriendService, IAsyncDisposable
             await _connection.InvokeAsync("GetConversations").ConfigureAwait(false);
             OnConversationsUpdated?.Invoke();
         }
+    }
+
+    public Task<List<FriendDto>> GetFriendsAsync()
+    {
+        // Return the current friends list - it's populated on connect via SignalR
+        return Task.FromResult(Friends.ToList());
     }
 
     public async Task DisconnectAsync()

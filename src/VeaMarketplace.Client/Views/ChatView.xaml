@@ -118,7 +118,7 @@
         </Border>
 
         <!-- Message Input Area -->
-        <Border Grid.Row="3" Margin="16,8,16,16">
+        <Grid Grid.Row="3" Margin="16,8,16,16">
             <Border Background="{StaticResource QuaternaryDarkBrush}"
                     CornerRadius="8" Padding="4">
                 <Grid>
@@ -258,6 +258,6 @@
                     </Grid>
                 </Border>
             </Popup>
-        </Border>
+        </Grid>
     </Grid>
 </UserControl>

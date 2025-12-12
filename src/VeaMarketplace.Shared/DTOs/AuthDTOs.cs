@@ -95,6 +95,9 @@ public class OnlineUserDto
     public string AvatarUrl { get; set; } = string.Empty;
     public UserRole Role { get; set; }
     public UserRank Rank { get; set; }
+    public string? StatusMessage { get; set; }
+    public string? Bio { get; set; }
+    public string? AccentColor { get; set; }
 }
 
 public enum ActivityType
