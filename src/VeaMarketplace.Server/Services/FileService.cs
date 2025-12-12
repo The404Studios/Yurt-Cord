@@ -1,4 +1,5 @@
 using LiteDB;
+using VeaMarketplace.Server.Data;
 using VeaMarketplace.Shared.DTOs;
 using VeaMarketplace.Shared.Models;
 using System.Security.Cryptography;
@@ -11,7 +12,7 @@ namespace VeaMarketplace.Server.Services;
 /// </summary>
 public class FileService
 {
-    private readonly ILiteDatabase _database;
+    private readonly DatabaseService _db;
     private readonly ILiteCollection<StoredFile> _files;
     private readonly string _uploadPath;
     private readonly string _baseUrl;
@@ -48,10 +49,10 @@ public class FileService
         "text/plain", "text/csv", "application/json"
     };
 
-    public FileService(ILiteDatabase database, IConfiguration configuration)
+    public FileService(DatabaseService db, IConfiguration configuration)
     {
-        _database = database;
-        _files = _database.GetCollection<StoredFile>("stored_files");
+        _db = db;
+        _files = _db.StoredFiles;
 
         // Get configuration for file storage
         _uploadPath = configuration.GetValue<string>("FileStorage:UploadPath") ?? "uploads";
