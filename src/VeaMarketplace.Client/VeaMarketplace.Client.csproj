@@ -33,4 +33,18 @@
     <ProjectReference Include="..\VeaMarketplace.Shared\VeaMarketplace.Shared.csproj" />
   </ItemGroup>
 
+  <!-- Copy FFmpeg DLLs to output if they exist -->
+  <ItemGroup>
+    <None Include="ffmpeg\*.dll" Condition="Exists('ffmpeg')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>ffmpeg\%(Filename)%(Extension)</Link>
+    </None>
+  </ItemGroup>
+
+  <!-- Include download scripts in solution -->
+  <ItemGroup>
+    <None Include="download-ffmpeg.bat" />
+    <None Include="download-ffmpeg.ps1" />
+  </ItemGroup>
+
 </Project>
