@@ -600,11 +600,31 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
     public async Task LeaveVoiceChannelAsync()
     {
+        // Stop screen share FIRST before leaving channel to ensure proper cleanup
+        if (_screenSharingManager.IsSharing)
+        {
+            try
+            {
+                await StopScreenShareAsync().ConfigureAwait(false);
+            }
+            catch
+            {
+                // Ignore errors during cleanup
+            }
+        }
+
         StopAudioCapture();
 
         if (_connection != null && IsConnected)
         {
-            await _connection.InvokeAsync("LeaveVoiceChannel");
+            try
+            {
+                await _connection.InvokeAsync("LeaveVoiceChannel").ConfigureAwait(false);
+            }
+            catch
+            {
+                // Ignore errors during cleanup
+            }
         }
 
         IsInVoiceChannel = false;
@@ -865,12 +885,32 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
     public async Task DisconnectAsync()
     {
-        await LeaveVoiceChannelAsync();
+        // LeaveVoiceChannelAsync now stops screen share first
+        await LeaveVoiceChannelAsync().ConfigureAwait(false);
+
+        // Disconnect the screen sharing manager
+        _screenSharingManager.Disconnect();
 
         if (_connection != null)
         {
-            await _connection.StopAsync();
-            await _connection.DisposeAsync();
+            try
+            {
+                await _connection.StopAsync().ConfigureAwait(false);
+            }
+            catch
+            {
+                // Ignore errors during disconnect
+            }
+
+            try
+            {
+                await _connection.DisposeAsync().ConfigureAwait(false);
+            }
+            catch
+            {
+                // Ignore errors during dispose
+            }
+
             _connection = null;
         }
     }
@@ -996,7 +1036,21 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
     public async Task StopScreenShareAsync()
     {
-        await _screenSharingManager.StopSharingAsync();
+        // Notify server FIRST while connection is still active
+        if (_connection != null && IsConnected)
+        {
+            try
+            {
+                await _connection.SendAsync("StopScreenShare").ConfigureAwait(false);
+            }
+            catch
+            {
+                // Ignore errors - connection might already be closing
+            }
+        }
+
+        // Then stop local capture/streaming
+        await _screenSharingManager.StopSharingAsync().ConfigureAwait(false);
     }
 
     // === DM Call Methods ===

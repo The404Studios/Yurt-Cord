@@ -279,22 +279,18 @@ public class ScreenSharingManager : IScreenSharingManager
         _sessionStopwatch.Stop();
         _stats.Duration = _sessionStopwatch.Elapsed;
 
-        // Notify server - do this last and don't wait if connection is closing
+        // Notify server - VoiceService already handles this, but try as backup
+        // Do NOT fire-and-forget as that causes InvokeCoreAsync errors on closed connections
         if (_isConnected && _notifyStopFunc != null)
         {
             try
             {
-                // Fire and forget to prevent blocking on network
-                _ = Task.Run(async () =>
-                {
-                    try
-                    {
-                        await _notifyStopFunc().ConfigureAwait(false);
-                    }
-                    catch { }
-                });
+                await _notifyStopFunc().ConfigureAwait(false);
             }
-            catch { }
+            catch
+            {
+                // Ignore - server notification is also handled by VoiceService.StopScreenShareAsync
+            }
         }
     }
 
