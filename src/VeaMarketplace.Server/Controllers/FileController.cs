@@ -145,10 +145,12 @@ public class FileController : ControllerBase
     [HttpGet("{category}/{fileName}")]
     public IActionResult GetFile(string category, string fileName)
     {
+        var uploadBasePath = _fileService.GetUploadBasePath();
+
         // For thumbnails, serve directly from disk (they're not stored in DB)
         if (category == "thumbnails")
         {
-            var thumbnailPath = Path.Combine("uploads", "thumbnails", fileName);
+            var thumbnailPath = Path.Combine(uploadBasePath, "thumbnails", fileName);
             if (!System.IO.File.Exists(thumbnailPath))
                 return NotFound();
 
@@ -163,7 +165,7 @@ public class FileController : ControllerBase
         if (stream2 == null || mimeType == null)
         {
             // Fallback: try to serve file directly from disk if not found in DB
-            var directPath = Path.Combine("uploads", category, fileName);
+            var directPath = Path.Combine(uploadBasePath, category, fileName);
             if (System.IO.File.Exists(directPath))
             {
                 var directStream = System.IO.File.OpenRead(directPath);
@@ -196,6 +198,7 @@ public class FileController : ControllerBase
             ".gif" => "image/gif",
             ".webp" => "image/webp",
             ".bmp" => "image/bmp",
+            ".ico" => "image/x-icon",
             ".mp4" => "video/mp4",
             ".webm" => "video/webm",
             ".mp3" => "audio/mpeg",
