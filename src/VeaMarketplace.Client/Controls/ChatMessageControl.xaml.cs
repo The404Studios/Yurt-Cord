@@ -194,42 +194,117 @@ public partial class ChatMessageControl : UserControl
 
     private UIElement CreateImageAttachment(MessageAttachmentDto attachment)
     {
+        // Calculate display dimensions
+        int displayWidth = 300;
+        int displayHeight = 200;
+
+        if (attachment.Width.HasValue && attachment.Height.HasValue && attachment.Width > 0 && attachment.Height > 0)
+        {
+            var aspectRatio = (double)attachment.Width.Value / attachment.Height.Value;
+
+            // Constrain to max dimensions while maintaining aspect ratio
+            const int maxWidth = 400;
+            const int maxHeight = 300;
+
+            if (aspectRatio > 1) // Wider than tall
+            {
+                displayWidth = Math.Min(attachment.Width.Value, maxWidth);
+                displayHeight = (int)(displayWidth / aspectRatio);
+            }
+            else // Taller than wide
+            {
+                displayHeight = Math.Min(attachment.Height.Value, maxHeight);
+                displayWidth = (int)(displayHeight * aspectRatio);
+            }
+        }
+
+        // Create the container grid for the image
+        var containerGrid = new Grid
+        {
+            Width = displayWidth,
+            Height = displayHeight,
+            Margin = new Thickness(0, 0, 8, 8),
+            Cursor = WpfCursors.Hand,
+            Background = new SolidColorBrush(Color.FromRgb(30, 31, 34))
+        };
+
+        // Create a border with clipping for rounded corners
         var border = new Border
         {
             CornerRadius = new CornerRadius(8),
-            Margin = new Thickness(0, 0, 8, 8),
-            MaxWidth = 400,
-            MaxHeight = 300,
-            Cursor = WpfCursors.Hand,
+            ClipToBounds = true,
             Tag = attachment.FileUrl
         };
 
+        // Create image element
         var image = new WpfImage
         {
-            Stretch = Stretch.Uniform,
-            StretchDirection = StretchDirection.DownOnly
+            Stretch = Stretch.UniformToFill,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
         };
 
-        try
+        // Create loading indicator
+        var loadingText = new TextBlock
         {
-            var bitmap = new BitmapImage();
-            bitmap.BeginInit();
-            bitmap.UriSource = new Uri(attachment.ThumbnailUrl ?? attachment.FileUrl);
-            bitmap.CacheOption = BitmapCacheOption.OnLoad;
-            bitmap.EndInit();
-            image.Source = bitmap;
-        }
-        catch
+            Text = "Loading...",
+            Foreground = new SolidColorBrush(Color.FromRgb(185, 187, 190)),
+            FontSize = 12,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        // Add loading text initially
+        containerGrid.Children.Add(loadingText);
+
+        // Load image asynchronously
+        var imageUrl = attachment.ThumbnailUrl ?? attachment.FileUrl;
+        if (!string.IsNullOrEmpty(imageUrl))
         {
-            // Fallback to file icon
-            return CreateFileAttachment(attachment);
+            try
+            {
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
+                bitmap.UriSource = new Uri(imageUrl, UriKind.Absolute);
+
+                // Handle download completion
+                bitmap.DownloadCompleted += (s, e) =>
+                {
+                    containerGrid.Children.Clear();
+                    border.Child = image;
+                    containerGrid.Children.Add(border);
+                };
+
+                bitmap.DownloadFailed += (s, e) =>
+                {
+                    // Show error/fallback
+                    loadingText.Text = "Failed to load";
+                };
+
+                bitmap.EndInit();
+                image.Source = bitmap;
+
+                // If already downloaded (cached), show immediately
+                if (bitmap.IsDownloading == false)
+                {
+                    containerGrid.Children.Clear();
+                    border.Child = image;
+                    containerGrid.Children.Add(border);
+                }
+            }
+            catch
+            {
+                loadingText.Text = "Error";
+            }
         }
 
-        border.Child = image;
-        border.MouseLeftButtonDown += (s, e) =>
+        // Click handler to open full image
+        containerGrid.MouseLeftButtonDown += (s, e) =>
         {
-            // Open full image in browser or viewer
-            if (s is Border b && b.Tag is string url)
+            var url = attachment.FileUrl;
+            if (!string.IsNullOrEmpty(url))
             {
                 try
                 {
@@ -239,7 +314,7 @@ public partial class ChatMessageControl : UserControl
             }
         };
 
-        return border;
+        return containerGrid;
     }
 
     private UIElement CreateFileAttachment(MessageAttachmentDto attachment)
