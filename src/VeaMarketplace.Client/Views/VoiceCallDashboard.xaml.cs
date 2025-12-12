@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using VeaMarketplace.Client.Services;
 
@@ -13,11 +14,16 @@ public partial class VoiceCallDashboard : UserControl
     private readonly IVoiceService _voiceService = null!;
     private readonly IApiService _apiService = null!;
     private readonly ObservableCollection<VoiceParticipant> _participants = new();
+    private readonly ObservableCollection<ActiveScreenShare> _activeShares = new();
     private bool _isMuted;
     private bool _isDeafened;
     private string? _currentScreenSharerConnectionId;
     private int _frameCount;
     private DateTime _lastFpsUpdate = DateTime.Now;
+    private bool _isViewingSelfPreview;
+    private bool _previewHidden;
+    private int _selfPreviewFrameCount;
+    private DateTime _lastSelfFpsUpdate = DateTime.Now;
 
     // Channel name mapping
     private static readonly Dictionary<string, string> ChannelDisplayNames = new()
@@ -38,6 +44,7 @@ public partial class VoiceCallDashboard : UserControl
         _apiService = (IApiService)App.ServiceProvider.GetService(typeof(IApiService))!;
 
         ParticipantsItemsControl.ItemsSource = _participants;
+        ActiveSharesItemsControl.ItemsSource = _activeShares;
 
         SetupEventHandlers();
         UpdateSelfInfo();
@@ -220,28 +227,67 @@ public partial class VoiceCallDashboard : UserControl
 
                 if (isSharing)
                 {
-                    // Auto-watch new screen share if not currently watching anyone
-                    // or switch to the new sharer
-                    _currentScreenSharerConnectionId = connectionId;
-                    StreamerNameText.Text = participant?.Username ?? "Unknown";
-                    StreamInfoPanel.Visibility = Visibility.Visible;
-                    NoStreamPanel.Visibility = Visibility.Collapsed;
-                    ScreenShareImage.Visibility = Visibility.Visible;
-                    _frameCount = 0;
-                    _lastFpsUpdate = DateTime.Now;
-                }
-                else if (_currentScreenSharerConnectionId == connectionId)
-                {
-                    // Find another active sharer if available
-                    var otherSharer = _participants.FirstOrDefault(p => p.IsScreenSharing && p.ConnectionId != connectionId);
-                    if (otherSharer != null)
+                    // Add to active shares list
+                    if (!_activeShares.Any(s => s.ConnectionId == connectionId))
                     {
-                        _currentScreenSharerConnectionId = otherSharer.ConnectionId;
-                        StreamerNameText.Text = otherSharer.Username;
+                        _activeShares.Add(new ActiveScreenShare
+                        {
+                            ConnectionId = connectionId,
+                            Username = participant?.Username ?? "Unknown"
+                        });
                     }
-                    else
+                    UpdateActiveSharesVisibility();
+
+                    // Auto-watch new screen share if not viewing self preview
+                    if (!_isViewingSelfPreview || _previewHidden)
                     {
-                        ClearScreenShare();
+                        _currentScreenSharerConnectionId = connectionId;
+                        StreamerNameText.Text = participant?.Username ?? "Unknown";
+                        StreamInfoPanel.Visibility = Visibility.Visible;
+                        NoStreamPanel.Visibility = Visibility.Collapsed;
+                        ScreenShareImage.Visibility = Visibility.Visible;
+                        _frameCount = 0;
+                        _lastFpsUpdate = DateTime.Now;
+                    }
+                }
+                else
+                {
+                    // Remove from active shares list
+                    var share = _activeShares.FirstOrDefault(s => s.ConnectionId == connectionId);
+                    if (share != null)
+                    {
+                        _activeShares.Remove(share);
+                    }
+                    UpdateActiveSharesVisibility();
+
+                    if (_currentScreenSharerConnectionId == connectionId)
+                    {
+                        // If we were viewing this share, switch to another or self preview
+                        if (_isViewingSelfPreview && !_previewHidden && _voiceService.IsScreenSharing)
+                        {
+                            // Stay on self preview
+                            _currentScreenSharerConnectionId = null;
+                        }
+                        else
+                        {
+                            // Find another active sharer if available
+                            var otherSharer = _participants.FirstOrDefault(p => p.IsScreenSharing && p.ConnectionId != connectionId);
+                            if (otherSharer != null)
+                            {
+                                _currentScreenSharerConnectionId = otherSharer.ConnectionId;
+                                StreamerNameText.Text = otherSharer.Username;
+                            }
+                            else if (_voiceService.IsScreenSharing && !_previewHidden)
+                            {
+                                // Switch to self preview
+                                _isViewingSelfPreview = true;
+                                _currentScreenSharerConnectionId = null;
+                            }
+                            else
+                            {
+                                ClearScreenShare();
+                            }
+                        }
                     }
                 }
             });
@@ -254,6 +300,91 @@ public partial class VoiceCallDashboard : UserControl
                 MessageBox.Show(reason, "Disconnected", MessageBoxButton.OK, MessageBoxImage.Warning);
             });
         };
+
+        // Subscribe to local screen share frames for self-preview
+        _voiceService.OnLocalScreenFrameReady += (frameData, width, height) =>
+        {
+            Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    // Update self preview frame count
+                    _selfPreviewFrameCount++;
+                    var now = DateTime.Now;
+                    if ((now - _lastSelfFpsUpdate).TotalSeconds >= 1)
+                    {
+                        _lastSelfFpsUpdate = now;
+                        _selfPreviewFrameCount = 0;
+                    }
+
+                    // Show self preview toggle if we're sharing
+                    if (_voiceService.IsScreenSharing)
+                    {
+                        SelfSharePreviewToggle.Visibility = Visibility.Visible;
+                        UpdateActiveSharesVisibility();
+
+                        // Display self preview if viewing self and not hidden
+                        if (_isViewingSelfPreview && !_previewHidden)
+                        {
+                            using var ms = new MemoryStream(frameData);
+                            var bitmap = new BitmapImage();
+                            bitmap.BeginInit();
+                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                            bitmap.StreamSource = ms;
+                            bitmap.EndInit();
+                            bitmap.Freeze();
+
+                            ScreenShareImage.Source = bitmap;
+                            ScreenShareImage.Visibility = Visibility.Visible;
+                            NoStreamPanel.Visibility = Visibility.Collapsed;
+                            StreamInfoPanel.Visibility = Visibility.Visible;
+                            StreamerNameText.Text = "You (Preview)";
+                            StreamFpsText.Text = $"SHARING | {width}x{height}";
+                        }
+                    }
+                }
+                catch
+                {
+                    // Ignore frame errors
+                }
+            });
+        };
+
+        // Track screen share manager events for active shares list
+        _voiceService.ScreenSharingManager.OnScreenShareStarted += share =>
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (!_activeShares.Any(s => s.ConnectionId == share.ConnectionId))
+                {
+                    _activeShares.Add(new ActiveScreenShare
+                    {
+                        ConnectionId = share.ConnectionId,
+                        Username = share.Username
+                    });
+                }
+                UpdateActiveSharesVisibility();
+            });
+        };
+
+        _voiceService.ScreenSharingManager.OnScreenShareStopped += connectionId =>
+        {
+            Dispatcher.Invoke(() =>
+            {
+                var share = _activeShares.FirstOrDefault(s => s.ConnectionId == connectionId);
+                if (share != null)
+                {
+                    _activeShares.Remove(share);
+                }
+                UpdateActiveSharesVisibility();
+            });
+        };
+    }
+
+    private void UpdateActiveSharesVisibility()
+    {
+        var hasActiveShares = _activeShares.Count > 0 || _voiceService.IsScreenSharing;
+        ActiveSharesSection.Visibility = hasActiveShares ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void UpdateSelfInfo()
@@ -328,6 +459,18 @@ public partial class VoiceCallDashboard : UserControl
             ScreenShareIcon.Text = "🖥";
             ScreenShareBtn.Background = null;
             ScreenShareBtn.ToolTip = "Share Screen";
+
+            // Reset self preview state
+            _isViewingSelfPreview = false;
+            _previewHidden = false;
+            SelfSharePreviewToggle.Visibility = Visibility.Collapsed;
+            UpdateActiveSharesVisibility();
+
+            // If we were viewing self preview, clear the screen
+            if (StreamerNameText.Text.Contains("You"))
+            {
+                ClearScreenShare();
+            }
         }
         else
         {
@@ -346,6 +489,13 @@ public partial class VoiceCallDashboard : UserControl
                 ScreenShareBtn.Background = new System.Windows.Media.SolidColorBrush(
                     System.Windows.Media.Color.FromRgb(67, 181, 129));
                 ScreenShareBtn.ToolTip = $"Stop Sharing ({picker.SelectedDisplay.FriendlyName}) - {settings.TargetWidth}x{settings.TargetHeight} @ {settings.TargetFps}fps";
+
+                // Enable self preview by default when starting to share
+                _isViewingSelfPreview = true;
+                _previewHidden = false;
+                _currentScreenSharerConnectionId = null; // Clear any other viewer to show self
+                SelfSharePreviewToggle.Visibility = Visibility.Visible;
+                UpdateActiveSharesVisibility();
             }
         }
     }
@@ -466,6 +616,80 @@ public partial class VoiceCallDashboard : UserControl
     }
 
     #endregion
+
+    #region Active Screen Share Handlers
+
+    private void ActiveShare_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is Border border && border.Tag is ActiveScreenShare share)
+        {
+            // Switch to viewing this user's screen share
+            _isViewingSelfPreview = false;
+            _currentScreenSharerConnectionId = share.ConnectionId;
+
+            // Update UI to show we're viewing this share
+            StreamerNameText.Text = share.Username;
+            StreamInfoPanel.Visibility = Visibility.Visible;
+            NoStreamPanel.Visibility = Visibility.Collapsed;
+            ScreenShareImage.Visibility = Visibility.Visible;
+            _frameCount = 0;
+            _lastFpsUpdate = DateTime.Now;
+        }
+    }
+
+    private void SelfSharePreview_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (!_voiceService.IsScreenSharing) return;
+
+        // Toggle between showing self preview and hiding it
+        if (_isViewingSelfPreview)
+        {
+            // Toggle hidden state
+            _previewHidden = !_previewHidden;
+            PreviewToggleText.Text = _previewHidden ? "👁‍🗨" : "👁";
+
+            if (_previewHidden)
+            {
+                // Hide the preview but keep sharing
+                if (StreamerNameText.Text.Contains("You"))
+                {
+                    // Check if there's another share to view
+                    var otherShare = _activeShares.FirstOrDefault();
+                    if (otherShare != null)
+                    {
+                        _currentScreenSharerConnectionId = otherShare.ConnectionId;
+                        StreamerNameText.Text = otherShare.Username;
+                    }
+                    else
+                    {
+                        // No other shares, show "hidden preview" message
+                        NoStreamPanel.Visibility = Visibility.Visible;
+                        ScreenShareImage.Visibility = Visibility.Collapsed;
+                        StreamInfoPanel.Visibility = Visibility.Collapsed;
+                    }
+                }
+            }
+        }
+        else
+        {
+            // Start viewing self preview
+            _isViewingSelfPreview = true;
+            _previewHidden = false;
+            _currentScreenSharerConnectionId = null;
+            PreviewToggleText.Text = "👁";
+        }
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// Represents an active screen share from another user
+/// </summary>
+public class ActiveScreenShare
+{
+    public string ConnectionId { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
 }
 
 /// <summary>

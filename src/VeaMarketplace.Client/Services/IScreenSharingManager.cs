@@ -131,6 +131,9 @@ public interface IScreenSharingManager : IAsyncDisposable
     // Events for broadcasting
     event Action<string, byte[], int, int>? OnFrameReady;
 
+    // Event for local preview (fires when we're sharing)
+    event Action<byte[], int, int>? OnLocalFrameReady;
+
     // Events for receiving
     event Action<ScreenFrame>? OnFrameReceived;
     event Action<RemoteScreenShare>? OnScreenShareStarted;

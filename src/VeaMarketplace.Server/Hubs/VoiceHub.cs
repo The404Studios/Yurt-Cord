@@ -16,6 +16,9 @@ public class VoiceHub : Hub
     private static readonly ConcurrentDictionary<string, string> _connectionUsers = new(); // connectionId -> userId
     private static readonly ConcurrentDictionary<string, string> _activeCalls = new(); // callId -> (caller|recipient connectionId pair)
 
+    // Voice Room system
+    private static readonly ConcurrentDictionary<string, VoiceRoom> _voiceRooms = new();
+
     public VoiceHub(VoiceCallService? callService = null, AuthService? authService = null)
     {
         _callService = callService;
@@ -331,6 +334,313 @@ public class VoiceHub : Hub
             await Clients.Client(sharerConnectionId)
                 .SendAsync("QualityRequested", Context.ConnectionId, quality);
         }
+    }
+
+    // === Voice Room Methods ===
+
+    public async Task CreateVoiceRoom(CreateVoiceRoomDto dto, string userId, string username, string avatarUrl)
+    {
+        var room = new VoiceRoom
+        {
+            Name = dto.Name,
+            Description = dto.Description,
+            HostId = userId,
+            HostUsername = username,
+            HostAvatarUrl = avatarUrl,
+            IsPublic = dto.IsPublic,
+            PasswordHash = !string.IsNullOrEmpty(dto.Password)
+                ? BCrypt.Net.BCrypt.HashPassword(dto.Password)
+                : null,
+            MaxParticipants = Math.Clamp(dto.MaxParticipants, 2, 50),
+            Category = dto.Category,
+            AllowScreenShare = dto.AllowScreenShare
+        };
+
+        // Add host as first participant
+        var hostParticipant = new VoiceRoomParticipant
+        {
+            UserId = userId,
+            ConnectionId = Context.ConnectionId,
+            Username = username,
+            AvatarUrl = avatarUrl,
+            IsHost = true
+        };
+        room.Participants[userId] = hostParticipant;
+
+        _voiceRooms[room.Id] = room;
+
+        // Join the SignalR group for this room
+        await Groups.AddToGroupAsync(Context.ConnectionId, $"room_{room.Id}");
+
+        // Also join the voice channel for audio
+        await JoinVoiceChannel($"room_{room.Id}", userId, username, avatarUrl);
+
+        await Clients.Caller.SendAsync("VoiceRoomCreated", room.ToDto());
+
+        // Notify all clients that a new public room is available
+        if (room.IsPublic)
+        {
+            await Clients.All.SendAsync("VoiceRoomAdded", room.ToDto());
+        }
+    }
+
+    public async Task JoinVoiceRoom(string roomId, string userId, string username, string avatarUrl, string? password = null)
+    {
+        if (!_voiceRooms.TryGetValue(roomId, out var room))
+        {
+            await Clients.Caller.SendAsync("VoiceRoomError", "Room not found");
+            return;
+        }
+
+        if (!room.IsActive)
+        {
+            await Clients.Caller.SendAsync("VoiceRoomError", "Room is no longer active");
+            return;
+        }
+
+        if (room.Participants.Count >= room.MaxParticipants)
+        {
+            await Clients.Caller.SendAsync("VoiceRoomError", "Room is full");
+            return;
+        }
+
+        // Check password if required
+        if (room.PasswordHash != null)
+        {
+            if (string.IsNullOrEmpty(password) || !BCrypt.Net.BCrypt.Verify(password, room.PasswordHash))
+            {
+                await Clients.Caller.SendAsync("VoiceRoomError", "Incorrect password");
+                return;
+            }
+        }
+
+        var participant = new VoiceRoomParticipant
+        {
+            UserId = userId,
+            ConnectionId = Context.ConnectionId,
+            Username = username,
+            AvatarUrl = avatarUrl,
+            IsHost = false,
+            IsModerator = room.Moderators.Contains(userId)
+        };
+        room.Participants[userId] = participant;
+
+        // Join the SignalR group for this room
+        await Groups.AddToGroupAsync(Context.ConnectionId, $"room_{roomId}");
+
+        // Also join the voice channel for audio
+        await JoinVoiceChannel($"room_{roomId}", userId, username, avatarUrl);
+
+        // Notify room members
+        await Clients.Group($"room_{roomId}").SendAsync("VoiceRoomParticipantJoined", participant.ToDto());
+
+        // Send room info to new participant
+        await Clients.Caller.SendAsync("VoiceRoomJoined", room.ToDto());
+
+        // Update public room list
+        if (room.IsPublic)
+        {
+            await Clients.All.SendAsync("VoiceRoomUpdated", room.ToDto());
+        }
+    }
+
+    public async Task LeaveVoiceRoom(string roomId)
+    {
+        if (!_voiceRooms.TryGetValue(roomId, out var room))
+            return;
+
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+        {
+            // Try to find user by connection ID in room participants
+            var participant = room.Participants.Values.FirstOrDefault(p => p.ConnectionId == Context.ConnectionId);
+            if (participant == null) return;
+            userId = participant.UserId;
+        }
+
+        if (room.Participants.TryRemove(userId, out var removedParticipant))
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"room_{roomId}");
+            await LeaveVoiceChannel();
+
+            await Clients.Group($"room_{roomId}").SendAsync("VoiceRoomParticipantLeft", removedParticipant.ToDto());
+
+            // If host left, transfer to next person or close room
+            if (removedParticipant.IsHost)
+            {
+                if (room.Participants.Count > 0)
+                {
+                    // Transfer host to first participant
+                    var newHost = room.Participants.Values.FirstOrDefault();
+                    if (newHost != null)
+                    {
+                        newHost.IsHost = true;
+                        room.HostId = newHost.UserId;
+                        room.HostUsername = newHost.Username;
+                        room.HostAvatarUrl = newHost.AvatarUrl;
+
+                        await Clients.Group($"room_{roomId}").SendAsync("VoiceRoomHostChanged", newHost.ToDto());
+                    }
+                }
+                else
+                {
+                    // Close room
+                    room.IsActive = false;
+                    _voiceRooms.TryRemove(roomId, out _);
+
+                    if (room.IsPublic)
+                    {
+                        await Clients.All.SendAsync("VoiceRoomRemoved", roomId);
+                    }
+                }
+            }
+
+            // Update public room list
+            if (room.IsActive && room.IsPublic)
+            {
+                await Clients.All.SendAsync("VoiceRoomUpdated", room.ToDto());
+            }
+        }
+    }
+
+    public async Task GetPublicVoiceRooms(VoiceRoomCategory? category = null, string? query = null, int page = 1, int pageSize = 20)
+    {
+        var rooms = _voiceRooms.Values
+            .Where(r => r.IsActive && r.IsPublic)
+            .Where(r => !category.HasValue || r.Category == category.Value)
+            .Where(r => string.IsNullOrEmpty(query) ||
+                        r.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                        r.Description.Contains(query, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(r => r.Participants.Count)
+            .ThenByDescending(r => r.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(r => r.ToDto())
+            .ToList();
+
+        var totalCount = _voiceRooms.Values.Count(r => r.IsActive && r.IsPublic);
+
+        await Clients.Caller.SendAsync("PublicVoiceRooms", rooms, totalCount, page, pageSize);
+    }
+
+    public async Task CloseVoiceRoom(string roomId)
+    {
+        if (!_voiceRooms.TryGetValue(roomId, out var room))
+            return;
+
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId) || room.HostId != userId)
+        {
+            await Clients.Caller.SendAsync("VoiceRoomError", "Only the host can close the room");
+            return;
+        }
+
+        room.IsActive = false;
+
+        // Notify all participants
+        await Clients.Group($"room_{roomId}").SendAsync("VoiceRoomClosed", roomId, "Host closed the room");
+
+        // Remove all participants from the group
+        foreach (var participant in room.Participants.Values)
+        {
+            await Groups.RemoveFromGroupAsync(participant.ConnectionId, $"room_{roomId}");
+        }
+
+        _voiceRooms.TryRemove(roomId, out _);
+
+        if (room.IsPublic)
+        {
+            await Clients.All.SendAsync("VoiceRoomRemoved", roomId);
+        }
+    }
+
+    public async Task KickFromVoiceRoom(string roomId, string targetUserId, string? reason = null)
+    {
+        if (!_voiceRooms.TryGetValue(roomId, out var room))
+            return;
+
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        // Check if caller is host or moderator
+        var callerParticipant = room.Participants.Values.FirstOrDefault(p => p.UserId == userId);
+        if (callerParticipant == null || (!callerParticipant.IsHost && !callerParticipant.IsModerator))
+        {
+            await Clients.Caller.SendAsync("VoiceRoomError", "You don't have permission to kick users");
+            return;
+        }
+
+        if (room.Participants.TryRemove(targetUserId, out var kickedParticipant))
+        {
+            await Groups.RemoveFromGroupAsync(kickedParticipant.ConnectionId, $"room_{roomId}");
+
+            await Clients.Client(kickedParticipant.ConnectionId)
+                .SendAsync("VoiceRoomKicked", roomId, reason ?? "You were kicked from the room");
+
+            await Clients.Group($"room_{roomId}").SendAsync("VoiceRoomParticipantLeft", kickedParticipant.ToDto());
+
+            if (room.IsPublic)
+            {
+                await Clients.All.SendAsync("VoiceRoomUpdated", room.ToDto());
+            }
+        }
+    }
+
+    public async Task PromoteToModerator(string roomId, string targetUserId)
+    {
+        if (!_voiceRooms.TryGetValue(roomId, out var room))
+            return;
+
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId) || room.HostId != userId)
+        {
+            await Clients.Caller.SendAsync("VoiceRoomError", "Only the host can promote moderators");
+            return;
+        }
+
+        if (room.Participants.TryGetValue(targetUserId, out var participant))
+        {
+            participant.IsModerator = true;
+            room.Moderators.Add(targetUserId);
+
+            await Clients.Group($"room_{roomId}").SendAsync("VoiceRoomModeratorAdded", participant.ToDto());
+        }
+    }
+
+    // === Nudge System ===
+
+    public async Task SendNudge(string targetUserId, string? message = null)
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var senderId))
+        {
+            await Clients.Caller.SendAsync("NudgeError", "You must be authenticated to send nudges");
+            return;
+        }
+
+        // Get sender info from voice users or connection
+        var senderInfo = _voiceUsers.Values.FirstOrDefault(u => u.UserId == senderId);
+        if (senderInfo == null)
+        {
+            await Clients.Caller.SendAsync("NudgeError", "Could not find your user information");
+            return;
+        }
+
+        // Check if target is online
+        if (!_userConnections.TryGetValue(targetUserId, out var targetConnectionId))
+        {
+            await Clients.Caller.SendAsync("NudgeError", "User is not online");
+            return;
+        }
+
+        var nudge = new NudgeDto
+        {
+            FromUserId = senderId,
+            FromUsername = senderInfo.Username,
+            FromAvatarUrl = senderInfo.AvatarUrl,
+            ToUserId = targetUserId,
+            Timestamp = DateTime.UtcNow,
+            Message = message
+        };
+
+        await Clients.Client(targetConnectionId).SendAsync("NudgeReceived", nudge);
+        await Clients.Caller.SendAsync("NudgeSent", nudge);
     }
 
     // WebRTC Signaling
@@ -657,3 +967,72 @@ public class ScreenShareState
     public int LastHeight { get; set; }
     public DateTime LastFrameTime { get; set; }
 }
+
+public class VoiceRoom
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string HostId { get; set; } = string.Empty;
+    public string HostUsername { get; set; } = string.Empty;
+    public string HostAvatarUrl { get; set; } = string.Empty;
+    public bool IsPublic { get; set; } = true;
+    public string? PasswordHash { get; set; }
+    public int MaxParticipants { get; set; } = 10;
+    public VoiceRoomCategory Category { get; set; } = VoiceRoomCategory.General;
+    public bool AllowScreenShare { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public bool IsActive { get; set; } = true;
+    public ConcurrentDictionary<string, VoiceRoomParticipant> Participants { get; } = new();
+    public HashSet<string> Moderators { get; } = [];
+
+    public VoiceRoomDto ToDto(bool includePassword = false) => new()
+    {
+        Id = Id,
+        Name = Name,
+        Description = Description,
+        HostId = HostId,
+        HostUsername = HostUsername,
+        HostAvatarUrl = HostAvatarUrl,
+        IsPublic = IsPublic,
+        Password = includePassword ? (PasswordHash != null ? "protected" : null) : null,
+        MaxParticipants = MaxParticipants,
+        CurrentParticipants = Participants.Count,
+        Participants = Participants.Values.Select(p => p.ToDto()).ToList(),
+        CreatedAt = CreatedAt,
+        Category = Category,
+        AllowScreenShare = AllowScreenShare,
+        IsActive = IsActive
+    };
+}
+
+public class VoiceRoomParticipant
+{
+    public string UserId { get; set; } = string.Empty;
+    public string ConnectionId { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
+    public string AvatarUrl { get; set; } = string.Empty;
+    public bool IsHost { get; set; }
+    public bool IsModerator { get; set; }
+    public bool IsMuted { get; set; }
+    public bool IsDeafened { get; set; }
+    public bool IsSpeaking { get; set; }
+    public bool IsScreenSharing { get; set; }
+    public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
+
+    public VoiceRoomParticipantDto ToDto() => new()
+    {
+        UserId = UserId,
+        Username = Username,
+        AvatarUrl = AvatarUrl,
+        IsHost = IsHost,
+        IsModerator = IsModerator,
+        IsMuted = IsMuted,
+        IsDeafened = IsDeafened,
+        IsSpeaking = IsSpeaking,
+        IsScreenSharing = IsScreenSharing,
+        JoinedAt = JoinedAt
+    };
+}
+
+// VoiceRoomCategory is defined in VeaMarketplace.Shared.DTOs

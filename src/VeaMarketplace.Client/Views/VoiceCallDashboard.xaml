@@ -148,18 +148,75 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
+                    <!-- Active Screen Shares Section -->
+                    <Border x:Name="ActiveSharesSection" Grid.Row="0" Background="#1E1F22"
+                            Padding="12,10" CornerRadius="8,8,0,0" Visibility="Collapsed">
+                        <StackPanel>
+                            <TextBlock Text="SCREEN SHARES" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="#43B581" Margin="0,0,0,8"/>
+                            <ItemsControl x:Name="ActiveSharesItemsControl">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,0,4" Padding="8,6" CornerRadius="4"
+                                                Background="#36393F" Cursor="Hand"
+                                                MouseLeftButtonUp="ActiveShare_Click" Tag="{Binding}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="🖥" FontSize="14" Foreground="#43B581"
+                                                           VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Username}"
+                                                           Foreground="White" FontSize="13"
+                                                           VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="2" Text="LIVE" FontSize="9"
+                                                           Foreground="#ED4245" FontWeight="Bold"
+                                                           VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Self Share Preview Toggle -->
+                            <Border x:Name="SelfSharePreviewToggle" Margin="0,4,0,0"
+                                    Padding="8,6" CornerRadius="4" Background="#5865F2"
+                                    Cursor="Hand" MouseLeftButtonUp="SelfSharePreview_Click"
+                                    Visibility="Collapsed">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="🖥" FontSize="14" Foreground="White"
+                                               VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Grid.Column="1" Text="Your Screen (Preview)"
+                                               Foreground="White" FontSize="13"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="PreviewToggleText" Grid.Column="2"
+                                               Text="👁" FontSize="12" Foreground="White"
+                                               VerticalAlignment="Center" ToolTip="Toggle Preview"/>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
                     <!-- Panel Header -->
-                    <Border Grid.Row="0" Background="#1E1F22" Padding="12,10"
+                    <Border Grid.Row="1" Background="#1E1F22" Padding="12,10"
                             CornerRadius="8,8,0,0">
                         <TextBlock Text="PARTICIPANTS" FontSize="11" FontWeight="SemiBold"
                                    Foreground="#B5BAC1"/>
                     </Border>
 
                     <!-- Participants List -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
                         <ItemsControl x:Name="ParticipantsItemsControl">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>

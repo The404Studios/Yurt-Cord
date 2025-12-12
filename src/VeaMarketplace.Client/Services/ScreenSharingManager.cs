@@ -67,6 +67,7 @@ public class ScreenSharingManager : IScreenSharingManager
     public IReadOnlyDictionary<string, RemoteScreenShare> ActiveShares => _activeShares;
 
     public event Action<string, byte[], int, int>? OnFrameReady;
+    public event Action<byte[], int, int>? OnLocalFrameReady;
     public event Action<ScreenFrame>? OnFrameReceived;
     public event Action<RemoteScreenShare>? OnScreenShareStarted;
     public event Action<string>? OnScreenShareStopped;
@@ -575,8 +576,9 @@ public class ScreenSharingManager : IScreenSharingManager
                         _stats.FramesSent++;
                         _stats.BytesSent += frameToSend.Data.Length;
 
-                        // Fire event for local display
+                        // Fire events for local display
                         OnFrameReady?.Invoke("self", frameToSend.Data, frameToSend.Width, frameToSend.Height);
+                        OnLocalFrameReady?.Invoke(frameToSend.Data, frameToSend.Width, frameToSend.Height);
                     }
                     catch (Exception ex)
                     {

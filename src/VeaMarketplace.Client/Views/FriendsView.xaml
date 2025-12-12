@@ -295,6 +295,9 @@
                                                     <MenuItem Header="Start Call"
                                                               Command="{Binding DataContext.StartCallCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                               CommandParameter="{Binding}"/>
+                                                    <MenuItem Header="Nudge"
+                                                              Command="{Binding DataContext.SendNudgeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                              CommandParameter="{Binding}"/>
                                                     <Separator/>
                                                     <MenuItem Header="Remove Friend" Foreground="{StaticResource AccentRedBrush}"
                                                               Command="{Binding DataContext.RemoveFriendCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"

@@ -62,6 +62,7 @@ public interface IVoiceService
     DisplayInfo? SelectedDisplay { get; set; }
     IScreenSharingManager ScreenSharingManager { get; }
     event Action<string, byte[], int, int>? OnScreenFrameReceived;
+    event Action<byte[], int, int>? OnLocalScreenFrameReady;
     event Action<ScreenShareStats>? OnScreenShareStatsUpdated;
     Task StartScreenShareAsync();
     Task StartScreenShareAsync(DisplayInfo display);
@@ -118,6 +119,12 @@ public interface IVoiceService
     Task StartCallAsync(string recipientId);
     Task AnswerCallAsync(string callId, bool accept);
     Task EndCallAsync(string callId);
+
+    // Nudge system
+    event Action<NudgeDto>? OnNudgeReceived;
+    event Action<NudgeDto>? OnNudgeSent;
+    event Action<string>? OnNudgeError;
+    Task SendNudgeAsync(string targetUserId, string? message = null);
 }
 
 public class VoiceUserState
@@ -193,6 +200,10 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         {
             OnScreenFrameReceived?.Invoke(frame.SenderConnectionId, frame.Data, frame.Width, frame.Height);
         };
+        _screenSharingManager.OnLocalFrameReady += (data, width, height) =>
+        {
+            OnLocalScreenFrameReady?.Invoke(data, width, height);
+        };
         _screenSharingManager.OnStatsUpdated += stats =>
         {
             OnScreenShareStatsUpdated?.Invoke(stats);
@@ -238,6 +249,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     public event Action<string>? OnUserDisconnectedByAdmin;
     public event Action<string, string>? OnUserMovedToChannel;
     public event Action<string, byte[], int, int>? OnScreenFrameReceived;
+    public event Action<byte[], int, int>? OnLocalScreenFrameReady;
     public event Action<string, bool>? OnUserScreenShareChanged;
     public event Action<ScreenShareStats>? OnScreenShareStatsUpdated;
 
@@ -249,6 +261,11 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     public event Action<string, string>? OnCallEnded;
     public event Action<string>? OnCallFailed;
     public event Action<string, bool, double>? OnCallUserSpeaking;
+
+    // Nudge events
+    public event Action<NudgeDto>? OnNudgeReceived;
+    public event Action<NudgeDto>? OnNudgeSent;
+    public event Action<string>? OnNudgeError;
 
     // Call state
     public bool IsInCall { get; private set; }
@@ -1110,6 +1127,36 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         {
             OnCallUserSpeaking?.Invoke(connectionId, isSpeaking, audioLevel);
         });
+
+        // Nudge handlers
+        _connection.On<NudgeDto>("NudgeReceived", nudge =>
+        {
+            OnNudgeReceived?.Invoke(nudge);
+        });
+
+        _connection.On<NudgeDto>("NudgeSent", nudge =>
+        {
+            OnNudgeSent?.Invoke(nudge);
+        });
+
+        _connection.On<string>("NudgeError", error =>
+        {
+            OnNudgeError?.Invoke(error);
+        });
+    }
+
+    public async Task SendNudgeAsync(string targetUserId, string? message = null)
+    {
+        if (_connection?.State != HubConnectionState.Connected) return;
+
+        try
+        {
+            await _connection.InvokeAsync("SendNudge", targetUserId, message);
+        }
+        catch (Exception ex)
+        {
+            OnNudgeError?.Invoke($"Failed to send nudge: {ex.Message}");
+        }
     }
 
     private void DecodeAndPlayAudio(string senderConnectionId, byte[] opusData)

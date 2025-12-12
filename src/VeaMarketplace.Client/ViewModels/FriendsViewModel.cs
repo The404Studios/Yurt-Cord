@@ -587,6 +587,22 @@ public partial class FriendsViewModel : BaseViewModel
         }
     }
 
+    // Send a nudge to a friend
+    [RelayCommand]
+    private async Task SendNudgeAsync(FriendDto? friend)
+    {
+        if (friend == null) return;
+
+        try
+        {
+            await _voiceService.SendNudgeAsync(friend.UserId);
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to send nudge: {ex.Message}");
+        }
+    }
+
     // Mark messages as read when opening a conversation
     partial void OnSelectedFriendChanged(FriendDto? value)
     {
