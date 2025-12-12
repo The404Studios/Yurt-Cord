@@ -16,6 +16,7 @@ public class DatabaseService : IDisposable
     public ILiteCollection<DirectMessage> DirectMessages => _database.GetCollection<DirectMessage>("direct_messages");
     public ILiteCollection<VoiceCall> VoiceCalls => _database.GetCollection<VoiceCall>("voice_calls");
     public ILiteCollection<CustomRole> CustomRoles => _database.GetCollection<CustomRole>("custom_roles");
+    public ILiteCollection<Room> Rooms => _database.GetCollection<Room>("rooms");
 
     public DatabaseService(IConfiguration configuration)
     {
@@ -38,6 +39,9 @@ public class DatabaseService : IDisposable
         VoiceCalls.EnsureIndex(x => x.RecipientId);
         CustomRoles.EnsureIndex(x => x.Name);
         CustomRoles.EnsureIndex(x => x.Position);
+        Rooms.EnsureIndex(x => x.OwnerId);
+        Rooms.EnsureIndex(x => x.IsPublic);
+        Rooms.EnsureIndex(x => x.Name);
 
         // Seed default channels
         SeedDefaultData();

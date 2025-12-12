@@ -11,7 +11,27 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddSignalR();
+
+// Configure SignalR with high-bandwidth streaming support
+builder.Services.AddSignalR(options =>
+{
+    // Upload limit: 30MB for high-quality video streaming
+    options.MaximumReceiveMessageSize = 30 * 1024 * 1024; // 30MB upload
+
+    // Streaming buffer sizes for optimal performance
+    options.StreamBufferCapacity = 50; // Buffer 50 items for smooth streaming
+
+    // Keep connections alive during streaming
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
+    options.HandshakeTimeout = TimeSpan.FromSeconds(30);
+
+    // Enable detailed errors for debugging
+    options.EnableDetailedErrors = true;
+
+    // Maximum parallel hub invocations per client (for concurrent streams)
+    options.MaximumParallelInvocationsPerClient = 10;
+});
 
 // Database
 builder.Services.AddSingleton<DatabaseService>();
@@ -24,6 +44,7 @@ builder.Services.AddScoped<FriendService>();
 builder.Services.AddScoped<DirectMessageService>();
 builder.Services.AddScoped<VoiceCallService>();
 builder.Services.AddScoped<RoleService>();
+builder.Services.AddScoped<RoomService>();
 
 // JWT Authentication
 var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "YurtCordSuperSecretKey12345678901234567890";
@@ -90,6 +111,7 @@ app.MapHub<ChatHub>("/hubs/chat");
 app.MapHub<VoiceHub>("/hubs/voice");
 app.MapHub<FriendHub>("/hubs/friends");
 app.MapHub<ProfileHub>("/hubs/profile");
+app.MapHub<RoomHub>("/hubs/rooms");
 
 // Ensure data directory exists
 Directory.CreateDirectory("Data");
