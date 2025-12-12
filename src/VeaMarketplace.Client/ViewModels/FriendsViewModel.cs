@@ -12,6 +12,7 @@ public partial class FriendsViewModel : BaseViewModel
     private readonly IFriendService _friendService;
     private readonly IApiService _apiService;
     private readonly IVoiceService _voiceService;
+    private readonly INavigationService _navigationService;
     private readonly DispatcherTimer _callTimer;
     private DateTime _callStartTime;
 
@@ -23,6 +24,21 @@ public partial class FriendsViewModel : BaseViewModel
 
     [ObservableProperty]
     private string _dmMessageInput = string.Empty;
+
+    // Username search state
+    [ObservableProperty]
+    private UserSearchResultDto? _searchedUser;
+
+    [ObservableProperty]
+    private bool _isSearchingUser;
+
+    [ObservableProperty]
+    private bool _userSearchCompleted;
+
+    [ObservableProperty]
+    private string _userSearchMessage = string.Empty;
+
+    private DispatcherTimer? _usernameSearchDebounce;
 
     [ObservableProperty]
     private FriendDto? _selectedFriend;
@@ -88,11 +104,12 @@ public partial class FriendsViewModel : BaseViewModel
     public int PendingRequestsCount => PendingRequests.Count;
     public int UnreadConversationsCount => Conversations.Count(c => c.UnreadCount > 0);
 
-    public FriendsViewModel(IFriendService friendService, IApiService apiService, IVoiceService voiceService)
+    public FriendsViewModel(IFriendService friendService, IApiService apiService, IVoiceService voiceService, INavigationService navigationService)
     {
         _friendService = friendService;
         _apiService = apiService;
         _voiceService = voiceService;
+        _navigationService = navigationService;
 
         // Set up call timer
         _callTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -118,6 +135,34 @@ public partial class FriendsViewModel : BaseViewModel
         {
             // Could show toast notification
             ClearError();
+        };
+
+        _friendService.OnUserSearchResult += result =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                IsSearchingUser = false;
+                UserSearchCompleted = true;
+                SearchedUser = result;
+
+                if (result != null)
+                {
+                    if (result.IsFriend)
+                    {
+                        UserSearchMessage = "You're already friends!";
+                    }
+                    else
+                    {
+                        UserSearchMessage = string.Empty;
+                    }
+                }
+                else
+                {
+                    UserSearchMessage = "No user found with that username";
+                }
+
+                OnPropertyChanged(nameof(CanSendFriendRequest));
+            });
         };
 
         _friendService.OnUserTypingDM += (userId, username) =>
@@ -277,13 +322,18 @@ public partial class FriendsViewModel : BaseViewModel
     [RelayCommand]
     private async Task SendFriendRequestAsync()
     {
-        if (string.IsNullOrWhiteSpace(FriendRequestUsername)) return;
+        if (string.IsNullOrWhiteSpace(FriendRequestUsername) || SearchedUser == null) return;
 
         ClearError();
         try
         {
-            await _friendService.SendFriendRequestAsync(FriendRequestUsername);
+            // Send by user ID for reliability
+            await _friendService.SendFriendRequestByIdAsync(SearchedUser.UserId);
             FriendRequestUsername = string.Empty;
+            SearchedUser = null;
+            UserSearchCompleted = false;
+            UserSearchMessage = string.Empty;
+            OnPropertyChanged(nameof(CanSendFriendRequest));
         }
         catch (Exception ex)
         {
@@ -515,8 +565,16 @@ public partial class FriendsViewModel : BaseViewModel
     [RelayCommand]
     private void ViewFriendProfile(FriendDto friend)
     {
-        // Could navigate to profile view
-        ContextMenuFriend = friend;
+        if (friend == null) return;
+        _navigationService.NavigateToProfile(friend.UserId);
+    }
+
+    // View searched user profile
+    [RelayCommand]
+    private void ViewSearchedUserProfile()
+    {
+        if (SearchedUser == null) return;
+        _navigationService.NavigateToProfile(SearchedUser.UserId);
     }
 
     // Send typing indicator
@@ -550,5 +608,41 @@ public partial class FriendsViewModel : BaseViewModel
         {
             _ = RefreshConversationsAsync();
         }
+        else if (value == "Add")
+        {
+            // Reset search state when switching to Add view
+            SearchedUser = null;
+            UserSearchCompleted = false;
+            UserSearchMessage = string.Empty;
+            FriendRequestUsername = string.Empty;
+        }
     }
+
+    partial void OnFriendRequestUsernameChanged(string value)
+    {
+        // Reset search state on new input
+        SearchedUser = null;
+        UserSearchCompleted = false;
+        UserSearchMessage = string.Empty;
+
+        // Debounce the search
+        _usernameSearchDebounce?.Stop();
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            IsSearchingUser = false;
+            return;
+        }
+
+        IsSearchingUser = true;
+        _usernameSearchDebounce = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+        _usernameSearchDebounce.Tick += async (s, e) =>
+        {
+            _usernameSearchDebounce.Stop();
+            await _friendService.SearchUserAsync(value);
+        };
+        _usernameSearchDebounce.Start();
+    }
+
+    public bool CanSendFriendRequest => SearchedUser != null && !SearchedUser.IsFriend && UserSearchCompleted;
 }
