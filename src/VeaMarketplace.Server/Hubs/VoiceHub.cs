@@ -360,9 +360,9 @@ public class VoiceHub : Hub
             shareState.BytesSent += frameData.Length;
         }
 
-        // Broadcast screen frame to ALL users in the channel INCLUDING the sender
-        // This allows the sharer to see their own stream for verification
-        await Clients.Group($"voice_{userState.ChannelId}")
+        // Send screen frame ONLY to OTHER users in the channel (not back to sender)
+        // This prevents echo and reduces bandwidth for the sharer
+        await Clients.OthersInGroup($"voice_{userState.ChannelId}")
             .SendAsync("ReceiveScreenFrame", Context.ConnectionId, frameData, width, height);
     }
 

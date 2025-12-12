@@ -23,12 +23,12 @@ public enum ScreenShareQuality
 /// </summary>
 public class ScreenShareSettings
 {
-    public int TargetFps { get; set; } = 60;
+    public int TargetFps { get; set; } = 30; // Default to 30fps for lower CPU usage
     public int TargetWidth { get; set; } = 1280;
     public int TargetHeight { get; set; } = 720;
-    public int JpegQuality { get; set; } = 50;
-    public int MaxFrameSizeKb { get; set; } = 100;
-    public int BitrateKbps { get; set; } = 6000; // Target bitrate in kbps
+    public int JpegQuality { get; set; } = 45; // Lower quality = less CPU for encoding
+    public int MaxFrameSizeKb { get; set; } = 80;
+    public int BitrateKbps { get; set; } = 4000; // Target bitrate in kbps
     public bool AdaptiveQuality { get; set; } = true;
     public bool ShareAudio { get; set; } = false;
     public bool AllowDownscaling { get; set; } = true; // Allow viewers to request lower quality
@@ -70,9 +70,9 @@ public class ScreenShareSettings
             TargetFps = 60,
             TargetWidth = 1280,
             TargetHeight = 720,
-            JpegQuality = 65,
-            MaxFrameSizeKb = 120, // ~6 Mbps at 60fps
-            BitrateKbps = 6000
+            JpegQuality = 50, // Lower quality for less CPU usage
+            MaxFrameSizeKb = 100, // ~5 Mbps at 60fps
+            BitrateKbps = 5000
         },
         ScreenShareQuality.HD => new ScreenShareSettings
         {

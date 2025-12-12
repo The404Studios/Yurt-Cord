@@ -61,9 +61,15 @@ public class ScreenSharingManager : IScreenSharingManager
     private Graphics? _captureGraphics;
     private Graphics? _resizeGraphics;
 
-    // JPEG encoder
+    // JPEG encoder (fallback)
     private ImageCodecInfo? _jpegEncoder;
     private EncoderParameters? _encoderParams;
+
+    // Hardware encoder (H.264 with NVENC/AMF/QSV)
+    private HardwareVideoEncoder? _hardwareEncoder;
+    private bool _useHardwareEncoding;
+    public bool IsHardwareEncodingEnabled => _useHardwareEncoding && _hardwareEncoder != null;
+    public string EncoderName => _hardwareEncoder?.EncoderName ?? "jpeg";
 
     public bool IsSharing => _isSharing;
     public bool IsConnected => _isConnected;
@@ -358,10 +364,36 @@ public class ScreenSharingManager : IScreenSharingManager
         _resizeGraphics.CompositingQuality = CompositingQuality.HighSpeed;
         _resizeGraphics.SmoothingMode = SmoothingMode.HighSpeed;
 
-        // Initialize encoder params
+        // Initialize encoder params (for JPEG fallback)
         if (_encoderParams != null)
         {
             _encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, (long)_settings.JpegQuality);
+        }
+
+        // Try to initialize hardware encoder (H.264 with GPU acceleration)
+        try
+        {
+            _hardwareEncoder?.Dispose();
+            _hardwareEncoder = new HardwareVideoEncoder();
+
+            if (_hardwareEncoder.Initialize(_settings.TargetWidth, _settings.TargetHeight, _settings.TargetFps, _settings.BitrateKbps))
+            {
+                _useHardwareEncoding = true;
+                Debug.WriteLine($"Hardware encoding enabled: {_hardwareEncoder.EncoderName} (GPU: {_hardwareEncoder.IsHardwareAccelerated})");
+            }
+            else
+            {
+                _useHardwareEncoding = false;
+                _hardwareEncoder.Dispose();
+                _hardwareEncoder = null;
+                Debug.WriteLine("Hardware encoding unavailable, using JPEG fallback");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to initialize hardware encoder: {ex.Message}");
+            _useHardwareEncoding = false;
+            _hardwareEncoder = null;
         }
     }
 
@@ -375,6 +407,11 @@ public class ScreenSharingManager : IScreenSharingManager
         _resizeGraphics = null;
         _resizeBitmap?.Dispose();
         _resizeBitmap = null;
+
+        // Cleanup hardware encoder
+        _hardwareEncoder?.Dispose();
+        _hardwareEncoder = null;
+        _useHardwareEncoding = false;
     }
 
     /// <summary>
@@ -452,7 +489,7 @@ public class ScreenSharingManager : IScreenSharingManager
     }
 
     /// <summary>
-    /// Captures screen and encodes to JPEG
+    /// Captures screen and encodes using hardware H.264 or JPEG fallback
     /// </summary>
     private byte[]? CaptureAndEncode()
     {
@@ -486,7 +523,18 @@ public class ScreenSharingManager : IScreenSharingManager
                 bitmapToEncode = _captureBitmap;
             }
 
-            // Encode to JPEG
+            // Try hardware encoding first (H.264 with NVENC/AMF/QSV)
+            if (_useHardwareEncoding && _hardwareEncoder != null)
+            {
+                var h264Data = _hardwareEncoder.EncodeFrame(bitmapToEncode, _frameNumber);
+                if (h264Data != null && h264Data.Length > 0)
+                {
+                    return h264Data;
+                }
+                // Fall through to JPEG if hardware encoding fails
+            }
+
+            // Fallback: Encode to JPEG
             using var ms = new MemoryStream();
             if (_jpegEncoder != null && _encoderParams != null)
             {
@@ -544,40 +592,70 @@ public class ScreenSharingManager : IScreenSharingManager
     /// <summary>
     /// Send loop running as async task for network I/O
     /// Yields to voice audio to prevent choppy audio during screen sharing
+    /// Sends frames at a steady rate to prevent burst/lag issues
     /// </summary>
     private async Task SendLoop(CancellationToken cancellationToken)
     {
         var sendTimer = new Stopwatch();
+        var frameIntervalStopwatch = Stopwatch.StartNew();
+        long lastSendTime = 0;
 
         while (!cancellationToken.IsCancellationRequested && _isSharing)
         {
             try
             {
+                // Calculate frame interval for pacing - send at target FPS rate
+                var frameIntervalMs = 1000.0 / _settings.TargetFps;
+                var now = frameIntervalStopwatch.ElapsedMilliseconds;
+                var elapsed = now - lastSendTime;
+
                 // VOICE PRIORITY: When voice is active, add small delays between frames
                 // to give audio packets a chance to be sent first
                 if (_voiceActive)
                 {
-                    await Task.Delay(5, cancellationToken).ConfigureAwait(false);
+                    await Task.Delay(3, cancellationToken).ConfigureAwait(false);
                 }
 
-                // Get latest frame (skip old ones)
+                // Wait for next frame interval to maintain steady send rate
+                if (elapsed < frameIntervalMs)
+                {
+                    var waitTime = (int)(frameIntervalMs - elapsed);
+                    if (waitTime > 1)
+                    {
+                        await Task.Delay(waitTime - 1, cancellationToken).ConfigureAwait(false);
+                    }
+                }
+
+                // Get next frame from queue - don't skip all frames, just keep queue manageable
+                // Only skip if queue is backing up significantly (>3 frames)
                 CapturedFrame? frameToSend = null;
-                while (_frameQueue.TryDequeue(out var frame))
+                if (_frameQueue.TryDequeue(out var frame))
                 {
                     frameToSend = frame;
-                    if (_frameQueue.IsEmpty) break;
+                    // If queue is too backed up, skip some to catch up (but not all)
+                    if (_frameQueue.Count > 3)
+                    {
+                        // Skip half the backlog, not all of it
+                        var skipCount = _frameQueue.Count / 2;
+                        for (int i = 0; i < skipCount && _frameQueue.TryDequeue(out var skipped); i++)
+                        {
+                            frameToSend = skipped; // Use the newer frame
+                            _framesDroppedThisSecond++;
+                        }
+                    }
                 }
 
                 if (frameToSend != null && _sendFrameFunc != null && _isConnected)
                 {
+                    lastSendTime = frameIntervalStopwatch.ElapsedMilliseconds;
                     sendTimer.Restart();
 
                     try
                     {
-                        // Use timeout to prevent blocking if network is congested
-                        // This allows audio to continue flowing
+                        // Use longer timeout to allow network latency without dropping
                         var sendTask = _sendFrameFunc(frameToSend.Data, frameToSend.Width, frameToSend.Height);
-                        var completed = await Task.WhenAny(sendTask, Task.Delay(100, cancellationToken)).ConfigureAwait(false);
+                        var timeoutTask = Task.Delay(200, cancellationToken);
+                        var completed = await Task.WhenAny(sendTask, timeoutTask).ConfigureAwait(false);
 
                         sendTimer.Stop();
                         var sendTimeMs = sendTimer.Elapsed.TotalMilliseconds;

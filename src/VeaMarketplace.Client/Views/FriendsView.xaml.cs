@@ -7,7 +7,7 @@ namespace VeaMarketplace.Client.Views;
 
 public partial class FriendsView : UserControl
 {
-    private readonly DispatcherTimer _typingTimer;
+    private readonly DispatcherTimer? _typingTimer;
 
     public FriendsView()
     {
@@ -26,13 +26,13 @@ public partial class FriendsView : UserControl
     private void DmInput_TextChanged(object sender, TextChangedEventArgs e)
     {
         // Reset the timer on each keystroke
-        _typingTimer.Stop();
-        _typingTimer.Start();
+        _typingTimer?.Stop();
+        _typingTimer?.Start();
     }
 
     private void TypingTimer_Tick(object? sender, EventArgs e)
     {
-        _typingTimer.Stop();
+        _typingTimer?.Stop();
         // Send typing indicator
         if (DataContext is FriendsViewModel vm)
         {

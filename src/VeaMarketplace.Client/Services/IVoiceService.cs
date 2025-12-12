@@ -508,12 +508,14 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             try
             {
                 // Get or create per-user decoder (each user needs separate decoder state)
+#pragma warning disable CS0618 // Type or member is obsolete
                 var decoder = _userOpusDecoders.GetOrAdd(senderConnectionId,
                     _ => new OpusDecoder(SampleRate, Channels));
 
                 // Decode Opus to PCM
                 var pcmBuffer = new short[OpusFrameSize];
                 var decodedSamples = decoder.Decode(opusData, 0, opusData.Length, pcmBuffer, 0, OpusFrameSize, false);
+#pragma warning restore CS0618
 
                 if (decodedSamples > 0)
                 {
@@ -662,6 +664,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         try
         {
             // Initialize Opus encoder for sending audio
+#pragma warning disable CS0618 // Type or member is obsolete
             _opusEncoder = new OpusEncoder(SampleRate, Channels, OpusApplication.OPUS_APPLICATION_VOIP)
             {
                 Bitrate = OpusBitrate,
@@ -669,6 +672,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                 UseVBR = true,
                 SignalType = OpusSignal.OPUS_SIGNAL_VOICE
             };
+#pragma warning restore CS0618
 
             // Configure audio capture with small buffer for low latency
             _waveIn = new WaveInEvent
@@ -733,7 +737,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                         Buffer.BlockCopy(pcmData, 0, pcmSamples, 0, pcmData.Length);
 
                         // Encode with Opus - dramatically reduces bandwidth
+#pragma warning disable CS0618 // Type or member is obsolete
                         var encodedLength = _opusEncoder.Encode(pcmSamples, 0, OpusFrameSize, opusBuffer, 0, opusBuffer.Length);
+#pragma warning restore CS0618
 
                         if (encodedLength > 0)
                         {
@@ -1463,9 +1469,11 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         try
         {
+#pragma warning disable CS0618 // Type or member is obsolete
             var decoder = _userOpusDecoders.GetOrAdd(senderConnectionId, _ => new OpusDecoder(SampleRate, Channels));
             var pcmBuffer = new short[OpusFrameSize];
             var decodedSamples = decoder.Decode(opusData, 0, opusData.Length, pcmBuffer, 0, OpusFrameSize, false);
+#pragma warning restore CS0618
 
             if (decodedSamples > 0)
             {

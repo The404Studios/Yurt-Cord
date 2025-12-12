@@ -7,6 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>YurtCord</AssemblyName>
     <RootNamespace>VeaMarketplace.Client</RootNamespace>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
@@ -20,6 +21,7 @@
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
     <PackageReference Include="Concentus" Version="2.2.0" />
+    <PackageReference Include="FFmpeg.AutoGen" Version="7.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
@@ -30,6 +32,20 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VeaMarketplace.Shared\VeaMarketplace.Shared.csproj" />
+  </ItemGroup>
+
+  <!-- Copy FFmpeg DLLs to output if they exist -->
+  <ItemGroup>
+    <None Include="ffmpeg\*.dll" Condition="Exists('ffmpeg')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>ffmpeg\%(Filename)%(Extension)</Link>
+    </None>
+  </ItemGroup>
+
+  <!-- Include download scripts in solution -->
+  <ItemGroup>
+    <None Include="download-ffmpeg.bat" />
+    <None Include="download-ffmpeg.ps1" />
   </ItemGroup>
 
 </Project>
