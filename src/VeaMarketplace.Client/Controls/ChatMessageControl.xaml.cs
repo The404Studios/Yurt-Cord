@@ -493,8 +493,7 @@ public partial class ChatMessageControl : UserControl
         if (_currentMessage == null) return;
 
         var navigationService = (INavigationService?)App.ServiceProvider.GetService(typeof(INavigationService));
-        navigationService?.NavigateToProfile();
-        // In a full implementation, would pass user ID to load that profile
+        navigationService?.NavigateToProfile(_currentMessage.SenderId);
     }
 
     private async void SendMessage_Click(object sender, RoutedEventArgs e)

@@ -56,8 +56,12 @@ public class ChatHub : Hub
     /// </summary>
     public static async Task BroadcastProfileUpdate(IHubContext<ChatHub> hubContext, User user)
     {
+        // Update cached user if online, otherwise create a temporary DTO for broadcast
+        OnlineUserDto userDto;
+
         if (_onlineUsers.TryGetValue(user.Id, out var onlineUser))
         {
+            // Update existing online user
             onlineUser.AvatarUrl = user.AvatarUrl ?? onlineUser.AvatarUrl;
             onlineUser.BannerUrl = user.BannerUrl;
             onlineUser.Username = user.Username;
@@ -66,9 +70,29 @@ public class ChatHub : Hub
             onlineUser.Bio = user.Bio;
             onlineUser.AccentColor = user.AccentColor;
             onlineUser.LastUpdated = DateTime.UtcNow;
-
-            await hubContext.Clients.All.SendAsync("UserProfileUpdated", onlineUser);
+            userDto = onlineUser;
         }
+        else
+        {
+            // Create a DTO for broadcasting even if user isn't in chat
+            userDto = new OnlineUserDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                AvatarUrl = user.AvatarUrl ?? string.Empty,
+                BannerUrl = user.BannerUrl,
+                DisplayName = user.DisplayName,
+                Role = user.Role,
+                Rank = user.Rank,
+                StatusMessage = user.StatusMessage,
+                Bio = user.Bio,
+                AccentColor = user.AccentColor,
+                LastUpdated = DateTime.UtcNow
+            };
+        }
+
+        // Always broadcast the update to all clients
+        await hubContext.Clients.All.SendAsync("UserProfileUpdated", userDto);
     }
 
     public async Task Authenticate(string token)
