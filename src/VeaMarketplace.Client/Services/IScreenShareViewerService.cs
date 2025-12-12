@@ -95,10 +95,10 @@ public class ScreenShareViewerService : IScreenShareViewerService
     // Hardware decoders for H.264 streams (one per sharer)
     private readonly ConcurrentDictionary<string, HardwareVideoDecoder> _h264Decoders = new();
 
-    // Buffer settings - tuned for smooth playback with memory trade-off
-    private const int TargetBufferSize = 3; // Buffer 3 frames before starting playback
-    private const int MaxBufferSize = 15;   // ~50MB at 720p (3.5MB per decoded frame)
-    private const int PlaybackIntervalMs = 16; // ~60fps playback rate
+    // Buffer settings - tuned for smooth high-FPS playback with memory trade-off
+    private const int TargetBufferSize = 5;   // Buffer 5 frames before starting playback (increased for stability)
+    private const int MaxBufferSize = 45;     // ~150MB at 720p (3.5MB per decoded frame) - supports 60fps with headroom
+    private const int PlaybackIntervalMs = 8; // ~120fps playback rate (for smoother 60fps delivery)
 
     public ObservableCollection<ScreenShareDto> ActiveScreenShares { get; } = new();
     public ScreenShareDto? CurrentlyViewing => _viewingConnectionId != null && _screenShares.TryGetValue(_viewingConnectionId, out var share) ? share : null;

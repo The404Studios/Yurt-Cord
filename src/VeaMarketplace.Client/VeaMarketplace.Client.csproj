@@ -18,6 +18,20 @@
     <Description>YurtCord - Marketplace and Communication Platform</Description>
   </PropertyGroup>
 
+  <!-- Performance settings for high-throughput streaming -->
+  <PropertyGroup>
+    <!-- Use server GC for better multi-threaded performance with large buffers -->
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <!-- Use concurrent GC to reduce pause times during streaming -->
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <!-- Retain VM for faster memory allocation during streaming -->
+    <RetainVMGarbageCollection>true</RetainVMGarbageCollection>
+    <!-- Large Object Heap compaction on demand (helps with video frame buffers) -->
+    <GCLargeObjectHeapCompactionMode>CompactOnce</GCLargeObjectHeapCompactionMode>
+    <!-- Allow app to use more memory for video streaming buffers -->
+    <GCHeapCount>0</GCHeapCount>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
     <PackageReference Include="Concentus" Version="2.2.0" />

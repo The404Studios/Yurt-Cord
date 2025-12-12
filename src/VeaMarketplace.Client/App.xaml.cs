@@ -1,7 +1,9 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Windows;
 using System.Windows.Markup;
 using System.Windows.Threading;
@@ -22,6 +24,10 @@ public partial class App : Application
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+
+        // Configure ThreadPool for high-performance streaming
+        // Add extra threads for video encoding, decoding, and network I/O
+        ConfigureThreadPoolForStreaming();
 
         // Show splash screen
         var splash = new Views.SplashScreen();
@@ -234,5 +240,28 @@ public partial class App : Application
             // If MessageBox fails, write to console as last resort
             Console.Error.WriteLine(fullDetails);
         }
+    }
+
+    /// <summary>
+    /// Configure ThreadPool for high-performance streaming.
+    /// Increases min threads to handle video encoding, decoding, and network I/O concurrently.
+    /// </summary>
+    private static void ConfigureThreadPoolForStreaming()
+    {
+        // Get current min threads
+        ThreadPool.GetMinThreads(out int workerThreads, out int completionPortThreads);
+
+        // Increase minimum threads for streaming workloads:
+        // - 2 extra for video encoding (capture + encode)
+        // - 2 extra for video decoding (decode + color convert)
+        // - 2 extra for network I/O (send + receive)
+        // - Keep existing minimum as base
+        var processorCount = Environment.ProcessorCount;
+        var newWorkerMin = Math.Max(workerThreads, processorCount + 6);
+        var newCompletionMin = Math.Max(completionPortThreads, processorCount + 4);
+
+        ThreadPool.SetMinThreads(newWorkerMin, newCompletionMin);
+
+        Debug.WriteLine($"ThreadPool configured: min workers={newWorkerMin}, min IO={newCompletionMin} (processors={processorCount})");
     }
 }

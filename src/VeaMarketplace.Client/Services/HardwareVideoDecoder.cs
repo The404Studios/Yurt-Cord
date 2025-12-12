@@ -107,8 +107,17 @@ public unsafe class HardwareVideoDecoder : IDisposable
             _codecContext->flags |= ffmpeg.AV_CODEC_FLAG_LOW_DELAY;
             _codecContext->flags2 |= ffmpeg.AV_CODEC_FLAG2_FAST;
 
+            // Multi-threading for better decode performance
+            // Use frame-level threading for lower latency (slice threading adds latency)
+            _codecContext->thread_count = Math.Max(4, Environment.ProcessorCount);
+            _codecContext->thread_type = ffmpeg.FF_THREAD_FRAME;
+
             AVDictionary* opts = null;
-            ffmpeg.av_dict_set(&opts, "threads", "auto", 0);
+            // Set threads in options as well for codecs that read from options
+            ffmpeg.av_dict_set(&opts, "threads", _codecContext->thread_count.ToString(), 0);
+            // Reduce decode latency
+            ffmpeg.av_dict_set(&opts, "flags", "low_delay", 0);
+            ffmpeg.av_dict_set(&opts, "flags2", "fast", 0);
 
             var ret = ffmpeg.avcodec_open2(_codecContext, codec, &opts);
             ffmpeg.av_dict_free(&opts);

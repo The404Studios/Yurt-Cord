@@ -149,6 +149,14 @@ public unsafe class HardwareVideoEncoder : IDisposable
             // Low-latency settings
             _codecContext->flags |= ffmpeg.AV_CODEC_FLAG_LOW_DELAY;
 
+            // Multi-threading for better encode performance (for software encoder)
+            // Hardware encoders handle this internally
+            if (!isHardware)
+            {
+                _codecContext->thread_count = Math.Max(4, Environment.ProcessorCount);
+                _codecContext->thread_type = ffmpeg.FF_THREAD_FRAME | ffmpeg.FF_THREAD_SLICE;
+            }
+
             // Codec-specific options for low latency
             AVDictionary* opts = null;
 
