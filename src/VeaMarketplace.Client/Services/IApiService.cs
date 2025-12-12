@@ -1,5 +1,7 @@
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using VeaMarketplace.Shared.DTOs;
 using VeaMarketplace.Shared.Enums;
 
@@ -95,6 +97,13 @@ public class ApiService : IApiService
     private readonly HttpClient _httpClient;
     private const string BaseUrl = "http://162.248.94.23:5000";
 
+    // Shared JSON options for consistent enum serialization with server
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
+
     public string? AuthToken { get; private set; }
     public UserDto? CurrentUser { get; private set; }
     public bool IsAuthenticated => !string.IsNullOrEmpty(AuthToken) && CurrentUser != null;
@@ -107,8 +116,8 @@ public class ApiService : IApiService
     public async Task<AuthResponse> LoginAsync(string username, string password)
     {
         var request = new LoginRequest { Username = username, Password = password };
-        var response = await _httpClient.PostAsJsonAsync("/api/auth/login", request).ConfigureAwait(false);
-        var result = await response.Content.ReadFromJsonAsync<AuthResponse>().ConfigureAwait(false) ?? new AuthResponse();
+        var response = await _httpClient.PostAsJsonAsync("/api/auth/login", request, JsonOptions).ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<AuthResponse>(JsonOptions).ConfigureAwait(false) ?? new AuthResponse();
 
         if (result.Success && result.Token != null)
         {
@@ -124,8 +133,8 @@ public class ApiService : IApiService
     public async Task<AuthResponse> RegisterAsync(string username, string email, string password)
     {
         var request = new RegisterRequest { Username = username, Email = email, Password = password };
-        var response = await _httpClient.PostAsJsonAsync("/api/auth/register", request).ConfigureAwait(false);
-        var result = await response.Content.ReadFromJsonAsync<AuthResponse>().ConfigureAwait(false) ?? new AuthResponse();
+        var response = await _httpClient.PostAsJsonAsync("/api/auth/register", request, JsonOptions).ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<AuthResponse>(JsonOptions).ConfigureAwait(false) ?? new AuthResponse();
 
         if (result.Success && result.Token != null)
         {
@@ -147,7 +156,7 @@ public class ApiService : IApiService
             var response = await _httpClient.GetAsync("/api/auth/validate").ConfigureAwait(false);
             if (response.IsSuccessStatusCode)
             {
-                CurrentUser = await response.Content.ReadFromJsonAsync<UserDto>().ConfigureAwait(false);
+                CurrentUser = await response.Content.ReadFromJsonAsync<UserDto>(JsonOptions).ConfigureAwait(false);
                 return CurrentUser != null;
             }
         }
@@ -173,20 +182,20 @@ public class ApiService : IApiService
         if (!string.IsNullOrEmpty(search)) url += $"&search={Uri.EscapeDataString(search)}";
 
         var response = await _httpClient.GetAsync(url).ConfigureAwait(false);
-        return await response.Content.ReadFromJsonAsync<ProductListResponse>().ConfigureAwait(false) ?? new ProductListResponse();
+        return await response.Content.ReadFromJsonAsync<ProductListResponse>(JsonOptions).ConfigureAwait(false) ?? new ProductListResponse();
     }
 
     public async Task<ProductDto?> GetProductAsync(string productId)
     {
         var response = await _httpClient.GetAsync($"/api/products/{productId}").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return null;
-        return await response.Content.ReadFromJsonAsync<ProductDto>().ConfigureAwait(false);
+        return await response.Content.ReadFromJsonAsync<ProductDto>(JsonOptions).ConfigureAwait(false);
     }
 
     public async Task<ProductDto> CreateProductAsync(CreateProductRequest request)
     {
-        var response = await _httpClient.PostAsJsonAsync("/api/products", request).ConfigureAwait(false);
-        return await response.Content.ReadFromJsonAsync<ProductDto>().ConfigureAwait(false) ?? new ProductDto();
+        var response = await _httpClient.PostAsJsonAsync("/api/products", request, JsonOptions).ConfigureAwait(false);
+        return await response.Content.ReadFromJsonAsync<ProductDto>(JsonOptions).ConfigureAwait(false) ?? new ProductDto();
     }
 
     public async Task<bool> PurchaseProductAsync(string productId)
@@ -198,43 +207,43 @@ public class ApiService : IApiService
     public async Task<List<ProductDto>> GetMyProductsAsync()
     {
         var response = await _httpClient.GetAsync("/api/products/my").ConfigureAwait(false);
-        return await response.Content.ReadFromJsonAsync<List<ProductDto>>().ConfigureAwait(false) ?? [];
+        return await response.Content.ReadFromJsonAsync<List<ProductDto>>(JsonOptions).ConfigureAwait(false) ?? [];
     }
 
     public async Task<UserDto?> GetUserAsync(string userId)
     {
         var response = await _httpClient.GetAsync($"/api/users/{userId}").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return null;
-        return await response.Content.ReadFromJsonAsync<UserDto>().ConfigureAwait(false);
+        return await response.Content.ReadFromJsonAsync<UserDto>(JsonOptions).ConfigureAwait(false);
     }
 
     public async Task<UserDto?> GetUserProfileAsync(string userId)
     {
         var response = await _httpClient.GetAsync($"/api/users/{userId}/profile").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return null;
-        return await response.Content.ReadFromJsonAsync<UserDto>().ConfigureAwait(false);
+        return await response.Content.ReadFromJsonAsync<UserDto>(JsonOptions).ConfigureAwait(false);
     }
 
     public async Task<List<UserSearchResultDto>> SearchUsersAsync(string query)
     {
         var response = await _httpClient.GetAsync($"/api/users/search?query={Uri.EscapeDataString(query)}").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return [];
-        return await response.Content.ReadFromJsonAsync<List<UserSearchResultDto>>().ConfigureAwait(false) ?? [];
+        return await response.Content.ReadFromJsonAsync<List<UserSearchResultDto>>(JsonOptions).ConfigureAwait(false) ?? [];
     }
 
     public async Task<UserSearchResultDto?> LookupUserAsync(string query)
     {
         var response = await _httpClient.GetAsync($"/api/users/lookup?query={Uri.EscapeDataString(query)}").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return null;
-        return await response.Content.ReadFromJsonAsync<UserSearchResultDto>().ConfigureAwait(false);
+        return await response.Content.ReadFromJsonAsync<UserSearchResultDto>(JsonOptions).ConfigureAwait(false);
     }
 
     public async Task<UserDto?> UpdateProfileAsync(UpdateProfileRequest request)
     {
-        var response = await _httpClient.PutAsJsonAsync("/api/users/profile", request).ConfigureAwait(false);
+        var response = await _httpClient.PutAsJsonAsync("/api/users/profile", request, JsonOptions).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return null;
 
-        var user = await response.Content.ReadFromJsonAsync<UserDto>().ConfigureAwait(false);
+        var user = await response.Content.ReadFromJsonAsync<UserDto>(JsonOptions).ConfigureAwait(false);
         if (user != null) CurrentUser = user;
         return user;
     }
@@ -243,14 +252,14 @@ public class ApiService : IApiService
     {
         var response = await _httpClient.GetAsync($"/api/users/{userId}/roles").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return [];
-        return await response.Content.ReadFromJsonAsync<List<CustomRoleDto>>().ConfigureAwait(false) ?? [];
+        return await response.Content.ReadFromJsonAsync<List<CustomRoleDto>>(JsonOptions).ConfigureAwait(false) ?? [];
     }
 
     public async Task<List<CustomRoleDto>> GetAllRolesAsync()
     {
         var response = await _httpClient.GetAsync("/api/roles").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return [];
-        return await response.Content.ReadFromJsonAsync<List<CustomRoleDto>>().ConfigureAwait(false) ?? [];
+        return await response.Content.ReadFromJsonAsync<List<CustomRoleDto>>(JsonOptions).ConfigureAwait(false) ?? [];
     }
 
     // Notifications
@@ -258,7 +267,7 @@ public class ApiService : IApiService
     {
         var response = await _httpClient.GetAsync("/api/notifications").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return [];
-        return await response.Content.ReadFromJsonAsync<List<NotificationDto>>().ConfigureAwait(false) ?? [];
+        return await response.Content.ReadFromJsonAsync<List<NotificationDto>>(JsonOptions).ConfigureAwait(false) ?? [];
     }
 
     public async Task<bool> MarkNotificationReadAsync(string notificationId)
@@ -284,7 +293,7 @@ public class ApiService : IApiService
     {
         var response = await _httpClient.GetAsync("/api/wishlist").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return [];
-        return await response.Content.ReadFromJsonAsync<List<WishlistItemDto>>().ConfigureAwait(false) ?? [];
+        return await response.Content.ReadFromJsonAsync<List<WishlistItemDto>>(JsonOptions).ConfigureAwait(false) ?? [];
     }
 
     public async Task<bool> AddToWishlistAsync(string productId)
@@ -310,14 +319,14 @@ public class ApiService : IApiService
     {
         var response = await _httpClient.GetAsync("/api/orders").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return [];
-        return await response.Content.ReadFromJsonAsync<List<OrderDto>>().ConfigureAwait(false) ?? [];
+        return await response.Content.ReadFromJsonAsync<List<OrderDto>>(JsonOptions).ConfigureAwait(false) ?? [];
     }
 
     public async Task<OrderDto?> GetOrderAsync(string orderId)
     {
         var response = await _httpClient.GetAsync($"/api/orders/{orderId}").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return null;
-        return await response.Content.ReadFromJsonAsync<OrderDto>().ConfigureAwait(false);
+        return await response.Content.ReadFromJsonAsync<OrderDto>(JsonOptions).ConfigureAwait(false);
     }
 
     // Reviews
@@ -325,13 +334,13 @@ public class ApiService : IApiService
     {
         var response = await _httpClient.GetAsync($"/api/products/{productId}/reviews?page={page}").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return new ProductReviewListDto();
-        return await response.Content.ReadFromJsonAsync<ProductReviewListDto>().ConfigureAwait(false) ?? new ProductReviewListDto();
+        return await response.Content.ReadFromJsonAsync<ProductReviewListDto>(JsonOptions).ConfigureAwait(false) ?? new ProductReviewListDto();
     }
 
     public async Task<ProductReviewDto> CreateReviewAsync(CreateReviewRequest request)
     {
-        var response = await _httpClient.PostAsJsonAsync("/api/reviews", request).ConfigureAwait(false);
-        return await response.Content.ReadFromJsonAsync<ProductReviewDto>().ConfigureAwait(false) ?? new ProductReviewDto();
+        var response = await _httpClient.PostAsJsonAsync("/api/reviews", request, JsonOptions).ConfigureAwait(false);
+        return await response.Content.ReadFromJsonAsync<ProductReviewDto>(JsonOptions).ConfigureAwait(false) ?? new ProductReviewDto();
     }
 
     public async Task<bool> MarkReviewHelpfulAsync(string reviewId)
@@ -342,7 +351,7 @@ public class ApiService : IApiService
 
     public async Task<bool> ReportReviewAsync(string reviewId, string reason)
     {
-        var response = await _httpClient.PostAsJsonAsync($"/api/reviews/{reviewId}/report", new { Reason = reason }).ConfigureAwait(false);
+        var response = await _httpClient.PostAsJsonAsync($"/api/reviews/{reviewId}/report", new { Reason = reason }, JsonOptions).ConfigureAwait(false);
         return response.IsSuccessStatusCode;
     }
 
@@ -351,50 +360,50 @@ public class ApiService : IApiService
     {
         var response = await _httpClient.GetAsync("/api/moderation/dashboard").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return new ModerationDashboardDto();
-        return await response.Content.ReadFromJsonAsync<ModerationDashboardDto>().ConfigureAwait(false) ?? new ModerationDashboardDto();
+        return await response.Content.ReadFromJsonAsync<ModerationDashboardDto>(JsonOptions).ConfigureAwait(false) ?? new ModerationDashboardDto();
     }
 
     public async Task<List<UserBanDto>> GetBannedUsersAsync()
     {
         var response = await _httpClient.GetAsync("/api/moderation/bans").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return [];
-        return await response.Content.ReadFromJsonAsync<List<UserBanDto>>().ConfigureAwait(false) ?? [];
+        return await response.Content.ReadFromJsonAsync<List<UserBanDto>>(JsonOptions).ConfigureAwait(false) ?? [];
     }
 
     public async Task<List<MessageReportDto>> GetPendingReportsAsync()
     {
         var response = await _httpClient.GetAsync("/api/moderation/reports?status=pending").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return [];
-        return await response.Content.ReadFromJsonAsync<List<MessageReportDto>>().ConfigureAwait(false) ?? [];
+        return await response.Content.ReadFromJsonAsync<List<MessageReportDto>>(JsonOptions).ConfigureAwait(false) ?? [];
     }
 
     public async Task<bool> BanUserAsync(BanUserRequest request)
     {
-        var response = await _httpClient.PostAsJsonAsync("/api/moderation/bans", request).ConfigureAwait(false);
+        var response = await _httpClient.PostAsJsonAsync("/api/moderation/bans", request, JsonOptions).ConfigureAwait(false);
         return response.IsSuccessStatusCode;
     }
 
     public async Task<bool> UnbanUserAsync(string oderId, string reason)
     {
-        var response = await _httpClient.PostAsJsonAsync($"/api/moderation/bans/{oderId}/unban", new { Reason = reason }).ConfigureAwait(false);
+        var response = await _httpClient.PostAsJsonAsync($"/api/moderation/bans/{oderId}/unban", new { Reason = reason }, JsonOptions).ConfigureAwait(false);
         return response.IsSuccessStatusCode;
     }
 
     public async Task<bool> WarnUserAsync(WarnUserRequest request)
     {
-        var response = await _httpClient.PostAsJsonAsync("/api/moderation/warnings", request).ConfigureAwait(false);
+        var response = await _httpClient.PostAsJsonAsync("/api/moderation/warnings", request, JsonOptions).ConfigureAwait(false);
         return response.IsSuccessStatusCode;
     }
 
     public async Task<bool> MuteUserAsync(MuteUserRequest request)
     {
-        var response = await _httpClient.PostAsJsonAsync("/api/moderation/mutes", request).ConfigureAwait(false);
+        var response = await _httpClient.PostAsJsonAsync("/api/moderation/mutes", request, JsonOptions).ConfigureAwait(false);
         return response.IsSuccessStatusCode;
     }
 
     public async Task<bool> UnmuteUserAsync(string oderId, string reason)
     {
-        var response = await _httpClient.PostAsJsonAsync($"/api/moderation/mutes/{oderId}/unmute", new { Reason = reason }).ConfigureAwait(false);
+        var response = await _httpClient.PostAsJsonAsync($"/api/moderation/mutes/{oderId}/unmute", new { Reason = reason }, JsonOptions).ConfigureAwait(false);
         return response.IsSuccessStatusCode;
     }
 
@@ -406,13 +415,13 @@ public class ApiService : IApiService
 
     public async Task<bool> ResolveReportAsync(string reportId, string resolution)
     {
-        var response = await _httpClient.PostAsJsonAsync($"/api/moderation/reports/{reportId}/resolve", new { Resolution = resolution }).ConfigureAwait(false);
+        var response = await _httpClient.PostAsJsonAsync($"/api/moderation/reports/{reportId}/resolve", new { Resolution = resolution }, JsonOptions).ConfigureAwait(false);
         return response.IsSuccessStatusCode;
     }
 
     public async Task<bool> DeleteMessageAsync(string messageId, string reason)
     {
-        var response = await _httpClient.PostAsJsonAsync($"/api/moderation/messages/{messageId}/delete", new { Reason = reason }).ConfigureAwait(false);
+        var response = await _httpClient.PostAsJsonAsync($"/api/moderation/messages/{messageId}/delete", new { Reason = reason }, JsonOptions).ConfigureAwait(false);
         return response.IsSuccessStatusCode;
     }
 
@@ -428,7 +437,7 @@ public class ApiService : IApiService
         var response = await _httpClient.PostAsync("/api/media/upload", form).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return string.Empty;
 
-        var result = await response.Content.ReadFromJsonAsync<MediaUploadResponse>().ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<MediaUploadResponse>(JsonOptions).ConfigureAwait(false);
         return result?.Url ?? string.Empty;
     }
 
@@ -462,21 +471,21 @@ public class ApiService : IApiService
     {
         var response = await _httpClient.GetAsync("/api/cart").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return new CartDto();
-        return await response.Content.ReadFromJsonAsync<CartDto>().ConfigureAwait(false) ?? new CartDto();
+        return await response.Content.ReadFromJsonAsync<CartDto>(JsonOptions).ConfigureAwait(false) ?? new CartDto();
     }
 
     public async Task<CartDto> AddToCartAsync(AddToCartRequest request)
     {
-        var response = await _httpClient.PostAsJsonAsync("/api/cart/items", request).ConfigureAwait(false);
+        var response = await _httpClient.PostAsJsonAsync("/api/cart/items", request, JsonOptions).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return new CartDto();
-        return await response.Content.ReadFromJsonAsync<CartDto>().ConfigureAwait(false) ?? new CartDto();
+        return await response.Content.ReadFromJsonAsync<CartDto>(JsonOptions).ConfigureAwait(false) ?? new CartDto();
     }
 
     public async Task<CartDto> UpdateCartItemAsync(UpdateCartItemRequest request)
     {
-        var response = await _httpClient.PutAsJsonAsync($"/api/cart/items/{request.ItemId}", request).ConfigureAwait(false);
+        var response = await _httpClient.PutAsJsonAsync($"/api/cart/items/{request.ItemId}", request, JsonOptions).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return new CartDto();
-        return await response.Content.ReadFromJsonAsync<CartDto>().ConfigureAwait(false) ?? new CartDto();
+        return await response.Content.ReadFromJsonAsync<CartDto>(JsonOptions).ConfigureAwait(false) ?? new CartDto();
     }
 
     public async Task<bool> RemoveFromCartAsync(string itemId)
@@ -493,9 +502,9 @@ public class ApiService : IApiService
 
     public async Task<CouponResultDto> ApplyCouponAsync(string couponCode)
     {
-        var response = await _httpClient.PostAsJsonAsync("/api/cart/coupon", new ApplyCouponRequest { CouponCode = couponCode }).ConfigureAwait(false);
+        var response = await _httpClient.PostAsJsonAsync("/api/cart/coupon", new ApplyCouponRequest { CouponCode = couponCode }, JsonOptions).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return new CouponResultDto { IsValid = false, ErrorMessage = "Failed to apply coupon" };
-        return await response.Content.ReadFromJsonAsync<CouponResultDto>().ConfigureAwait(false) ?? new CouponResultDto();
+        return await response.Content.ReadFromJsonAsync<CouponResultDto>(JsonOptions).ConfigureAwait(false) ?? new CouponResultDto();
     }
 
     public async Task<bool> RemoveCouponAsync()
@@ -506,13 +515,13 @@ public class ApiService : IApiService
 
     public async Task<CheckoutResultDto> CheckoutAsync(CheckoutRequest request)
     {
-        var response = await _httpClient.PostAsJsonAsync("/api/cart/checkout", request).ConfigureAwait(false);
+        var response = await _httpClient.PostAsJsonAsync("/api/cart/checkout", request, JsonOptions).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             return new CheckoutResultDto { Success = false, ErrorMessage = error };
         }
-        return await response.Content.ReadFromJsonAsync<CheckoutResultDto>().ConfigureAwait(false) ?? new CheckoutResultDto();
+        return await response.Content.ReadFromJsonAsync<CheckoutResultDto>(JsonOptions).ConfigureAwait(false) ?? new CheckoutResultDto();
     }
 
     // Presence & Status
@@ -520,18 +529,18 @@ public class ApiService : IApiService
     {
         var response = await _httpClient.GetAsync($"/api/users/{userId}/presence").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return null;
-        return await response.Content.ReadFromJsonAsync<UserPresenceDto>().ConfigureAwait(false);
+        return await response.Content.ReadFromJsonAsync<UserPresenceDto>(JsonOptions).ConfigureAwait(false);
     }
 
     public async Task<bool> UpdatePresenceAsync(UpdatePresenceRequest request)
     {
-        var response = await _httpClient.PutAsJsonAsync("/api/users/me/presence", request).ConfigureAwait(false);
+        var response = await _httpClient.PutAsJsonAsync("/api/users/me/presence", request, JsonOptions).ConfigureAwait(false);
         return response.IsSuccessStatusCode;
     }
 
     public async Task<bool> SetCustomStatusAsync(SetCustomStatusRequest request)
     {
-        var response = await _httpClient.PutAsJsonAsync("/api/users/me/status", request).ConfigureAwait(false);
+        var response = await _httpClient.PutAsJsonAsync("/api/users/me/status", request, JsonOptions).ConfigureAwait(false);
         return response.IsSuccessStatusCode;
     }
 
