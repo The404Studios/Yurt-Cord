@@ -37,6 +37,12 @@ builder.Services.AddSignalR(options =>
 
     // Maximum parallel hub invocations per client (for concurrent streams)
     options.MaximumParallelInvocationsPerClient = 10;
+})
+.AddJsonProtocol(options =>
+{
+    // Serialize enums as strings for client compatibility (matches controller JSON options)
+    options.PayloadSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    options.PayloadSerializerOptions.PropertyNameCaseInsensitive = true;
 });
 
 // Database

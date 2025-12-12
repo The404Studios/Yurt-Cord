@@ -175,7 +175,8 @@ public partial class VoiceCallDashboard : UserControl
 
         _voiceService.OnScreenFrameReceived += (senderConnectionId, frameData, width, height) =>
         {
-            Dispatcher.Invoke(() =>
+            // Use BeginInvoke for non-blocking async UI updates to prevent stuttering
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Render, () =>
             {
                 try
                 {
@@ -304,7 +305,8 @@ public partial class VoiceCallDashboard : UserControl
         // Subscribe to local screen share frames for self-preview
         _voiceService.OnLocalScreenFrameReady += (frameData, width, height) =>
         {
-            Dispatcher.Invoke(() =>
+            // Use BeginInvoke for non-blocking async UI updates to prevent stuttering
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Render, () =>
             {
                 try
                 {

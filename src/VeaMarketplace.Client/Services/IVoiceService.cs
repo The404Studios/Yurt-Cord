@@ -1,11 +1,14 @@
 using Concentus.Enums;
 using Concentus.Structs;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.DependencyInjection;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Windows.Input;
 using VeaMarketplace.Shared.DTOs;
 
@@ -418,6 +421,12 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         _connection = new HubConnectionBuilder()
             .WithUrl(HubUrl)
             .WithAutomaticReconnect()
+            .AddJsonProtocol(options =>
+            {
+                // Match server's JSON serialization for proper enum handling
+                options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                options.PayloadSerializerOptions.PropertyNameCaseInsensitive = true;
+            })
             .Build();
 
         RegisterHandlers();

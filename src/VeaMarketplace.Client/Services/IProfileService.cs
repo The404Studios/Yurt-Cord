@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.DependencyInjection;
 using System.Collections.ObjectModel;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using VeaMarketplace.Shared.DTOs;
 
 namespace VeaMarketplace.Client.Services;
@@ -49,6 +52,12 @@ public class ProfileService : IProfileService, IAsyncDisposable
         _connection = new HubConnectionBuilder()
             .WithUrl(HubUrl)
             .WithAutomaticReconnect()
+            .AddJsonProtocol(options =>
+            {
+                // Match server's JSON serialization for proper enum handling
+                options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                options.PayloadSerializerOptions.PropertyNameCaseInsensitive = true;
+            })
             .Build();
 
         RegisterHandlers();

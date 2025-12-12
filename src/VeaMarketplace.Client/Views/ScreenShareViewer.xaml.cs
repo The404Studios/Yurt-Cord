@@ -35,7 +35,8 @@ public partial class ScreenShareViewer : Window
     {
         if (senderConnectionId != _sharerConnectionId) return;
 
-        Dispatcher.Invoke(() =>
+        // Use BeginInvoke for non-blocking async UI updates to prevent stuttering
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Render, () =>
         {
             try
             {
