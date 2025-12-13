@@ -1,0 +1,45 @@
+<UserControl x:Class="VeaMarketplace.Client.Controls.ProductCardSkeleton"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VeaMarketplace.Client.Controls"
+             Width="260">
+
+    <Border Background="#2B2D31" CornerRadius="8" Padding="0">
+        <StackPanel>
+            <!-- Image Skeleton -->
+            <controls:LoadingSkeleton Height="150" SkeletonType="Card"
+                                       CornerRadius="8,8,0,0"/>
+
+            <StackPanel Margin="12">
+                <!-- Title Skeleton -->
+                <controls:LoadingSkeleton Height="18" Width="180"
+                                           SkeletonType="Text" Margin="0,0,0,8"
+                                           HorizontalAlignment="Left"/>
+
+                <!-- Price Skeleton -->
+                <controls:LoadingSkeleton Height="24" Width="80"
+                                           SkeletonType="Text" Margin="0,0,0,12"
+                                           HorizontalAlignment="Left"/>
+
+                <!-- Seller Row Skeleton -->
+                <StackPanel Orientation="Horizontal">
+                    <controls:LoadingSkeleton Width="24" Height="24"
+                                               SkeletonType="Avatar"/>
+                    <controls:LoadingSkeleton Height="14" Width="100"
+                                               SkeletonType="Text" Margin="8,0,0,0"
+                                               VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Tags Skeleton -->
+                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                    <controls:LoadingSkeleton Height="22" Width="50"
+                                               SkeletonType="Button" Margin="0,0,6,0"/>
+                    <controls:LoadingSkeleton Height="22" Width="60"
+                                               SkeletonType="Button" Margin="0,0,6,0"/>
+                    <controls:LoadingSkeleton Height="22" Width="45"
+                                               SkeletonType="Button"/>
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

@@ -1,38 +1,216 @@
 <UserControl x:Class="VeaMarketplace.Client.Views.LoginView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             Background="{StaticResource TertiaryDarkBrush}">
+             Background="Transparent">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
 
+        <!-- Shake Animation for errors -->
         <Storyboard x:Key="ShakeAnimation">
             <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)">
-                <EasingDoubleKeyFrame KeyTime="0:0:0.05" Value="10"/>
-                <EasingDoubleKeyFrame KeyTime="0:0:0.1" Value="-10"/>
-                <EasingDoubleKeyFrame KeyTime="0:0:0.15" Value="8"/>
-                <EasingDoubleKeyFrame KeyTime="0:0:0.2" Value="-8"/>
-                <EasingDoubleKeyFrame KeyTime="0:0:0.25" Value="4"/>
-                <EasingDoubleKeyFrame KeyTime="0:0:0.3" Value="0"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.05" Value="12"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.1" Value="-12"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.15" Value="10"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.2" Value="-10"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.25" Value="6"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.3" Value="-6"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.35" Value="0"/>
             </DoubleAnimationUsingKeyFrames>
         </Storyboard>
+
+        <!-- Card Entry Animation -->
+        <Storyboard x:Key="CardEntryAnimation">
+            <DoubleAnimation Storyboard.TargetName="LoginCard"
+                             Storyboard.TargetProperty="Opacity"
+                             From="0" To="1" Duration="0:0:0.6">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="CardTranslate"
+                             Storyboard.TargetProperty="Y"
+                             From="50" To="0" Duration="0:0:0.6">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="CardScale"
+                             Storyboard.TargetProperty="ScaleX"
+                             From="0.95" To="1" Duration="0:0:0.6">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="CardScale"
+                             Storyboard.TargetProperty="ScaleY"
+                             From="0.95" To="1" Duration="0:0:0.6">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+
+        <!-- Logo Pulse Animation -->
+        <Storyboard x:Key="LogoPulse" RepeatBehavior="Forever">
+            <DoubleAnimation Storyboard.TargetName="LogoGlow"
+                             Storyboard.TargetProperty="Opacity"
+                             From="0.3" To="0.6" Duration="0:0:2"
+                             AutoReverse="True">
+                <DoubleAnimation.EasingFunction>
+                    <SineEase EasingMode="EaseInOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="LogoScale"
+                             Storyboard.TargetProperty="ScaleX"
+                             From="1" To="1.02" Duration="0:0:2"
+                             AutoReverse="True">
+                <DoubleAnimation.EasingFunction>
+                    <SineEase EasingMode="EaseInOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="LogoScale"
+                             Storyboard.TargetProperty="ScaleY"
+                             From="1" To="1.02" Duration="0:0:2"
+                             AutoReverse="True">
+                <DoubleAnimation.EasingFunction>
+                    <SineEase EasingMode="EaseInOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+
+        <!-- Gradient Animation -->
+        <Storyboard x:Key="GradientShift" RepeatBehavior="Forever">
+            <ColorAnimation Storyboard.TargetName="BgGradient1"
+                            Storyboard.TargetProperty="Color"
+                            From="#1a1a2e" To="#16213e" Duration="0:0:4"
+                            AutoReverse="True"/>
+            <ColorAnimation Storyboard.TargetName="BgGradient2"
+                            Storyboard.TargetProperty="Color"
+                            From="#0f3460" To="#1a1a2e" Duration="0:0:5"
+                            AutoReverse="True"/>
+        </Storyboard>
+
+        <!-- Particle Float Animation -->
+        <Storyboard x:Key="ParticleFloat" RepeatBehavior="Forever">
+            <DoubleAnimation Storyboard.TargetName="P1Translate"
+                             Storyboard.TargetProperty="Y"
+                             From="0" To="-30" Duration="0:0:4" AutoReverse="True">
+                <DoubleAnimation.EasingFunction>
+                    <SineEase EasingMode="EaseInOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="P1Translate"
+                             Storyboard.TargetProperty="X"
+                             From="0" To="15" Duration="0:0:5" AutoReverse="True">
+                <DoubleAnimation.EasingFunction>
+                    <SineEase EasingMode="EaseInOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="P2Translate"
+                             Storyboard.TargetProperty="Y"
+                             From="0" To="25" Duration="0:0:3.5" AutoReverse="True">
+                <DoubleAnimation.EasingFunction>
+                    <SineEase EasingMode="EaseInOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="P2Translate"
+                             Storyboard.TargetProperty="X"
+                             From="0" To="-20" Duration="0:0:4.5" AutoReverse="True">
+                <DoubleAnimation.EasingFunction>
+                    <SineEase EasingMode="EaseInOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="P3Translate"
+                             Storyboard.TargetProperty="Y"
+                             From="0" To="-20" Duration="0:0:5" AutoReverse="True">
+                <DoubleAnimation.EasingFunction>
+                    <SineEase EasingMode="EaseInOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="P4Translate"
+                             Storyboard.TargetProperty="Y"
+                             From="0" To="35" Duration="0:0:4.2" AutoReverse="True">
+                <DoubleAnimation.EasingFunction>
+                    <SineEase EasingMode="EaseInOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="P5Translate"
+                             Storyboard.TargetProperty="Y"
+                             From="0" To="-25" Duration="0:0:3.8" AutoReverse="True">
+                <DoubleAnimation.EasingFunction>
+                    <SineEase EasingMode="EaseInOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+
+        <!-- Ring Rotation -->
+        <Storyboard x:Key="RingRotation" RepeatBehavior="Forever">
+            <DoubleAnimation Storyboard.TargetName="RingRotate1"
+                             Storyboard.TargetProperty="Angle"
+                             From="0" To="360" Duration="0:0:20"/>
+            <DoubleAnimation Storyboard.TargetName="RingRotate2"
+                             Storyboard.TargetProperty="Angle"
+                             From="360" To="0" Duration="0:0:25"/>
+        </Storyboard>
+
+        <!-- Spinner Animation -->
+        <Storyboard x:Key="SpinnerAnimation" RepeatBehavior="Forever">
+            <DoubleAnimation Storyboard.TargetName="SpinnerRotation"
+                             Storyboard.TargetProperty="Angle"
+                             From="0" To="360" Duration="0:0:0.8"/>
+        </Storyboard>
     </UserControl.Resources>
+
+    <UserControl.Triggers>
+        <EventTrigger RoutedEvent="Loaded">
+            <BeginStoryboard Storyboard="{StaticResource CardEntryAnimation}"/>
+            <BeginStoryboard Storyboard="{StaticResource LogoPulse}"/>
+            <BeginStoryboard Storyboard="{StaticResource GradientShift}"/>
+            <BeginStoryboard Storyboard="{StaticResource ParticleFloat}"/>
+            <BeginStoryboard Storyboard="{StaticResource RingRotation}"/>
+        </EventTrigger>
+    </UserControl.Triggers>
 
     <Grid>
         <!-- Animated Background Gradient -->
         <Border>
             <Border.Background>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Color="#1a1a2e" Offset="0"/>
+                    <GradientStop x:Name="BgGradient1" Color="#1a1a2e" Offset="0"/>
                     <GradientStop Color="#16213e" Offset="0.5"/>
-                    <GradientStop Color="#0f3460" Offset="1"/>
+                    <GradientStop x:Name="BgGradient2" Color="#0f3460" Offset="1"/>
                 </LinearGradientBrush>
             </Border.Background>
         </Border>
 
-        <!-- Floating Particles Effect (decorative circles) -->
+        <!-- Animated Background Rings -->
+        <Canvas ClipToBounds="True" IsHitTestVisible="False">
+            <!-- Outer Ring -->
+            <Ellipse Width="800" Height="800" StrokeThickness="1"
+                     Stroke="#08FFFFFF" Canvas.Left="-100" Canvas.Top="-200"
+                     StrokeDashArray="4,8" RenderTransformOrigin="0.5,0.5">
+                <Ellipse.RenderTransform>
+                    <RotateTransform x:Name="RingRotate1" Angle="0"/>
+                </Ellipse.RenderTransform>
+            </Ellipse>
+            <!-- Inner Ring -->
+            <Ellipse Width="600" Height="600" StrokeThickness="1"
+                     Stroke="#05FFFFFF" Canvas.Right="-150" Canvas.Bottom="-100"
+                     StrokeDashArray="2,6" RenderTransformOrigin="0.5,0.5">
+                <Ellipse.RenderTransform>
+                    <RotateTransform x:Name="RingRotate2" Angle="0"/>
+                </Ellipse.RenderTransform>
+            </Ellipse>
+        </Canvas>
+
+        <!-- Floating Particles Effect -->
         <Canvas x:Name="ParticleCanvas" IsHitTestVisible="False">
-            <Ellipse Width="100" Height="100" Opacity="0.03" Canvas.Left="50" Canvas.Top="100">
+            <!-- Particle 1 - Blue -->
+            <Ellipse Width="120" Height="120" Opacity="0.06" Canvas.Left="50" Canvas.Top="80">
+                <Ellipse.RenderTransform>
+                    <TranslateTransform x:Name="P1Translate"/>
+                </Ellipse.RenderTransform>
                 <Ellipse.Fill>
                     <RadialGradientBrush>
                         <GradientStop Color="#5865F2" Offset="0"/>
@@ -40,7 +218,11 @@
                     </RadialGradientBrush>
                 </Ellipse.Fill>
             </Ellipse>
-            <Ellipse Width="200" Height="200" Opacity="0.05" Canvas.Right="100" Canvas.Top="50">
+            <!-- Particle 2 - Pink -->
+            <Ellipse Width="200" Height="200" Opacity="0.05" Canvas.Right="80" Canvas.Top="30">
+                <Ellipse.RenderTransform>
+                    <TranslateTransform x:Name="P2Translate"/>
+                </Ellipse.RenderTransform>
                 <Ellipse.Fill>
                     <RadialGradientBrush>
                         <GradientStop Color="#EB459E" Offset="0"/>
@@ -48,7 +230,11 @@
                     </RadialGradientBrush>
                 </Ellipse.Fill>
             </Ellipse>
-            <Ellipse Width="150" Height="150" Opacity="0.04" Canvas.Left="200" Canvas.Bottom="100">
+            <!-- Particle 3 - Green -->
+            <Ellipse Width="160" Height="160" Opacity="0.04" Canvas.Left="180" Canvas.Bottom="80">
+                <Ellipse.RenderTransform>
+                    <TranslateTransform x:Name="P3Translate"/>
+                </Ellipse.RenderTransform>
                 <Ellipse.Fill>
                     <RadialGradientBrush>
                         <GradientStop Color="#57F287" Offset="0"/>
@@ -56,63 +242,144 @@
                     </RadialGradientBrush>
                 </Ellipse.Fill>
             </Ellipse>
+            <!-- Particle 4 - Yellow -->
+            <Ellipse Width="100" Height="100" Opacity="0.04" Canvas.Right="200" Canvas.Bottom="150">
+                <Ellipse.RenderTransform>
+                    <TranslateTransform x:Name="P4Translate"/>
+                </Ellipse.RenderTransform>
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#FAA61A" Offset="0"/>
+                        <GradientStop Color="Transparent" Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+            <!-- Particle 5 - Cyan -->
+            <Ellipse Width="80" Height="80" Opacity="0.05" Canvas.Left="400" Canvas.Top="200">
+                <Ellipse.RenderTransform>
+                    <TranslateTransform x:Name="P5Translate"/>
+                </Ellipse.RenderTransform>
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#00D4FF" Offset="0"/>
+                        <GradientStop Color="Transparent" Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+            <!-- Small static particles -->
+            <Ellipse Width="6" Height="6" Fill="#205865F2" Canvas.Left="150" Canvas.Top="300"/>
+            <Ellipse Width="4" Height="4" Fill="#20EB459E" Canvas.Right="250" Canvas.Top="180"/>
+            <Ellipse Width="5" Height="5" Fill="#2057F287" Canvas.Left="350" Canvas.Bottom="250"/>
+            <Ellipse Width="3" Height="3" Fill="#20FAA61A" Canvas.Right="180" Canvas.Bottom="350"/>
         </Canvas>
 
         <!-- Login Card -->
         <Border x:Name="LoginCard"
                 Background="{StaticResource SecondaryDarkBrush}"
-                CornerRadius="8"
-                Width="480"
-                Padding="40"
+                CornerRadius="12"
+                Width="440"
+                Padding="40,32"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                Effect="{StaticResource DropShadow}">
+                Opacity="0"
+                RenderTransformOrigin="0.5,0.5">
 
             <Border.RenderTransform>
-                <TranslateTransform/>
+                <TransformGroup>
+                    <ScaleTransform x:Name="CardScale"/>
+                    <TranslateTransform x:Name="CardTranslate"/>
+                </TransformGroup>
             </Border.RenderTransform>
+
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="40" ShadowDepth="0" Opacity="0.5" Color="Black"/>
+            </Border.Effect>
 
             <Grid>
                 <!-- Login Form -->
                 <StackPanel x:Name="LoginPanel">
                     <!-- Logo and Title -->
-                    <StackPanel HorizontalAlignment="Center" Margin="0,0,0,20">
-                        <Border Width="80" Height="80" CornerRadius="40" Margin="0,0,0,16"
-                                HorizontalAlignment="Center">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                    <GradientStop Color="#5865F2" Offset="0"/>
-                                    <GradientStop Color="#EB459E" Offset="1"/>
-                                </LinearGradientBrush>
-                            </Border.Background>
-                            <TextBlock Text="Y" FontSize="40" FontWeight="Bold"
-                                       Foreground="White"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
+                    <StackPanel HorizontalAlignment="Center" Margin="0,0,0,24">
+                        <!-- Logo with Glow -->
+                        <Grid HorizontalAlignment="Center" Margin="0,0,0,20"
+                              RenderTransformOrigin="0.5,0.5">
+                            <Grid.RenderTransform>
+                                <ScaleTransform x:Name="LogoScale"/>
+                            </Grid.RenderTransform>
 
-                        <TextBlock Text="Welcome to Yurt Cord"
-                                   Style="{StaticResource HeaderLarge}"
-                                   HorizontalAlignment="Center"/>
+                            <!-- Glow Effect -->
+                            <Ellipse x:Name="LogoGlow" Width="110" Height="110" Opacity="0.4">
+                                <Ellipse.Fill>
+                                    <RadialGradientBrush>
+                                        <GradientStop Color="#5865F2" Offset="0"/>
+                                        <GradientStop Color="Transparent" Offset="1"/>
+                                    </RadialGradientBrush>
+                                </Ellipse.Fill>
+                            </Ellipse>
+
+                            <!-- Logo Ring -->
+                            <Ellipse Width="88" Height="88" StrokeThickness="2"
+                                     Stroke="#305865F2"/>
+
+                            <!-- Logo Circle -->
+                            <Border Width="80" Height="80" CornerRadius="40">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#5865F2" Offset="0"/>
+                                        <GradientStop Color="#7289DA" Offset="0.5"/>
+                                        <GradientStop Color="#EB459E" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="15" ShadowDepth="0"
+                                                      Color="#5865F2" Opacity="0.5"/>
+                                </Border.Effect>
+                                <TextBlock Text="Y" FontSize="38" FontWeight="Bold"
+                                           Foreground="White"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+
+                        <!-- Title with subtle gradient -->
+                        <TextBlock FontSize="26" FontWeight="Bold" HorizontalAlignment="Center">
+                            <TextBlock.Foreground>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="White" Offset="0"/>
+                                    <GradientStop Color="#B5BAC1" Offset="1"/>
+                                </LinearGradientBrush>
+                            </TextBlock.Foreground>
+                            Welcome to Yurt Cord
+                        </TextBlock>
 
                         <TextBlock x:Name="SubtitleText"
                                    Text="The marketplace with a community"
-                                   Style="{StaticResource BodyText}"
+                                   FontSize="13" Foreground="#72767D"
                                    HorizontalAlignment="Center"
-                                   Margin="0,8,0,0"/>
+                                   Margin="0,6,0,0"/>
                     </StackPanel>
 
-                    <!-- Error Message -->
+                    <!-- Error Message with fade animation -->
                     <Border x:Name="ErrorBorder" Visibility="Collapsed"
-                            Background="#ED4245" CornerRadius="4"
-                            Padding="12,8" Margin="0,0,0,16">
-                        <TextBlock x:Name="ErrorText" Foreground="White"
-                                   TextWrapping="Wrap" TextAlignment="Center"/>
+                            CornerRadius="6" Padding="12,10" Margin="0,0,0,16">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#ED4245" Offset="0"/>
+                                <GradientStop Color="#F04747" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <TextBlock Text="⚠" FontSize="14" VerticalAlignment="Center"
+                                       Foreground="White" Margin="0,0,8,0"/>
+                            <TextBlock x:Name="ErrorText" Foreground="White"
+                                       TextWrapping="Wrap" VerticalAlignment="Center"
+                                       FontWeight="Medium"/>
+                        </StackPanel>
                     </Border>
 
                     <!-- Username Input -->
                     <TextBlock Text="USERNAME" FontSize="11" FontWeight="Bold"
                                Foreground="{StaticResource TextSecondaryBrush}"
-                               Margin="0,0,0,8"/>
+                               Margin="0,0,0,8" LetterSpacing="0.5"/>
                     <TextBox x:Name="UsernameBox"
                              Style="{StaticResource ModernTextBox}"
                              Margin="0,0,0,16"/>
@@ -121,7 +388,7 @@
                     <StackPanel x:Name="EmailPanel" Visibility="Collapsed">
                         <TextBlock Text="EMAIL" FontSize="11" FontWeight="Bold"
                                    Foreground="{StaticResource TextSecondaryBrush}"
-                                   Margin="0,0,0,8"/>
+                                   Margin="0,0,0,8" LetterSpacing="0.5"/>
                         <TextBox x:Name="EmailBox"
                                  Style="{StaticResource ModernTextBox}"
                                  Margin="0,0,0,16"/>
@@ -130,7 +397,7 @@
                     <!-- Password Input -->
                     <TextBlock Text="PASSWORD" FontSize="11" FontWeight="Bold"
                                Foreground="{StaticResource TextSecondaryBrush}"
-                               Margin="0,0,0,8"/>
+                               Margin="0,0,0,8" LetterSpacing="0.5"/>
                     <PasswordBox x:Name="PasswordBox"
                                  Style="{StaticResource ModernPasswordBox}"
                                  Margin="0,0,0,16"/>
@@ -139,7 +406,7 @@
                     <StackPanel x:Name="ConfirmPasswordPanel" Visibility="Collapsed">
                         <TextBlock Text="CONFIRM PASSWORD" FontSize="11" FontWeight="Bold"
                                    Foreground="{StaticResource TextSecondaryBrush}"
-                                   Margin="0,0,0,8"/>
+                                   Margin="0,0,0,8" LetterSpacing="0.5"/>
                         <PasswordBox x:Name="ConfirmPasswordBox"
                                      Style="{StaticResource ModernPasswordBox}"
                                      Margin="0,0,0,16"/>
@@ -148,55 +415,93 @@
                     <!-- Remember Me (Login only) -->
                     <CheckBox x:Name="RememberMeCheck" Content="Remember me"
                               Foreground="{StaticResource TextSecondaryBrush}"
-                              Margin="0,0,0,20"/>
+                              Margin="0,0,0,20" FontSize="13"/>
 
                     <!-- Login/Register Button -->
                     <Button x:Name="ActionButton" Content="Login"
                             Style="{StaticResource PrimaryButton}"
                             Click="ActionButton_Click"
-                            Height="44"/>
+                            Height="46" FontSize="15" FontWeight="SemiBold"/>
+
+                    <!-- Divider -->
+                    <Grid Margin="0,20,0,16">
+                        <Rectangle Height="1" Fill="#40444B"/>
+                        <Border Background="{StaticResource SecondaryDarkBrush}"
+                                HorizontalAlignment="Center" Padding="12,0">
+                            <TextBlock Text="or continue with" FontSize="11"
+                                       Foreground="#72767D"/>
+                        </Border>
+                    </Grid>
+
+                    <!-- Social Login Buttons (decorative) -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="🎮 Discord"
+                                Style="{StaticResource SecondaryButton}"
+                                Height="40" FontSize="13"/>
+                        <Button Grid.Column="2" Content="📧 Email Magic Link"
+                                Style="{StaticResource SecondaryButton}"
+                                Height="40" FontSize="13"/>
+                    </Grid>
 
                     <!-- Toggle Mode Link -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
-                                Margin="0,16,0,0">
+                                Margin="0,20,0,0">
                         <TextBlock x:Name="TogglePromptText"
                                    Text="Need an account?"
-                                   Foreground="{StaticResource TextSecondaryBrush}"/>
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   FontSize="13"/>
                         <TextBlock x:Name="ToggleLinkText"
                                    Text="Register"
                                    Foreground="{StaticResource TextLinkBrush}"
-                                   Margin="4,0,0,0"
+                                   Margin="5,0,0,0" FontSize="13"
+                                   FontWeight="SemiBold"
                                    Cursor="Hand"
-                                   MouseLeftButtonDown="ToggleMode_Click"/>
+                                   MouseLeftButtonDown="ToggleMode_Click">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="TextDecorations" Value="Underline"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </StackPanel>
                 </StackPanel>
 
                 <!-- Loading Overlay -->
                 <Border x:Name="LoadingOverlay" Visibility="Collapsed"
-                        Background="#80000000" CornerRadius="8">
+                        Background="#E0000000" CornerRadius="12">
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <Border Width="40" Height="40" CornerRadius="20"
-                                BorderBrush="{StaticResource AccentBrush}"
-                                BorderThickness="3"
-                                RenderTransformOrigin="0.5,0.5">
-                            <Border.RenderTransform>
-                                <RotateTransform x:Name="SpinnerRotation"/>
-                            </Border.RenderTransform>
-                            <Border.Triggers>
-                                <EventTrigger RoutedEvent="Loaded">
-                                    <BeginStoryboard>
-                                        <Storyboard RepeatBehavior="Forever">
-                                            <DoubleAnimation Storyboard.TargetName="SpinnerRotation"
-                                                             Storyboard.TargetProperty="Angle"
-                                                             From="0" To="360"
-                                                             Duration="0:0:1"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </EventTrigger>
-                            </Border.Triggers>
-                        </Border>
-                        <TextBlock Text="Connecting..." Foreground="White"
-                                   Margin="0,16,0,0"/>
+                        <!-- Animated Spinner -->
+                        <Grid Width="48" Height="48" RenderTransformOrigin="0.5,0.5">
+                            <Grid.RenderTransform>
+                                <RotateTransform x:Name="SpinnerRotation" Angle="0"/>
+                            </Grid.RenderTransform>
+                            <Ellipse Width="48" Height="48" StrokeThickness="3"
+                                     Stroke="#30FFFFFF"/>
+                            <Ellipse Width="48" Height="48" StrokeThickness="3"
+                                     StrokeDashArray="2,4">
+                                <Ellipse.Stroke>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#5865F2" Offset="0"/>
+                                        <GradientStop Color="#EB459E" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Ellipse.Stroke>
+                            </Ellipse>
+                        </Grid>
+                        <TextBlock x:Name="LoadingText" Text="Connecting..."
+                                   Foreground="White" FontWeight="Medium"
+                                   Margin="0,16,0,0" FontSize="14"/>
+                        <TextBlock x:Name="LoadingSubtext" Text="Please wait..."
+                                   Foreground="#72767D" FontSize="12"
+                                   Margin="0,4,0,0"/>
                     </StackPanel>
                 </Border>
             </Grid>
@@ -205,12 +510,17 @@
         <!-- Window Controls -->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
                     VerticalAlignment="Top" Margin="0,8,8,0">
-            <Button Content="─" Width="32" Height="32"
+            <Button Content="─" Width="36" Height="36"
                     Style="{StaticResource IconButton}"
-                    Click="MinimizeButton_Click"/>
-            <Button Content="✕" Width="32" Height="32"
+                    Click="MinimizeButton_Click" FontSize="14"/>
+            <Button Content="✕" Width="36" Height="36"
                     Style="{StaticResource IconButton}"
-                    Click="CloseButton_Click"/>
+                    Click="CloseButton_Click" FontSize="14"/>
         </StackPanel>
+
+        <!-- Version Tag -->
+        <TextBlock Text="v2.6.0" FontSize="11" Foreground="#40444B"
+                   HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                   Margin="12,0,0,12"/>
     </Grid>
 </UserControl>
