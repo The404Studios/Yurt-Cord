@@ -6,6 +6,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
+using VeaMarketplace.Client.Services.Streaming;
 using DrawingRectangle = System.Drawing.Rectangle;
 
 namespace VeaMarketplace.Client.Services;
@@ -81,6 +82,10 @@ public class ScreenSharingManager : IScreenSharingManager
     private HardwareVideoEncoder? _hardwareEncoder;
     private bool _useHardwareEncoding;
     public bool IsHardwareEncodingEnabled => _useHardwareEncoding && _hardwareEncoder != null;
+
+    // Adaptive streaming engine (smart compression + delta encoding)
+    private AdaptiveStreamingEngine? _streamingEngine;
+    private bool _useAdaptiveStreaming = true; // Enable by default
     public string EncoderName => _hardwareEncoder?.EncoderName ?? "jpeg";
 
     public bool IsSharing => _isSharing;
@@ -414,6 +419,28 @@ public class ScreenSharingManager : IScreenSharingManager
         _resizeGraphics.CompositingQuality = CompositingQuality.HighSpeed;
         _resizeGraphics.SmoothingMode = SmoothingMode.HighSpeed;
 
+        // Initialize adaptive streaming engine (smart compression + delta encoding)
+        try
+        {
+            _streamingEngine?.Dispose();
+            _streamingEngine = new AdaptiveStreamingEngine(new StreamingConfig
+            {
+                MaxWidth = _settings.TargetWidth,
+                MaxHeight = _settings.TargetHeight,
+                BaseQuality = _settings.JpegQuality,
+                TargetFps = _settings.TargetFps,
+                TargetBitrateMbps = _settings.BitrateKbps / 1000
+            });
+            _streamingEngine.Start();
+            Debug.WriteLine("Adaptive streaming engine initialized");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to initialize adaptive streaming: {ex.Message}");
+            _useAdaptiveStreaming = false;
+            _streamingEngine = null;
+        }
+
         // Try to initialize hardware encoder (H.264 with GPU acceleration)
         // First check if FFmpeg is available at all
         if (!FFmpegHelper.IsAvailable)
@@ -461,6 +488,11 @@ public class ScreenSharingManager : IScreenSharingManager
         _resizeGraphics = null;
         _resizeBitmap?.Dispose();
         _resizeBitmap = null;
+
+        // Cleanup streaming engine
+        _streamingEngine?.Stop();
+        _streamingEngine?.Dispose();
+        _streamingEngine = null;
 
         // Cleanup hardware encoder
         _hardwareEncoder?.Dispose();
@@ -663,14 +695,33 @@ public class ScreenSharingManager : IScreenSharingManager
     }
 
     /// <summary>
-    /// Encodes a bitmap using hardware H.264 or JPEG fallback.
+    /// Encodes a bitmap using adaptive streaming, hardware H.264, or JPEG fallback.
     /// Called from EncodeLoop on dedicated encoding thread.
     /// </summary>
     private byte[]? EncodeBitmap(Bitmap bitmap)
     {
         try
         {
-            // Try hardware encoding first (H.264 with NVENC/AMF/QSV)
+            // Try adaptive streaming engine (smart compression + delta encoding)
+            if (_useAdaptiveStreaming && _streamingEngine != null)
+            {
+                var encodedFrame = _streamingEngine.ProcessFrame(bitmap, _frameNumber);
+                if (encodedFrame != null && encodedFrame.Data.Length > 0)
+                {
+                    // Update stats from streaming engine
+                    var engineStats = _streamingEngine.Stats;
+                    _stats.AverageFrameSize = (int)engineStats.LastFrameSizeBytes;
+                    return encodedFrame.Data;
+                }
+                // Frame was skipped (no changes) - return null to skip sending
+                if (encodedFrame == null && _streamingEngine.Stats.FramesSkipped > 0)
+                {
+                    return null;
+                }
+                // Fall through to other encoders if adaptive fails
+            }
+
+            // Try hardware encoding (H.264 with NVENC/AMF/QSV)
             if (_useHardwareEncoding && _hardwareEncoder != null)
             {
                 var h264Data = _hardwareEncoder.EncodeFrame(bitmap, _frameNumber);

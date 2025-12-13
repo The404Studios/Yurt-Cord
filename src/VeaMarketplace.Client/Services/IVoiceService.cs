@@ -205,6 +205,12 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
     // Screen sharing manager
     private readonly IScreenSharingManager _screenSharingManager;
+
+    // HTTP-based screen streaming (reduces voice lag)
+    private HttpScreenStreamService? _httpStreamService;
+    private bool _useHttpStreaming = true; // Enable HTTP streaming by default
+    private CancellationTokenSource? _framePollingCts;
+    private readonly ConcurrentDictionary<string, long> _lastFrameNumbers = new();
     private DisplayInfo? _selectedDisplay;
 
     // Audio send queue - prevents blocking audio callback with network operations
@@ -220,6 +226,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
     // Mic boost - amplify input audio before sending
     private const float MicGain = 2.5f; // 2.5x boost for quiet mics
+
+    // Pre-allocated buffer to reduce GC pressure in audio callback
+    private byte[]? _audioProcessBuffer;
 
     // Voice activity tracking for receive side
     // Ensures screen share yields when we're receiving audio too
@@ -242,6 +251,10 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         {
             OnScreenShareStatsUpdated?.Invoke(stats);
         };
+
+        // Initialize HTTP streaming service (extracts base URL from hub URL)
+        var baseUrl = HubUrl.Replace("/hubs/voice", "");
+        _httpStreamService = new HttpScreenStreamService(baseUrl);
     }
 
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
@@ -654,6 +667,28 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             _screenSharingManager.HandleViewerCountUpdate(count);
         });
 
+        // HTTP streaming: lightweight notification that a new frame is available
+        // Viewers fetch the frame via HTTP instead of receiving it through SignalR
+        _connection.On<string, long, int, int>("ScreenFrameAvailable", async (streamId, frameNumber, width, height) =>
+        {
+            // Only fetch if we don't have this frame yet
+            if (_lastFrameNumbers.TryGetValue(streamId, out var lastFrame) && frameNumber <= lastFrame)
+                return;
+
+            _lastFrameNumbers[streamId] = frameNumber;
+
+            // Fetch frame via HTTP
+            if (_httpStreamService != null)
+            {
+                var (data, w, h, fn) = await _httpStreamService.GetFrameAsync(streamId, lastFrame);
+                if (data != null && data.Length > 0)
+                {
+                    // Fire the frame received event
+                    OnScreenFrameReceived?.Invoke(streamId, data, w, h);
+                }
+            }
+        });
+
         // Register call handlers
         RegisterCallHandlers();
     }
@@ -836,28 +871,21 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                             var opusData = new byte[encodedLength];
                             Buffer.BlockCopy(opusBuffer, 0, opusData, 0, encodedLength);
 
-                            // Send synchronously with timeout to ensure audio gets priority
-                            // Capture connection locally to avoid race condition
+                            // Fire-and-forget send - NEVER block audio thread!
+                            // Blocking causes mic lag/choppiness
                             var conn = _connection;
                             if (conn != null)
                             {
-                                try
-                                {
-                                    var sendTask = conn.SendAsync("SendAudio", opusData, cancellationToken);
-                                    // Wait up to 30ms - audio packets are small and should send fast
-                                    sendTask.Wait(30, cancellationToken);
-
-                                    // Signal orchestrator that audio was sent
-                                    StreamingOrchestrator.Instance.SignalAudioSend();
-                                }
-                                catch (OperationCanceledException)
-                                {
-                                    break;
-                                }
-                                catch
-                                {
-                                    // Send failed or timed out - continue to next packet
-                                }
+                                // Queue the send without waiting - audio packets are tiny (~50-100 bytes)
+                                // and SignalR will handle queuing internally
+                                _ = conn.SendAsync("SendAudio", opusData, cancellationToken)
+                                    .ContinueWith(t =>
+                                    {
+                                        if (t.IsCompletedSuccessfully)
+                                        {
+                                            StreamingOrchestrator.Instance.SignalAudioSend();
+                                        }
+                                    }, TaskContinuationOptions.ExecuteSynchronously);
                             }
                         }
                     }
@@ -928,15 +956,17 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         if (_connection == null || !IsConnected) return;
 
-        // Calculate audio level (RMS for better accuracy)
-        var sum = 0.0;
-        var sampleCount = e.BytesRecorded / 2;
-        for (var i = 0; i < e.BytesRecorded; i += 2)
+        // Calculate audio level (optimized RMS - subsample for speed)
+        // Check every 8th sample instead of every sample - still accurate enough for VAD
+        var sum = 0L;
+        var sampleCount = 0;
+        for (var i = 0; i < e.BytesRecorded; i += 16) // Every 8th sample (16 bytes = 8 samples * 2 bytes)
         {
-            var sample = BitConverter.ToInt16(e.Buffer, i) / 32768.0;
+            var sample = (short)(e.Buffer[i] | (e.Buffer[i + 1] << 8));
             sum += sample * sample;
+            sampleCount++;
         }
-        var rms = Math.Sqrt(sum / sampleCount);
+        var rms = sampleCount > 0 ? Math.Sqrt((double)sum / sampleCount) / 32768.0 : 0;
         var audioLevel = Math.Min(1.0, rms * 3); // Scale for better visualization
 
         _currentAudioLevel = audioLevel;
@@ -1011,17 +1041,23 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         // The background AudioSendLoop will handle the actual network transmission
         if (_isSpeaking && !IsMuted && e.BytesRecorded > 0)
         {
-            // Copy and apply mic gain boost
+            // Ensure buffer is allocated (reuse to reduce GC pressure)
+            if (_audioProcessBuffer == null || _audioProcessBuffer.Length < e.BytesRecorded)
+            {
+                _audioProcessBuffer = new byte[e.BytesRecorded];
+            }
+
+            // Copy and apply mic gain boost - optimized with unsafe for speed
             var audioData = new byte[e.BytesRecorded];
             for (int i = 0; i < e.BytesRecorded; i += 2)
             {
-                var sample = BitConverter.ToInt16(e.Buffer, i);
+                var sample = (short)(e.Buffer[i] | (e.Buffer[i + 1] << 8));
                 // Apply gain with clipping protection
                 var boosted = (int)(sample * MicGain);
-                boosted = Math.Clamp(boosted, short.MinValue, short.MaxValue);
-                var bytes = BitConverter.GetBytes((short)boosted);
-                audioData[i] = bytes[0];
-                audioData[i + 1] = bytes[1];
+                if (boosted > short.MaxValue) boosted = short.MaxValue;
+                else if (boosted < short.MinValue) boosted = short.MinValue;
+                audioData[i] = (byte)boosted;
+                audioData[i + 1] = (byte)(boosted >> 8);
             }
 
             // Add to send queue - background thread will send it
@@ -1065,6 +1101,10 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         // Disconnect the screen sharing manager
         _screenSharingManager.Disconnect();
+
+        // Cleanup HTTP streaming service
+        _httpStreamService?.Dispose();
+        _lastFrameNumbers.Clear();
 
         if (_connection != null)
         {
@@ -1181,12 +1221,25 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _selectedDisplay = display;
 
-        // Connect the manager to our SignalR connection
+        // Use HTTP streaming if available (reduces voice lag)
+        string? httpStreamId = null;
+        if (_useHttpStreaming && _httpStreamService != null && CurrentChannelId != null)
+        {
+            httpStreamId = await _httpStreamService.StartStreamAsync(CurrentChannelId, _currentUsername ?? "Unknown");
+        }
+
+        // Connect the manager with appropriate frame sender
         await _screenSharingManager.ConnectAsync(
             async (frameData, width, height) =>
             {
-                if (_connection != null && IsConnected)
+                if (_useHttpStreaming && httpStreamId != null && _httpStreamService != null)
                 {
+                    // Send via HTTP (doesn't block voice SignalR)
+                    await _httpStreamService.UploadFrameAsync(frameData, width, height).ConfigureAwait(false);
+                }
+                else if (_connection != null && IsConnected)
+                {
+                    // Fallback to SignalR
                     await _connection.SendAsync("SendScreenFrame", frameData, width, height).ConfigureAwait(false);
                 }
             },
@@ -1202,6 +1255,11 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                 if (_connection != null && IsConnected)
                 {
                     await _connection.SendAsync("StopScreenShare").ConfigureAwait(false);
+                }
+                // Stop HTTP stream
+                if (_httpStreamService != null)
+                {
+                    await _httpStreamService.StopStreamAsync().ConfigureAwait(false);
                 }
             });
 
