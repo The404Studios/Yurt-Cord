@@ -1141,6 +1141,229 @@ public class VoiceHub : Hub
             }
         }
     }
+
+    #region Group Calls
+
+    private static readonly ConcurrentDictionary<string, GroupCallState> _groupCalls = new();
+
+    public async Task StartGroupCall(string name, List<string> invitedUserIds)
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        if (!_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
+            return;
+
+        var callId = Guid.NewGuid().ToString();
+        var call = new GroupCallState
+        {
+            Id = callId,
+            Name = name,
+            HostId = userId,
+            HostUsername = userState.Username,
+            HostAvatarUrl = userState.AvatarUrl,
+            StartedAt = DateTime.UtcNow
+        };
+
+        // Add host as participant
+        call.Participants[userId] = new GroupCallParticipantState
+        {
+            UserId = userId,
+            Username = userState.Username,
+            AvatarUrl = userState.AvatarUrl,
+            ConnectionId = Context.ConnectionId,
+            JoinedAt = DateTime.UtcNow
+        };
+
+        _groupCalls[callId] = call;
+
+        // Add host to call group
+        await Groups.AddToGroupAsync(Context.ConnectionId, $"groupcall_{callId}");
+
+        // Send call started to host
+        await Clients.Caller.SendAsync("GroupCallStarted", call.ToDto());
+
+        // Send invites to invited users
+        foreach (var invitedId in invitedUserIds)
+        {
+            if (_userConnections.TryGetValue(invitedId, out var invitedConnId))
+            {
+                var invite = new GroupCallInviteDto
+                {
+                    CallId = callId,
+                    HostId = userId,
+                    HostUsername = userState.Username,
+                    HostAvatarUrl = userState.AvatarUrl,
+                    CallName = name,
+                    ParticipantCount = 1,
+                    InvitedAt = DateTime.UtcNow
+                };
+                await Clients.Client(invitedConnId).SendAsync("GroupCallInvite", invite);
+            }
+        }
+    }
+
+    public async Task JoinGroupCall(string callId)
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        if (!_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
+            return;
+
+        if (!_groupCalls.TryGetValue(callId, out var call))
+        {
+            await Clients.Caller.SendAsync("GroupCallError", "Call not found or has ended");
+            return;
+        }
+
+        if (call.Status != GroupCallStatus.Active && call.Status != GroupCallStatus.Starting)
+        {
+            await Clients.Caller.SendAsync("GroupCallError", "Call has ended");
+            return;
+        }
+
+        // Add participant
+        var participant = new GroupCallParticipantState
+        {
+            UserId = userId,
+            Username = userState.Username,
+            AvatarUrl = userState.AvatarUrl,
+            ConnectionId = Context.ConnectionId,
+            JoinedAt = DateTime.UtcNow
+        };
+        call.Participants[userId] = participant;
+
+        // Mark call as active if it was starting
+        if (call.Status == GroupCallStatus.Starting)
+        {
+            call.Status = GroupCallStatus.Active;
+        }
+
+        // Add to call group
+        await Groups.AddToGroupAsync(Context.ConnectionId, $"groupcall_{callId}");
+
+        // Send call info to joiner
+        await Clients.Caller.SendAsync("GroupCallStarted", call.ToDto());
+
+        // Notify all participants
+        await Clients.Group($"groupcall_{callId}").SendAsync("GroupCallParticipantJoined", callId, participant.ToDto());
+        await Clients.Group($"groupcall_{callId}").SendAsync("GroupCallUpdated", call.ToDto());
+    }
+
+    public async Task LeaveGroupCall(string callId)
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        if (!_groupCalls.TryGetValue(callId, out var call))
+            return;
+
+        // Remove participant
+        call.Participants.TryRemove(userId, out _);
+
+        // Remove from call group
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"groupcall_{callId}");
+
+        // Notify remaining participants
+        await Clients.Group($"groupcall_{callId}").SendAsync("GroupCallParticipantLeft", callId, userId);
+
+        // If host left or no participants, end the call
+        if (userId == call.HostId || call.Participants.IsEmpty)
+        {
+            call.Status = GroupCallStatus.Ended;
+            await Clients.Group($"groupcall_{callId}").SendAsync("GroupCallEnded", callId, userId == call.HostId ? "Host left the call" : "All participants left");
+            _groupCalls.TryRemove(callId, out _);
+        }
+        else
+        {
+            await Clients.Group($"groupcall_{callId}").SendAsync("GroupCallUpdated", call.ToDto());
+        }
+    }
+
+    public async Task InviteToGroupCall(string callId, string targetUserId)
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        if (!_groupCalls.TryGetValue(callId, out var call))
+        {
+            await Clients.Caller.SendAsync("GroupCallError", "Call not found");
+            return;
+        }
+
+        // Only host or participants can invite
+        if (!call.Participants.ContainsKey(userId))
+        {
+            await Clients.Caller.SendAsync("GroupCallError", "You are not in this call");
+            return;
+        }
+
+        if (_userConnections.TryGetValue(targetUserId, out var targetConnId))
+        {
+            var invite = new GroupCallInviteDto
+            {
+                CallId = callId,
+                HostId = call.HostId,
+                HostUsername = call.HostUsername,
+                HostAvatarUrl = call.HostAvatarUrl,
+                CallName = call.Name,
+                ParticipantCount = call.Participants.Count,
+                InvitedAt = DateTime.UtcNow
+            };
+            await Clients.Client(targetConnId).SendAsync("GroupCallInvite", invite);
+        }
+    }
+
+    public async Task DeclineGroupCall(string callId)
+    {
+        // Just acknowledge - nothing to do server-side for a decline
+        // Could notify the host if desired
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        if (_groupCalls.TryGetValue(callId, out var call))
+        {
+            if (_userConnections.TryGetValue(call.HostId, out var hostConnId))
+            {
+                await Clients.Client(hostConnId).SendAsync("GroupCallInviteDeclined", callId, userId);
+            }
+        }
+    }
+
+    public async Task SendGroupCallAudio(string callId, byte[] audioData)
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        if (!_groupCalls.TryGetValue(callId, out var call))
+            return;
+
+        if (!call.Participants.ContainsKey(userId))
+            return;
+
+        // Broadcast audio to all other participants
+        await Clients.OthersInGroup($"groupcall_{callId}").SendAsync("GroupCallAudioReceived", userId, audioData);
+    }
+
+    public async Task SendGroupCallSpeakingState(string callId, bool isSpeaking, double audioLevel)
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        if (!_groupCalls.TryGetValue(callId, out var call))
+            return;
+
+        if (call.Participants.TryGetValue(userId, out var participant))
+        {
+            participant.IsSpeaking = isSpeaking;
+            participant.AudioLevel = audioLevel;
+
+            await Clients.OthersInGroup($"groupcall_{callId}").SendAsync("GroupCallUserSpeaking", callId, userId, isSpeaking, audioLevel);
+        }
+    }
+
+    #endregion
 }
 
 public class VoiceChannelState
@@ -1246,3 +1469,54 @@ public class VoiceRoomParticipant
 }
 
 // VoiceRoomCategory is defined in VeaMarketplace.Shared.DTOs
+
+public class GroupCallState
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string HostId { get; set; } = string.Empty;
+    public string HostUsername { get; set; } = string.Empty;
+    public string HostAvatarUrl { get; set; } = string.Empty;
+    public GroupCallStatus Status { get; set; } = GroupCallStatus.Starting;
+    public DateTime StartedAt { get; set; }
+    public ConcurrentDictionary<string, GroupCallParticipantState> Participants { get; } = new();
+
+    public GroupCallDto ToDto() => new()
+    {
+        Id = Id,
+        Name = Name,
+        HostId = HostId,
+        HostUsername = HostUsername,
+        HostAvatarUrl = HostAvatarUrl,
+        Status = Status,
+        StartedAt = StartedAt,
+        Participants = Participants.Values.Select(p => p.ToDto()).ToList()
+    };
+}
+
+public class GroupCallParticipantState
+{
+    public string UserId { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
+    public string AvatarUrl { get; set; } = string.Empty;
+    public string ConnectionId { get; set; } = string.Empty;
+    public bool IsMuted { get; set; }
+    public bool IsDeafened { get; set; }
+    public bool IsSpeaking { get; set; }
+    public double AudioLevel { get; set; }
+    public bool IsScreenSharing { get; set; }
+    public DateTime JoinedAt { get; set; }
+
+    public GroupCallParticipantDto ToDto() => new()
+    {
+        UserId = UserId,
+        Username = Username,
+        AvatarUrl = AvatarUrl,
+        IsMuted = IsMuted,
+        IsDeafened = IsDeafened,
+        IsSpeaking = IsSpeaking,
+        IsScreenSharing = IsScreenSharing,
+        JoinedAt = JoinedAt,
+        Status = GroupCallParticipantStatus.Connected
+    };
+}
