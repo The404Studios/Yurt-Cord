@@ -221,4 +221,104 @@ public class FriendService
              (f.RequesterId == userId2 && f.AddresseeId == userId1)) &&
             f.Status == FriendshipStatus.Accepted);
     }
+
+    public (bool Success, string Message) CancelFriendRequest(string userId, string requestId)
+    {
+        var friendship = _db.Friendships.FindById(requestId);
+        if (friendship == null)
+            return (false, "Friend request not found");
+
+        if (friendship.RequesterId != userId)
+            return (false, "Not authorized to cancel this request");
+
+        if (friendship.Status != FriendshipStatus.Pending)
+            return (false, "Friend request is no longer pending");
+
+        _db.Friendships.Delete(requestId);
+        return (true, "Friend request cancelled");
+    }
+
+    public (bool Success, string Message) BlockUser(string userId, string targetUserId, string? reason = null)
+    {
+        if (userId == targetUserId)
+            return (false, "Cannot block yourself");
+
+        var target = _db.Users.FindById(targetUserId);
+        if (target == null)
+            return (false, "User not found");
+
+        // Check if already blocked
+        var existing = _db.Friendships.FindOne(f =>
+            f.RequesterId == userId && f.AddresseeId == targetUserId && f.Status == FriendshipStatus.Blocked);
+
+        if (existing != null)
+            return (false, "User is already blocked");
+
+        // Remove any existing friendship
+        var friendship = _db.Friendships.FindOne(f =>
+            (f.RequesterId == userId && f.AddresseeId == targetUserId) ||
+            (f.RequesterId == targetUserId && f.AddresseeId == userId));
+
+        if (friendship != null)
+        {
+            _db.Friendships.Delete(friendship.Id);
+        }
+
+        // Create block record
+        var block = new Friendship
+        {
+            RequesterId = userId,
+            AddresseeId = targetUserId,
+            Status = FriendshipStatus.Blocked,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _db.Friendships.Insert(block);
+        return (true, "User blocked");
+    }
+
+    public (bool Success, string Message) UnblockUser(string userId, string targetUserId)
+    {
+        var block = _db.Friendships.FindOne(f =>
+            f.RequesterId == userId && f.AddresseeId == targetUserId && f.Status == FriendshipStatus.Blocked);
+
+        if (block == null)
+            return (false, "User is not blocked");
+
+        _db.Friendships.Delete(block.Id);
+        return (true, "User unblocked");
+    }
+
+    public List<BlockedUserDto> GetBlockedUsers(string userId)
+    {
+        var blocks = _db.Friendships
+            .Find(f => f.RequesterId == userId && f.Status == FriendshipStatus.Blocked)
+            .ToList();
+
+        var result = new List<BlockedUserDto>();
+        foreach (var block in blocks)
+        {
+            var blockedUser = _db.Users.FindById(block.AddresseeId);
+            if (blockedUser != null)
+            {
+                result.Add(new BlockedUserDto
+                {
+                    UserId = blockedUser.Id,
+                    Username = blockedUser.Username,
+                    AvatarUrl = blockedUser.AvatarUrl,
+                    BlockedAt = block.CreatedAt
+                });
+            }
+        }
+
+        return result;
+    }
+
+    public bool IsBlocked(string userId, string targetUserId)
+    {
+        return _db.Friendships.Exists(f =>
+            ((f.RequesterId == userId && f.AddresseeId == targetUserId) ||
+             (f.RequesterId == targetUserId && f.AddresseeId == userId)) &&
+            f.Status == FriendshipStatus.Blocked);
+    }
 }

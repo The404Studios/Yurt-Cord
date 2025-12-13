@@ -76,7 +76,6 @@ public class ScreenSharingManager : IScreenSharingManager
 
     // JPEG encoder (fallback)
     private ImageCodecInfo? _jpegEncoder;
-    private EncoderParameters? _encoderParams;
 
     // Hardware encoder (H.264 with NVENC/AMF/QSV)
     private HardwareVideoEncoder? _hardwareEncoder;
@@ -108,7 +107,6 @@ public class ScreenSharingManager : IScreenSharingManager
     {
         _jpegEncoder = ImageCodecInfo.GetImageEncoders()
             .FirstOrDefault(e => e.MimeType == "image/jpeg");
-        _encoderParams = new EncoderParameters(1);
     }
 
     public Task ConnectAsync(Func<byte[], int, int, Task> sendFrameFunc, Func<Task> notifyStartFunc, Func<Task> notifyStopFunc)
@@ -380,12 +378,6 @@ public class ScreenSharingManager : IScreenSharingManager
             _stats.CurrentWidth = settings.TargetWidth;
             _stats.CurrentHeight = settings.TargetHeight;
 
-            // Update encoder params
-            if (_encoderParams != null)
-            {
-                _encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, (long)settings.JpegQuality);
-            }
-
             if (needsResize && _isSharing)
             {
                 // Reinitialize resize bitmap
@@ -421,12 +413,6 @@ public class ScreenSharingManager : IScreenSharingManager
         _resizeGraphics.InterpolationMode = InterpolationMode.Bilinear;
         _resizeGraphics.CompositingQuality = CompositingQuality.HighSpeed;
         _resizeGraphics.SmoothingMode = SmoothingMode.HighSpeed;
-
-        // Initialize encoder params (for JPEG fallback)
-        if (_encoderParams != null)
-        {
-            _encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, (long)_settings.JpegQuality);
-        }
 
         // Try to initialize hardware encoder (H.264 with GPU acceleration)
         // First check if FFmpeg is available at all
@@ -707,9 +693,12 @@ public class ScreenSharingManager : IScreenSharingManager
             }
 
             using var ms = new MemoryStream();
-            if (_jpegEncoder != null && _encoderParams != null)
+            if (_jpegEncoder != null)
             {
-                bitmap.Save(ms, _jpegEncoder, _encoderParams);
+                // Set quality parameter for each encode (quality may change with adaptive settings)
+                using var encodeParams = new EncoderParameters(1);
+                encodeParams.Param[0] = new EncoderParameter(Encoder.Quality, (long)jpegQuality);
+                bitmap.Save(ms, _jpegEncoder, encodeParams);
             }
             else
             {
@@ -952,10 +941,6 @@ public class ScreenSharingManager : IScreenSharingManager
             {
                 _settings.JpegQuality -= 5;
                 _stats.CurrentQuality = _settings.JpegQuality;
-                if (_encoderParams != null)
-                {
-                    _encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, (long)_settings.JpegQuality);
-                }
                 Debug.WriteLine($"Adaptive: Reduced quality to {_settings.JpegQuality}");
             }
             // If quality is already minimum, reduce resolution instead
@@ -968,10 +953,6 @@ public class ScreenSharingManager : IScreenSharingManager
                 // Reset quality since resolution reduced
                 _settings.JpegQuality = Math.Max(40, _initialJpegQuality - 10);
                 _stats.CurrentQuality = _settings.JpegQuality;
-                if (_encoderParams != null)
-                {
-                    _encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, (long)_settings.JpegQuality);
-                }
                 ReinitializeResizeBitmap();
                 Debug.WriteLine("Adaptive: Reduced resolution to 480p");
             }
@@ -988,10 +969,6 @@ public class ScreenSharingManager : IScreenSharingManager
             {
                 _settings.JpegQuality = Math.Min(_initialJpegQuality, _settings.JpegQuality + 5);
                 _stats.CurrentQuality = _settings.JpegQuality;
-                if (_encoderParams != null)
-                {
-                    _encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, (long)_settings.JpegQuality);
-                }
                 Debug.WriteLine($"Adaptive: Increased quality to {_settings.JpegQuality}");
             }
             // FPS is always kept constant at _initialTargetFps
@@ -1153,9 +1130,12 @@ public class ScreenSharingManager : IScreenSharingManager
         }
 
         using var ms = new MemoryStream();
-        if (_jpegEncoder != null && _encoderParams != null)
+        if (_jpegEncoder != null)
         {
-            bitmap.Save(ms, _jpegEncoder, _encoderParams);
+            // Use standard quality (75) for decoded H.264 frames
+            using var encodeParams = new EncoderParameters(1);
+            encodeParams.Param[0] = new EncoderParameter(Encoder.Quality, 75L);
+            bitmap.Save(ms, _jpegEncoder, encodeParams);
         }
         else
         {
@@ -1226,7 +1206,6 @@ public class ScreenSharingManager : IScreenSharingManager
         // Final cleanup
         CleanupCaptureResources();
 
-        try { _encoderParams?.Dispose(); } catch { }
         try { _captureSignal?.Dispose(); } catch { }
         try { _decoderLock?.Dispose(); } catch { }
 

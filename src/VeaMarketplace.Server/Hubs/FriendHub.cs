@@ -317,6 +317,90 @@ public class FriendHub : Hub
         }
     }
 
+    public async Task StopTypingDM(string recipientId)
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        if (_userConnections.TryGetValue(recipientId, out var recipientConnId))
+        {
+            await Clients.Client(recipientConnId).SendAsync("UserStoppedTypingDM", userId);
+        }
+    }
+
+    public async Task CancelFriendRequest(string requestId)
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        var (success, message) = _friendService.CancelFriendRequest(userId, requestId);
+
+        if (success)
+        {
+            // Update the caller's outgoing requests
+            var outgoingRequests = _friendService.GetOutgoingRequests(userId);
+            await Clients.Caller.SendAsync("OutgoingRequests", outgoingRequests);
+            await Clients.Caller.SendAsync("FriendRequestCancelled", requestId);
+        }
+        else
+        {
+            await Clients.Caller.SendAsync("FriendError", message);
+        }
+    }
+
+    public async Task BlockUser(string targetUserId, string? reason = null)
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        var (success, message) = _friendService.BlockUser(userId, targetUserId, reason);
+
+        if (success)
+        {
+            // Remove from friends list if they were friends
+            var friends = _friendService.GetFriends(userId);
+            await Clients.Caller.SendAsync("FriendsList", friends);
+            await Clients.Caller.SendAsync("UserBlocked", targetUserId);
+
+            // Notify the blocked user they've been removed (don't tell them they're blocked)
+            if (_userConnections.TryGetValue(targetUserId, out var targetConnId))
+            {
+                var targetFriends = _friendService.GetFriends(targetUserId);
+                await Clients.Client(targetConnId).SendAsync("FriendsList", targetFriends);
+            }
+        }
+        else
+        {
+            await Clients.Caller.SendAsync("FriendError", message);
+        }
+    }
+
+    public async Task UnblockUser(string targetUserId)
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        var (success, message) = _friendService.UnblockUser(userId, targetUserId);
+
+        if (success)
+        {
+            await Clients.Caller.SendAsync("UserUnblocked", targetUserId);
+        }
+        else
+        {
+            await Clients.Caller.SendAsync("FriendError", message);
+        }
+    }
+
+    public async Task GetBlockedUsers()
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        var blockedUsers = _friendService.GetBlockedUsers(userId);
+        await Clients.Caller.SendAsync("BlockedUsers", blockedUsers);
+    }
+
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         if (_connectionUsers.TryRemove(Context.ConnectionId, out var userId))
