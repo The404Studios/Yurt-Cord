@@ -30,6 +30,7 @@ public interface IChatService
     Task DeleteMessageAsync(string messageId, string channel = "general");
     Task SendTypingAsync(string channel);
     Task UpdateProfileAsync(string? avatarUrl = null, string? bannerUrl = null);
+    Task<string?> CreateGroupChatAsync(string name, List<string> memberIds, string? iconPath = null);
 }
 
 public class ChatService : IChatService, IAsyncDisposable
@@ -214,6 +215,27 @@ public class ChatService : IChatService, IAsyncDisposable
                 BannerUrl = bannerUrl
             };
             await _connection.InvokeAsync("UpdateUserProfile", request).ConfigureAwait(false);
+        }
+    }
+
+    public async Task<string?> CreateGroupChatAsync(string name, List<string> memberIds, string? iconPath = null)
+    {
+        if (_connection == null || !IsConnected)
+            return null;
+
+        try
+        {
+            var request = new CreateGroupChatRequest
+            {
+                Name = name,
+                MemberIds = memberIds,
+                IconPath = iconPath
+            };
+            return await _connection.InvokeAsync<string>("CreateGroupChat", request).ConfigureAwait(false);
+        }
+        catch
+        {
+            return null;
         }
     }
 

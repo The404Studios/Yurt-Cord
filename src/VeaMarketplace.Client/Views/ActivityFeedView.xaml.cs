@@ -4,15 +4,15 @@ using VeaMarketplace.Client.ViewModels;
 
 namespace VeaMarketplace.Client.Views;
 
-public partial class OrderHistoryView : UserControl
+public partial class ActivityFeedView : UserControl
 {
-    public OrderHistoryView()
+    public ActivityFeedView()
     {
         InitializeComponent();
 
         if (DesignerProperties.GetIsInDesignMode(this))
             return;
 
-        DataContext = App.ServiceProvider.GetService(typeof(OrderHistoryViewModel));
+        DataContext = App.ServiceProvider.GetService(typeof(ActivityFeedViewModel));
     }
 }
