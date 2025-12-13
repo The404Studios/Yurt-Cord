@@ -207,4 +207,114 @@ public partial class MainWindow : Window
     {
         _navigationService.NavigateTo("ActivityFeed");
     }
+
+    // Activity Panel
+    private bool _isActivityPanelOpen;
+
+    private void ActivityPanelButton_Click(object sender, RoutedEventArgs e)
+    {
+        _isActivityPanelOpen = !_isActivityPanelOpen;
+        ActivityPanelOverlay.Visibility = _isActivityPanelOpen ? Visibility.Visible : Visibility.Collapsed;
+
+        if (_isActivityPanelOpen)
+        {
+            LoadActivityPanelData();
+        }
+    }
+
+    private async void LoadActivityPanelData()
+    {
+        // Load online friends
+        var onlineFriends = new List<Controls.SocialActivityPanel.OnlineFriend>();
+
+        if (_friendService.Friends != null)
+        {
+            foreach (var friend in _friendService.Friends.Where(f => f.IsOnline).Take(10))
+            {
+                onlineFriends.Add(new Controls.SocialActivityPanel.OnlineFriend
+                {
+                    UserId = friend.UserId,
+                    Username = friend.Username,
+                    AvatarUrl = friend.AvatarUrl ?? "pack://application:,,,/Assets/default-avatar.png",
+                    Status = friend.CustomStatus
+                });
+            }
+        }
+
+        SocialActivityPanelControl.SetOnlineFriends(onlineFriends);
+
+        // Load sample activities
+        var activities = new List<Controls.SocialActivityPanel.ActivityItem>
+        {
+            new()
+            {
+                UserId = "1",
+                Username = "Player1",
+                UserAvatarUrl = "pack://application:,,,/Assets/default-avatar.png",
+                Type = Controls.SocialActivityPanel.ActivityType.FriendOnline,
+                ActionText = " is now online",
+                Timestamp = DateTime.Now.AddMinutes(-5)
+            },
+            new()
+            {
+                UserId = "2",
+                Username = "Gamer123",
+                UserAvatarUrl = "pack://application:,,,/Assets/default-avatar.png",
+                Type = Controls.SocialActivityPanel.ActivityType.GameStarted,
+                ActionText = " started playing",
+                TargetName = "Counter-Strike 2",
+                Timestamp = DateTime.Now.AddMinutes(-15),
+                HasAction = true,
+                ActionIcon = "🎮"
+            },
+            new()
+            {
+                UserId = "3",
+                Username = "Seller99",
+                UserAvatarUrl = "pack://application:,,,/Assets/default-avatar.png",
+                Type = Controls.SocialActivityPanel.ActivityType.NewListing,
+                ActionText = " listed a new item",
+                TargetName = "Premium Software License",
+                Timestamp = DateTime.Now.AddHours(-1),
+                HasAction = true,
+                ActionIcon = "→"
+            }
+        };
+
+        SocialActivityPanelControl.SetActivities(activities);
+    }
+
+    private void SocialActivity_StartGroupCall(object? sender, EventArgs e)
+    {
+        _toastService.ShowInfo("Group Call", "Starting group call...");
+        // Navigate to group call setup
+    }
+
+    private void SocialActivity_CreateGroupChat(object? sender, EventArgs e)
+    {
+        _toastService.ShowInfo("Group Chat", "Creating group chat...");
+        // Navigate to group chat creation
+    }
+
+    private void SocialActivity_ShareStatus(object? sender, EventArgs e)
+    {
+        _toastService.ShowInfo("Status", "Opening status editor...");
+        // Show status update dialog
+    }
+
+    private void SocialActivity_FindFriends(object? sender, EventArgs e)
+    {
+        _navigationService.NavigateToFriends();
+        ActivityPanelOverlay.Visibility = Visibility.Collapsed;
+        _isActivityPanelOpen = false;
+    }
+
+    private void SocialActivity_OnlineFriendClicked(object? sender, Controls.SocialActivityPanel.OnlineFriend friend)
+    {
+        // Navigate to DM with this friend
+        _toastService.ShowInfo("Opening Chat", $"Starting chat with {friend.Username}...");
+        _navigationService.NavigateToFriends();
+        ActivityPanelOverlay.Visibility = Visibility.Collapsed;
+        _isActivityPanelOpen = false;
+    }
 }

@@ -356,82 +356,12 @@
         <!-- Share Dialog -->
         <Border x:Name="ShareDialog" Grid.RowSpan="4" Visibility="Collapsed"
                 Background="#80000000" MouseDown="ShareDialogOverlay_MouseDown">
-            <Border Background="{StaticResource SecondaryDarkBrush}"
-                    CornerRadius="8" Width="400" Padding="24"
-                    HorizontalAlignment="Center" VerticalAlignment="Center">
-                <StackPanel>
-                    <Grid Margin="0,0,0,16">
-                        <TextBlock Text="Share Product" FontSize="18" FontWeight="Bold"
-                                   Foreground="{StaticResource TextPrimaryBrush}"/>
-                        <Button Content="✕" Style="{StaticResource IconButton}"
-                                HorizontalAlignment="Right" Click="CloseShareDialog_Click"/>
-                    </Grid>
-
-                    <!-- Product Preview -->
-                    <Border Background="{StaticResource QuaternaryDarkBrush}"
-                            CornerRadius="4" Padding="12" Margin="0,0,0,16">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" Width="50" Height="50" CornerRadius="4"
-                                    Background="{StaticResource PrimaryDarkBrush}" Margin="0,0,12,0">
-                                <TextBlock Text="📦" FontSize="24" HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"/>
-                            </Border>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock x:Name="ShareProductTitle" FontWeight="SemiBold"
-                                           Foreground="{StaticResource TextPrimaryBrush}"
-                                           TextTrimming="CharacterEllipsis"/>
-                                <TextBlock x:Name="ShareProductPrice"
-                                           Foreground="{StaticResource AccentGreenBrush}"
-                                           FontSize="12"/>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-
-                    <!-- Share Link -->
-                    <TextBlock Text="SHARE LINK" FontSize="11" FontWeight="Bold"
-                               Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,8"/>
-                    <Grid Margin="0,0,0,16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox x:Name="ShareLinkBox" Grid.Column="0"
-                                 Style="{StaticResource ModernTextBox}"
-                                 IsReadOnly="True" Margin="0,0,8,0"/>
-                        <Button Grid.Column="1" Content="📋 Copy"
-                                Style="{StaticResource PrimaryButton}"
-                                Click="CopyShareLink_Click"/>
-                    </Grid>
-
-                    <!-- Share Options -->
-                    <TextBlock Text="OR SHARE TO" FontSize="11" FontWeight="Bold"
-                               Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,12"/>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Button Grid.Column="0" Style="{StaticResource SecondaryButton}"
-                                Click="ShareToFriend_Click" Margin="0,0,4,0">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="💬" Margin="0,0,8,0"/>
-                                <TextBlock Text="Send to Friend"/>
-                            </StackPanel>
-                        </Button>
-                        <Button Grid.Column="1" Style="{StaticResource SecondaryButton}"
-                                Click="CopyShareLink_Click" Margin="4,0,0,0">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="🔗" Margin="0,0,8,0"/>
-                                <TextBlock Text="Copy Link"/>
-                            </StackPanel>
-                        </Button>
-                    </Grid>
-                </StackPanel>
-            </Border>
+            <controls:ShareContentDialog x:Name="ShareContentDialogControl"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          CloseRequested="ShareContentDialog_CloseRequested"
+                                          ContentSharedToFriend="ShareContentDialog_SharedToFriend"
+                                          ContentSharedToGroup="ShareContentDialog_SharedToGroup"
+                                          LinkCopied="ShareContentDialog_LinkCopied"/>
         </Border>
 
         <!-- My Listings Panel -->
