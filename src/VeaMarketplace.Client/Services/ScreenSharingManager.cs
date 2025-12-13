@@ -429,29 +429,39 @@ public class ScreenSharingManager : IScreenSharingManager
         }
 
         // Try to initialize hardware encoder (H.264 with GPU acceleration)
-        try
+        // First check if FFmpeg is available at all
+        if (!FFmpegHelper.IsAvailable)
         {
-            _hardwareEncoder?.Dispose();
-            _hardwareEncoder = new HardwareVideoEncoder();
-
-            if (_hardwareEncoder.Initialize(_settings.TargetWidth, _settings.TargetHeight, _settings.TargetFps, _settings.BitrateKbps))
-            {
-                _useHardwareEncoding = true;
-                Debug.WriteLine($"Hardware encoding enabled: {_hardwareEncoder.EncoderName} (GPU: {_hardwareEncoder.IsHardwareAccelerated})");
-            }
-            else
-            {
-                _useHardwareEncoding = false;
-                _hardwareEncoder.Dispose();
-                _hardwareEncoder = null;
-                Debug.WriteLine("Hardware encoding unavailable, using JPEG fallback");
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"Failed to initialize hardware encoder: {ex.Message}");
+            Debug.WriteLine("FFmpeg not available, using JPEG encoding only");
             _useHardwareEncoding = false;
             _hardwareEncoder = null;
+        }
+        else
+        {
+            try
+            {
+                _hardwareEncoder?.Dispose();
+                _hardwareEncoder = new HardwareVideoEncoder();
+
+                if (_hardwareEncoder.Initialize(_settings.TargetWidth, _settings.TargetHeight, _settings.TargetFps, _settings.BitrateKbps))
+                {
+                    _useHardwareEncoding = true;
+                    Debug.WriteLine($"Hardware encoding enabled: {_hardwareEncoder.EncoderName} (GPU: {_hardwareEncoder.IsHardwareAccelerated})");
+                }
+                else
+                {
+                    _useHardwareEncoding = false;
+                    _hardwareEncoder.Dispose();
+                    _hardwareEncoder = null;
+                    Debug.WriteLine("Hardware encoding unavailable, using JPEG fallback");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to initialize hardware encoder: {ex.Message}");
+                _useHardwareEncoding = false;
+                _hardwareEncoder = null;
+            }
         }
     }
 
@@ -1034,6 +1044,13 @@ public class ScreenSharingManager : IScreenSharingManager
         // If H.264, decode to JPEG so existing consumers can display it
         if (isH264)
         {
+            // First check if FFmpeg is even available
+            if (!FFmpegHelper.IsAvailable)
+            {
+                Debug.WriteLine($"Cannot decode H.264 from {senderConnectionId} - FFmpeg not available. Install FFmpeg to view H.264 streams.");
+                return;
+            }
+
             _decoderLock.EnterWriteLock();
             try
             {
@@ -1043,7 +1060,6 @@ public class ScreenSharingManager : IScreenSharingManager
                     if (existingDecoder.IsDisposed || existingDecoder.DecoderName == "none")
                     {
                         // Decoder failed previously, skip H.264 decoding
-                        Debug.WriteLine($"Skipping H.264 decode for {senderConnectionId} - decoder unavailable");
                         return;
                     }
                 }
@@ -1055,7 +1071,10 @@ public class ScreenSharingManager : IScreenSharingManager
                     {
                         Debug.WriteLine($"Failed to initialize H.264 decoder for {senderConnectionId}");
                     }
-                    Debug.WriteLine($"Created H.264 decoder for {senderConnectionId}: {d.DecoderName}");
+                    else
+                    {
+                        Debug.WriteLine($"Created H.264 decoder for {senderConnectionId}: {d.DecoderName} (HW: {d.IsHardwareAccelerated})");
+                    }
                     return d;
                 });
 
@@ -1071,14 +1090,13 @@ public class ScreenSharingManager : IScreenSharingManager
                     }
                     else
                     {
-                        // Decode failed (might need keyframe), skip this frame
+                        // Decode failed (might need keyframe), skip this frame silently
                         return;
                     }
                 }
                 else
                 {
                     // Decoder not available, can't decode H.264
-                    Debug.WriteLine($"H.264 decoder not available for {senderConnectionId}");
                     return;
                 }
             }
