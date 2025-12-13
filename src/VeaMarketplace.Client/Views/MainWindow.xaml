@@ -177,6 +177,7 @@
                         <views:NotificationCenterView x:Name="NotificationCenterViewControl" Visibility="Collapsed"/>
                         <views:ModerationPanelView x:Name="ModerationPanelViewControl" Visibility="Collapsed"/>
                         <views:ServerBrowserView x:Name="ServerBrowserViewControl" Visibility="Collapsed"/>
+                        <views:ActivityFeedView x:Name="ActivityFeedViewControl" Visibility="Collapsed"/>
                     </Grid>
                 </Border>
 

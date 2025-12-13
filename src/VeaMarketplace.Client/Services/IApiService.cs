@@ -90,6 +90,9 @@ public interface IApiService
     // Products - additional
     Task<bool> DeleteProductAsync(string productId);
     Task<CartDto> AddToCartAsync(string productId, int quantity);
+
+    // Activity Feed
+    Task<List<UserActivityDto>> GetActivityFeedAsync(string? filter = null, int page = 1, int pageSize = 20);
 }
 
 public class ApiService : IApiService
@@ -605,6 +608,18 @@ public class ApiService : IApiService
     {
         var request = new AddToCartRequest { ProductId = productId, Quantity = quantity };
         return await AddToCartAsync(request).ConfigureAwait(false);
+    }
+
+    // Activity Feed
+    public async Task<List<UserActivityDto>> GetActivityFeedAsync(string? filter = null, int page = 1, int pageSize = 20)
+    {
+        var url = $"/api/activity?page={page}&pageSize={pageSize}";
+        if (!string.IsNullOrEmpty(filter))
+            url += $"&filter={Uri.EscapeDataString(filter)}";
+
+        var response = await _httpClient.GetAsync(url).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return [];
+        return await response.Content.ReadFromJsonAsync<List<UserActivityDto>>(JsonOptions).ConfigureAwait(false) ?? [];
     }
 }
 

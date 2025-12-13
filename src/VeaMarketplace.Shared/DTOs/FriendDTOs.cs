@@ -299,3 +299,54 @@ public enum VoiceRoomCategory
     Sports,
     Other
 }
+
+public class UserDto
+{
+    public string Id { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
+    public string? DisplayName { get; set; }
+    public string? AvatarUrl { get; set; }
+    public string? Bio { get; set; }
+    public string? CustomStatus { get; set; }
+    public string? StatusEmoji { get; set; }
+    public string? BannerColor1 { get; set; }
+    public string? BannerColor2 { get; set; }
+    public UserStatus Status { get; set; }
+    public UserRole Role { get; set; }
+    public UserRank Rank { get; set; }
+    public bool IsVerified { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public List<UserRoleDto>? Roles { get; set; }
+}
+
+public class UserRoleDto
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Color { get; set; } = "#5865F2";
+}
+
+public enum UserStatus
+{
+    Offline,
+    Online,
+    Idle,
+    DoNotDisturb,
+    Invisible
+}
+
+public class CreateGroupChatRequest
+{
+    public string Name { get; set; } = string.Empty;
+    public List<string> MemberIds { get; set; } = [];
+    public string? IconPath { get; set; }
+}
+
+public class UpdateProfileRequest
+{
+    public string? AvatarUrl { get; set; }
+    public string? BannerUrl { get; set; }
+    public string? DisplayName { get; set; }
+    public string? Bio { get; set; }
+    public string? CustomStatus { get; set; }
+}

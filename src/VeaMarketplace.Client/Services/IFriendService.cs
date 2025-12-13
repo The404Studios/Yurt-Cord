@@ -60,6 +60,11 @@ public interface IFriendService
     Task SearchUsersAsync(string query);
     Task RefreshConversationsAsync();
     Task<List<FriendDto>> GetFriendsAsync();
+    Task<List<UserDto>> GetMutualFriendsAsync(string userId);
+    Task<FriendRelationship> GetRelationshipAsync(string userId);
+    Task AcceptFriendRequestAsync(string userId);
+    Task<string?> GetUserNoteAsync(string userId);
+    Task SetUserNoteAsync(string userId, string note);
 }
 
 public class FriendService : IFriendService, IAsyncDisposable
@@ -498,6 +503,84 @@ public class FriendService : IFriendService, IAsyncDisposable
     {
         // Return the current friends list - it's populated on connect via SignalR
         return Task.FromResult(Friends.ToList());
+    }
+
+    public async Task<List<UserDto>> GetMutualFriendsAsync(string userId)
+    {
+        if (_connection == null || !IsConnected)
+            return [];
+
+        try
+        {
+            var result = await _connection.InvokeAsync<List<UserDto>>("GetMutualFriends", userId).ConfigureAwait(false);
+            return result ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    public async Task<FriendRelationship> GetRelationshipAsync(string userId)
+    {
+        if (_connection == null || !IsConnected)
+            return FriendRelationship.None;
+
+        try
+        {
+            // Check if user is a friend
+            if (Friends.Any(f => f.UserId == userId))
+                return FriendRelationship.Friends;
+
+            // Check pending requests
+            if (PendingRequests.Any(r => r.SenderId == userId))
+                return FriendRelationship.PendingIncoming;
+
+            if (OutgoingRequests.Any(r => r.RecipientId == userId))
+                return FriendRelationship.PendingOutgoing;
+
+            // Check blocked users
+            if (BlockedUsers.Any(b => b.UserId == userId))
+                return FriendRelationship.Blocked;
+
+            return FriendRelationship.None;
+        }
+        catch
+        {
+            return FriendRelationship.None;
+        }
+    }
+
+    public async Task AcceptFriendRequestAsync(string userId)
+    {
+        var request = PendingRequests.FirstOrDefault(r => r.SenderId == userId);
+        if (request != null && _connection != null && IsConnected)
+        {
+            await _connection.InvokeAsync("RespondToFriendRequest", request.Id, true).ConfigureAwait(false);
+        }
+    }
+
+    public async Task<string?> GetUserNoteAsync(string userId)
+    {
+        if (_connection == null || !IsConnected)
+            return null;
+
+        try
+        {
+            return await _connection.InvokeAsync<string?>("GetUserNote", userId).ConfigureAwait(false);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task SetUserNoteAsync(string userId, string note)
+    {
+        if (_connection != null && IsConnected)
+        {
+            await _connection.InvokeAsync("SetUserNote", userId, note).ConfigureAwait(false);
+        }
     }
 
     public async Task DisconnectAsync()
