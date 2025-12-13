@@ -79,15 +79,23 @@ public partial class MainWindow : Window
 
     private void SwitchView(string view)
     {
-        _currentView = view;
+        // Handle parameterized views (e.g., "Product:123", "Settings:audio")
+        var baseView = view.Contains(':') ? view.Split(':')[0] : view;
+        _currentView = baseView;
 
-        // Hide all views with fade
-        ChatViewControl.Visibility = view == "Chat" ? Visibility.Visible : Visibility.Collapsed;
-        MarketplaceViewControl.Visibility = view == "Marketplace" ? Visibility.Visible : Visibility.Collapsed;
-        ProfileViewControl.Visibility = view == "Profile" ? Visibility.Visible : Visibility.Collapsed;
-        SettingsViewControl.Visibility = view == "Settings" ? Visibility.Visible : Visibility.Collapsed;
-        FriendsViewControl.Visibility = view == "Friends" ? Visibility.Visible : Visibility.Collapsed;
-        VoiceCallDashboardControl.Visibility = view == "VoiceCall" ? Visibility.Visible : Visibility.Collapsed;
+        // Hide all views
+        ChatViewControl.Visibility = baseView == "Chat" || baseView == "DirectMessage" ? Visibility.Visible : Visibility.Collapsed;
+        MarketplaceViewControl.Visibility = baseView == "Marketplace" || baseView == "Product" ? Visibility.Visible : Visibility.Collapsed;
+        ProfileViewControl.Visibility = baseView == "Profile" ? Visibility.Visible : Visibility.Collapsed;
+        SettingsViewControl.Visibility = baseView == "Settings" ? Visibility.Visible : Visibility.Collapsed;
+        FriendsViewControl.Visibility = baseView == "Friends" ? Visibility.Visible : Visibility.Collapsed;
+        VoiceCallDashboardControl.Visibility = baseView == "VoiceCall" ? Visibility.Visible : Visibility.Collapsed;
+        CartViewControl.Visibility = baseView == "Cart" ? Visibility.Visible : Visibility.Collapsed;
+        WishlistViewControl.Visibility = baseView == "Wishlist" ? Visibility.Visible : Visibility.Collapsed;
+        OrderHistoryViewControl.Visibility = baseView == "Orders" || baseView == "Order" ? Visibility.Visible : Visibility.Collapsed;
+        NotificationCenterViewControl.Visibility = baseView == "Notifications" ? Visibility.Visible : Visibility.Collapsed;
+        ModerationPanelViewControl.Visibility = baseView == "Moderation" ? Visibility.Visible : Visibility.Collapsed;
+        ServerBrowserViewControl.Visibility = baseView == "ServerBrowser" ? Visibility.Visible : Visibility.Collapsed;
 
         // Update sidebar button states
         UpdateButtonStates();
@@ -170,5 +178,15 @@ public partial class MainWindow : Window
     private void FriendsButton_Click(object sender, RoutedEventArgs e)
     {
         _navigationService.NavigateToFriends();
+    }
+
+    private void NotificationsButton_Click(object sender, RoutedEventArgs e)
+    {
+        _navigationService.NavigateToNotifications();
+    }
+
+    private void CartButton_Click(object sender, RoutedEventArgs e)
+    {
+        _navigationService.NavigateToCart();
     }
 }

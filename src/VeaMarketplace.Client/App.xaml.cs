@@ -60,6 +60,14 @@ public partial class App : Application
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<FriendsViewModel>();
 
+        // Additional ViewModels for feature views
+        services.AddTransient<CartViewModel>();
+        services.AddTransient<WishlistViewModel>();
+        services.AddTransient<OrderHistoryViewModel>();
+        services.AddTransient<NotificationCenterViewModel>();
+        services.AddTransient<ModerationPanelViewModel>();
+        services.AddTransient<ProductReviewsViewModel>();
+
         ServiceProvider = services.BuildServiceProvider();
 
         // Wait for splash to complete
