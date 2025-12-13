@@ -425,12 +425,20 @@ public class ScreenShareViewerService : IScreenShareViewerService
         StopPlaybackTimer();
         _frameBuffers.Clear();
 
-        // Dispose all H.264 decoders
-        foreach (var decoder in _h264Decoders.Values)
+        // Dispose all H.264 decoders with write lock to prevent race conditions
+        _decoderLock.EnterWriteLock();
+        try
         {
-            decoder.Dispose();
+            foreach (var decoder in _h264Decoders.Values)
+            {
+                decoder.Dispose();
+            }
+            _h264Decoders.Clear();
         }
-        _h264Decoders.Clear();
+        finally
+        {
+            _decoderLock.ExitWriteLock();
+        }
 
         System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
         {

@@ -27,13 +27,13 @@ public class StreamingOrchestrator : IDisposable
 
     // Cancellation for background threads
     private readonly CancellationTokenSource _cts = new();
-    private bool _disposed;
+    private volatile bool _disposed;
 
-    // Voice activity state
+    // Voice activity state - use Interlocked for thread-safe updates
     private volatile bool _voiceActive;
     private volatile bool _isReceivingAudio;
     private volatile bool _isSendingAudio;
-    private DateTime _lastVoiceActivityTime = DateTime.MinValue;
+    private long _lastVoiceActivityTimeTicks = DateTime.MinValue.Ticks;  // Use ticks for Interlocked
 
     // Memory management
     private readonly Thread _memoryThread;
@@ -127,8 +127,9 @@ public class StreamingOrchestrator : IDisposable
     /// </summary>
     public void SignalAudioSend()
     {
+        if (_disposed) return;
         _isSendingAudio = true;
-        _lastVoiceActivityTime = DateTime.UtcNow;
+        Interlocked.Exchange(ref _lastVoiceActivityTimeTicks, DateTime.UtcNow.Ticks);
         Interlocked.Increment(ref _audioPacketsSent);
         UpdateVoiceActive(true);
     }
@@ -138,8 +139,9 @@ public class StreamingOrchestrator : IDisposable
     /// </summary>
     public void SignalAudioReceive()
     {
+        if (_disposed) return;
         _isReceivingAudio = true;
-        _lastVoiceActivityTime = DateTime.UtcNow;
+        Interlocked.Exchange(ref _lastVoiceActivityTimeTicks, DateTime.UtcNow.Ticks);
         Interlocked.Increment(ref _audioPacketsReceived);
         UpdateVoiceActive(true);
     }
@@ -149,6 +151,7 @@ public class StreamingOrchestrator : IDisposable
     /// </summary>
     public void SignalVideoFrameSent()
     {
+        if (_disposed) return;
         Interlocked.Increment(ref _videoFramesSent);
         _sendTimestamps.Enqueue(Stopwatch.GetTimestamp());
 
@@ -162,6 +165,7 @@ public class StreamingOrchestrator : IDisposable
     /// </summary>
     public void SignalVideoFrameDropped()
     {
+        if (_disposed) return;
         Interlocked.Increment(ref _videoFramesDropped);
     }
 
@@ -170,6 +174,7 @@ public class StreamingOrchestrator : IDisposable
     /// </summary>
     public void RecordLatency(int latencyMs)
     {
+        if (_disposed) return;
         _latencySamples.Enqueue(latencyMs);
         while (_latencySamples.Count > MaxLatencySamples)
             _latencySamples.TryDequeue(out _);
@@ -182,7 +187,8 @@ public class StreamingOrchestrator : IDisposable
     {
         if (!_voiceActive) return 0;
 
-        var elapsed = (DateTime.UtcNow - _lastVoiceActivityTime).TotalMilliseconds;
+        var lastActivityTicks = Interlocked.Read(ref _lastVoiceActivityTimeTicks);
+        var elapsed = (DateTime.UtcNow - new DateTime(lastActivityTicks)).TotalMilliseconds;
         if (elapsed < 100) return VoiceYieldMaxDelayMs;
         return VoiceYieldDelayMs;
     }
@@ -193,7 +199,8 @@ public class StreamingOrchestrator : IDisposable
     public bool ShouldSkipVideoFrame(int frameNumber)
     {
         // Skip if voice very active or network congested
-        if (_voiceActive && (DateTime.UtcNow - _lastVoiceActivityTime).TotalMilliseconds < 50)
+        var lastActivityTicks = Interlocked.Read(ref _lastVoiceActivityTimeTicks);
+        if (_voiceActive && (DateTime.UtcNow - new DateTime(lastActivityTicks)).TotalMilliseconds < 50)
         {
             return frameNumber % 2 == 0;
         }
@@ -364,7 +371,8 @@ public class StreamingOrchestrator : IDisposable
                 // Voice activity timeout check
                 if (_voiceActive)
                 {
-                    var elapsed = (DateTime.UtcNow - _lastVoiceActivityTime).TotalMilliseconds;
+                    var lastActivityTicks = Interlocked.Read(ref _lastVoiceActivityTimeTicks);
+                    var elapsed = (DateTime.UtcNow - new DateTime(lastActivityTicks)).TotalMilliseconds;
                     if (elapsed > VoiceActivityTimeoutMs)
                     {
                         _isSendingAudio = false;

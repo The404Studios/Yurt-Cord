@@ -727,6 +727,22 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Audio device error: {ex.Message}");
+
+            // Clean up any partially initialized resources
+            try { _waveIn?.StopRecording(); } catch { }
+            try { _waveIn?.Dispose(); } catch { }
+            _waveIn = null;
+
+            try { _waveOut?.Stop(); } catch { }
+            try { _waveOut?.Dispose(); } catch { }
+            _waveOut = null;
+
+            _bufferedWaveProvider = null;
+            _opusEncoder = null;
+
+            try { _audioSendCts?.Cancel(); } catch { }
+            try { _audioSendCts?.Dispose(); } catch { }
+            _audioSendCts = null;
         }
     }
 
