@@ -91,7 +91,7 @@
                                             <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                                                 <TextBlock Text="Blocked on " FontSize="12"
                                                            Foreground="{StaticResource TextMutedBrush}"/>
-                                                <TextBlock Text="{Binding BlockedAt, StringFormat={}{0:MMM d, yyyy}}"
+                                                <TextBlock Text="{Binding BlockedAt, StringFormat='MMM d, yyyy'}"
                                                            FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
                                             </StackPanel>
                                             <TextBlock Text="{Binding Reason}" FontSize="12"

@@ -99,6 +99,7 @@ public partial class MainWindow : Window
         ActivityFeedViewControl.Visibility = baseView == "Activity" || baseView == "ActivityFeed" ? Visibility.Visible : Visibility.Collapsed;
         BlockedUsersViewControl.Visibility = baseView == "BlockedUsers" ? Visibility.Visible : Visibility.Collapsed;
         PrivacySettingsViewControl.Visibility = baseView == "Privacy" || baseView == "PrivacySettings" ? Visibility.Visible : Visibility.Collapsed;
+        DiscoverViewControl.Visibility = baseView == "Discover" ? Visibility.Visible : Visibility.Collapsed;
 
         // Update sidebar button states
         UpdateButtonStates();
@@ -111,6 +112,8 @@ public partial class MainWindow : Window
 
         ChatButtonBorder.Background = _currentView == "Chat" ? activeBrush : inactiveBrush;
         MarketButtonBorder.Background = _currentView == "Marketplace" ? activeBrush : inactiveBrush;
+        DiscoverButtonBorder.Background = _currentView == "Discover" ? activeBrush : inactiveBrush;
+        ActivityButtonBorder.Background = _currentView == "Activity" || _currentView == "ActivityFeed" ? activeBrush : inactiveBrush;
         ProfileButtonBorder.Background = _currentView == "Profile" ? activeBrush : inactiveBrush;
         FriendsButtonBorder.Background = _currentView == "Friends" ? activeBrush : inactiveBrush;
 
@@ -120,6 +123,8 @@ public partial class MainWindow : Window
 
         ChatButtonBorder.CornerRadius = _currentView == "Chat" ? activeRadius : inactiveRadius;
         MarketButtonBorder.CornerRadius = _currentView == "Marketplace" ? activeRadius : inactiveRadius;
+        DiscoverButtonBorder.CornerRadius = _currentView == "Discover" ? activeRadius : inactiveRadius;
+        ActivityButtonBorder.CornerRadius = _currentView == "Activity" || _currentView == "ActivityFeed" ? activeRadius : inactiveRadius;
         ProfileButtonBorder.CornerRadius = _currentView == "Profile" ? activeRadius : inactiveRadius;
         FriendsButtonBorder.CornerRadius = _currentView == "Friends" ? activeRadius : inactiveRadius;
     }
@@ -191,5 +196,15 @@ public partial class MainWindow : Window
     private void CartButton_Click(object sender, RoutedEventArgs e)
     {
         _navigationService.NavigateToCart();
+    }
+
+    private void DiscoverButton_Click(object sender, RoutedEventArgs e)
+    {
+        _navigationService.NavigateTo("Discover");
+    }
+
+    private void ActivityFeedButton_Click(object sender, RoutedEventArgs e)
+    {
+        _navigationService.NavigateTo("ActivityFeed");
     }
 }

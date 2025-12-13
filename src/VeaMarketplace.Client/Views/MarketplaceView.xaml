@@ -573,5 +573,14 @@
                 </StackPanel>
             </Border>
         </Border>
+
+        <!-- Quick Actions Toolbar -->
+        <controls:QuickActionsToolbar x:Name="QuickActionsToolbar" Grid.RowSpan="4"
+                                       HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                       Margin="0,0,24,24"
+                                       ScrollTopRequested="QuickActions_ScrollTopRequested"
+                                       RefreshRequested="QuickActions_RefreshRequested"
+                                       FilterRequested="QuickActions_FilterRequested"
+                                       CreateListingRequested="QuickActions_CreateListingRequested"/>
     </Grid>
 </UserControl>

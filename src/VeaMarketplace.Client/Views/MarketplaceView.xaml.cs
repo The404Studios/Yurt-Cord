@@ -435,4 +435,62 @@ public partial class MarketplaceView : UserControl
         };
         _toastTimer.Start();
     }
+
+    // Quick Actions Toolbar handlers
+    private void QuickActions_ScrollTopRequested(object sender, RoutedEventArgs e)
+    {
+        // Find the parent ScrollViewer
+        var scrollViewer = FindParent<ScrollViewer>(ProductsItemsControl);
+        scrollViewer?.ScrollToTop();
+    }
+
+    private async void QuickActions_RefreshRequested(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel == null) return;
+        await _viewModel.RefreshCommand.ExecuteAsync(null);
+        ShowToast("Products refreshed!");
+    }
+
+    private void QuickActions_FilterRequested(object sender, RoutedEventArgs e)
+    {
+        // Toggle filter visibility or show filter dialog
+        ShowToast("Filter panel coming soon!");
+    }
+
+    private void QuickActions_CreateListingRequested(object sender, RoutedEventArgs e)
+    {
+        CreateListingButton_Click(sender, e);
+    }
+
+    private static T? FindChild<T>(DependencyObject parent) where T : DependencyObject
+    {
+        if (parent == null) return null;
+
+        int childCount = VisualTreeHelper.GetChildrenCount(parent);
+        for (int i = 0; i < childCount; i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T typedChild)
+                return typedChild;
+
+            var result = FindChild<T>(child);
+            if (result != null)
+                return result;
+        }
+        return null;
+    }
+
+    private static T? FindParent<T>(DependencyObject child) where T : DependencyObject
+    {
+        if (child == null) return null;
+
+        var parent = VisualTreeHelper.GetParent(child);
+        while (parent != null)
+        {
+            if (parent is T typedParent)
+                return typedParent;
+            parent = VisualTreeHelper.GetParent(parent);
+        }
+        return null;
+    }
 }

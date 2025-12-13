@@ -57,7 +57,8 @@ public partial class ActivityFeedViewModel : BaseViewModel
             IsRefreshing = refresh;
             ErrorMessage = null;
 
-            var activities = await _apiService.GetActivityFeedAsync(_currentPage, PageSize, ShowFriendsOnly);
+            var filter = ShowFriendsOnly ? "friends" : null;
+            var activities = await _apiService.GetActivityFeedAsync(filter, _currentPage, PageSize);
 
             if (activities.Count < PageSize)
             {

@@ -11,6 +11,11 @@ namespace VeaMarketplace.Client.Controls;
 public partial class ProductCard : UserControl
 {
     public event RoutedEventHandler? Click;
+    public event RoutedEventHandler? AddToCartClick;
+    public event RoutedEventHandler? AddToWishlistClick;
+    public event RoutedEventHandler? QuickViewClick;
+
+    private bool _isInWishlist;
 
     public ProductCard()
     {
@@ -32,7 +37,11 @@ public partial class ProductCard : UserControl
         SellerText.Text = product.SellerUsername;
         CategoryText.Text = product.Category.ToString();
         PriceText.Text = $"${product.Price:F2}";
-        ViewsText.Text = product.ViewCount.ToString();
+        ViewsText.Text = FormatViewCount(product.ViewCount);
+
+        // Rating display
+        RatingText.Text = product.AverageRating.ToString("F1");
+        ReviewCountText.Text = $"({product.ReviewCount})";
 
         // Load image
         if (product.ImageUrls?.Count > 0)
@@ -55,6 +64,28 @@ public partial class ProductCard : UserControl
         // Featured badge
         FeaturedBadge.Visibility = product.IsFeatured ? Visibility.Visible : Visibility.Collapsed;
 
+        // New badge (products created in last 7 days)
+        var isNew = (DateTime.UtcNow - product.CreatedAt).TotalDays <= 7;
+        NewBadge.Visibility = isNew && !product.IsFeatured ? Visibility.Visible : Visibility.Collapsed;
+
+        // Sale badge and original price
+        if (product.OriginalPrice > product.Price)
+        {
+            var discount = (int)((1 - product.Price / product.OriginalPrice) * 100);
+            SaleBadge.Visibility = Visibility.Visible;
+            SaleBadgeText.Text = $"-{discount}%";
+            OriginalPriceText.Text = $"${product.OriginalPrice:F2}";
+            OriginalPriceText.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            SaleBadge.Visibility = Visibility.Collapsed;
+            OriginalPriceText.Visibility = Visibility.Collapsed;
+        }
+
+        // Out of stock
+        OutOfStockOverlay.Visibility = product.Stock <= 0 ? Visibility.Visible : Visibility.Collapsed;
+
         // Seller badge
         if (product.SellerRole >= UserRole.VIP)
         {
@@ -68,9 +99,45 @@ public partial class ProductCard : UserControl
         }
     }
 
+    private static string FormatViewCount(int count)
+    {
+        return count switch
+        {
+            >= 1000000 => $"{count / 1000000.0:F1}M",
+            >= 1000 => $"{count / 1000.0:F1}K",
+            _ => count.ToString()
+        };
+    }
+
+    public void SetWishlistState(bool isInWishlist)
+    {
+        _isInWishlist = isInWishlist;
+        WishlistIcon.Text = isInWishlist ? "\u2665" : "\u2661"; // Filled vs empty heart
+    }
+
     private void Card_Click(object sender, MouseButtonEventArgs e)
     {
         Click?.Invoke(this, new RoutedEventArgs());
+    }
+
+    private void AddToCart_Click(object sender, RoutedEventArgs e)
+    {
+        e.Handled = true; // Prevent card click
+        AddToCartClick?.Invoke(this, e);
+    }
+
+    private void AddToWishlist_Click(object sender, RoutedEventArgs e)
+    {
+        e.Handled = true; // Prevent card click
+        _isInWishlist = !_isInWishlist;
+        WishlistIcon.Text = _isInWishlist ? "\u2665" : "\u2661";
+        AddToWishlistClick?.Invoke(this, e);
+    }
+
+    private void QuickView_Click(object sender, RoutedEventArgs e)
+    {
+        e.Handled = true; // Prevent card click
+        QuickViewClick?.Invoke(this, e);
     }
 
     private static Color GetRoleColor(UserRole role)

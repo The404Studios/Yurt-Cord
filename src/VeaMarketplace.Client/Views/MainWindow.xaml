@@ -122,6 +122,26 @@
                             </Border>
                         </Button>
 
+                        <!-- Discover Button -->
+                        <Button Style="{StaticResource IconButton}" Width="48" Height="48"
+                                Margin="0,8,0,0" ToolTip="Discover" Click="DiscoverButton_Click">
+                            <Border x:Name="DiscoverButtonBorder" Background="{StaticResource SecondaryDarkBrush}"
+                                    CornerRadius="24" Width="48" Height="48">
+                                <TextBlock Text="🔍" FontSize="22"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Button>
+
+                        <!-- Activity Feed Button -->
+                        <Button Style="{StaticResource IconButton}" Width="48" Height="48"
+                                Margin="0,8,0,0" ToolTip="Activity Feed" Click="ActivityFeedButton_Click">
+                            <Border x:Name="ActivityButtonBorder" Background="{StaticResource SecondaryDarkBrush}"
+                                    CornerRadius="24" Width="48" Height="48">
+                                <TextBlock Text="📰" FontSize="22"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Button>
+
                         <!-- Profile Button -->
                         <Button Style="{StaticResource IconButton}" Width="48" Height="48"
                                 Margin="0,8,0,0" ToolTip="Profile" Click="ProfileButton_Click">
@@ -180,6 +200,7 @@
                         <views:ActivityFeedView x:Name="ActivityFeedViewControl" Visibility="Collapsed"/>
                         <views:BlockedUsersView x:Name="BlockedUsersViewControl" Visibility="Collapsed"/>
                         <views:PrivacySettingsView x:Name="PrivacySettingsViewControl" Visibility="Collapsed"/>
+                        <views:DiscoverView x:Name="DiscoverViewControl" Visibility="Collapsed"/>
                     </Grid>
                 </Border>
 
