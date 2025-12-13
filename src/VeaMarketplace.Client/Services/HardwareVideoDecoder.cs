@@ -269,6 +269,9 @@ public unsafe class HardwareVideoDecoder : IDisposable
                         InitializeColorConverter();
                     }
 
+                    // Check if color converter is valid
+                    if (_swsContext == null) return (null, 0, 0, 0);
+
                     ffmpeg.sws_scale(_swsContext,
                         _frame->data, _frame->linesize, 0, Height,
                         _rgbFrame->data, _rgbFrame->linesize);
@@ -276,14 +279,11 @@ public unsafe class HardwareVideoDecoder : IDisposable
                     var stride = _rgbFrame->linesize[0];
                     var bufferSize = stride * Height;
 
-                    if (_rgbBuffer.Length < bufferSize)
-                    {
-                        _rgbBuffer = new byte[bufferSize];
-                    }
+                    // Return a copy of the buffer to avoid race conditions with reused buffer
+                    var outputBuffer = new byte[bufferSize];
+                    Marshal.Copy((IntPtr)_rgbFrame->data[0], outputBuffer, 0, bufferSize);
 
-                    Marshal.Copy((IntPtr)_rgbFrame->data[0], _rgbBuffer, 0, bufferSize);
-
-                    return (_rgbBuffer, Width, Height, stride);
+                    return (outputBuffer, Width, Height, stride);
                 }
             }
             catch
