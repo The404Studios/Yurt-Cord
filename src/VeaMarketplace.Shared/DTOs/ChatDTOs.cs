@@ -24,6 +24,70 @@ public class ChatMessageDto
     public DateTime Timestamp { get; set; }
     public bool IsEdited { get; set; }
     public List<MessageAttachmentDto> Attachments { get; set; } = new();
+    public List<MessageEmbedDto> Embeds { get; set; } = new();
+    public List<MessageReactionDto> Reactions { get; set; } = new();
+}
+
+/// <summary>
+/// DTO for embedded content in messages (shared products, auctions, profiles)
+/// </summary>
+public class MessageEmbedDto
+{
+    public string Id { get; set; } = string.Empty;
+    public EmbedContentType Type { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? Subtitle { get; set; }
+    public string? Description { get; set; }
+    public string? ImageUrl { get; set; }
+    public string? ThumbnailUrl { get; set; }
+    public decimal? Price { get; set; }
+    public decimal? OriginalPrice { get; set; }
+    public decimal? CurrentBid { get; set; }
+    public decimal? MinBidIncrement { get; set; }
+    public DateTime? AuctionEndsAt { get; set; }
+    public string? SellerId { get; set; }
+    public string? SellerUsername { get; set; }
+    public string? SellerAvatarUrl { get; set; }
+    public string? SellerRole { get; set; }
+    public string? ContentId { get; set; }
+    public string ShareLink => $"vea://marketplace/{Type.ToString().ToLower()}/{ContentId}";
+}
+
+/// <summary>
+/// DTO for message reactions
+/// </summary>
+public class MessageReactionDto
+{
+    public string Id { get; set; } = string.Empty;
+    public string MessageId { get; set; } = string.Empty;
+    public string UserId { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
+    public string Emoji { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+}
+
+/// <summary>
+/// Grouped reaction display
+/// </summary>
+public class ReactionGroupDto
+{
+    public string Emoji { get; set; } = string.Empty;
+    public int Count { get; set; }
+    public bool HasCurrentUserReacted { get; set; }
+    public List<string> UserNames { get; set; } = new();
+}
+
+/// <summary>
+/// Types of embedded content
+/// </summary>
+public enum EmbedContentType
+{
+    Product,
+    Auction,
+    Profile,
+    Listing,
+    Link,
+    Image
 }
 
 public class ChannelDto
