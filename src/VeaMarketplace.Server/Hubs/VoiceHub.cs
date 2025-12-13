@@ -75,6 +75,12 @@ public class VoiceHub : Hub
 
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"voice_{userState.ChannelId}");
                 await Clients.Group($"voice_{userState.ChannelId}").SendAsync("UserLeftVoice", userState);
+
+                // Clean up empty channels to prevent memory leak
+                if (channel.Users.IsEmpty)
+                {
+                    _voiceChannels.TryRemove(userState.ChannelId, out _);
+                }
             }
         }
     }
