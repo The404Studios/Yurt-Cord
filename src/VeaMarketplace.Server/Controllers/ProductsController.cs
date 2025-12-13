@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using VeaMarketplace.Server.Hubs;
 using VeaMarketplace.Server.Services;
 using VeaMarketplace.Shared.DTOs;
 using VeaMarketplace.Shared.Enums;
@@ -11,11 +13,16 @@ public class ProductsController : ControllerBase
 {
     private readonly ProductService _productService;
     private readonly AuthService _authService;
+    private readonly IHubContext<ContentHub> _contentHubContext;
 
-    public ProductsController(ProductService productService, AuthService authService)
+    public ProductsController(
+        ProductService productService,
+        AuthService authService,
+        IHubContext<ContentHub> contentHubContext)
     {
         _productService = productService;
         _authService = authService;
+        _contentHubContext = contentHubContext;
     }
 
     [HttpGet]
@@ -39,7 +46,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost]
-    public ActionResult<ProductDto> CreateProduct(
+    public async Task<ActionResult<ProductDto>> CreateProduct(
         [FromHeader(Name = "Authorization")] string? authorization,
         [FromBody] CreateProductRequest request)
     {
@@ -54,6 +61,34 @@ public class ProductsController : ControllerBase
             return BadRequest("Price must be greater than 0");
 
         var product = _productService.CreateProduct(user.Id, request);
+
+        // Broadcast new product event to all connected clients
+        await ContentHub.BroadcastNewProduct(_contentHubContext, new NewProductEvent
+        {
+            SourceUserId = user.Id,
+            SourceUsername = user.Username,
+            SourceAvatarUrl = user.AvatarUrl,
+            Product = product,
+            ShareLink = $"vea://marketplace/product/{product.Id}"
+        });
+
+        // Also broadcast as a new post event for the feed
+        await ContentHub.BroadcastNewPost(_contentHubContext, new NewPostEvent
+        {
+            SourceUserId = user.Id,
+            SourceUsername = user.Username,
+            SourceAvatarUrl = user.AvatarUrl,
+            PostId = product.Id,
+            Title = product.Title,
+            Description = product.Description,
+            PreviewImageUrl = product.ImageUrls.FirstOrDefault(),
+            ContentType = PostContentType.Product,
+            Price = product.Price,
+            IsAuction = false,
+            Category = product.Category.ToString(),
+            Tags = product.Tags
+        });
+
         return Ok(product);
     }
 

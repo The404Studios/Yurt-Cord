@@ -125,6 +125,7 @@ app.MapHub<VoiceHub>("/hubs/voice");
 app.MapHub<FriendHub>("/hubs/friends");
 app.MapHub<ProfileHub>("/hubs/profile");
 app.MapHub<RoomHub>("/hubs/rooms");
+app.MapHub<ContentHub>("/hubs/content");
 
 // Ensure data directory exists
 Directory.CreateDirectory("Data");

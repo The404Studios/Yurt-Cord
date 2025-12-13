@@ -48,6 +48,7 @@ public partial class App : Application
         services.AddSingleton<IToastNotificationService, ToastNotificationService>();
         services.AddSingleton<IFileUploadService, FileUploadService>();
         services.AddSingleton<IImageCacheService, ImageCacheService>();
+        services.AddSingleton<IContentService, ContentService>();
 
         // ViewModels
         services.AddTransient<LoginViewModel>();

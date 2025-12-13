@@ -13,12 +13,18 @@ public class FileController : ControllerBase
     private readonly FileService _fileService;
     private readonly AuthService _authService;
     private readonly IHubContext<ChatHub> _chatHubContext;
+    private readonly IHubContext<ContentHub> _contentHubContext;
 
-    public FileController(FileService fileService, AuthService authService, IHubContext<ChatHub> chatHubContext)
+    public FileController(
+        FileService fileService,
+        AuthService authService,
+        IHubContext<ChatHub> chatHubContext,
+        IHubContext<ContentHub> contentHubContext)
     {
         _fileService = fileService;
         _authService = authService;
         _chatHubContext = chatHubContext;
+        _contentHubContext = contentHubContext;
     }
 
     /// <summary>
@@ -86,11 +92,24 @@ public class FileController : ControllerBase
         var user = _authService.GetUserById(userId);
         if (user != null)
         {
+            var oldAvatarUrl = user.AvatarUrl;
             var updateRequest = new UpdateProfileRequest { AvatarUrl = result.ImageUrl };
             _authService.UpdateProfile(userId, updateRequest);
 
-            // Broadcast profile update to all clients
+            // Broadcast profile update to all clients via ChatHub
             await ChatHub.BroadcastProfileUpdate(_chatHubContext, user);
+
+            // Also broadcast via ContentHub for real-time image updates everywhere
+            await ContentHub.BroadcastProfilePictureUpdate(_contentHubContext, new ProfilePictureUpdateEvent
+            {
+                UserId = userId,
+                SourceUserId = userId,
+                SourceUsername = user.Username,
+                SourceAvatarUrl = result.ImageUrl,
+                OldAvatarUrl = oldAvatarUrl,
+                NewAvatarUrl = result.ImageUrl!,
+                ThumbnailUrl = result.ThumbnailUrl
+            });
         }
 
         return Ok(result);
@@ -129,11 +148,23 @@ public class FileController : ControllerBase
         var user = _authService.GetUserById(userId);
         if (user != null)
         {
+            var oldBannerUrl = user.BannerUrl;
             var updateRequest = new UpdateProfileRequest { BannerUrl = result.ImageUrl };
             _authService.UpdateProfile(userId, updateRequest);
 
-            // Broadcast profile update to all clients
+            // Broadcast profile update to all clients via ChatHub
             await ChatHub.BroadcastProfileUpdate(_chatHubContext, user);
+
+            // Also broadcast via ContentHub for real-time banner updates
+            await ContentHub.BroadcastBannerUpdate(_contentHubContext, new BannerUpdateEvent
+            {
+                UserId = userId,
+                SourceUserId = userId,
+                SourceUsername = user.Username,
+                SourceAvatarUrl = user.AvatarUrl,
+                OldBannerUrl = oldBannerUrl,
+                NewBannerUrl = result.ImageUrl!
+            });
         }
 
         return Ok(result);
