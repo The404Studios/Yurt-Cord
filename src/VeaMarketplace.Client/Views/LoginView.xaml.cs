@@ -12,6 +12,7 @@ public partial class LoginView : UserControl
 {
     private readonly LoginViewModel? _viewModel;
     private bool _isRegistering;
+    private Storyboard? _spinnerStoryboard;
 
     public event Action? OnLoginSuccess;
 
@@ -39,8 +40,15 @@ public partial class LoginView : UserControl
             if (e.Key == Key.Enter) PasswordBox.Focus();
         };
 
-        // Focus username on load
-        Loaded += (s, e) => UsernameBox.Focus();
+        // Focus username on load with slight delay for animation
+        Loaded += async (s, e) =>
+        {
+            await Task.Delay(400); // Wait for card entry animation
+            UsernameBox.Focus();
+        };
+
+        // Get spinner storyboard reference
+        _spinnerStoryboard = (Storyboard)FindResource("SpinnerAnimation");
     }
 
     private async void ActionButton_Click(object sender, RoutedEventArgs e)
@@ -91,20 +99,29 @@ public partial class LoginView : UserControl
             }
         }
 
-        ShowLoading(true);
+        ShowLoading(true, _isRegistering ? "Creating account..." : "Logging in...", "Connecting to server...");
 
         try
         {
             if (_isRegistering)
             {
+                UpdateLoadingText("Creating account...", "Registering your profile...");
+                await Task.Delay(300); // Brief delay for visual feedback
+
                 var result = await ((IApiService)App.ServiceProvider.GetService(typeof(IApiService))!)
                     .RegisterAsync(username, email, password);
 
                 if (result.Success)
                 {
+                    UpdateLoadingText("Success!", "Connecting to services...");
+                    await Task.Delay(200);
+
                     var chatService = (IChatService)App.ServiceProvider.GetService(typeof(IChatService))!;
                     if (result.Token != null)
                         await chatService.ConnectAsync(result.Token);
+
+                    UpdateLoadingText("Welcome!", "Preparing your experience...");
+                    await Task.Delay(300);
 
                     OnLoginSuccess?.Invoke();
                 }
@@ -116,11 +133,16 @@ public partial class LoginView : UserControl
             }
             else
             {
+                UpdateLoadingText("Logging in...", "Verifying credentials...");
+                await Task.Delay(200);
+
                 if (_viewModel != null)
                 {
                     _viewModel.Username = username;
                     _viewModel.Password = password;
                     _viewModel.RememberMe = RememberMeCheck.IsChecked ?? false;
+
+                    UpdateLoadingText("Authenticating...", "Please wait...");
                     await _viewModel.LoginCommand.ExecuteAsync(null);
                 }
             }
@@ -140,14 +162,32 @@ public partial class LoginView : UserControl
     {
         _isRegistering = !_isRegistering;
 
-        // Animate the transition
-        var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(150));
+        // Animate the transition with scale + fade
+        var scaleDown = new DoubleAnimation(1, 0.98, TimeSpan.FromMilliseconds(100))
+        {
+            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn }
+        };
+        var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(150))
+        {
+            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn }
+        };
+
         fadeOut.Completed += (s, ev) =>
         {
             UpdateUI();
-            var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150));
+
+            var scaleUp = new DoubleAnimation(0.98, 1, TimeSpan.FromMilliseconds(200))
+            {
+                EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.2 }
+            };
+            var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200))
+            {
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+            };
+
             LoginCard.BeginAnimation(OpacityProperty, fadeIn);
         };
+
         LoginCard.BeginAnimation(OpacityProperty, fadeOut);
     }
 
@@ -155,7 +195,7 @@ public partial class LoginView : UserControl
     {
         if (_isRegistering)
         {
-            ActionButton.Content = "Register";
+            ActionButton.Content = "Create Account";
             SubtitleText.Text = "Create your account";
             TogglePromptText.Text = "Already have an account?";
             ToggleLinkText.Text = "Login";
@@ -180,13 +220,30 @@ public partial class LoginView : UserControl
     private void ShowError(string message)
     {
         ErrorText.Text = message;
+
+        // Animate error appearance
+        ErrorBorder.Opacity = 0;
         ErrorBorder.Visibility = Visibility.Visible;
+
+        var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200))
+        {
+            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+        };
+        ErrorBorder.BeginAnimation(OpacityProperty, fadeIn);
     }
 
     private void ClearError()
     {
-        ErrorBorder.Visibility = Visibility.Collapsed;
-        ErrorText.Text = string.Empty;
+        if (ErrorBorder.Visibility == Visibility.Visible)
+        {
+            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(150));
+            fadeOut.Completed += (s, e) =>
+            {
+                ErrorBorder.Visibility = Visibility.Collapsed;
+                ErrorText.Text = string.Empty;
+            };
+            ErrorBorder.BeginAnimation(OpacityProperty, fadeOut);
+        }
     }
 
     private void ShakeCard()
@@ -195,14 +252,58 @@ public partial class LoginView : UserControl
         storyboard.Begin(LoginCard);
     }
 
-    private void ShowLoading(bool show)
+    private void ShowLoading(bool show, string? text = null, string? subtext = null)
     {
-        LoadingOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        if (show)
+        {
+            LoadingText.Text = text ?? "Loading...";
+            LoadingSubtext.Text = subtext ?? "Please wait...";
+
+            LoadingOverlay.Opacity = 0;
+            LoadingOverlay.Visibility = Visibility.Visible;
+
+            var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
+            LoadingOverlay.BeginAnimation(OpacityProperty, fadeIn);
+
+            // Start spinner animation
+            _spinnerStoryboard?.Begin(this, true);
+        }
+        else
+        {
+            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(150));
+            fadeOut.Completed += (s, e) =>
+            {
+                LoadingOverlay.Visibility = Visibility.Collapsed;
+                _spinnerStoryboard?.Stop(this);
+            };
+            LoadingOverlay.BeginAnimation(OpacityProperty, fadeOut);
+        }
+
         ActionButton.IsEnabled = !show;
         UsernameBox.IsEnabled = !show;
         PasswordBox.IsEnabled = !show;
         EmailBox.IsEnabled = !show;
         ConfirmPasswordBox.IsEnabled = !show;
+    }
+
+    private void UpdateLoadingText(string text, string subtext)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            // Quick fade transition for text change
+            var fadeOut = new DoubleAnimation(1, 0.5, TimeSpan.FromMilliseconds(80));
+            fadeOut.Completed += (s, e) =>
+            {
+                LoadingText.Text = text;
+                LoadingSubtext.Text = subtext;
+
+                var fadeIn = new DoubleAnimation(0.5, 1, TimeSpan.FromMilliseconds(120));
+                LoadingText.BeginAnimation(OpacityProperty, fadeIn);
+                LoadingSubtext.BeginAnimation(OpacityProperty, fadeIn);
+            };
+            LoadingText.BeginAnimation(OpacityProperty, fadeOut);
+            LoadingSubtext.BeginAnimation(OpacityProperty, fadeOut);
+        });
     }
 
     private void MinimizeButton_Click(object sender, RoutedEventArgs e)

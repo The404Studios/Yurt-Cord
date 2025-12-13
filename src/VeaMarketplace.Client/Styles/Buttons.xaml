@@ -15,14 +15,19 @@
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="border"
                             Background="{TemplateBinding Background}"
-                            CornerRadius="4"
-                            Padding="{TemplateBinding Padding}">
+                            CornerRadius="6"
+                            Padding="{TemplateBinding Padding}"
+                            RenderTransformOrigin="0.5,0.5">
                         <Border.RenderTransform>
-                            <ScaleTransform x:Name="scale" ScaleX="1" ScaleY="1"/>
+                            <TransformGroup>
+                                <ScaleTransform x:Name="scale" ScaleX="1" ScaleY="1"/>
+                                <TranslateTransform x:Name="translate"/>
+                            </TransformGroup>
                         </Border.RenderTransform>
-                        <Border.RenderTransformOrigin>
-                            <Point X="0.5" Y="0.5"/>
-                        </Border.RenderTransformOrigin>
+                        <Border.Effect>
+                            <DropShadowEffect x:Name="shadow" BlurRadius="0" ShadowDepth="0"
+                                              Color="#5865F2" Opacity="0"/>
+                        </Border.Effect>
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -32,15 +37,33 @@
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="border" Property="Background" Value="#3C45A5"/>
                         </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="border" Property="Background" Value="#404249"/>
+                            <Setter Property="Foreground" Value="#72767D"/>
+                        </Trigger>
                         <EventTrigger RoutedEvent="MouseEnter">
                             <BeginStoryboard>
                                 <Storyboard>
                                     <DoubleAnimation Storyboard.TargetName="scale"
                                                      Storyboard.TargetProperty="ScaleX"
-                                                     To="1.02" Duration="0:0:0.1"/>
+                                                     To="1.02" Duration="0:0:0.15">
+                                        <DoubleAnimation.EasingFunction>
+                                            <CubicEase EasingMode="EaseOut"/>
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
                                     <DoubleAnimation Storyboard.TargetName="scale"
                                                      Storyboard.TargetProperty="ScaleY"
-                                                     To="1.02" Duration="0:0:0.1"/>
+                                                     To="1.02" Duration="0:0:0.15">
+                                        <DoubleAnimation.EasingFunction>
+                                            <CubicEase EasingMode="EaseOut"/>
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetName="shadow"
+                                                     Storyboard.TargetProperty="BlurRadius"
+                                                     To="12" Duration="0:0:0.15"/>
+                                    <DoubleAnimation Storyboard.TargetName="shadow"
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="0.4" Duration="0:0:0.15"/>
                                 </Storyboard>
                             </BeginStoryboard>
                         </EventTrigger>
@@ -49,10 +72,56 @@
                                 <Storyboard>
                                     <DoubleAnimation Storyboard.TargetName="scale"
                                                      Storyboard.TargetProperty="ScaleX"
-                                                     To="1" Duration="0:0:0.1"/>
+                                                     To="1" Duration="0:0:0.15">
+                                        <DoubleAnimation.EasingFunction>
+                                            <CubicEase EasingMode="EaseOut"/>
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
                                     <DoubleAnimation Storyboard.TargetName="scale"
                                                      Storyboard.TargetProperty="ScaleY"
-                                                     To="1" Duration="0:0:0.1"/>
+                                                     To="1" Duration="0:0:0.15">
+                                        <DoubleAnimation.EasingFunction>
+                                            <CubicEase EasingMode="EaseOut"/>
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetName="shadow"
+                                                     Storyboard.TargetProperty="BlurRadius"
+                                                     To="0" Duration="0:0:0.15"/>
+                                    <DoubleAnimation Storyboard.TargetName="shadow"
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="0" Duration="0:0:0.15"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="PreviewMouseDown">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="0.98" Duration="0:0:0.08"/>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="0.98" Duration="0:0:0.08"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="PreviewMouseUp">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="1.02" Duration="0:0:0.1">
+                                        <DoubleAnimation.EasingFunction>
+                                            <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="1.02" Duration="0:0:0.1">
+                                        <DoubleAnimation.EasingFunction>
+                                            <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
                                 </Storyboard>
                             </BeginStoryboard>
                         </EventTrigger>
@@ -75,8 +144,12 @@
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="border"
                             Background="{TemplateBinding Background}"
-                            CornerRadius="4"
-                            Padding="{TemplateBinding Padding}">
+                            CornerRadius="6"
+                            Padding="{TemplateBinding Padding}"
+                            RenderTransformOrigin="0.5,0.5">
+                        <Border.RenderTransform>
+                            <ScaleTransform x:Name="scale" ScaleX="1" ScaleY="1"/>
+                        </Border.RenderTransform>
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -86,6 +159,66 @@
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="border" Property="Background" Value="#5D6269"/>
                         </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="border" Property="Background" Value="#2B2D31"/>
+                            <Setter Property="Foreground" Value="#72767D"/>
+                        </Trigger>
+                        <EventTrigger RoutedEvent="MouseEnter">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="1.02" Duration="0:0:0.12">
+                                        <DoubleAnimation.EasingFunction>
+                                            <CubicEase EasingMode="EaseOut"/>
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="1.02" Duration="0:0:0.12">
+                                        <DoubleAnimation.EasingFunction>
+                                            <CubicEase EasingMode="EaseOut"/>
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="MouseLeave">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="1" Duration="0:0:0.12"/>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="1" Duration="0:0:0.12"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="PreviewMouseDown">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="0.97" Duration="0:0:0.06"/>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="0.97" Duration="0:0:0.06"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="PreviewMouseUp">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="1.02" Duration="0:0:0.1"/>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="1.02" Duration="0:0:0.1"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -105,14 +238,85 @@
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="border"
                             Background="{TemplateBinding Background}"
-                            CornerRadius="4">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            CornerRadius="6"
+                            RenderTransformOrigin="0.5,0.5">
+                        <Border.RenderTransform>
+                            <ScaleTransform x:Name="scale" ScaleX="1" ScaleY="1"/>
+                        </Border.RenderTransform>
+                        <ContentPresenter x:Name="content" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="border" Property="Background" Value="#40444B"/>
                             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
                         </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#36393F"/>
+                        </Trigger>
+                        <EventTrigger RoutedEvent="MouseEnter">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="1.1" Duration="0:0:0.12">
+                                        <DoubleAnimation.EasingFunction>
+                                            <BackEase EasingMode="EaseOut" Amplitude="0.5"/>
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="1.1" Duration="0:0:0.12">
+                                        <DoubleAnimation.EasingFunction>
+                                            <BackEase EasingMode="EaseOut" Amplitude="0.5"/>
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="MouseLeave">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="1" Duration="0:0:0.1"/>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="1" Duration="0:0:0.1"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="PreviewMouseDown">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="0.9" Duration="0:0:0.05"/>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="0.9" Duration="0:0:0.05"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="PreviewMouseUp">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="1.1" Duration="0:0:0.08">
+                                        <DoubleAnimation.EasingFunction>
+                                            <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="1.1" Duration="0:0:0.08">
+                                        <DoubleAnimation.EasingFunction>
+                                            <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -133,8 +337,16 @@
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="border"
                             Background="{TemplateBinding Background}"
-                            CornerRadius="4"
-                            Padding="{TemplateBinding Padding}">
+                            CornerRadius="6"
+                            Padding="{TemplateBinding Padding}"
+                            RenderTransformOrigin="0.5,0.5">
+                        <Border.RenderTransform>
+                            <ScaleTransform x:Name="scale" ScaleX="1" ScaleY="1"/>
+                        </Border.RenderTransform>
+                        <Border.Effect>
+                            <DropShadowEffect x:Name="shadow" BlurRadius="0" ShadowDepth="0"
+                                              Color="#ED4245" Opacity="0"/>
+                        </Border.Effect>
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -144,6 +356,54 @@
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="border" Property="Background" Value="#9B2C2C"/>
                         </Trigger>
+                        <EventTrigger RoutedEvent="MouseEnter">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="1.02" Duration="0:0:0.12"/>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="1.02" Duration="0:0:0.12"/>
+                                    <DoubleAnimation Storyboard.TargetName="shadow"
+                                                     Storyboard.TargetProperty="BlurRadius"
+                                                     To="12" Duration="0:0:0.15"/>
+                                    <DoubleAnimation Storyboard.TargetName="shadow"
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="0.4" Duration="0:0:0.15"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="MouseLeave">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="1" Duration="0:0:0.12"/>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="1" Duration="0:0:0.12"/>
+                                    <DoubleAnimation Storyboard.TargetName="shadow"
+                                                     Storyboard.TargetProperty="BlurRadius"
+                                                     To="0" Duration="0:0:0.15"/>
+                                    <DoubleAnimation Storyboard.TargetName="shadow"
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="0" Duration="0:0:0.15"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="PreviewMouseDown">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="0.97" Duration="0:0:0.06"/>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="0.97" Duration="0:0:0.06"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -165,7 +425,11 @@
                     <Border x:Name="border"
                             Background="{TemplateBinding Background}"
                             CornerRadius="4"
-                            Padding="{TemplateBinding Padding}">
+                            Padding="{TemplateBinding Padding}"
+                            RenderTransformOrigin="0.5,0.5">
+                        <Border.RenderTransform>
+                            <TranslateTransform x:Name="translate"/>
+                        </Border.RenderTransform>
                         <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                           VerticalAlignment="Center"/>
                     </Border>
@@ -174,6 +438,28 @@
                             <Setter TargetName="border" Property="Background" Value="#34373C"/>
                             <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
                         </Trigger>
+                        <EventTrigger RoutedEvent="MouseEnter">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="translate"
+                                                     Storyboard.TargetProperty="X"
+                                                     To="3" Duration="0:0:0.1">
+                                        <DoubleAnimation.EasingFunction>
+                                            <CubicEase EasingMode="EaseOut"/>
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="MouseLeave">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="translate"
+                                                     Storyboard.TargetProperty="X"
+                                                     To="0" Duration="0:0:0.1"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -194,8 +480,12 @@
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="border"
                             Background="{TemplateBinding Background}"
-                            CornerRadius="4"
-                            Padding="{TemplateBinding Padding}">
+                            CornerRadius="6"
+                            Padding="{TemplateBinding Padding}"
+                            RenderTransformOrigin="0.5,0.5">
+                        <Border.RenderTransform>
+                            <ScaleTransform x:Name="scale" ScaleX="1" ScaleY="1"/>
+                        </Border.RenderTransform>
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -205,6 +495,42 @@
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="border" Property="Background" Value="#3C45A5"/>
                         </Trigger>
+                        <EventTrigger RoutedEvent="MouseEnter">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="1.02" Duration="0:0:0.12"/>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="1.02" Duration="0:0:0.12"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="MouseLeave">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="1" Duration="0:0:0.1"/>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="1" Duration="0:0:0.1"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="PreviewMouseDown">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="0.97" Duration="0:0:0.05"/>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="0.97" Duration="0:0:0.05"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -225,7 +551,11 @@
                     <Border x:Name="border"
                             Background="{TemplateBinding Background}"
                             CornerRadius="4"
-                            Padding="{TemplateBinding Padding}">
+                            Padding="{TemplateBinding Padding}"
+                            RenderTransformOrigin="0.5,0.5">
+                        <Border.RenderTransform>
+                            <ScaleTransform x:Name="scale" ScaleX="1" ScaleY="1"/>
+                        </Border.RenderTransform>
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -236,6 +566,30 @@
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="border" Property="Background" Value="{StaticResource QuaternaryDarkBrush}"/>
                         </Trigger>
+                        <EventTrigger RoutedEvent="MouseEnter">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="1.03" Duration="0:0:0.1"/>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="1.03" Duration="0:0:0.1"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="MouseLeave">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="1" Duration="0:0:0.1"/>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="1" Duration="0:0:0.1"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -288,7 +642,11 @@
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="border"
                             Background="{TemplateBinding Background}"
-                            CornerRadius="4">
+                            CornerRadius="4"
+                            RenderTransformOrigin="0.5,0.5">
+                        <Border.RenderTransform>
+                            <ScaleTransform x:Name="scale" ScaleX="1" ScaleY="1"/>
+                        </Border.RenderTransform>
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -298,6 +656,38 @@
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="border" Property="Background" Value="{StaticResource QuaternaryDarkBrush}"/>
                         </Trigger>
+                        <EventTrigger RoutedEvent="MouseEnter">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="1.15" Duration="0:0:0.1">
+                                        <DoubleAnimation.EasingFunction>
+                                            <BackEase EasingMode="EaseOut" Amplitude="0.5"/>
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="1.15" Duration="0:0:0.1">
+                                        <DoubleAnimation.EasingFunction>
+                                            <BackEase EasingMode="EaseOut" Amplitude="0.5"/>
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="MouseLeave">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="1" Duration="0:0:0.08"/>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="1" Duration="0:0:0.08"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -320,7 +710,11 @@
                             CornerRadius="10"
                             Padding="{TemplateBinding Padding}"
                             BorderThickness="1"
-                            BorderBrush="Transparent">
+                            BorderBrush="Transparent"
+                            RenderTransformOrigin="0.5,0.5">
+                        <Border.RenderTransform>
+                            <ScaleTransform x:Name="scale" ScaleX="1" ScaleY="1"/>
+                        </Border.RenderTransform>
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -331,6 +725,38 @@
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="border" Property="Background" Value="{StaticResource AccentBrush}"/>
                         </Trigger>
+                        <EventTrigger RoutedEvent="MouseEnter">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="1.08" Duration="0:0:0.1">
+                                        <DoubleAnimation.EasingFunction>
+                                            <BackEase EasingMode="EaseOut" Amplitude="0.4"/>
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="1.08" Duration="0:0:0.1">
+                                        <DoubleAnimation.EasingFunction>
+                                            <BackEase EasingMode="EaseOut" Amplitude="0.4"/>
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="MouseLeave">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="1" Duration="0:0:0.08"/>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="1" Duration="0:0:0.08"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -377,10 +803,17 @@
                     <Border x:Name="track" Background="{StaticResource QuaternaryDarkBrush}"
                             CornerRadius="12" Padding="2">
                         <Ellipse x:Name="thumb" Width="20" Height="20"
-                                 Fill="White" HorizontalAlignment="Left">
+                                 Fill="White" HorizontalAlignment="Left"
+                                 RenderTransformOrigin="0.5,0.5">
                             <Ellipse.RenderTransform>
-                                <TranslateTransform x:Name="thumbTranslate" X="0"/>
+                                <TransformGroup>
+                                    <ScaleTransform x:Name="thumbScale" ScaleX="1" ScaleY="1"/>
+                                    <TranslateTransform x:Name="thumbTranslate" X="0"/>
+                                </TransformGroup>
                             </Ellipse.RenderTransform>
+                            <Ellipse.Effect>
+                                <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.3"/>
+                            </Ellipse.Effect>
                         </Ellipse>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -391,7 +824,25 @@
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="thumbTranslate"
                                                          Storyboard.TargetProperty="X"
-                                                         To="20" Duration="0:0:0.15"/>
+                                                         To="20" Duration="0:0:0.2">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="thumbScale"
+                                                         Storyboard.TargetProperty="ScaleX"
+                                                         To="1.1" Duration="0:0:0.1" AutoReverse="True">
+                                            <DoubleAnimation.EasingFunction>
+                                                <QuadraticEase EasingMode="EaseOut"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="thumbScale"
+                                                         Storyboard.TargetProperty="ScaleY"
+                                                         To="1.1" Duration="0:0:0.1" AutoReverse="True">
+                                            <DoubleAnimation.EasingFunction>
+                                                <QuadraticEase EasingMode="EaseOut"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.EnterActions>
@@ -400,7 +851,17 @@
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="thumbTranslate"
                                                          Storyboard.TargetProperty="X"
-                                                         To="0" Duration="0:0:0.15"/>
+                                                         To="0" Duration="0:0:0.2">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="thumbScale"
+                                                         Storyboard.TargetProperty="ScaleX"
+                                                         To="1.1" Duration="0:0:0.1" AutoReverse="True"/>
+                                        <DoubleAnimation Storyboard.TargetName="thumbScale"
+                                                         Storyboard.TargetProperty="ScaleY"
+                                                         To="1.1" Duration="0:0:0.1" AutoReverse="True"/>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.ExitActions>
@@ -408,6 +869,93 @@
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="thumb" Property="Fill" Value="#F0F0F0"/>
                         </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Success Button Style -->
+    <Style x:Key="SuccessButton" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource AccentGreenBrush}"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Padding" Value="20,12"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="6"
+                            Padding="{TemplateBinding Padding}"
+                            RenderTransformOrigin="0.5,0.5">
+                        <Border.RenderTransform>
+                            <ScaleTransform x:Name="scale" ScaleX="1" ScaleY="1"/>
+                        </Border.RenderTransform>
+                        <Border.Effect>
+                            <DropShadowEffect x:Name="shadow" BlurRadius="0" ShadowDepth="0"
+                                              Color="#43B581" Opacity="0"/>
+                        </Border.Effect>
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#3CA374"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="#359B68"/>
+                        </Trigger>
+                        <EventTrigger RoutedEvent="MouseEnter">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="1.02" Duration="0:0:0.12"/>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="1.02" Duration="0:0:0.12"/>
+                                    <DoubleAnimation Storyboard.TargetName="shadow"
+                                                     Storyboard.TargetProperty="BlurRadius"
+                                                     To="12" Duration="0:0:0.15"/>
+                                    <DoubleAnimation Storyboard.TargetName="shadow"
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="0.4" Duration="0:0:0.15"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="MouseLeave">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="1" Duration="0:0:0.1"/>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="1" Duration="0:0:0.1"/>
+                                    <DoubleAnimation Storyboard.TargetName="shadow"
+                                                     Storyboard.TargetProperty="BlurRadius"
+                                                     To="0" Duration="0:0:0.15"/>
+                                    <DoubleAnimation Storyboard.TargetName="shadow"
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="0" Duration="0:0:0.15"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="PreviewMouseDown">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleX"
+                                                     To="0.97" Duration="0:0:0.06"/>
+                                    <DoubleAnimation Storyboard.TargetName="scale"
+                                                     Storyboard.TargetProperty="ScaleY"
+                                                     To="0.97" Duration="0:0:0.06"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

@@ -289,41 +289,57 @@ public partial class MarketplaceView : UserControl
     // Share dialog
     private void ShowShareDialog(ProductDto product)
     {
-        ShareProductTitle.Text = product.Title;
-        ShareProductPrice.Text = $"${product.Price:F2}";
-        ShareLinkBox.Text = $"vea://marketplace/product/{product.Id}";
+        var content = new Controls.ShareContentDialog.ShareableContent
+        {
+            Type = Controls.ShareContentDialog.ShareContentType.Product,
+            Id = product.Id,
+            Title = product.Title,
+            Subtitle = $"${product.Price:F2}",
+            Description = product.Description,
+            ImageUrl = product.ImageUrls?.FirstOrDefault(),
+            ShareLink = $"vea://marketplace/product/{product.Id}"
+        };
+
+        ShareContentDialogControl.SetContent(content);
+
+        // Load sample friends for demo (in production, fetch from FriendService)
+        var sampleFriends = new List<Controls.ShareContentDialog.ShareFriend>
+        {
+            new() { UserId = "1", Username = "JohnDoe", IsOnline = true, AvatarUrl = "pack://application:,,,/Assets/default-avatar.png" },
+            new() { UserId = "2", Username = "JaneSmith", IsOnline = true, AvatarUrl = "pack://application:,,,/Assets/default-avatar.png" },
+            new() { UserId = "3", Username = "Player123", IsOnline = false, AvatarUrl = "pack://application:,,,/Assets/default-avatar.png" }
+        };
+        ShareContentDialogControl.SetFriends(sampleFriends);
+
         ShareDialog.Visibility = Visibility.Visible;
     }
 
-    private void CloseShareDialog_Click(object sender, RoutedEventArgs e)
+    private void ShareContentDialog_CloseRequested(object? sender, EventArgs e)
     {
         ShareDialog.Visibility = Visibility.Collapsed;
+    }
+
+    private void ShareContentDialog_SharedToFriend(object? sender, Controls.ShareContentDialog.ShareFriend friend)
+    {
+        var message = ShareContentDialogControl.GetMessage();
+        ShowToast($"Shared to {friend.Username}!");
+        ShareDialog.Visibility = Visibility.Collapsed;
+    }
+
+    private void ShareContentDialog_SharedToGroup(object? sender, EventArgs e)
+    {
+        ShowToast("Select a group chat to share!");
+    }
+
+    private void ShareContentDialog_LinkCopied(object? sender, EventArgs e)
+    {
+        ShowToast("Link copied to clipboard!");
     }
 
     private void ShareDialogOverlay_MouseDown(object sender, MouseButtonEventArgs e)
     {
         if (e.OriginalSource == ShareDialog)
             ShareDialog.Visibility = Visibility.Collapsed;
-    }
-
-    private void CopyShareLink_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            Clipboard.SetText(ShareLinkBox.Text);
-            ShowToast("Link copied to clipboard!");
-            ShareDialog.Visibility = Visibility.Collapsed;
-        }
-        catch
-        {
-            ShowToast("Failed to copy link");
-        }
-    }
-
-    private void ShareToFriend_Click(object sender, RoutedEventArgs e)
-    {
-        ShowToast("Share to friend feature coming soon!");
-        ShareDialog.Visibility = Visibility.Collapsed;
     }
 
     // My Listings
