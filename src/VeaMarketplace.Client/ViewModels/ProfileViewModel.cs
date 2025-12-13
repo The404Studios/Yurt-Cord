@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using VeaMarketplace.Client.Controls;
 using VeaMarketplace.Client.Services;
 using VeaMarketplace.Shared.DTOs;
+using DtoActivityType = VeaMarketplace.Shared.DTOs.ActivityType;
 
 namespace VeaMarketplace.Client.ViewModels;
 
@@ -324,15 +325,15 @@ public partial class ProfileViewModel : BaseViewModel
 
     private void UpdateActivityText()
     {
-        if (CurrentRichPresence != null && CurrentRichPresence.ActivityType != ActivityType.None)
+        if (CurrentRichPresence != null && CurrentRichPresence.ActivityType != DtoActivityType.None)
         {
             var prefix = CurrentRichPresence.ActivityType switch
             {
-                ActivityType.Playing => "Playing",
-                ActivityType.Streaming => "Streaming",
-                ActivityType.Listening => "Listening to",
-                ActivityType.Watching => "Watching",
-                ActivityType.Competing => "Competing in",
+                DtoActivityType.Playing => "Playing",
+                DtoActivityType.Streaming => "Streaming",
+                DtoActivityType.Listening => "Listening to",
+                DtoActivityType.Watching => "Watching",
+                DtoActivityType.Competing => "Competing in",
                 _ => ""
             };
             ActivityText = $"{prefix} {CurrentRichPresence.ActivityName}";

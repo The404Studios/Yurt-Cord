@@ -47,6 +47,13 @@ public class FriendRequestDto
     public string RequesterAvatarUrl { get; set; } = string.Empty;
     public UserRole RequesterRole { get; set; }
     public DateTime RequestedAt { get; set; }
+
+    // Additional fields for both incoming and outgoing request support
+    public string RecipientId { get; set; } = string.Empty;
+    public string RecipientUsername { get; set; } = string.Empty;
+
+    // Alias for RequesterId for clearer semantics
+    public string SenderId => RequesterId;
 }
 
 public class SendFriendRequestDto

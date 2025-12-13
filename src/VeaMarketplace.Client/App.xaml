@@ -30,6 +30,7 @@
             <converters:DefaultAvatarConverter x:Key="DefaultAvatarConverter"/>
 
             <!-- Converter Aliases -->
+            <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
             <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
             <converters:StringToVisibilityConverter x:Key="StringToVisConverter"/>
             <converters:NullToVisibilityConverter x:Key="NullToVisibility"/>
