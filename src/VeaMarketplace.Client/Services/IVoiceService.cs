@@ -90,6 +90,7 @@ public interface IVoiceService
     event Action<string>? OnUserDisconnectedByAdmin;
     event Action<string, string>? OnUserMovedToChannel;
     event Action<string, bool>? OnUserScreenShareChanged;
+    event Action<bool, string>? OnConnectionStateChanged;  // (isConnected, message)
 
     Task ConnectAsync();
     Task DisconnectAsync();
@@ -289,6 +290,12 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     public event Action<byte[], int, int>? OnLocalScreenFrameReady;
     public event Action<string, bool>? OnUserScreenShareChanged;
     public event Action<ScreenShareStats>? OnScreenShareStatsUpdated;
+    public event Action<bool, string>? OnConnectionStateChanged;
+
+    // User info for reconnection
+    private string? _currentUserId;
+    private string? _currentUsername;
+    private string? _currentAvatarUrl;
 
     // Call events
     public event Action<VoiceCallDto>? OnIncomingCall;
@@ -445,6 +452,46 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                 options.PayloadSerializerOptions.PropertyNameCaseInsensitive = true;
             })
             .Build();
+
+        // Handle connection state changes
+        _connection.Reconnecting += error =>
+        {
+            Debug.WriteLine($"Voice connection reconnecting: {error?.Message}");
+            // Notify UI that connection is temporarily lost
+            OnConnectionStateChanged?.Invoke(false, "Reconnecting...");
+            return Task.CompletedTask;
+        };
+
+        _connection.Reconnected += async connectionId =>
+        {
+            Debug.WriteLine($"Voice connection reconnected: {connectionId}");
+            OnConnectionStateChanged?.Invoke(true, "Reconnected");
+
+            // Re-join voice channel if we were in one
+            if (IsInVoiceChannel && !string.IsNullOrEmpty(CurrentChannelId) && !string.IsNullOrEmpty(_currentUserId))
+            {
+                try
+                {
+                    await _connection.InvokeAsync("JoinVoiceChannel", CurrentChannelId, _currentUserId, _currentUsername, _currentAvatarUrl);
+                    Debug.WriteLine($"Re-joined voice channel {CurrentChannelId} after reconnect");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Failed to re-join voice channel after reconnect: {ex.Message}");
+                }
+            }
+        };
+
+        _connection.Closed += error =>
+        {
+            Debug.WriteLine($"Voice connection closed: {error?.Message}");
+            OnConnectionStateChanged?.Invoke(false, error?.Message ?? "Disconnected");
+
+            // Clean up local state
+            IsInVoiceChannel = false;
+            _voiceUsers.Clear();
+            return Task.CompletedTask;
+        };
 
         RegisterHandlers();
         await _connection.StartAsync();
@@ -627,6 +674,11 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     public async Task JoinVoiceChannelAsync(string channelId, string userId, string username, string avatarUrl)
     {
         if (_connection == null || !IsConnected) return;
+
+        // Store user info for reconnection
+        _currentUserId = userId;
+        _currentUsername = username;
+        _currentAvatarUrl = avatarUrl;
 
         await _connection.InvokeAsync("JoinVoiceChannel", channelId, userId, username, avatarUrl);
         IsInVoiceChannel = true;

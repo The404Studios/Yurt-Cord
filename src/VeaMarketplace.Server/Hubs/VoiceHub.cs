@@ -912,13 +912,13 @@ public class VoiceHub : Hub
             }
         }
 
+        // Clean up bandwidth tracking for this connection (keyed by connectionId)
+        _bandwidthUsage.TryRemove(Context.ConnectionId, out _);
+
         // Handle call disconnection
         if (_connectionUsers.TryRemove(Context.ConnectionId, out var userId))
         {
             _userConnections.TryRemove(userId, out _);
-
-            // Clean up bandwidth tracking for this user
-            _bandwidthUsage.TryRemove(userId, out _);
 
             // End any active calls
             if (_callService != null)
