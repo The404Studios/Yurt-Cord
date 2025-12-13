@@ -6,6 +6,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
+using DrawingRectangle = System.Drawing.Rectangle;
 
 namespace VeaMarketplace.Client.Services;
 
@@ -125,7 +126,6 @@ public class ScreenSharingManager : IScreenSharingManager
         _isConnected = false;
 
         // Clear callbacks immediately to prevent async operations
-        var notifyStop = _notifyStopFunc;
         _sendFrameFunc = null;
         _notifyStartFunc = null;
         _notifyStopFunc = null;
@@ -429,29 +429,39 @@ public class ScreenSharingManager : IScreenSharingManager
         }
 
         // Try to initialize hardware encoder (H.264 with GPU acceleration)
-        try
+        // First check if FFmpeg is available at all
+        if (!FFmpegHelper.IsAvailable)
         {
-            _hardwareEncoder?.Dispose();
-            _hardwareEncoder = new HardwareVideoEncoder();
-
-            if (_hardwareEncoder.Initialize(_settings.TargetWidth, _settings.TargetHeight, _settings.TargetFps, _settings.BitrateKbps))
-            {
-                _useHardwareEncoding = true;
-                Debug.WriteLine($"Hardware encoding enabled: {_hardwareEncoder.EncoderName} (GPU: {_hardwareEncoder.IsHardwareAccelerated})");
-            }
-            else
-            {
-                _useHardwareEncoding = false;
-                _hardwareEncoder.Dispose();
-                _hardwareEncoder = null;
-                Debug.WriteLine("Hardware encoding unavailable, using JPEG fallback");
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"Failed to initialize hardware encoder: {ex.Message}");
+            Debug.WriteLine("FFmpeg not available, using JPEG encoding only");
             _useHardwareEncoding = false;
             _hardwareEncoder = null;
+        }
+        else
+        {
+            try
+            {
+                _hardwareEncoder?.Dispose();
+                _hardwareEncoder = new HardwareVideoEncoder();
+
+                if (_hardwareEncoder.Initialize(_settings.TargetWidth, _settings.TargetHeight, _settings.TargetFps, _settings.BitrateKbps))
+                {
+                    _useHardwareEncoding = true;
+                    Debug.WriteLine($"Hardware encoding enabled: {_hardwareEncoder.EncoderName} (GPU: {_hardwareEncoder.IsHardwareAccelerated})");
+                }
+                else
+                {
+                    _useHardwareEncoding = false;
+                    _hardwareEncoder.Dispose();
+                    _hardwareEncoder = null;
+                    Debug.WriteLine("Hardware encoding unavailable, using JPEG fallback");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to initialize hardware encoder: {ex.Message}");
+                _useHardwareEncoding = false;
+                _hardwareEncoder = null;
+            }
         }
     }
 
@@ -1034,18 +1044,41 @@ public class ScreenSharingManager : IScreenSharingManager
         // If H.264, decode to JPEG so existing consumers can display it
         if (isH264)
         {
-            _decoderLock.EnterReadLock();
+            // First check if FFmpeg is even available
+            if (!FFmpegHelper.IsAvailable)
+            {
+                Debug.WriteLine($"Cannot decode H.264 from {senderConnectionId} - FFmpeg not available. Install FFmpeg to view H.264 streams.");
+                return;
+            }
+
+            _decoderLock.EnterWriteLock();
             try
             {
+                // Check if we already have a failed decoder for this sender
+                if (_h264Decoders.TryGetValue(senderConnectionId, out var existingDecoder))
+                {
+                    if (existingDecoder.IsDisposed || existingDecoder.DecoderName == "none")
+                    {
+                        // Decoder failed previously, skip H.264 decoding
+                        return;
+                    }
+                }
+
                 var decoder = _h264Decoders.GetOrAdd(senderConnectionId, _ =>
                 {
                     var d = new HardwareVideoDecoder();
-                    d.Initialize();
-                    Debug.WriteLine($"Created H.264 decoder for {senderConnectionId}: {d.DecoderName}");
+                    if (!d.Initialize())
+                    {
+                        Debug.WriteLine($"Failed to initialize H.264 decoder for {senderConnectionId}");
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"Created H.264 decoder for {senderConnectionId}: {d.DecoderName} (HW: {d.IsHardwareAccelerated})");
+                    }
                     return d;
                 });
 
-                if (!decoder.IsDisposed)
+                if (!decoder.IsDisposed && decoder.DecoderName != "none")
                 {
                     var (decodedData, decodedWidth, decodedHeight, stride) = decoder.DecodeFrameRaw(frameData);
                     if (decodedData != null && decodedData.Length > 0)
@@ -1057,9 +1090,14 @@ public class ScreenSharingManager : IScreenSharingManager
                     }
                     else
                     {
-                        // Decode failed, skip this frame
+                        // Decode failed (might need keyframe), skip this frame silently
                         return;
                     }
+                }
+                else
+                {
+                    // Decoder not available, can't decode H.264
+                    return;
                 }
             }
             catch (Exception ex)
@@ -1069,7 +1107,7 @@ public class ScreenSharingManager : IScreenSharingManager
             }
             finally
             {
-                _decoderLock.ExitReadLock();
+                _decoderLock.ExitWriteLock();
             }
         }
 
@@ -1097,7 +1135,7 @@ public class ScreenSharingManager : IScreenSharingManager
     {
         using var bitmap = new Bitmap(width, height, PixelFormat.Format24bppRgb);
         var bitmapData = bitmap.LockBits(
-            new Rectangle(0, 0, width, height),
+            new DrawingRectangle(0, 0, width, height),
             ImageLockMode.WriteOnly,
             PixelFormat.Format24bppRgb);
 

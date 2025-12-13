@@ -239,6 +239,15 @@ public class FriendHub : Hub
     }
 
     // Direct Messages
+    public async Task GetConversations()
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        var conversations = _dmService.GetConversations(userId);
+        await Clients.Caller.SendAsync("Conversations", conversations);
+    }
+
     public async Task GetDMHistory(string partnerId)
     {
         if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
