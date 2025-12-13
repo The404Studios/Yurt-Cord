@@ -9,6 +9,10 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize">
 
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </Window.Resources>
+
     <Border Background="#2B2D31" CornerRadius="12" Margin="10">
         <Border.Effect>
             <DropShadowEffect BlurRadius="20" ShadowDepth="3"
@@ -269,8 +273,4 @@
             </Grid>
         </Grid>
     </Border>
-
-    <Window.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
-    </Window.Resources>
 </Window>

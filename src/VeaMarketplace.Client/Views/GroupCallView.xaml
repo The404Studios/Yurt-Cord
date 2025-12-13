@@ -83,15 +83,10 @@
                             <Grid>
                                 <!-- Speaking Indicator Border -->
                                 <Border CornerRadius="12" BorderThickness="3"
-                                        BorderBrush="{Binding IsSpeaking, Converter={StaticResource BoolToVis}}"
                                         Visibility="{Binding IsSpeaking, Converter={StaticResource BoolToVis}}">
                                     <Border.Style>
                                         <Style TargetType="Border">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsSpeaking}" Value="True">
-                                                    <Setter Property="BorderBrush" Value="#43B581"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
+                                            <Setter Property="BorderBrush" Value="#43B581"/>
                                         </Style>
                                     </Border.Style>
                                 </Border>
