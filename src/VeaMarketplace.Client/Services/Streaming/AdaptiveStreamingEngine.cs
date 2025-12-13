@@ -214,8 +214,8 @@ public class DeltaResult
     public bool IsKeyFrame { get; set; }
     public float ChangePercentage { get; set; }
     public bool IsHighMotion { get; set; }
-    public Rectangle[] ChangedRegions { get; set; } = Array.Empty<Rectangle>();
-    public Rectangle BoundingBox { get; set; }
+    public System.Drawing.Rectangle[] ChangedRegions { get; set; } = Array.Empty<System.Drawing.Rectangle>();
+    public System.Drawing.Rectangle BoundingBox { get; set; }
 }
 
 /// <summary>
