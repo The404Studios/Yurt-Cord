@@ -203,6 +203,12 @@ public unsafe class HardwareVideoEncoder : IDisposable
 
             // Allocate frame
             _frame = ffmpeg.av_frame_alloc();
+            if (_frame == null)
+            {
+                Debug.WriteLine("Failed to allocate AVFrame");
+                Cleanup();
+                return false;
+            }
             _frame->format = (int)_codecContext->pix_fmt;
             _frame->width = Width;
             _frame->height = Height;
@@ -217,6 +223,12 @@ public unsafe class HardwareVideoEncoder : IDisposable
 
             // Allocate packet
             _packet = ffmpeg.av_packet_alloc();
+            if (_packet == null)
+            {
+                Debug.WriteLine("Failed to allocate AVPacket");
+                Cleanup();
+                return false;
+            }
 
             // Initialize color space converter (BGR24 -> YUV420P)
             _swsContext = ffmpeg.sws_getContext(
