@@ -160,7 +160,207 @@ public partial class ChatMessageControl : UserControl
 
         // Display attachments
         DisplayAttachments(message.Attachments);
+
+        // Display embeds (shared posts, products, auctions)
+        DisplayEmbeds(message.Embeds);
+
+        // Display reactions
+        DisplayReactions(message.Reactions);
     }
+
+    private void DisplayEmbeds(List<MessageEmbedDto>? embeds)
+    {
+        EmbedsContainer.Children.Clear();
+
+        if (embeds == null || embeds.Count == 0)
+        {
+            EmbedsContainer.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        EmbedsContainer.Visibility = Visibility.Visible;
+
+        foreach (var embed in embeds)
+        {
+            var embedControl = new SharedPostEmbed();
+
+            var content = new EmbeddedContent
+            {
+                Id = embed.ContentId ?? embed.Id,
+                Type = MapEmbedType(embed.Type),
+                Title = embed.Title,
+                Subtitle = embed.Subtitle,
+                Description = embed.Description,
+                ImageUrl = embed.ImageUrl ?? embed.ThumbnailUrl,
+                Price = embed.Price,
+                OriginalPrice = embed.OriginalPrice,
+                CurrentBid = embed.CurrentBid,
+                MinBidIncrement = embed.MinBidIncrement ?? 1,
+                AuctionEndsAt = embed.AuctionEndsAt,
+                SellerUsername = embed.SellerUsername,
+                SellerAvatarUrl = embed.SellerAvatarUrl,
+                SellerRole = embed.SellerRole
+            };
+
+            embedControl.SetContent(content);
+            embedControl.Margin = new Thickness(0, 0, 0, 8);
+
+            // Wire up events
+            embedControl.ViewClicked += EmbedControl_ViewClicked;
+            embedControl.ShareClicked += EmbedControl_ShareClicked;
+            embedControl.LinkCopied += EmbedControl_LinkCopied;
+            embedControl.BidClicked += EmbedControl_BidClicked;
+            embedControl.ReactionClicked += EmbedControl_ReactionClicked;
+
+            EmbedsContainer.Children.Add(embedControl);
+        }
+    }
+
+    private void DisplayReactions(List<MessageReactionDto>? reactions)
+    {
+        ReactionsContainer.Children.Clear();
+
+        if (reactions == null || reactions.Count == 0)
+        {
+            ReactionsContainer.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        ReactionsContainer.Visibility = Visibility.Visible;
+
+        // Group reactions by emoji
+        var grouped = reactions
+            .GroupBy(r => r.Emoji)
+            .Select(g => new
+            {
+                Emoji = g.Key,
+                Count = g.Count(),
+                Users = g.Select(r => r.Username).ToList(),
+                HasUserReacted = g.Any(r => IsCurrentUser(r.UserId))
+            })
+            .ToList();
+
+        foreach (var group in grouped)
+        {
+            var btn = new Button
+            {
+                Style = (Style)FindResource("ReactionButton"),
+                Tag = group.Emoji,
+                Margin = new Thickness(0, 0, 6, 0)
+            };
+
+            var stack = new StackPanel { Orientation = Orientation.Horizontal };
+            stack.Children.Add(new TextBlock
+            {
+                Text = group.Emoji,
+                FontSize = 14,
+                Margin = new Thickness(0, 0, 4, 0)
+            });
+            stack.Children.Add(new TextBlock
+            {
+                Text = group.Count.ToString(),
+                FontSize = 12,
+                Foreground = group.HasUserReacted
+                    ? new SolidColorBrush(Color.FromRgb(88, 101, 242))
+                    : new SolidColorBrush(Color.FromRgb(181, 186, 193))
+            });
+
+            btn.Content = stack;
+            btn.ToolTip = string.Join(", ", group.Users.Take(10)) +
+                (group.Users.Count > 10 ? $" +{group.Users.Count - 10} more" : "");
+
+            btn.Click += (s, e) => ToggleReaction(group.Emoji, group.HasUserReacted);
+
+            ReactionsContainer.Children.Add(btn);
+        }
+
+        // Add reaction button
+        var addBtn = new Button
+        {
+            Style = (Style)FindResource("IconButton"),
+            Width = 28,
+            Height = 28,
+            ToolTip = "Add Reaction"
+        };
+        addBtn.Content = new TextBlock { Text = "+", FontSize = 14 };
+        addBtn.Click += (s, e) => ShowReactionPicker();
+        ReactionsContainer.Children.Add(addBtn);
+    }
+
+    private bool IsCurrentUser(string userId)
+    {
+        var apiService = (IApiService?)App.ServiceProvider.GetService(typeof(IApiService));
+        return apiService?.CurrentUser?.Id == userId;
+    }
+
+    private async void ToggleReaction(string emoji, bool hasReacted)
+    {
+        if (_currentMessage == null) return;
+
+        var chatService = (IChatService?)App.ServiceProvider.GetService(typeof(IChatService));
+        if (chatService != null)
+        {
+            // Toggle reaction - add or remove based on current state
+            // This would call the appropriate service method
+        }
+    }
+
+    private void ShowReactionPicker()
+    {
+        // Could show a popup with common emojis
+    }
+
+    private static EmbedType MapEmbedType(EmbedContentType type)
+    {
+        return type switch
+        {
+            EmbedContentType.Product => EmbedType.Product,
+            EmbedContentType.Auction => EmbedType.Auction,
+            EmbedContentType.Profile => EmbedType.Profile,
+            EmbedContentType.Listing => EmbedType.Listing,
+            _ => EmbedType.Product
+        };
+    }
+
+    private void EmbedControl_ViewClicked(object? sender, EmbedActionEventArgs e)
+    {
+        var navigationService = (INavigationService?)App.ServiceProvider.GetService(typeof(INavigationService));
+        switch (e.ContentType)
+        {
+            case EmbedType.Product:
+            case EmbedType.Auction:
+                navigationService?.NavigateToProduct(e.ContentId);
+                break;
+            case EmbedType.Profile:
+                navigationService?.NavigateToProfile(e.ContentId);
+                break;
+        }
+    }
+
+    private void EmbedControl_ShareClicked(object? sender, EmbedActionEventArgs e)
+    {
+        OnShareEmbedRequested?.Invoke(this, e);
+    }
+
+    private void EmbedControl_LinkCopied(object? sender, EmbedActionEventArgs e)
+    {
+        // Could show a toast notification
+    }
+
+    private void EmbedControl_BidClicked(object? sender, EmbedBidEventArgs e)
+    {
+        OnBidRequested?.Invoke(this, e);
+    }
+
+    private void EmbedControl_ReactionClicked(object? sender, EmbedReactionEventArgs e)
+    {
+        OnEmbedReactionRequested?.Invoke(this, e);
+    }
+
+    // Events for parent to handle embed interactions
+    public event EventHandler<EmbedActionEventArgs>? OnShareEmbedRequested;
+    public event EventHandler<EmbedBidEventArgs>? OnBidRequested;
+    public event EventHandler<EmbedReactionEventArgs>? OnEmbedReactionRequested;
 
     private void DisplayAttachments(List<MessageAttachmentDto>? attachments)
     {

@@ -210,6 +210,18 @@
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
             </ItemsControl>
+
+            <!-- Embeds Area (Shared Posts, Products, Auctions) -->
+            <StackPanel x:Name="EmbedsContainer" Margin="0,8,0,0"
+                        Visibility="Collapsed">
+                <!-- Embeds will be added dynamically -->
+            </StackPanel>
+
+            <!-- Reactions Area -->
+            <StackPanel x:Name="ReactionsContainer" Orientation="Horizontal"
+                        Margin="0,8,0,0" Visibility="Collapsed">
+                <!-- Reactions will be added dynamically -->
+            </StackPanel>
         </StackPanel>
 
         <!-- Hover Actions -->
