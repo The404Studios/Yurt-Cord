@@ -216,13 +216,7 @@ public class TypingIndicatorDto
     public DateTime Timestamp { get; set; }
 }
 
-public class MessageReactionDto
-{
-    public string MessageId { get; set; } = string.Empty;
-    public string Emoji { get; set; } = string.Empty;
-    public string UserId { get; set; } = string.Empty;
-    public string Username { get; set; } = string.Empty;
-}
+// MessageReactionDto is defined in ChatDTOs.cs
 
 // Voice Room DTOs for room/server system
 public class VoiceRoomDto

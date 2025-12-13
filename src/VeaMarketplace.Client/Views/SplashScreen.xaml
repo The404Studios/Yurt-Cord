@@ -279,9 +279,9 @@
                 </TextBlock>
 
                 <!-- Tagline -->
-                <TextBlock Text="Connect • Trade • Play" FontSize="14"
+                <TextBlock Text="Connect  •  Trade  •  Play" FontSize="14"
                            Foreground="#72767D" HorizontalAlignment="Center"
-                           FontWeight="Medium" Margin="0,0,0,40" LetterSpacing="2"/>
+                           FontWeight="Medium" Margin="0,0,0,40"/>
 
                 <!-- Loading Status -->
                 <StackPanel HorizontalAlignment="Center" Margin="0,0,0,12">
