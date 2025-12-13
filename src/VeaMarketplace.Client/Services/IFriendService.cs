@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Collections.ObjectModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using VeaMarketplace.Client.Models;
 using VeaMarketplace.Shared.DTOs;
 
 namespace VeaMarketplace.Client.Services;

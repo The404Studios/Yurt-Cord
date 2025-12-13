@@ -7,6 +7,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using VeaMarketplace.Client.Models;
 using VeaMarketplace.Client.Services;
+using VeaMarketplace.Shared.DTOs;
 
 namespace VeaMarketplace.Client.Controls;
 
@@ -63,15 +64,16 @@ public partial class MutualFriendsDisplay : UserControl
             _friends.Clear();
             foreach (var friend in mutualFriends)
             {
+                var status = friend.IsOnline ? UserStatus.Online : UserStatus.Offline;
                 _friends.Add(new MutualFriendDisplay
                 {
                     Id = friend.Id,
                     Username = friend.Username,
-                    DisplayName = friend.DisplayName ?? friend.Username,
-                    AvatarUrl = friend.AvatarUrl ?? "/Assets/default-avatar.png",
-                    Status = friend.Status,
-                    StatusColor = GetStatusBrush(friend.Status),
-                    ShowUsername = friend.DisplayName != null && friend.DisplayName != friend.Username
+                    DisplayName = string.IsNullOrEmpty(friend.DisplayName) ? friend.Username : friend.DisplayName,
+                    AvatarUrl = string.IsNullOrEmpty(friend.AvatarUrl) ? "/Assets/default-avatar.png" : friend.AvatarUrl,
+                    Status = status,
+                    StatusColor = GetStatusBrush(status),
+                    ShowUsername = !string.IsNullOrEmpty(friend.DisplayName) && friend.DisplayName != friend.Username
                 });
             }
 
