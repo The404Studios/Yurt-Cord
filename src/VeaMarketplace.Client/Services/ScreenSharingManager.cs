@@ -6,7 +6,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
-using Rectangle = System.Drawing.Rectangle;
+using DrawingRectangle = System.Drawing.Rectangle;
 
 namespace VeaMarketplace.Client.Services;
 
@@ -126,7 +126,6 @@ public class ScreenSharingManager : IScreenSharingManager
         _isConnected = false;
 
         // Clear callbacks immediately to prevent async operations
-        var notifyStop = _notifyStopFunc;
         _sendFrameFunc = null;
         _notifyStartFunc = null;
         _notifyStopFunc = null;
@@ -1098,7 +1097,7 @@ public class ScreenSharingManager : IScreenSharingManager
     {
         using var bitmap = new Bitmap(width, height, PixelFormat.Format24bppRgb);
         var bitmapData = bitmap.LockBits(
-            new Rectangle(0, 0, width, height),
+            new DrawingRectangle(0, 0, width, height),
             ImageLockMode.WriteOnly,
             PixelFormat.Format24bppRgb);
 
