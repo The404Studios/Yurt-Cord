@@ -8,6 +8,58 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Styles/Colors.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Quick Action Button Style -->
+            <Style x:Key="QuickActionButton" TargetType="Button">
+                <Setter Property="Width" Value="32"/>
+                <Setter Property="Height" Value="32"/>
+                <Setter Property="Background" Value="#CC2F3136"/>
+                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                <Setter Property="RenderTransform">
+                    <Setter.Value>
+                        <ScaleTransform ScaleX="1" ScaleY="1"/>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}"
+                                    CornerRadius="16" Padding="6">
+                                <ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{StaticResource AccentBlurpleBrush}"/>
+                        <Trigger.EnterActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                   To="1.1" Duration="0:0:0.1"/>
+                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                   To="1.1" Duration="0:0:0.1"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.EnterActions>
+                        <Trigger.ExitActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                   To="1" Duration="0:0:0.1"/>
+                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                   To="1" Duration="0:0:0.1"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.ExitActions>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -24,10 +76,24 @@
                 <Storyboard>
                     <DoubleAnimation Storyboard.TargetName="CardScale"
                                      Storyboard.TargetProperty="ScaleX"
-                                     To="1.02" Duration="0:0:0.15"/>
+                                     To="1.02" Duration="0:0:0.2">
+                        <DoubleAnimation.EasingFunction>
+                            <CubicEase EasingMode="EaseOut"/>
+                        </DoubleAnimation.EasingFunction>
+                    </DoubleAnimation>
                     <DoubleAnimation Storyboard.TargetName="CardScale"
                                      Storyboard.TargetProperty="ScaleY"
-                                     To="1.02" Duration="0:0:0.15"/>
+                                     To="1.02" Duration="0:0:0.2">
+                        <DoubleAnimation.EasingFunction>
+                            <CubicEase EasingMode="EaseOut"/>
+                        </DoubleAnimation.EasingFunction>
+                    </DoubleAnimation>
+                    <DoubleAnimation Storyboard.TargetName="QuickActions"
+                                     Storyboard.TargetProperty="Opacity"
+                                     To="1" Duration="0:0:0.2"/>
+                    <DoubleAnimation Storyboard.TargetName="ImageOverlay"
+                                     Storyboard.TargetProperty="Opacity"
+                                     To="0.3" Duration="0:0:0.2"/>
                 </Storyboard>
             </BeginStoryboard>
         </EventTrigger>
@@ -36,80 +102,153 @@
                 <Storyboard>
                     <DoubleAnimation Storyboard.TargetName="CardScale"
                                      Storyboard.TargetProperty="ScaleX"
-                                     To="1" Duration="0:0:0.15"/>
+                                     To="1" Duration="0:0:0.2"/>
                     <DoubleAnimation Storyboard.TargetName="CardScale"
                                      Storyboard.TargetProperty="ScaleY"
-                                     To="1" Duration="0:0:0.15"/>
+                                     To="1" Duration="0:0:0.2"/>
+                    <DoubleAnimation Storyboard.TargetName="QuickActions"
+                                     Storyboard.TargetProperty="Opacity"
+                                     To="0" Duration="0:0:0.15"/>
+                    <DoubleAnimation Storyboard.TargetName="ImageOverlay"
+                                     Storyboard.TargetProperty="Opacity"
+                                     To="0" Duration="0:0:0.15"/>
                 </Storyboard>
             </BeginStoryboard>
         </EventTrigger>
     </UserControl.Triggers>
 
-    <Border Background="{StaticResource SecondaryDarkBrush}"
-            CornerRadius="8" MouseLeftButtonDown="Card_Click">
+    <Border x:Name="MainBorder" Background="{StaticResource SecondaryDarkBrush}"
+            CornerRadius="10" MouseLeftButtonDown="Card_Click">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.2" Color="Black"/>
+        </Border.Effect>
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="160"/>
+                <RowDefinition Height="170"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
             <!-- Product Image -->
-            <Border Grid.Row="0" CornerRadius="8,8,0,0"
-                    Background="{StaticResource PrimaryDarkBrush}">
+            <Border Grid.Row="0" CornerRadius="10,10,0,0"
+                    Background="{StaticResource PrimaryDarkBrush}" ClipToBounds="True">
                 <Grid>
                     <Image x:Name="ProductImage" Stretch="UniformToFill"/>
-                    <TextBlock x:Name="NoImageText" Text="📦" FontSize="48"
+                    <TextBlock x:Name="NoImageText" Text="&#x1F4E6;" FontSize="48"
                                HorizontalAlignment="Center" VerticalAlignment="Center"
                                Foreground="{StaticResource TextMutedBrush}"/>
 
-                    <!-- Featured Badge -->
-                    <Border x:Name="FeaturedBadge" Visibility="Collapsed"
-                            Background="{StaticResource AccentYellowBrush}"
-                            CornerRadius="4" Padding="8,4"
-                            HorizontalAlignment="Left" VerticalAlignment="Top"
-                            Margin="8">
-                        <TextBlock Text="⭐ FEATURED" FontSize="10" FontWeight="Bold"
-                                   Foreground="#000"/>
+                    <!-- Hover Overlay -->
+                    <Border x:Name="ImageOverlay" Background="Black" Opacity="0"/>
+
+                    <!-- Quick Actions (shown on hover) -->
+                    <StackPanel x:Name="QuickActions" Orientation="Horizontal"
+                                HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Opacity="0">
+                        <Button Style="{StaticResource QuickActionButton}"
+                                ToolTip="Add to Cart" Click="AddToCart_Click" Margin="0,0,8,0">
+                            <TextBlock Text="&#x1F6D2;" FontSize="14"/>
+                        </Button>
+                        <Button Style="{StaticResource QuickActionButton}"
+                                ToolTip="Add to Wishlist" Click="AddToWishlist_Click" Margin="0,0,8,0">
+                            <TextBlock x:Name="WishlistIcon" Text="&#x2661;" FontSize="16"/>
+                        </Button>
+                        <Button Style="{StaticResource QuickActionButton}"
+                                ToolTip="Quick View" Click="QuickView_Click">
+                            <TextBlock Text="&#x1F441;" FontSize="14"/>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- Badges Container -->
+                    <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8">
+                        <!-- Featured Badge -->
+                        <Border x:Name="FeaturedBadge" Visibility="Collapsed"
+                                Background="{StaticResource AccentYellowBrush}"
+                                CornerRadius="4" Padding="8,4" Margin="0,0,0,4">
+                            <TextBlock Text="&#x2B50; FEATURED" FontSize="9" FontWeight="Bold"
+                                       Foreground="#000"/>
+                        </Border>
+
+                        <!-- Sale Badge -->
+                        <Border x:Name="SaleBadge" Visibility="Collapsed"
+                                Background="{StaticResource AccentRedBrush}"
+                                CornerRadius="4" Padding="8,4" Margin="0,0,0,4">
+                            <TextBlock x:Name="SaleBadgeText" Text="SALE" FontSize="9" FontWeight="Bold"
+                                       Foreground="White"/>
+                        </Border>
+
+                        <!-- New Badge -->
+                        <Border x:Name="NewBadge" Visibility="Collapsed"
+                                Background="{StaticResource AccentBlurpleBrush}"
+                                CornerRadius="4" Padding="8,4">
+                            <TextBlock Text="NEW" FontSize="9" FontWeight="Bold"
+                                       Foreground="White"/>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Out of Stock Overlay -->
+                    <Border x:Name="OutOfStockOverlay" Visibility="Collapsed"
+                            Background="#CC000000" CornerRadius="10,10,0,0">
+                        <TextBlock Text="OUT OF STOCK" FontSize="14" FontWeight="Bold"
+                                   Foreground="White" HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
                     </Border>
                 </Grid>
             </Border>
 
             <!-- Product Info -->
-            <StackPanel Grid.Row="1" Margin="12">
+            <StackPanel Grid.Row="1" Margin="14">
                 <!-- Title -->
-                <TextBlock x:Name="TitleText" FontSize="15" FontWeight="Medium"
+                <TextBlock x:Name="TitleText" FontSize="15" FontWeight="SemiBold"
                            Foreground="{StaticResource TextPrimaryBrush}"
                            TextTrimming="CharacterEllipsis"
-                           MaxHeight="40"/>
+                           MaxHeight="40" LineHeight="20"/>
 
-                <!-- Seller -->
-                <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
-                    <TextBlock x:Name="SellerText" FontSize="12"
-                               Foreground="{StaticResource TextMutedBrush}"/>
-                    <Border x:Name="SellerBadge" CornerRadius="3"
-                            Padding="4,1" Margin="6,0,0,0"
-                            VerticalAlignment="Center" Visibility="Collapsed">
-                        <TextBlock x:Name="SellerBadgeText" FontSize="8" FontWeight="Bold"
-                                   Foreground="White"/>
-                    </Border>
-                </StackPanel>
+                <!-- Seller with Rating -->
+                <Grid Margin="0,6,0,8">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock x:Name="SellerText" FontSize="12"
+                                   Foreground="{StaticResource TextMutedBrush}"/>
+                        <Border x:Name="SellerBadge" CornerRadius="3"
+                                Padding="4,1" Margin="6,0,0,0"
+                                VerticalAlignment="Center" Visibility="Collapsed">
+                            <TextBlock x:Name="SellerBadgeText" FontSize="8" FontWeight="Bold"
+                                       Foreground="White"/>
+                        </Border>
+                    </StackPanel>
+                    <!-- Rating -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock x:Name="RatingStars" Text="&#x2B50;" FontSize="11"/>
+                        <TextBlock x:Name="RatingText" Text="4.8" FontSize="11"
+                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="3,0,0,0"/>
+                        <TextBlock x:Name="ReviewCountText" Text="(128)" FontSize="10"
+                                   Foreground="{StaticResource TextMutedBrush}" Margin="3,0,0,0"/>
+                    </StackPanel>
+                </Grid>
 
                 <!-- Category Tag -->
                 <Border x:Name="CategoryBadge" CornerRadius="4"
                         Background="{StaticResource QuaternaryDarkBrush}"
-                        Padding="8,4" HorizontalAlignment="Left" Margin="0,0,0,8">
-                    <TextBlock x:Name="CategoryText" FontSize="11"
+                        Padding="8,4" HorizontalAlignment="Left" Margin="0,0,0,10">
+                    <TextBlock x:Name="CategoryText" FontSize="10"
                                Foreground="{StaticResource TextSecondaryBrush}"/>
                 </Border>
 
-                <!-- Price and Stats -->
+                <!-- Price Row -->
                 <Grid>
-                    <TextBlock x:Name="PriceText" FontSize="20" FontWeight="Bold"
-                               Foreground="{StaticResource AccentGreenBrush}"/>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock x:Name="PriceText" FontSize="20" FontWeight="Bold"
+                                   Foreground="{StaticResource AccentGreenBrush}"/>
+                        <TextBlock x:Name="OriginalPriceText" FontSize="13"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   TextDecorations="Strikethrough"
+                                   VerticalAlignment="Center" Margin="8,2,0,0"
+                                   Visibility="Collapsed"/>
+                    </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
                                 VerticalAlignment="Center">
-                        <TextBlock Text="👁" FontSize="12" Margin="0,0,4,0"/>
-                        <TextBlock x:Name="ViewsText" FontSize="12"
+                        <TextBlock Text="&#x1F441;" FontSize="11" Margin="0,0,4,0"
+                                   Foreground="{StaticResource TextMutedBrush}"/>
+                        <TextBlock x:Name="ViewsText" FontSize="11"
                                    Foreground="{StaticResource TextMutedBrush}"/>
                     </StackPanel>
                 </Grid>
