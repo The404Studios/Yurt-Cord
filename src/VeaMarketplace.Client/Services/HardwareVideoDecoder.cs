@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Media;
@@ -22,6 +23,55 @@ public unsafe class HardwareVideoDecoder : IDisposable
     private bool _initialized;
     private volatile bool _disposed;  // Volatile for thread-safe reads
     private readonly object _lock = new();
+    private static bool _ffmpegInitialized;
+
+    static HardwareVideoDecoder()
+    {
+        InitializeFFmpeg();
+    }
+
+    private static void InitializeFFmpeg()
+    {
+        if (_ffmpegInitialized) return;
+
+        try
+        {
+            // Set FFmpeg binaries path - look in app directory first
+            var appDir = AppDomain.CurrentDomain.BaseDirectory;
+            var ffmpegPath = Path.Combine(appDir, "ffmpeg");
+
+            if (Directory.Exists(ffmpegPath))
+            {
+                ffmpeg.RootPath = ffmpegPath;
+            }
+            else
+            {
+                // Try common installation paths
+                var commonPaths = new[]
+                {
+                    @"C:\ffmpeg\bin",
+                    @"C:\Program Files\ffmpeg\bin",
+                    Environment.GetEnvironmentVariable("FFMPEG_PATH") ?? ""
+                };
+
+                foreach (var path in commonPaths)
+                {
+                    if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
+                    {
+                        ffmpeg.RootPath = path;
+                        break;
+                    }
+                }
+            }
+
+            _ffmpegInitialized = true;
+            Debug.WriteLine($"FFmpeg decoder initialized");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"FFmpeg decoder initialization failed: {ex.Message}");
+        }
+    }
 
     public string DecoderName { get; private set; } = "none";
     public bool IsHardwareAccelerated { get; private set; }
@@ -269,6 +319,9 @@ public unsafe class HardwareVideoDecoder : IDisposable
                         InitializeColorConverter();
                     }
 
+                    // Check if color converter is valid
+                    if (_swsContext == null) return (null, 0, 0, 0);
+
                     ffmpeg.sws_scale(_swsContext,
                         _frame->data, _frame->linesize, 0, Height,
                         _rgbFrame->data, _rgbFrame->linesize);
@@ -276,14 +329,11 @@ public unsafe class HardwareVideoDecoder : IDisposable
                     var stride = _rgbFrame->linesize[0];
                     var bufferSize = stride * Height;
 
-                    if (_rgbBuffer.Length < bufferSize)
-                    {
-                        _rgbBuffer = new byte[bufferSize];
-                    }
+                    // Return a copy of the buffer to avoid race conditions with reused buffer
+                    var outputBuffer = new byte[bufferSize];
+                    Marshal.Copy((IntPtr)_rgbFrame->data[0], outputBuffer, 0, bufferSize);
 
-                    Marshal.Copy((IntPtr)_rgbFrame->data[0], _rgbBuffer, 0, bufferSize);
-
-                    return (_rgbBuffer, Width, Height, stride);
+                    return (outputBuffer, Width, Height, stride);
                 }
             }
             catch
