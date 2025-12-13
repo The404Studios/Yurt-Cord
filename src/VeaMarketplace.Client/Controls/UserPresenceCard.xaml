@@ -37,7 +37,7 @@
                 <!-- Activity Type Label -->
                 <TextBlock x:Name="ActivityTypeText" FontSize="10" FontWeight="Bold"
                            Foreground="{StaticResource TextMutedBrush}"
-                           TextTransform="Uppercase" Margin="0,0,0,2"/>
+                           Margin="0,0,0,2"/>
 
                 <!-- Activity Name (e.g., Game name, Song name) -->
                 <TextBlock x:Name="ActivityNameText" FontSize="14" FontWeight="SemiBold"

@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using VeaMarketplace.Client.Models;
 using VeaMarketplace.Client.Services;
+using VeaMarketplace.Shared.DTOs;
 
 namespace VeaMarketplace.Client.Controls;
 
@@ -63,14 +64,23 @@ public partial class OnlineStatusSelector : UserControl
         _currentStatus = newStatus;
         UpdateCheckmarks();
 
-        // Update on server
+        // Update on server - map client UserStatus to shared UserPresenceStatus
         if (_apiService != null)
         {
             try
             {
+                var presenceStatus = newStatus switch
+                {
+                    UserStatus.Online => UserPresenceStatus.Online,
+                    UserStatus.Idle => UserPresenceStatus.Idle,
+                    UserStatus.DoNotDisturb => UserPresenceStatus.DoNotDisturb,
+                    UserStatus.Invisible => UserPresenceStatus.Invisible,
+                    _ => UserPresenceStatus.Online
+                };
+
                 await _apiService.UpdatePresenceAsync(new UpdatePresenceRequest
                 {
-                    Status = newStatus.ToString()
+                    Status = presenceStatus
                 });
             }
             catch
@@ -86,12 +96,4 @@ public partial class OnlineStatusSelector : UserControl
     {
         CustomStatusRequested?.Invoke(this, EventArgs.Empty);
     }
-}
-
-public class UpdatePresenceRequest
-{
-    public string? Status { get; set; }
-    public string? CustomStatus { get; set; }
-    public string? ActivityType { get; set; }
-    public string? ActivityName { get; set; }
 }
