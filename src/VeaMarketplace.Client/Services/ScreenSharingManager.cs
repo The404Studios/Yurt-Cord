@@ -5,6 +5,7 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace VeaMarketplace.Client.Services;
 
@@ -21,6 +22,10 @@ public class ScreenSharingManager : IScreenSharingManager
     private ScreenShareSettings _settings = new();
     private ScreenShareStats _stats = new();
     private readonly ConcurrentDictionary<string, RemoteScreenShare> _activeShares = new();
+
+    // H.264 decoders for receiving frames from other users (one per sharer)
+    private readonly ConcurrentDictionary<string, HardwareVideoDecoder> _h264Decoders = new();
+    private readonly ReaderWriterLockSlim _decoderLock = new();
 
     // Threading - dedicated threads for capture, encoding, and sending
     private CancellationTokenSource? _captureCts;
@@ -156,6 +161,21 @@ public class ScreenSharingManager : IScreenSharingManager
             CleanupCaptureResources();
 
             _sessionStopwatch.Stop();
+        }
+
+        // Clean up all H.264 decoders for received frames
+        _decoderLock.EnterWriteLock();
+        try
+        {
+            foreach (var decoder in _h264Decoders.Values)
+            {
+                decoder.Dispose();
+            }
+            _h264Decoders.Clear();
+        }
+        finally
+        {
+            _decoderLock.ExitWriteLock();
         }
     }
 
@@ -1001,10 +1021,62 @@ public class ScreenSharingManager : IScreenSharingManager
     // Receiving frames from other users
     public void HandleFrameReceived(string senderConnectionId, byte[] frameData, int width, int height)
     {
+        if (frameData == null || frameData.Length == 0) return;
+
+        // Detect frame type: JPEG starts with 0xFF 0xD8, H.264 NAL units start with 0x00 0x00
+        var isJpeg = frameData.Length >= 2 && frameData[0] == 0xFF && frameData[1] == 0xD8;
+        var isH264 = frameData.Length >= 4 &&
+                    ((frameData[0] == 0x00 && frameData[1] == 0x00 && frameData[2] == 0x00 && frameData[3] == 0x01) ||
+                     (frameData[0] == 0x00 && frameData[1] == 0x00 && frameData[2] == 0x01));
+
+        byte[] outputData = frameData;
+
+        // If H.264, decode to JPEG so existing consumers can display it
+        if (isH264)
+        {
+            _decoderLock.EnterReadLock();
+            try
+            {
+                var decoder = _h264Decoders.GetOrAdd(senderConnectionId, _ =>
+                {
+                    var d = new HardwareVideoDecoder();
+                    d.Initialize();
+                    Debug.WriteLine($"Created H.264 decoder for {senderConnectionId}: {d.DecoderName}");
+                    return d;
+                });
+
+                if (!decoder.IsDisposed)
+                {
+                    var (decodedData, decodedWidth, decodedHeight, stride) = decoder.DecodeFrameRaw(frameData);
+                    if (decodedData != null && decodedData.Length > 0)
+                    {
+                        // Convert decoded BGR24 to JPEG for existing consumers
+                        outputData = ConvertBgrToJpeg(decodedData, decodedWidth, decodedHeight, stride);
+                        width = decodedWidth;
+                        height = decodedHeight;
+                    }
+                    else
+                    {
+                        // Decode failed, skip this frame
+                        return;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"H.264 decode error for {senderConnectionId}: {ex.Message}");
+                return;
+            }
+            finally
+            {
+                _decoderLock.ExitReadLock();
+            }
+        }
+
         var frame = new ScreenFrame
         {
             SenderConnectionId = senderConnectionId,
-            Data = frameData,
+            Data = outputData,
             Width = width,
             Height = height,
             Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
@@ -1019,6 +1091,39 @@ public class ScreenSharingManager : IScreenSharingManager
         }
 
         OnFrameReceived?.Invoke(frame);
+    }
+
+    private byte[] ConvertBgrToJpeg(byte[] bgrData, int width, int height, int stride)
+    {
+        using var bitmap = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+        var bitmapData = bitmap.LockBits(
+            new Rectangle(0, 0, width, height),
+            ImageLockMode.WriteOnly,
+            PixelFormat.Format24bppRgb);
+
+        try
+        {
+            // Copy row by row to handle stride differences
+            for (int y = 0; y < height; y++)
+            {
+                Marshal.Copy(bgrData, y * stride, bitmapData.Scan0 + y * bitmapData.Stride, width * 3);
+            }
+        }
+        finally
+        {
+            bitmap.UnlockBits(bitmapData);
+        }
+
+        using var ms = new MemoryStream();
+        if (_jpegEncoder != null && _encoderParams != null)
+        {
+            bitmap.Save(ms, _jpegEncoder, _encoderParams);
+        }
+        else
+        {
+            bitmap.Save(ms, ImageFormat.Jpeg);
+        }
+        return ms.ToArray();
     }
 
     public void HandleScreenShareStarted(string connectionId, string username)
@@ -1038,6 +1143,22 @@ public class ScreenSharingManager : IScreenSharingManager
     public void HandleScreenShareStopped(string connectionId)
     {
         _activeShares.TryRemove(connectionId, out _);
+
+        // Clean up H.264 decoder for this connection
+        _decoderLock.EnterWriteLock();
+        try
+        {
+            if (_h264Decoders.TryRemove(connectionId, out var decoder))
+            {
+                decoder.Dispose();
+                Debug.WriteLine($"Disposed H.264 decoder for {connectionId}");
+            }
+        }
+        finally
+        {
+            _decoderLock.ExitWriteLock();
+        }
+
         OnScreenShareStopped?.Invoke(connectionId);
     }
 
@@ -1069,6 +1190,7 @@ public class ScreenSharingManager : IScreenSharingManager
 
         try { _encoderParams?.Dispose(); } catch { }
         try { _captureSignal?.Dispose(); } catch { }
+        try { _decoderLock?.Dispose(); } catch { }
 
         // Clear any remaining queues
         while (_captureQueue.TryDequeue(out var bitmap)) { bitmap?.Dispose(); }
