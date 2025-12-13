@@ -5,6 +5,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using VeaMarketplace.Client.Models;
 using VeaMarketplace.Client.Services;
+using VeaMarketplace.Shared.DTOs;
 
 namespace VeaMarketplace.Client.Controls;
 
@@ -12,7 +13,7 @@ public partial class UserProfilePopup : UserControl
 {
     private readonly INavigationService? _navigationService;
     private readonly IFriendService? _friendService;
-    private UserDto? _user;
+    private UserDisplayModel? _user;
     private string _noteText = string.Empty;
     private bool _isNotePlaceholder = true;
 
@@ -31,7 +32,7 @@ public partial class UserProfilePopup : UserControl
         _friendService = App.ServiceProvider.GetService(typeof(IFriendService)) as IFriendService;
     }
 
-    public void SetUser(UserDto user)
+    public void SetUser(UserDisplayModel user)
     {
         _user = user;
         UpdateUI();

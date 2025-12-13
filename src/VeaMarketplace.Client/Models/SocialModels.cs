@@ -4,9 +4,9 @@ using VeaMarketplace.Shared.DTOs;
 namespace VeaMarketplace.Client.Models;
 
 /// <summary>
-/// User DTO wrapper for client-side use
+/// Client-side user display model with additional UI properties
 /// </summary>
-public class UserDto
+public class UserDisplayModel
 {
     public string Id { get; set; } = string.Empty;
     public string Username { get; set; } = string.Empty;
