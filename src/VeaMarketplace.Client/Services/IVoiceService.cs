@@ -209,7 +209,6 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     // HTTP-based screen streaming (reduces voice lag)
     private HttpScreenStreamService? _httpStreamService;
     private bool _useHttpStreaming = true; // Enable HTTP streaming by default
-    private CancellationTokenSource? _framePollingCts;
     private readonly ConcurrentDictionary<string, long> _lastFrameNumbers = new();
     private DisplayInfo? _selectedDisplay;
 

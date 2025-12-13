@@ -24,7 +24,7 @@ public partial class NotificationCenterViewModel : BaseViewModel
     {
         _apiService = apiService;
         _navigationService = navigationService;
-        LoadNotificationsAsync();
+        _ = LoadNotificationsAsync();
     }
 
     private async Task LoadNotificationsAsync()

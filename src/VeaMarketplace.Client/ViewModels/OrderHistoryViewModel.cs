@@ -39,7 +39,7 @@ public partial class OrderHistoryViewModel : BaseViewModel
     {
         _apiService = apiService;
         _navigationService = navigationService;
-        LoadOrdersAsync();
+        _ = LoadOrdersAsync();
     }
 
     private async Task LoadOrdersAsync()

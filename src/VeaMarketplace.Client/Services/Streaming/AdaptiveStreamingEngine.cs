@@ -33,7 +33,6 @@ public class AdaptiveStreamingEngine : IDisposable
     private readonly Stopwatch _sessionTimer = new();
 
     // === Events ===
-    public event Action<EncodedFrame>? OnFrameReady;
     public event Action<StreamingStats>? OnStatsUpdated;
 
     public StreamingStats Stats => _stats;

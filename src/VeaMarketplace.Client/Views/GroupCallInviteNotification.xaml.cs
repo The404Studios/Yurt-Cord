@@ -45,6 +45,13 @@ public partial class GroupCallInviteNotification : Window
         Left = workArea.Right - Width - 20;
         Top = workArea.Bottom - Height - 20;
 
+        // Ring sound timer (initialize first since auto-decline timer references it)
+        _ringTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(2)
+        };
+        _ringTimer.Tick += RingTimer_Tick;
+
         // Auto-decline after 30 seconds
         _autoDeclineTimer = new DispatcherTimer
         {
@@ -57,13 +64,6 @@ public partial class GroupCallInviteNotification : Window
             DeclineCall();
         };
         _autoDeclineTimer.Start();
-
-        // Ring sound timer
-        _ringTimer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromSeconds(2)
-        };
-        _ringTimer.Tick += RingTimer_Tick;
 
         // Play initial ring
         PlayRingSound();
