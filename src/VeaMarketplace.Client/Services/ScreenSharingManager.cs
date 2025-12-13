@@ -1034,18 +1034,32 @@ public class ScreenSharingManager : IScreenSharingManager
         // If H.264, decode to JPEG so existing consumers can display it
         if (isH264)
         {
-            _decoderLock.EnterReadLock();
+            _decoderLock.EnterWriteLock();
             try
             {
+                // Check if we already have a failed decoder for this sender
+                if (_h264Decoders.TryGetValue(senderConnectionId, out var existingDecoder))
+                {
+                    if (existingDecoder.IsDisposed || existingDecoder.DecoderName == "none")
+                    {
+                        // Decoder failed previously, skip H.264 decoding
+                        Debug.WriteLine($"Skipping H.264 decode for {senderConnectionId} - decoder unavailable");
+                        return;
+                    }
+                }
+
                 var decoder = _h264Decoders.GetOrAdd(senderConnectionId, _ =>
                 {
                     var d = new HardwareVideoDecoder();
-                    d.Initialize();
+                    if (!d.Initialize())
+                    {
+                        Debug.WriteLine($"Failed to initialize H.264 decoder for {senderConnectionId}");
+                    }
                     Debug.WriteLine($"Created H.264 decoder for {senderConnectionId}: {d.DecoderName}");
                     return d;
                 });
 
-                if (!decoder.IsDisposed)
+                if (!decoder.IsDisposed && decoder.DecoderName != "none")
                 {
                     var (decodedData, decodedWidth, decodedHeight, stride) = decoder.DecodeFrameRaw(frameData);
                     if (decodedData != null && decodedData.Length > 0)
@@ -1057,9 +1071,15 @@ public class ScreenSharingManager : IScreenSharingManager
                     }
                     else
                     {
-                        // Decode failed, skip this frame
+                        // Decode failed (might need keyframe), skip this frame
                         return;
                     }
+                }
+                else
+                {
+                    // Decoder not available, can't decode H.264
+                    Debug.WriteLine($"H.264 decoder not available for {senderConnectionId}");
+                    return;
                 }
             }
             catch (Exception ex)
@@ -1069,7 +1089,7 @@ public class ScreenSharingManager : IScreenSharingManager
             }
             finally
             {
-                _decoderLock.ExitReadLock();
+                _decoderLock.ExitWriteLock();
             }
         }
 
