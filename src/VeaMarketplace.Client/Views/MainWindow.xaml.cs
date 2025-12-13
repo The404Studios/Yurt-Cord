@@ -97,6 +97,8 @@ public partial class MainWindow : Window
         ModerationPanelViewControl.Visibility = baseView == "Moderation" ? Visibility.Visible : Visibility.Collapsed;
         ServerBrowserViewControl.Visibility = baseView == "ServerBrowser" ? Visibility.Visible : Visibility.Collapsed;
         ActivityFeedViewControl.Visibility = baseView == "Activity" || baseView == "ActivityFeed" ? Visibility.Visible : Visibility.Collapsed;
+        BlockedUsersViewControl.Visibility = baseView == "BlockedUsers" ? Visibility.Visible : Visibility.Collapsed;
+        PrivacySettingsViewControl.Visibility = baseView == "Privacy" || baseView == "PrivacySettings" ? Visibility.Visible : Visibility.Collapsed;
 
         // Update sidebar button states
         UpdateButtonStates();

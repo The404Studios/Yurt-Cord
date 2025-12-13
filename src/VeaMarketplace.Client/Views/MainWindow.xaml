@@ -178,6 +178,8 @@
                         <views:ModerationPanelView x:Name="ModerationPanelViewControl" Visibility="Collapsed"/>
                         <views:ServerBrowserView x:Name="ServerBrowserViewControl" Visibility="Collapsed"/>
                         <views:ActivityFeedView x:Name="ActivityFeedViewControl" Visibility="Collapsed"/>
+                        <views:BlockedUsersView x:Name="BlockedUsersViewControl" Visibility="Collapsed"/>
+                        <views:PrivacySettingsView x:Name="PrivacySettingsViewControl" Visibility="Collapsed"/>
                     </Grid>
                 </Border>
 

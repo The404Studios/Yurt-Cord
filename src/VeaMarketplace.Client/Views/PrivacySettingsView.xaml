@@ -1,0 +1,265 @@
+<UserControl x:Class="VeaMarketplace.Client.Views.PrivacySettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{StaticResource TertiaryDarkBrush}">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
+        <StackPanel MaxWidth="700">
+            <!-- Header -->
+            <TextBlock Text="Privacy &amp; Safety" FontSize="24" FontWeight="Bold"
+                       Foreground="{StaticResource TextPrimaryBrush}"
+                       Margin="0,0,0,8"/>
+            <TextBlock Text="Control who can contact you and what information others can see."
+                       FontSize="14" Foreground="{StaticResource TextSecondaryBrush}"
+                       Margin="0,0,0,24"/>
+
+            <!-- Direct Messages -->
+            <Border Background="{StaticResource SecondaryDarkBrush}"
+                    CornerRadius="8" Padding="20" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="DIRECT MESSAGES" FontSize="11" FontWeight="Bold"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               Margin="0,0,0,16"/>
+
+                    <!-- Allow DMs from server members -->
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Allow DMs from server members"
+                                       FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="Members of the same servers can send you messages"
+                                       FontSize="12" Foreground="{StaticResource TextMutedBrush}"
+                                       Margin="0,4,0,0"/>
+                        </StackPanel>
+                        <ToggleButton x:Name="AllowServerDMsToggle" Grid.Column="1"
+                                      Style="{StaticResource ToggleSwitch}"
+                                      Checked="SettingToggle_Changed"
+                                      Unchecked="SettingToggle_Changed"/>
+                    </Grid>
+
+                    <!-- Allow DMs from everyone -->
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Allow DMs from anyone"
+                                       FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="Anyone can send you a message request"
+                                       FontSize="12" Foreground="{StaticResource TextMutedBrush}"
+                                       Margin="0,4,0,0"/>
+                        </StackPanel>
+                        <ToggleButton x:Name="AllowAllDMsToggle" Grid.Column="1"
+                                      Style="{StaticResource ToggleSwitch}"
+                                      Checked="SettingToggle_Changed"
+                                      Unchecked="SettingToggle_Changed"/>
+                    </Grid>
+
+                    <Separator Background="{StaticResource QuaternaryDarkBrush}" Margin="0,8"/>
+
+                    <!-- Message request filter -->
+                    <StackPanel Margin="0,8,0,0">
+                        <TextBlock Text="Message Request Filter"
+                                   FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"
+                                   Margin="0,0,0,8"/>
+                        <ComboBox x:Name="MessageFilterCombo" Width="200"
+                                  HorizontalAlignment="Left"
+                                  SelectionChanged="MessageFilterCombo_Changed">
+                            <ComboBoxItem Content="Keep all messages"/>
+                            <ComboBoxItem Content="Filter suspicious messages"/>
+                            <ComboBoxItem Content="Friends only"/>
+                        </ComboBox>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Friend Requests -->
+            <Border Background="{StaticResource SecondaryDarkBrush}"
+                    CornerRadius="8" Padding="20" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="FRIEND REQUESTS" FontSize="11" FontWeight="Bold"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               Margin="0,0,0,16"/>
+
+                    <!-- Who can send friend requests -->
+                    <StackPanel Margin="0,0,0,12">
+                        <TextBlock Text="Who can send you friend requests"
+                                   FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"
+                                   Margin="0,0,0,8"/>
+                        <RadioButton x:Name="FriendsEveryoneRadio" Content="Everyone"
+                                     Foreground="{StaticResource TextSecondaryBrush}"
+                                     Margin="0,4" GroupName="FriendRequests"
+                                     Checked="FriendRequestRadio_Changed"/>
+                        <RadioButton x:Name="FriendsServerRadio" Content="Server members only"
+                                     Foreground="{StaticResource TextSecondaryBrush}"
+                                     Margin="0,4" GroupName="FriendRequests"
+                                     Checked="FriendRequestRadio_Changed"/>
+                        <RadioButton x:Name="FriendsMutualRadio" Content="Friends of friends only"
+                                     Foreground="{StaticResource TextSecondaryBrush}"
+                                     Margin="0,4" GroupName="FriendRequests"
+                                     Checked="FriendRequestRadio_Changed"/>
+                        <RadioButton x:Name="FriendsNoneRadio" Content="No one"
+                                     Foreground="{StaticResource TextSecondaryBrush}"
+                                     Margin="0,4" GroupName="FriendRequests"
+                                     Checked="FriendRequestRadio_Changed"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Activity Status -->
+            <Border Background="{StaticResource SecondaryDarkBrush}"
+                    CornerRadius="8" Padding="20" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="ACTIVITY STATUS" FontSize="11" FontWeight="Bold"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               Margin="0,0,0,16"/>
+
+                    <!-- Show activity status -->
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Display current activity as status"
+                                       FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="Show what game you're playing or music you're listening to"
+                                       FontSize="12" Foreground="{StaticResource TextMutedBrush}"
+                                       Margin="0,4,0,0"/>
+                        </StackPanel>
+                        <ToggleButton x:Name="ShowActivityToggle" Grid.Column="1"
+                                      Style="{StaticResource ToggleSwitch}"
+                                      Checked="SettingToggle_Changed"
+                                      Unchecked="SettingToggle_Changed"/>
+                    </Grid>
+
+                    <!-- Show online status -->
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Show when you're online"
+                                       FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="Let others see your online status indicator"
+                                       FontSize="12" Foreground="{StaticResource TextMutedBrush}"
+                                       Margin="0,4,0,0"/>
+                        </StackPanel>
+                        <ToggleButton x:Name="ShowOnlineStatusToggle" Grid.Column="1"
+                                      Style="{StaticResource ToggleSwitch}"
+                                      Checked="SettingToggle_Changed"
+                                      Unchecked="SettingToggle_Changed"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Profile Visibility -->
+            <Border Background="{StaticResource SecondaryDarkBrush}"
+                    CornerRadius="8" Padding="20" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="PROFILE VISIBILITY" FontSize="11" FontWeight="Bold"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               Margin="0,0,0,16"/>
+
+                    <!-- Show mutual servers -->
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Show mutual servers"
+                                       FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="Display servers you share with other users"
+                                       FontSize="12" Foreground="{StaticResource TextMutedBrush}"
+                                       Margin="0,4,0,0"/>
+                        </StackPanel>
+                        <ToggleButton x:Name="ShowMutualServersToggle" Grid.Column="1"
+                                      Style="{StaticResource ToggleSwitch}"
+                                      Checked="SettingToggle_Changed"
+                                      Unchecked="SettingToggle_Changed"/>
+                    </Grid>
+
+                    <!-- Show mutual friends -->
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Show mutual friends"
+                                       FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="Display friends you share with other users"
+                                       FontSize="12" Foreground="{StaticResource TextMutedBrush}"
+                                       Margin="0,4,0,0"/>
+                        </StackPanel>
+                        <ToggleButton x:Name="ShowMutualFriendsToggle" Grid.Column="1"
+                                      Style="{StaticResource ToggleSwitch}"
+                                      Checked="SettingToggle_Changed"
+                                      Unchecked="SettingToggle_Changed"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Blocked Users Link -->
+            <Border Background="{StaticResource SecondaryDarkBrush}"
+                    CornerRadius="8" Padding="20" Margin="0,0,0,16"
+                    Cursor="Hand" MouseLeftButtonDown="BlockedUsersLink_Click">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{StaticResource TertiaryDarkBrush}"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" Text="🚫" FontSize="20" Margin="0,0,16,0"
+                               VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Blocked Users"
+                                   FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock x:Name="BlockedCountText" Text="View and manage blocked users"
+                                   FontSize="12" Foreground="{StaticResource TextMutedBrush}"
+                                   Margin="0,4,0,0"/>
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Text="→" FontSize="18"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               VerticalAlignment="Center"/>
+                </Grid>
+            </Border>
+
+            <!-- Data & Privacy -->
+            <Border Background="{StaticResource SecondaryDarkBrush}"
+                    CornerRadius="8" Padding="20" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="DATA &amp; PRIVACY" FontSize="11" FontWeight="Bold"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               Margin="0,0,0,16"/>
+
+                    <!-- Request data -->
+                    <Button Content="Request My Data" Style="{StaticResource SecondaryButton}"
+                            HorizontalAlignment="Left" Margin="0,0,0,12"
+                            Click="RequestDataButton_Click"/>
+
+                    <!-- Delete account -->
+                    <Button Content="Delete My Account" Style="{StaticResource DangerButton}"
+                            HorizontalAlignment="Left"
+                            Click="DeleteAccountButton_Click"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
