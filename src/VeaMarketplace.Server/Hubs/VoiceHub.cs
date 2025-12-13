@@ -1517,6 +1517,6 @@ public class GroupCallParticipantState
         IsSpeaking = IsSpeaking,
         IsScreenSharing = IsScreenSharing,
         JoinedAt = JoinedAt,
-        Status = GroupCallParticipantStatus.Connected
+        Status = GroupCallParticipantStatus.Joined
     };
 }

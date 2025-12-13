@@ -59,7 +59,7 @@ public class DeltaFrameEncoder : IDisposable
 
         // Lock bitmap for fast access
         var bitmapData = frame.LockBits(
-            new Rectangle(0, 0, frame.Width, frame.Height),
+            new System.Drawing.Rectangle(0, 0, frame.Width, frame.Height),
             ImageLockMode.ReadOnly,
             PixelFormat.Format24bppRgb);
 
@@ -77,7 +77,7 @@ public class DeltaFrameEncoder : IDisposable
             {
                 // Keyframe: everything changed
                 result.ChangePercentage = 100f;
-                result.BoundingBox = new Rectangle(0, 0, frame.Width, frame.Height);
+                result.BoundingBox = new System.Drawing.Rectangle(0, 0, frame.Width, frame.Height);
                 result.ChangedRegions = new[] { result.BoundingBox };
             }
             else
@@ -162,13 +162,13 @@ public class DeltaFrameEncoder : IDisposable
 
         if (changedCount > 0)
         {
-            result.BoundingBox = new Rectangle(minX, minY, maxX - minX, maxY - minY);
+            result.BoundingBox = new System.Drawing.Rectangle(minX, minY, maxX - minX, maxY - minY);
             result.ChangedRegions = MergeChangedRegions(changedBlocks, newBlocksX, newBlocksY, blockSize, width, height);
         }
         else
         {
-            result.BoundingBox = Rectangle.Empty;
-            result.ChangedRegions = Array.Empty<Rectangle>();
+            result.BoundingBox = System.Drawing.Rectangle.Empty;
+            result.ChangedRegions = Array.Empty<System.Drawing.Rectangle>();
         }
     }
 
@@ -258,7 +258,7 @@ public class DeltaFrameEncoder : IDisposable
                     }
                 }
 
-                var rect = new Rectangle(
+                var rect = new System.Drawing.Rectangle(
                     bx * blockSize,
                     by * blockSize,
                     Math.Min((maxBx - bx + 1) * blockSize, width - bx * blockSize),

@@ -20,7 +20,7 @@ public partial class WishlistViewModel : BaseViewModel
     {
         _apiService = apiService;
         _navigationService = navigationService;
-        LoadWishlistAsync();
+        _ = LoadWishlistAsync();
     }
 
     private async Task LoadWishlistAsync()
