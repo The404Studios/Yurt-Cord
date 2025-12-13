@@ -167,6 +167,8 @@ public unsafe class HardwareVideoEncoder : IDisposable
                 ffmpeg.av_dict_set(&opts, "tune", "ull", 0);  // Ultra low latency
                 ffmpeg.av_dict_set(&opts, "zerolatency", "1", 0);
                 ffmpeg.av_dict_set(&opts, "rc", "cbr", 0);    // Constant bitrate
+                // Include SPS/PPS in every keyframe for late joiners
+                ffmpeg.av_dict_set(&opts, "a53cc", "0", 0);
             }
             else if (encoderName.Contains("amf"))
             {
@@ -174,12 +176,16 @@ public unsafe class HardwareVideoEncoder : IDisposable
                 ffmpeg.av_dict_set(&opts, "usage", "ultralowlatency", 0);
                 ffmpeg.av_dict_set(&opts, "quality", "speed", 0);
                 ffmpeg.av_dict_set(&opts, "rc", "cbr", 0);
+                // Include headers in bitstream for late joiners
+                ffmpeg.av_dict_set(&opts, "header_insertion_mode", "idr", 0);
             }
             else if (encoderName.Contains("qsv"))
             {
                 // Intel QSV settings
                 ffmpeg.av_dict_set(&opts, "preset", "veryfast", 0);
                 ffmpeg.av_dict_set(&opts, "look_ahead", "0", 0);
+                // Include SPS/PPS in IDR frames
+                ffmpeg.av_dict_set(&opts, "repeat_pps", "1", 0);
             }
             else if (encoderName == SoftwareEncoder)
             {
@@ -187,6 +193,8 @@ public unsafe class HardwareVideoEncoder : IDisposable
                 ffmpeg.av_dict_set(&opts, "preset", "ultrafast", 0);
                 ffmpeg.av_dict_set(&opts, "tune", "zerolatency", 0);
                 ffmpeg.av_dict_set(&opts, "crf", "23", 0);
+                // repeat-headers ensures SPS/PPS in every keyframe for late joiners
+                ffmpeg.av_dict_set(&opts, "x264-params", "repeat-headers=1", 0);
             }
 
             var ret = ffmpeg.avcodec_open2(_codecContext, codec, &opts);
