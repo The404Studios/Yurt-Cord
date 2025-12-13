@@ -143,6 +143,7 @@ public class ScreenShareStats
     public double SendTimeMs { get; set; }
     public TimeSpan Duration { get; set; }
     public DateTime StartTime { get; set; }
+    public int AverageFrameSize { get; set; }
 }
 
 /// <summary>

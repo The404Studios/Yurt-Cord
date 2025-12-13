@@ -221,7 +221,8 @@ public class ScreenStreamController : ControllerBase
             ? authorization[7..]
             : authorization;
 
-        return _authService.ValidateToken(token);
+        var user = _authService.ValidateToken(token);
+        return user?.Id;
     }
 
     private static void CleanupStaleStreams(object? state)
