@@ -1,0 +1,253 @@
+<UserControl x:Class="VeaMarketplace.Client.Controls.SocialActivityPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Width="320">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <!-- Activity Item Style -->
+        <Style x:Key="ActivityItemBorder" TargetType="Border">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#36393F"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Quick Action Button -->
+        <Style x:Key="QuickActionBtn" TargetType="Button">
+            <Setter Property="Background" Value="#4F545C"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="18">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#5D6269"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Border Background="#2B2D31" CornerRadius="12">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Border Grid.Row="0" Padding="16,12" BorderBrush="#1E1F22"
+                    BorderThickness="0,0,0,1">
+                <Grid>
+                    <TextBlock Text="Activity" FontSize="16" FontWeight="Bold"
+                               Foreground="White" VerticalAlignment="Center"/>
+                    <Button Content="..." Style="{StaticResource IconButton}"
+                            HorizontalAlignment="Right" Width="32" Height="32"
+                            Click="MoreOptions_Click"/>
+                </Grid>
+            </Border>
+
+            <!-- Online Friends Quick Access -->
+            <Border Grid.Row="1" Padding="12" BorderBrush="#1E1F22"
+                    BorderThickness="0,0,0,1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" FontSize="11" FontWeight="Bold"
+                               Foreground="#72767D" Margin="4,0,0,8">
+                        <Run Text="ONLINE — "/>
+                        <Run x:Name="OnlineCountText" Text="0"/>
+                    </TextBlock>
+
+                    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Disabled">
+                        <StackPanel x:Name="OnlineFriendsPanel" Orientation="Horizontal">
+                            <!-- Online friends avatars will be added here -->
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- Quick Actions -->
+            <Border Grid.Row="2" Padding="12" BorderBrush="#1E1F22"
+                    BorderThickness="0,0,0,1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0" Style="{StaticResource QuickActionBtn}"
+                            Click="StartGroupCall_Click" ToolTip="Start Group Call">
+                        <TextBlock Text="📞" FontSize="16"/>
+                    </Button>
+
+                    <Button Grid.Column="1" Style="{StaticResource QuickActionBtn}"
+                            Click="CreateGroupChat_Click" ToolTip="Create Group Chat">
+                        <TextBlock Text="💬" FontSize="16"/>
+                    </Button>
+
+                    <Button Grid.Column="2" Style="{StaticResource QuickActionBtn}"
+                            Click="ShareStatus_Click" ToolTip="Share Status">
+                        <TextBlock Text="📢" FontSize="16"/>
+                    </Button>
+
+                    <Button Grid.Column="3" Style="{StaticResource QuickActionBtn}"
+                            Click="FindFriends_Click" ToolTip="Find Friends">
+                        <TextBlock Text="🔍" FontSize="16"/>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Activity Feed -->
+            <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <!-- Recent Activity Section -->
+                    <TextBlock Text="RECENT ACTIVITY" FontSize="11" FontWeight="Bold"
+                               Foreground="#72767D" Margin="16,12,16,8"/>
+
+                    <ItemsControl x:Name="ActivityFeedControl">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource ActivityItemBorder}"
+                                        CornerRadius="4" Padding="12,8" Margin="4,2"
+                                        MouseLeftButtonUp="Activity_Click" Tag="{Binding}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Icon/Avatar -->
+                                        <Grid Grid.Column="0" Width="40" Height="40" Margin="0,0,12,0">
+                                            <Ellipse>
+                                                <Ellipse.Fill>
+                                                    <ImageBrush ImageSource="{Binding UserAvatarUrl}"
+                                                                Stretch="UniformToFill"/>
+                                                </Ellipse.Fill>
+                                            </Ellipse>
+                                            <!-- Activity type badge -->
+                                            <Border Width="18" Height="18" CornerRadius="9"
+                                                    HorizontalAlignment="Right"
+                                                    VerticalAlignment="Bottom"
+                                                    Margin="0,0,-4,-4"
+                                                    Background="{Binding ActivityColor}">
+                                                <TextBlock Text="{Binding ActivityIcon}" FontSize="10"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"/>
+                                            </Border>
+                                        </Grid>
+
+                                        <!-- Content -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock TextWrapping="Wrap">
+                                                <Run Text="{Binding Username}" FontWeight="SemiBold"
+                                                     Foreground="White"/>
+                                                <Run Text="{Binding ActionText}" Foreground="#B5BAC1"/>
+                                            </TextBlock>
+                                            <TextBlock Text="{Binding TargetName}" FontSize="12"
+                                                       Foreground="#72767D"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       Visibility="{Binding HasTarget, Converter={StaticResource BoolToVis}}"/>
+                                            <TextBlock Text="{Binding TimeAgo}" FontSize="11"
+                                                       Foreground="#5D6269" Margin="0,2,0,0"/>
+                                        </StackPanel>
+
+                                        <!-- Action Button -->
+                                        <Button Grid.Column="2" Style="{StaticResource QuickActionBtn}"
+                                                Width="28" Height="28"
+                                                Visibility="{Binding HasAction, Converter={StaticResource BoolToVis}}"
+                                                Tag="{Binding}" Click="ActivityAction_Click">
+                                            <TextBlock Text="{Binding ActionIcon}" FontSize="12"/>
+                                        </Button>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Empty State -->
+                    <StackPanel x:Name="EmptyState" Visibility="Collapsed"
+                                HorizontalAlignment="Center" Margin="0,40,0,0">
+                        <TextBlock Text="🌙" FontSize="40" HorizontalAlignment="Center"
+                                   Margin="0,0,0,12"/>
+                        <TextBlock Text="No recent activity" FontSize="14"
+                                   Foreground="#72767D" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Activity from friends will appear here"
+                                   FontSize="12" Foreground="#5D6269"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Suggested Friends Section -->
+                    <TextBlock x:Name="SuggestedHeader" Text="SUGGESTED FRIENDS"
+                               FontSize="11" FontWeight="Bold"
+                               Foreground="#72767D" Margin="16,20,16,8"
+                               Visibility="Collapsed"/>
+
+                    <ItemsControl x:Name="SuggestedFriendsControl" Visibility="Collapsed">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource ActivityItemBorder}"
+                                        CornerRadius="4" Padding="12,8" Margin="4,2"
+                                        Tag="{Binding}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <Ellipse Grid.Column="0" Width="40" Height="40" Margin="0,0,12,0">
+                                            <Ellipse.Fill>
+                                                <ImageBrush ImageSource="{Binding AvatarUrl}"
+                                                            Stretch="UniformToFill"/>
+                                            </Ellipse.Fill>
+                                        </Ellipse>
+
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Username}" FontWeight="SemiBold"
+                                                       Foreground="White"/>
+                                            <TextBlock FontSize="11" Foreground="#72767D">
+                                                <Run Text="{Binding MutualFriendsCount}"/>
+                                                <Run Text=" mutual friends"/>
+                                            </TextBlock>
+                                        </StackPanel>
+
+                                        <Button Grid.Column="2" Content="Add"
+                                                Style="{StaticResource PrimaryButton}"
+                                                Padding="12,4" Tag="{Binding}"
+                                                Click="AddSuggestedFriend_Click"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Border>
+</UserControl>

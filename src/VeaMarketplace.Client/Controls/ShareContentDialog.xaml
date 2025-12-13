@@ -1,0 +1,326 @@
+<UserControl x:Class="VeaMarketplace.Client.Controls.ShareContentDialog"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Width="450">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <!-- Share Option Button Style -->
+        <Style x:Key="ShareOptionButton" TargetType="Button">
+            <Setter Property="Background" Value="#36393F"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Left"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#40444B"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#2B2D31"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Friend Item Style -->
+        <Style x:Key="FriendShareItem" TargetType="Border">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#36393F"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <Border Background="#2B2D31" CornerRadius="12">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="20,16,16,16">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Share" FontSize="20" FontWeight="Bold"
+                               Foreground="White"/>
+                </StackPanel>
+                <Button Content="X" Style="{StaticResource IconButton}"
+                        Width="32" Height="32" HorizontalAlignment="Right"
+                        Click="Close_Click"/>
+            </Grid>
+
+            <!-- Content Preview -->
+            <Border Grid.Row="1" Background="#36393F" CornerRadius="8"
+                    Margin="16,0,16,16" Padding="12">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Content Image/Icon -->
+                    <Border Grid.Column="0" Width="64" Height="64" CornerRadius="8"
+                            Background="#1E1F22" Margin="0,0,12,0">
+                        <Grid>
+                            <Image x:Name="ContentImage" Stretch="UniformToFill"
+                                   Visibility="Collapsed"/>
+                            <TextBlock x:Name="ContentIcon" Text="📦" FontSize="28"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Content Info -->
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock x:Name="ContentTitle" Text="Product Title"
+                                   FontSize="14" FontWeight="SemiBold"
+                                   Foreground="White" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock x:Name="ContentSubtitle" Text="$0.00"
+                                   FontSize="12" Foreground="#43B581"
+                                   Margin="0,4,0,0"/>
+                        <TextBlock x:Name="ContentDescription" Text=""
+                                   FontSize="11" Foreground="#72767D"
+                                   TextTrimming="CharacterEllipsis"
+                                   Visibility="Collapsed" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Share Options -->
+            <StackPanel Grid.Row="2" Margin="16,0,16,16">
+                <TextBlock Text="SHARE OPTIONS" FontSize="11" FontWeight="Bold"
+                           Foreground="#72767D" Margin="0,0,0,8"/>
+
+                <!-- Copy Link -->
+                <Button Style="{StaticResource ShareOptionButton}" Click="CopyLink_Click"
+                        Margin="0,0,0,8">
+                    <Grid Width="400">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="🔗" FontSize="18" Margin="0,0,12,0"
+                                   VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Copy Link" Foreground="White" FontWeight="Medium"/>
+                            <TextBlock x:Name="ShareLinkText" Text="vea://share/..." FontSize="11"
+                                       Foreground="#72767D" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                        <TextBlock x:Name="CopySuccessIcon" Grid.Column="2" Text="✓" FontSize="16"
+                                   Foreground="#43B581" VerticalAlignment="Center"
+                                   Visibility="Collapsed"/>
+                    </Grid>
+                </Button>
+
+                <!-- Share to Group Chat -->
+                <Button Style="{StaticResource ShareOptionButton}" Click="ShareToGroup_Click"
+                        Margin="0,0,0,8">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="👥" FontSize="18" Margin="0,0,12,0"/>
+                        <StackPanel>
+                            <TextBlock Text="Share to Group Chat" Foreground="White" FontWeight="Medium"/>
+                            <TextBlock Text="Send to a group conversation" FontSize="11"
+                                       Foreground="#72767D"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Button>
+
+                <!-- Quick Share Buttons -->
+                <Grid Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0" Style="{StaticResource ShareOptionButton}"
+                            Click="ShareTwitter_Click" Margin="0,0,4,0"
+                            HorizontalContentAlignment="Center">
+                        <StackPanel>
+                            <TextBlock Text="🐦" FontSize="20" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Twitter" FontSize="10" Foreground="#72767D"
+                                       HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Grid.Column="1" Style="{StaticResource ShareOptionButton}"
+                            Click="ShareDiscord_Click" Margin="2,0">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="💬" FontSize="20" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Discord" FontSize="10" Foreground="#72767D"
+                                       HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Grid.Column="2" Style="{StaticResource ShareOptionButton}"
+                            Click="ShareMore_Click" Margin="4,0,0,0"
+                            HorizontalContentAlignment="Center">
+                        <StackPanel>
+                            <TextBlock Text="•••" FontSize="20" HorizontalAlignment="Center"/>
+                            <TextBlock Text="More" FontSize="10" Foreground="#72767D"
+                                       HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </StackPanel>
+
+            <!-- Send to Friend Section -->
+            <Grid Grid.Row="3" Margin="16,0,16,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Text="SEND TO FRIEND" FontSize="11" FontWeight="Bold"
+                           Foreground="#72767D" Margin="0,0,0,8"/>
+
+                <!-- Search Box -->
+                <Border Grid.Row="1" Background="#1E1F22" CornerRadius="8"
+                        Padding="12,8" Margin="0,0,0,8">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="🔍" FontSize="14" Foreground="#72767D"
+                                   Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBox x:Name="FriendSearchBox" Grid.Column="1"
+                                 Background="Transparent" BorderThickness="0"
+                                 Foreground="White" FontSize="14"
+                                 CaretBrush="White"
+                                 TextChanged="FriendSearch_TextChanged">
+                            <TextBox.Style>
+                                <Style TargetType="TextBox">
+                                    <Setter Property="Tag" Value="Search friends..."/>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+                    </Grid>
+                </Border>
+
+                <!-- Friends List -->
+                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto"
+                              MaxHeight="200">
+                    <ItemsControl x:Name="FriendsListControl">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource FriendShareItem}"
+                                        CornerRadius="8" Padding="8" Margin="0,2"
+                                        MouseLeftButtonUp="Friend_Click" Tag="{Binding}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Avatar with status -->
+                                        <Grid Grid.Column="0" Margin="0,0,12,0">
+                                            <Ellipse Width="40" Height="40">
+                                                <Ellipse.Fill>
+                                                    <ImageBrush ImageSource="{Binding AvatarUrl}"
+                                                                Stretch="UniformToFill"/>
+                                                </Ellipse.Fill>
+                                            </Ellipse>
+                                            <Ellipse Width="12" Height="12"
+                                                     HorizontalAlignment="Right"
+                                                     VerticalAlignment="Bottom"
+                                                     Stroke="#2B2D31" StrokeThickness="2">
+                                                <Ellipse.Style>
+                                                    <Style TargetType="Ellipse">
+                                                        <Setter Property="Fill" Value="#747F8D"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsOnline}" Value="True">
+                                                                <Setter Property="Fill" Value="#43B581"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Ellipse.Style>
+                                            </Ellipse>
+                                        </Grid>
+
+                                        <!-- User Info -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Username}" FontSize="14"
+                                                       Foreground="White" FontWeight="Medium"/>
+                                            <TextBlock FontSize="11">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="Offline"/>
+                                                        <Setter Property="Foreground" Value="#72767D"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsOnline}" Value="True">
+                                                                <Setter Property="Text" Value="Online"/>
+                                                                <Setter Property="Foreground" Value="#43B581"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+
+                                        <!-- Send Button -->
+                                        <Button Grid.Column="2" Content="Send"
+                                                Style="{StaticResource PrimaryButton}"
+                                                Padding="12,6" Click="SendToFriend_Click"
+                                                Tag="{Binding}"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+
+            <!-- Message Input -->
+            <Border Grid.Row="4" Margin="16" Background="#1E1F22" CornerRadius="8"
+                    Padding="12">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="MessageBox" Grid.Column="0"
+                             Background="Transparent" BorderThickness="0"
+                             Foreground="White" FontSize="14"
+                             CaretBrush="White"
+                             Text="Check this out!"/>
+                    <TextBlock Grid.Column="0" Text="Add a message..."
+                               Foreground="#72767D" FontSize="14"
+                               VerticalAlignment="Center" IsHitTestVisible="False">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Text, ElementName=MessageBox}" Value="">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <Button Grid.Column="1" Content="📎" Style="{StaticResource IconButton}"
+                            Width="32" Height="32" ToolTip="Add attachment"/>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

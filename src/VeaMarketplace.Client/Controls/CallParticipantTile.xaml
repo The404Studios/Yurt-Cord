@@ -1,0 +1,166 @@
+<UserControl x:Class="VeaMarketplace.Client.Controls.CallParticipantTile"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Width="220" Height="180">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <Storyboard x:Key="SpeakingPulse" RepeatBehavior="Forever">
+            <DoubleAnimation Storyboard.TargetName="SpeakingRing"
+                             Storyboard.TargetProperty="Opacity"
+                             From="1" To="0.5" Duration="0:0:0.5"
+                             AutoReverse="True"/>
+        </Storyboard>
+
+        <Storyboard x:Key="VolumeBarAnimation">
+            <DoubleAnimation Storyboard.TargetName="VolumeLevel"
+                             Storyboard.TargetProperty="Width"
+                             Duration="0:0:0.1"/>
+        </Storyboard>
+    </UserControl.Resources>
+
+    <Border x:Name="MainBorder" CornerRadius="12" Background="#2B2D31"
+            BorderThickness="3" BorderBrush="Transparent">
+        <Border.Triggers>
+            <EventTrigger RoutedEvent="Loaded">
+                <BeginStoryboard>
+                    <Storyboard>
+                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                         From="0" To="1" Duration="0:0:0.3"/>
+                        <DoubleAnimation Storyboard.TargetName="ContentScale"
+                                         Storyboard.TargetProperty="ScaleX"
+                                         From="0.9" To="1" Duration="0:0:0.3">
+                            <DoubleAnimation.EasingFunction>
+                                <BackEase EasingMode="EaseOut"/>
+                            </DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
+                        <DoubleAnimation Storyboard.TargetName="ContentScale"
+                                         Storyboard.TargetProperty="ScaleY"
+                                         From="0.9" To="1" Duration="0:0:0.3">
+                            <DoubleAnimation.EasingFunction>
+                                <BackEase EasingMode="EaseOut"/>
+                            </DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
+                    </Storyboard>
+                </BeginStoryboard>
+            </EventTrigger>
+        </Border.Triggers>
+
+        <Grid x:Name="ContentGrid" RenderTransformOrigin="0.5,0.5">
+            <Grid.RenderTransform>
+                <ScaleTransform x:Name="ContentScale" ScaleX="1" ScaleY="1"/>
+            </Grid.RenderTransform>
+
+            <!-- Video Stream (when enabled) -->
+            <Image x:Name="VideoStream" Stretch="UniformToFill"
+                   Visibility="Collapsed"/>
+
+            <!-- Avatar Display (when video disabled) -->
+            <Grid x:Name="AvatarDisplay" VerticalAlignment="Center"
+                  HorizontalAlignment="Center">
+                <StackPanel HorizontalAlignment="Center">
+                    <!-- Avatar with Speaking Ring -->
+                    <Grid Width="80" Height="80" Margin="0,0,0,12">
+                        <Ellipse x:Name="AvatarEllipse">
+                            <Ellipse.Fill>
+                                <ImageBrush x:Name="AvatarBrush" Stretch="UniformToFill"/>
+                            </Ellipse.Fill>
+                        </Ellipse>
+
+                        <!-- Speaking Ring -->
+                        <Ellipse x:Name="SpeakingRing" Stroke="#43B581"
+                                 StrokeThickness="3" Visibility="Collapsed"/>
+
+                        <!-- Connecting Animation -->
+                        <Border x:Name="ConnectingOverlay" Visibility="Collapsed"
+                                Background="#80000000" CornerRadius="40">
+                            <TextBlock Text="..." FontSize="20" Foreground="White"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                    </Grid>
+
+                    <!-- Username -->
+                    <TextBlock x:Name="UsernameText" FontSize="14"
+                               Foreground="White" FontWeight="Medium"
+                               HorizontalAlignment="Center"
+                               TextTrimming="CharacterEllipsis"
+                               MaxWidth="180"/>
+
+                    <!-- Speaking Indicator Text -->
+                    <TextBlock x:Name="StatusText" FontSize="11"
+                               Foreground="#72767D" HorizontalAlignment="Center"
+                               Margin="0,4,0,0"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Status Badges (top-right corner) -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                        VerticalAlignment="Top" Margin="8">
+                <!-- Host Badge -->
+                <Border x:Name="HostBadge" Background="#5865F2" CornerRadius="4"
+                        Padding="6,2" Margin="0,0,4,0" Visibility="Collapsed">
+                    <TextBlock Text="HOST" FontSize="9" FontWeight="Bold"
+                               Foreground="White"/>
+                </Border>
+
+                <!-- Screen Share Badge -->
+                <Border x:Name="ScreenShareBadge" Background="#43B581" CornerRadius="4"
+                        Padding="6,2" Visibility="Collapsed">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="🖥" FontSize="10" Margin="0,0,4,0"/>
+                        <TextBlock Text="LIVE" FontSize="9" FontWeight="Bold"
+                                   Foreground="White"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- Status Icons (bottom-left corner) -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left"
+                        VerticalAlignment="Bottom" Margin="8">
+                <!-- Muted Icon -->
+                <Border x:Name="MutedBadge" Background="#ED4245" CornerRadius="4"
+                        Padding="4" Margin="0,0,4,0" Visibility="Collapsed">
+                    <TextBlock Text="🔇" FontSize="12"/>
+                </Border>
+
+                <!-- Deafened Icon -->
+                <Border x:Name="DeafenedBadge" Background="#ED4245" CornerRadius="4"
+                        Padding="4" Visibility="Collapsed">
+                    <TextBlock Text="🔈" FontSize="12"/>
+                </Border>
+            </StackPanel>
+
+            <!-- Volume Level Indicator (bottom) -->
+            <Border VerticalAlignment="Bottom" HorizontalAlignment="Center"
+                    Margin="0,0,0,8" Width="100">
+                <Grid>
+                    <Border Background="#40444B" CornerRadius="2" Height="4"/>
+                    <Border x:Name="VolumeLevel" Background="#43B581"
+                            CornerRadius="2" Height="4"
+                            HorizontalAlignment="Left" Width="0"/>
+                </Grid>
+            </Border>
+
+            <!-- Context Menu Trigger -->
+            <Border Background="Transparent" Cursor="Hand">
+                <Border.ContextMenu>
+                    <ContextMenu x:Name="ParticipantContextMenu">
+                        <MenuItem x:Name="ViewProfileMenuItem" Header="View Profile" Click="ViewProfile_Click"/>
+                        <MenuItem x:Name="MuteUserMenuItem" Header="Mute User" Click="MuteUser_Click"/>
+                        <MenuItem x:Name="AdjustVolumeMenuItem" Header="Adjust Volume" Click="AdjustVolume_Click"/>
+                        <Separator/>
+                        <MenuItem x:Name="WatchScreenMenuItem" Header="Watch Screen"
+                                  Click="WatchScreen_Click" Visibility="Collapsed"/>
+                        <MenuItem x:Name="SendMessageMenuItem" Header="Send Message" Click="SendMessage_Click"/>
+                        <Separator/>
+                        <MenuItem x:Name="KickUserMenuItem" Header="Kick from Call"
+                                  Foreground="#ED4245" Click="KickUser_Click"
+                                  Visibility="Collapsed"/>
+                    </ContextMenu>
+                </Border.ContextMenu>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>
