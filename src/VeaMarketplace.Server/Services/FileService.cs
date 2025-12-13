@@ -166,7 +166,7 @@ public class FileService
             int? height = null;
             string? thumbnailUrl = null;
 
-            if (attachmentType == AttachmentType.Image)
+            if (attachmentType == AttachmentType.Image && OperatingSystem.IsWindows())
             {
                 (width, height) = GetImageDimensions(fileBytes);
 

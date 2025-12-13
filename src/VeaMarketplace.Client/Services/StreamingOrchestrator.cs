@@ -37,8 +37,8 @@ public class StreamingOrchestrator : IDisposable
 
     // Memory management
     private readonly Thread _memoryThread;
-    private volatile long _currentMemoryMb;
-    private volatile long _peakMemoryMb;
+    private long _currentMemoryMb;  // Use Interlocked for thread-safe access
+    private long _peakMemoryMb;     // Use Interlocked for thread-safe access
     private const long MemoryWarningThresholdMb = 500;  // Warn at 500MB
     private const long MemoryCleanupThresholdMb = 400;  // Cleanup at 400MB
     private const int MemoryCheckIntervalMs = 1000;     // Check every second
@@ -80,7 +80,7 @@ public class StreamingOrchestrator : IDisposable
     public bool IsSendingAudio => _isSendingAudio;
     public bool IsNetworkCongested => _networkCongested;
     public int NetworkLatencyMs => _networkLatencyMs;
-    public long CurrentMemoryMb => _currentMemoryMb;
+    public long CurrentMemoryMb => Interlocked.Read(ref _currentMemoryMb);
 
     // Events
     public event Action<bool>? OnVoiceActivityChanged;
@@ -285,8 +285,15 @@ public class StreamingOrchestrator : IDisposable
 
                 // Get current memory usage
                 var memoryBytes = GC.GetTotalMemory(false);
-                _currentMemoryMb = memoryBytes / (1024 * 1024);
-                _peakMemoryMb = Math.Max(_peakMemoryMb, _currentMemoryMb);
+                var currentMb = memoryBytes / (1024 * 1024);
+                Interlocked.Exchange(ref _currentMemoryMb, currentMb);
+
+                // Update peak memory atomically
+                long peakMb;
+                do
+                {
+                    peakMb = Interlocked.Read(ref _peakMemoryMb);
+                } while (currentMb > peakMb && Interlocked.CompareExchange(ref _peakMemoryMb, currentMb, peakMb) != peakMb);
 
                 // Track GC collections
                 var currentGcGen2 = GC.CollectionCount(2);
@@ -297,14 +304,14 @@ public class StreamingOrchestrator : IDisposable
                 }
 
                 // Memory warning
-                if (_currentMemoryMb > MemoryWarningThresholdMb)
+                if (currentMb > MemoryWarningThresholdMb)
                 {
-                    OnMemoryWarning?.Invoke(_currentMemoryMb);
-                    Debug.WriteLine($"[Orchestrator] Memory warning: {_currentMemoryMb}MB");
+                    OnMemoryWarning?.Invoke(currentMb);
+                    Debug.WriteLine($"[Orchestrator] Memory warning: {currentMb}MB");
                 }
 
                 // Proactive cleanup at threshold
-                if (_currentMemoryMb > MemoryCleanupThresholdMb)
+                if (currentMb > MemoryCleanupThresholdMb)
                 {
                     // Request GC to clean up Gen0/Gen1 without blocking
                     GC.Collect(1, GCCollectionMode.Optimized, false);
@@ -317,7 +324,7 @@ public class StreamingOrchestrator : IDisposable
                 }
 
                 // Compact LOH periodically if memory is high
-                if (_currentMemoryMb > MemoryWarningThresholdMb && _uptimeStopwatch.Elapsed.TotalMinutes > 5)
+                if (currentMb > MemoryWarningThresholdMb && _uptimeStopwatch.Elapsed.TotalMinutes > 5)
                 {
                     GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
                 }
@@ -445,8 +452,8 @@ public class StreamingOrchestrator : IDisposable
             IsVoiceActive = _voiceActive,
             NetworkLatencyMs = _networkLatencyMs,
             IsNetworkCongested = _networkCongested,
-            CurrentMemoryMb = _currentMemoryMb,
-            PeakMemoryMb = _peakMemoryMb,
+            CurrentMemoryMb = Interlocked.Read(ref _currentMemoryMb),
+            PeakMemoryMb = Interlocked.Read(ref _peakMemoryMb),
             GCCollections = Interlocked.Read(ref _gcCollections),
             UptimeSeconds = (int)_uptimeStopwatch.Elapsed.TotalSeconds
         };
@@ -462,7 +469,7 @@ public class StreamingOrchestrator : IDisposable
         Interlocked.Exchange(ref _videoFramesSent, 0);
         Interlocked.Exchange(ref _videoFramesDropped, 0);
         Interlocked.Exchange(ref _gcCollections, 0);
-        _peakMemoryMb = _currentMemoryMb;
+        Interlocked.Exchange(ref _peakMemoryMb, Interlocked.Read(ref _currentMemoryMb));
     }
 
     #endregion
