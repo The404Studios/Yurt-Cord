@@ -1,0 +1,119 @@
+<UserControl x:Class="VeaMarketplace.Client.Views.BlockedUsersView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:VeaMarketplace.Client.Converters"
+             Background="{StaticResource TertiaryDarkBrush}">
+
+    <UserControl.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="{StaticResource SecondaryDarkBrush}"
+                Padding="24,20">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0" Style="{StaticResource IconButton}"
+                        Content="←" FontSize="18" ToolTip="Back"
+                        Width="36" Height="36" Margin="0,0,16,0"
+                        Click="BackButton_Click"/>
+
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="Blocked Users" FontSize="20" FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock x:Name="BlockedCountText" Text="0 blocked users"
+                               FontSize="12" Foreground="{StaticResource TextMutedBrush}"
+                               Margin="0,2,0,0"/>
+                </StackPanel>
+
+                <TextBlock Grid.Column="2" Text="🚫" FontSize="32" Opacity="0.3"
+                           VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- Content -->
+        <Border Grid.Row="1" Padding="24">
+            <Grid>
+                <!-- Empty State -->
+                <StackPanel x:Name="EmptyState" HorizontalAlignment="Center"
+                            VerticalAlignment="Center" Visibility="Collapsed">
+                    <TextBlock Text="🎉" FontSize="64" HorizontalAlignment="Center"
+                               Margin="0,0,0,16"/>
+                    <TextBlock Text="No blocked users" FontSize="20" FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimaryBrush}"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="You haven't blocked anyone yet. That's great!"
+                               FontSize="14" Foreground="{StaticResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                </StackPanel>
+
+                <!-- Blocked Users List -->
+                <ScrollViewer x:Name="BlockedListScroll" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl x:Name="BlockedUsersControl">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{StaticResource SecondaryDarkBrush}"
+                                        CornerRadius="8" Margin="0,0,0,8" Padding="16">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Avatar -->
+                                        <Border Grid.Column="0" Width="48" Height="48"
+                                                CornerRadius="24" Margin="0,0,16,0">
+                                            <Ellipse Width="48" Height="48">
+                                                <Ellipse.Fill>
+                                                    <ImageBrush ImageSource="{Binding AvatarUrl}"
+                                                                Stretch="UniformToFill"/>
+                                                </Ellipse.Fill>
+                                            </Ellipse>
+                                        </Border>
+
+                                        <!-- User Info -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Username}" FontSize="15"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                <TextBlock Text="Blocked on " FontSize="12"
+                                                           Foreground="{StaticResource TextMutedBrush}"/>
+                                                <TextBlock Text="{Binding BlockedAt, StringFormat={}{0:MMM d, yyyy}}"
+                                                           FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding Reason}" FontSize="12"
+                                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                                       Margin="0,4,0,0"
+                                                       Visibility="{Binding HasReason, Converter={StaticResource BoolToVis}}"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+
+                                        <!-- Actions -->
+                                        <Button Grid.Column="2" Content="Unblock"
+                                                Style="{StaticResource SecondaryButton}"
+                                                Padding="16,8"
+                                                Click="UnblockButton_Click"
+                                                Tag="{Binding UserId}"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

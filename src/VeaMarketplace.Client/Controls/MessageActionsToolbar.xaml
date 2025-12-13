@@ -1,0 +1,53 @@
+<UserControl x:Class="VeaMarketplace.Client.Controls.MessageActionsToolbar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root" Visibility="Collapsed">
+
+    <Border Background="{StaticResource SecondaryDarkBrush}"
+            CornerRadius="4" Padding="4"
+            Effect="{StaticResource SubtleShadow}">
+        <StackPanel Orientation="Horizontal">
+            <!-- Add Reaction -->
+            <Button x:Name="AddReactionButton" Style="{StaticResource IconButton}"
+                    Width="28" Height="28" ToolTip="Add Reaction"
+                    Click="AddReactionButton_Click">
+                <TextBlock Text="😀" FontSize="14"/>
+            </Button>
+
+            <!-- Reply -->
+            <Button x:Name="ReplyButton" Style="{StaticResource IconButton}"
+                    Width="28" Height="28" ToolTip="Reply"
+                    Click="ReplyButton_Click">
+                <TextBlock Text="↩️" FontSize="14"/>
+            </Button>
+
+            <!-- Edit (only for own messages) -->
+            <Button x:Name="EditButton" Style="{StaticResource IconButton}"
+                    Width="28" Height="28" ToolTip="Edit"
+                    Visibility="Collapsed" Click="EditButton_Click">
+                <TextBlock Text="✏️" FontSize="14"/>
+            </Button>
+
+            <!-- Pin Message -->
+            <Button x:Name="PinButton" Style="{StaticResource IconButton}"
+                    Width="28" Height="28" ToolTip="Pin Message"
+                    Visibility="Collapsed" Click="PinButton_Click">
+                <TextBlock Text="📌" FontSize="14"/>
+            </Button>
+
+            <!-- Copy Text -->
+            <Button x:Name="CopyButton" Style="{StaticResource IconButton}"
+                    Width="28" Height="28" ToolTip="Copy Text"
+                    Click="CopyButton_Click">
+                <TextBlock Text="📋" FontSize="14"/>
+            </Button>
+
+            <!-- More Options -->
+            <Button x:Name="MoreButton" Style="{StaticResource IconButton}"
+                    Width="28" Height="28" ToolTip="More"
+                    Click="MoreButton_Click">
+                <TextBlock Text="⋯" FontSize="14" FontWeight="Bold"/>
+            </Button>
+        </StackPanel>
+    </Border>
+</UserControl>
