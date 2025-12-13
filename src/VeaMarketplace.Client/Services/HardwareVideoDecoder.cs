@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Media;
@@ -22,6 +23,55 @@ public unsafe class HardwareVideoDecoder : IDisposable
     private bool _initialized;
     private volatile bool _disposed;  // Volatile for thread-safe reads
     private readonly object _lock = new();
+    private static bool _ffmpegInitialized;
+
+    static HardwareVideoDecoder()
+    {
+        InitializeFFmpeg();
+    }
+
+    private static void InitializeFFmpeg()
+    {
+        if (_ffmpegInitialized) return;
+
+        try
+        {
+            // Set FFmpeg binaries path - look in app directory first
+            var appDir = AppDomain.CurrentDomain.BaseDirectory;
+            var ffmpegPath = Path.Combine(appDir, "ffmpeg");
+
+            if (Directory.Exists(ffmpegPath))
+            {
+                ffmpeg.RootPath = ffmpegPath;
+            }
+            else
+            {
+                // Try common installation paths
+                var commonPaths = new[]
+                {
+                    @"C:\ffmpeg\bin",
+                    @"C:\Program Files\ffmpeg\bin",
+                    Environment.GetEnvironmentVariable("FFMPEG_PATH") ?? ""
+                };
+
+                foreach (var path in commonPaths)
+                {
+                    if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
+                    {
+                        ffmpeg.RootPath = path;
+                        break;
+                    }
+                }
+            }
+
+            _ffmpegInitialized = true;
+            Debug.WriteLine($"FFmpeg decoder initialized");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"FFmpeg decoder initialization failed: {ex.Message}");
+        }
+    }
 
     public string DecoderName { get; private set; } = "none";
     public bool IsHardwareAccelerated { get; private set; }
