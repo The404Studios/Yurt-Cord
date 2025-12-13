@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;

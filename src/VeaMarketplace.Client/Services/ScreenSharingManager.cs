@@ -6,6 +6,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
+using Rectangle = System.Drawing.Rectangle;
 
 namespace VeaMarketplace.Client.Services;
 
