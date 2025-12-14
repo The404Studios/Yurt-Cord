@@ -1,13 +1,9 @@
 <UserControl x:Class="VeaMarketplace.Client.Views.ActivityFeedView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:converters="clr-namespace:VeaMarketplace.Client.Converters">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <UserControl.Resources>
-        <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
-        <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
-        <converters:TimeAgoConverter x:Key="TimeAgoConverter"/>
-    </UserControl.Resources>
+    <!-- Converters (BoolToVis, InverseBoolToVis, TimeAgoConverter, StringToVisibilityConverter)
+         are available globally from App.xaml -->
 
     <Grid Background="{StaticResource TertiaryDarkBrush}">
         <Grid.RowDefinitions>

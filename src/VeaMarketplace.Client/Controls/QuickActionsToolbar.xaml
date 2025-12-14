@@ -5,7 +5,12 @@
              Margin="0,0,24,24">
 
     <UserControl.Resources>
-        <!-- Floating Action Button Style -->
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Styles/Colors.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Floating Action Button Style -->
         <Style x:Key="FloatingActionButton" TargetType="Button">
             <Setter Property="Width" Value="56"/>
             <Setter Property="Height" Value="56"/>
@@ -108,6 +113,7 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+        </ResourceDictionary>
     </UserControl.Resources>
 
     <StackPanel>

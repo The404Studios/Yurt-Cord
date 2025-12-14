@@ -2,8 +2,9 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:VeaMarketplace.Client.Views"
-             xmlns:converters="clr-namespace:VeaMarketplace.Client.Converters"
              Background="#1E1F22">
+
+    <!-- Converters (BoolToVis, NullToVisibility) are available globally from App.xaml -->
 
     <UserControl.Resources>
         <ResourceDictionary>
@@ -11,9 +12,6 @@
                 <ResourceDictionary Source="../Styles/Colors.xaml"/>
                 <ResourceDictionary Source="../Styles/Controls.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-
-            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
-            <converters:NullToVisibilityConverter x:Key="NullToVisibility"/>
         </ResourceDictionary>
     </UserControl.Resources>
 
