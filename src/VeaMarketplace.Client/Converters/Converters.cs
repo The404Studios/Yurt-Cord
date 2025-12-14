@@ -84,25 +84,37 @@ public class TimeAgoConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        if (value is DateTime dateTime)
-        {
-            var timeSpan = DateTime.Now - dateTime;
+        DateTime dateTime;
 
-            if (timeSpan.TotalMinutes < 1)
-                return "just now";
-            if (timeSpan.TotalMinutes < 60)
-                return $"{(int)timeSpan.TotalMinutes}m ago";
-            if (timeSpan.TotalHours < 24)
-                return $"{(int)timeSpan.TotalHours}h ago";
-            if (timeSpan.TotalDays < 7)
-                return $"{(int)timeSpan.TotalDays}d ago";
-            if (timeSpan.TotalDays < 30)
-                return $"{(int)(timeSpan.TotalDays / 7)}w ago";
-            if (timeSpan.TotalDays < 365)
-                return $"{(int)(timeSpan.TotalDays / 30)}mo ago";
-            return $"{(int)(timeSpan.TotalDays / 365)}y ago";
+        // Handle both DateTime and DateTime?
+        if (value is DateTime dt)
+        {
+            dateTime = dt;
         }
-        return string.Empty;
+        else if (value is DateTime? nullableDt && nullableDt.HasValue)
+        {
+            dateTime = nullableDt.Value;
+        }
+        else
+        {
+            return string.Empty;
+        }
+
+        var timeSpan = DateTime.Now - dateTime;
+
+        if (timeSpan.TotalMinutes < 1)
+            return "just now";
+        if (timeSpan.TotalMinutes < 60)
+            return $"{(int)timeSpan.TotalMinutes}m ago";
+        if (timeSpan.TotalHours < 24)
+            return $"{(int)timeSpan.TotalHours}h ago";
+        if (timeSpan.TotalDays < 7)
+            return $"{(int)timeSpan.TotalDays}d ago";
+        if (timeSpan.TotalDays < 30)
+            return $"{(int)(timeSpan.TotalDays / 7)}w ago";
+        if (timeSpan.TotalDays < 365)
+            return $"{(int)(timeSpan.TotalDays / 30)}mo ago";
+        return $"{(int)(timeSpan.TotalDays / 365)}y ago";
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -216,12 +228,24 @@ public class TimestampConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        if (value is DateTime dateTime)
+        DateTime dateTime;
+
+        // Handle both DateTime and DateTime?
+        if (value is DateTime dt)
         {
-            var format = parameter as string ?? "g"; // Default to general short date/time
-            return dateTime.ToString(format, culture);
+            dateTime = dt;
         }
-        return string.Empty;
+        else if (value is DateTime? nullableDt && nullableDt.HasValue)
+        {
+            dateTime = nullableDt.Value;
+        }
+        else
+        {
+            return string.Empty;
+        }
+
+        var format = parameter as string ?? "g"; // Default to general short date/time
+        return dateTime.ToString(format, culture);
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
