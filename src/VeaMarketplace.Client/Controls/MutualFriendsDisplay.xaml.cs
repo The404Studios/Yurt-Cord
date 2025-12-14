@@ -189,8 +189,8 @@ public partial class MutualFriendsDisplay : UserControl
             FontSize = 11,
             FontWeight = FontWeights.Bold,
             Foreground = FindResource("TextPrimaryBrush") as Brush,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = System.Windows.VerticalAlignment.Center
         };
 
         return border;

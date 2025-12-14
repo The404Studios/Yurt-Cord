@@ -85,7 +85,7 @@ public partial class NotificationToast : UserControl
             From = 1,
             To = 0,
             Duration = TimeSpan.FromMilliseconds(_totalDurationMs),
-            EasingFunction = new LinearEase()
+            EasingFunction = new System.Windows.Media.Animation.LinearEase()
         };
         ProgressScale.BeginAnimation(ScaleTransform.ScaleXProperty, _progressAnimation);
 
@@ -127,7 +127,7 @@ public partial class NotificationToast : UserControl
             From = currentScale,
             To = 0,
             Duration = remainingDuration,
-            EasingFunction = new LinearEase()
+            EasingFunction = new System.Windows.Media.Animation.LinearEase()
         };
         ProgressScale.BeginAnimation(ScaleTransform.ScaleXProperty, _progressAnimation);
 
