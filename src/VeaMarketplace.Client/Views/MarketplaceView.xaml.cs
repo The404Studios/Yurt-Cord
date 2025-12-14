@@ -463,7 +463,7 @@ public partial class MarketplaceView : UserControl
     private async void QuickActions_RefreshRequested(object sender, RoutedEventArgs e)
     {
         if (_viewModel == null) return;
-        await _viewModel.RefreshCommand.ExecuteAsync(null);
+        await _viewModel.LoadProductsCommand.ExecuteAsync(null);
         ShowToast("Products refreshed!");
     }
 

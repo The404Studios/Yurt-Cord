@@ -22,6 +22,8 @@ public class ProductDto
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public decimal Price { get; set; }
+    public decimal OriginalPrice { get; set; }
+    public int Stock { get; set; } = -1; // -1 = unlimited
     public ProductCategory Category { get; set; }
     public ProductStatus Status { get; set; }
     public List<string> ImageUrls { get; set; } = [];

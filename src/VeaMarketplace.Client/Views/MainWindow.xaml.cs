@@ -236,7 +236,7 @@ public partial class MainWindow : Window
                     UserId = friend.UserId,
                     Username = friend.Username,
                     AvatarUrl = friend.AvatarUrl ?? "pack://application:,,,/Assets/default-avatar.png",
-                    Status = friend.CustomStatus
+                    Status = friend.StatusMessage
                 });
             }
         }

@@ -140,7 +140,7 @@ public partial class SocialActivityPanel : UserControl
             Margin = new Thickness(0, 0, 8, 0),
             CornerRadius = new CornerRadius(22),
             Background = Brushes.Transparent,
-            Cursor = Cursors.Hand,
+            Cursor = System.Windows.Input.Cursors.Hand,
             Tag = friend,
             ToolTip = friend.Username
         };

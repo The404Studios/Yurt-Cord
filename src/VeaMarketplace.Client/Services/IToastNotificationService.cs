@@ -11,6 +11,7 @@ public interface IToastNotificationService
     void ShowSuccess(string title, string message);
     void ShowError(string title, string message);
     void ShowWarning(string title, string message);
+    void ShowInfo(string title, string message);
     void ShowFriendRequest(string fromUsername);
     void ShowMessage(string fromUsername, string preview);
     void ClearAll();
@@ -87,6 +88,9 @@ public class ToastNotificationService : IToastNotificationService
 
     public void ShowWarning(string title, string message)
         => ShowNotification(title, message, NotificationType.Warning, 6000);
+
+    public void ShowInfo(string title, string message)
+        => ShowNotification(title, message, NotificationType.Info);
 
     public void ShowFriendRequest(string fromUsername)
         => ShowNotification("Friend Request", $"{fromUsername} sent you a friend request!", NotificationType.FriendRequest);
