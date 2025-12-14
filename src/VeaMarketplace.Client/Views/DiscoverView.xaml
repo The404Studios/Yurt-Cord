@@ -403,10 +403,10 @@
                                     <TextBlock Text="&#x2B50;" FontSize="12"/>
                                     <TextBlock Text="{Binding Rating, StringFormat='{}{0:F1}'}" FontSize="12"
                                                Foreground="{StaticResource TextSecondaryBrush}" Margin="4,0,0,0"/>
-                                    <TextBlock Text="{Binding ReviewCount, StringFormat='({0})'}" FontSize="12"
+                                    <TextBlock Text="{Binding ReviewCount, StringFormat='{}({0})'}" FontSize="12"
                                                Foreground="{StaticResource TextMutedBrush}" Margin="4,0,0,0"/>
                                 </StackPanel>
-                                <TextBlock Text="{Binding ProductCount, StringFormat='{0} products'}" FontSize="11"
+                                <TextBlock Text="{Binding ProductCount, StringFormat='{}{0} products'}" FontSize="11"
                                            Foreground="{StaticResource TextMutedBrush}"
                                            HorizontalAlignment="Center" Margin="0,8,0,0"/>
 
