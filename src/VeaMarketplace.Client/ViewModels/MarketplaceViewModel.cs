@@ -638,10 +638,7 @@ public partial class MarketplaceViewModel : BaseViewModel
     [RelayCommand]
     private void RemoveProductImage(string imageUrl)
     {
-        if (NewImageUrls.Contains(imageUrl))
-        {
-            NewImageUrls.Remove(imageUrl);
-        }
+        NewImageUrls.Remove(imageUrl);
     }
 
     private void ClearNewListingFields()

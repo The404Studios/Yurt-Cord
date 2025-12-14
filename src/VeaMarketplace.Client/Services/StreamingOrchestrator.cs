@@ -490,6 +490,7 @@ public class StreamingOrchestrator : IDisposable
         _smallBufferPool.Clear();
         _largeBufferPool.Clear();
 
+        GC.SuppressFinalize(this);
         Debug.WriteLine("[Orchestrator] Disposed");
     }
 }
