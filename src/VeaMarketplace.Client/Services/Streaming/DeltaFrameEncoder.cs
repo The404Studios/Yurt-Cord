@@ -214,9 +214,9 @@ public class DeltaFrameEncoder : IDisposable
     /// Merge adjacent changed blocks into larger rectangles.
     /// Reduces encoding overhead.
     /// </summary>
-    private Rectangle[] MergeChangedRegions(bool[] changedBlocks, int blocksX, int blocksY, int blockSize, int width, int height)
+    private System.Drawing.Rectangle[] MergeChangedRegions(bool[] changedBlocks, int blocksX, int blocksY, int blockSize, int width, int height)
     {
-        var regions = new List<Rectangle>();
+        var regions = new List<System.Drawing.Rectangle>();
         var visited = new bool[changedBlocks.Length];
 
         for (int by = 0; by < blocksY; by++)

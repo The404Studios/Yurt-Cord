@@ -11,6 +11,8 @@ public interface INotificationService
     void PlayUserLeaveSound();
     void PlayMessageSound();
     void PlayCallSound();
+    void PlayMentionSound();
+    void PlayFriendRequestSound();
     void StopAllSounds();
 }
 
@@ -53,6 +55,16 @@ public class NotificationService : INotificationService
     public void PlayCallSound()
     {
         PlaySound("call.wav");
+    }
+
+    public void PlayMentionSound()
+    {
+        PlaySound("mention.wav");
+    }
+
+    public void PlayFriendRequestSound()
+    {
+        PlaySound("friend_request.wav");
     }
 
     public void StopAllSounds()
@@ -116,6 +128,20 @@ public class NotificationService : INotificationService
         {
             // Ringtone-like pattern
             CreateChimeWav(callPath, new[] { 440.0, 554.37, 659.25, 554.37 }, 0.2); // A4-C#5-E5-C#5
+        }
+
+        var mentionPath = Path.Combine(_soundsPath, "mention.wav");
+        if (!File.Exists(mentionPath))
+        {
+            // Higher pitched alert - two quick notes
+            CreateChimeWav(mentionPath, new[] { 987.77, 1174.66 }, 0.08); // B5 to D6
+        }
+
+        var friendRequestPath = Path.Combine(_soundsPath, "friend_request.wav");
+        if (!File.Exists(friendRequestPath))
+        {
+            // Friendly ascending pattern
+            CreateChimeWav(friendRequestPath, new[] { 523.25, 659.25, 783.99 }, 0.12); // C5-E5-G5
         }
     }
 

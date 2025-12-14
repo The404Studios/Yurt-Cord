@@ -66,6 +66,7 @@
 
     <!-- Legacy Accent Brush Names -->
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentBlurpleColor}"/>
+    <SolidColorBrush x:Key="AccentBlurpleBrush" Color="{StaticResource AccentBlurpleColor}"/>
     <SolidColorBrush x:Key="AccentGreenBrush" Color="{StaticResource AccentGreenColor}"/>
     <SolidColorBrush x:Key="AccentYellowBrush" Color="{StaticResource AccentYellowColor}"/>
     <SolidColorBrush x:Key="AccentRedBrush" Color="{StaticResource AccentRedColor}"/>
