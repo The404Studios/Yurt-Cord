@@ -124,7 +124,7 @@ public partial class MutualFriendsDisplay : UserControl
             BorderThickness = new Thickness(2),
             BorderBrush = FindResource("PrimaryDarkBrush") as Brush,
             Margin = new Thickness(index > 0 ? -10 : 0, 0, 0, 0),
-            Cursor = Cursors.Hand,
+            Cursor = System.Windows.Input.Cursors.Hand,
             ToolTip = friend.DisplayName ?? friend.Username,
             Tag = friend.Id
         };
@@ -178,7 +178,7 @@ public partial class MutualFriendsDisplay : UserControl
             BorderThickness = new Thickness(2),
             BorderBrush = FindResource("PrimaryDarkBrush") as Brush,
             Margin = new Thickness(-10, 0, 0, 0),
-            Cursor = Cursors.Hand
+            Cursor = System.Windows.Input.Cursors.Hand
         };
 
         border.MouseLeftButtonDown += (s, e) => ToggleExpanded();
@@ -189,8 +189,8 @@ public partial class MutualFriendsDisplay : UserControl
             FontSize = 11,
             FontWeight = FontWeights.Bold,
             Foreground = FindResource("TextPrimaryBrush") as Brush,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = System.Windows.VerticalAlignment.Center
         };
 
         return border;

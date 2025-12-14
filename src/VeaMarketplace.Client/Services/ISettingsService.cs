@@ -8,6 +8,8 @@ public interface ISettingsService
     AppSettings Settings { get; }
     void SaveSettings();
     void LoadSettings();
+    T GetSetting<T>(string key, T defaultValue);
+    void SetSetting<T>(string key, T value);
 }
 
 public class AppSettings
@@ -29,6 +31,9 @@ public class AppSettings
     public double VoiceActivityThreshold { get; set; } = 0.02;
     public bool NoiseSuppression { get; set; } = true;
     public bool EchoCancellation { get; set; } = true;
+
+    // Extra settings stored by key
+    public Dictionary<string, object> ExtraSettings { get; set; } = new();
 }
 
 public class SettingsService : ISettingsService
@@ -68,5 +73,36 @@ public class SettingsService : ISettingsService
                 Settings = new AppSettings();
             }
         }
+    }
+
+    public T GetSetting<T>(string key, T defaultValue)
+    {
+        if (Settings.ExtraSettings.TryGetValue(key, out var value))
+        {
+            try
+            {
+                if (value is JsonElement jsonElement)
+                {
+                    return JsonSerializer.Deserialize<T>(jsonElement.GetRawText()) ?? defaultValue;
+                }
+                if (value is T typedValue)
+                {
+                    return typedValue;
+                }
+                // Try to convert
+                return (T)Convert.ChangeType(value, typeof(T));
+            }
+            catch
+            {
+                return defaultValue;
+            }
+        }
+        return defaultValue;
+    }
+
+    public void SetSetting<T>(string key, T value)
+    {
+        Settings.ExtraSettings[key] = value!;
+        SaveSettings();
     }
 }

@@ -140,7 +140,7 @@ public partial class SocialActivityPanel : UserControl
             Margin = new Thickness(0, 0, 8, 0),
             CornerRadius = new CornerRadius(22),
             Background = Brushes.Transparent,
-            Cursor = Cursors.Hand,
+            Cursor = System.Windows.Input.Cursors.Hand,
             Tag = friend,
             ToolTip = friend.Username
         };
@@ -165,8 +165,8 @@ public partial class SocialActivityPanel : UserControl
             Fill = new SolidColorBrush(Color.FromRgb(67, 181, 129)),
             Stroke = new SolidColorBrush(Color.FromRgb(43, 45, 49)),
             StrokeThickness = 3,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            VerticalAlignment = VerticalAlignment.Bottom
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
+            VerticalAlignment = System.Windows.VerticalAlignment.Bottom
         };
 
         grid.Children.Add(ellipse);

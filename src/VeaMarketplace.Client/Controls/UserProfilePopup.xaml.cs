@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
 using VeaMarketplace.Client.Models;
 using VeaMarketplace.Client.Services;
 using VeaMarketplace.Shared.DTOs;
@@ -159,8 +160,8 @@ public partial class UserProfilePopup : UserControl
                         FontSize = 10,
                         FontWeight = FontWeights.Bold,
                         Foreground = FindResource("TextPrimaryBrush") as Brush,
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        VerticalAlignment = VerticalAlignment.Center
+                        HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                        VerticalAlignment = System.Windows.VerticalAlignment.Center
                     };
                     MutualFriendsAvatars.Children.Add(moreIndicator);
                 }

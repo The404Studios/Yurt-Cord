@@ -4,7 +4,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
-using VeaMarketplace.Client.Models;
 using VeaMarketplace.Client.Services;
 
 namespace VeaMarketplace.Client.Views;
@@ -47,10 +46,11 @@ public partial class CreateGroupChatDialog : Window
                 _friends.Add(new SelectableFriend
                 {
                     Id = friend.Id,
+                    UserId = friend.UserId,
                     Username = friend.Username,
                     DisplayName = friend.DisplayName ?? friend.Username,
                     AvatarUrl = friend.AvatarUrl ?? "/Assets/default-avatar.png",
-                    Status = friend.Status,
+                    IsOnline = friend.IsOnline,
                     IsSelected = false
                 });
             }
@@ -242,12 +242,4 @@ public partial class CreateGroupChatDialog : Window
     }
 }
 
-public class SelectableFriend
-{
-    public string Id { get; set; } = string.Empty;
-    public string Username { get; set; } = string.Empty;
-    public string DisplayName { get; set; } = string.Empty;
-    public string AvatarUrl { get; set; } = string.Empty;
-    public UserStatus Status { get; set; }
-    public bool IsSelected { get; set; }
-}
+// SelectableFriend is defined in StartGroupCallDialog.xaml.cs
