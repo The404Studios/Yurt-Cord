@@ -266,9 +266,22 @@ public static class AnimationHelper
         if (element.RenderTransform is TranslateTransform tt) return tt;
 
         if (element.RenderTransform is TransformGroup group)
-            return group.Children.OfType<TranslateTransform>().First();
+        {
+            var transform = group.Children.OfType<TranslateTransform>().FirstOrDefault();
+            if (transform != null) return transform;
+        }
 
-        throw new InvalidOperationException("TranslateTransform not found");
+        // Create and add a TranslateTransform if not found
+        var newTransform = new TranslateTransform();
+        if (element.RenderTransform is TransformGroup existingGroup)
+        {
+            existingGroup.Children.Add(newTransform);
+        }
+        else
+        {
+            element.RenderTransform = newTransform;
+        }
+        return newTransform;
     }
 }
 

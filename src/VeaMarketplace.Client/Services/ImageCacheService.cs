@@ -240,10 +240,13 @@ public class ImageCacheService : IImageCacheService
             // Evict oldest entries if cache is full
             if (_memoryCache.Count >= MaxMemoryCacheItems)
             {
-                var oldestKey = _memoryCache
+                var oldest = _memoryCache
                     .OrderBy(kvp => kvp.Value.cachedAt)
-                    .First().Key;
-                _memoryCache.Remove(oldestKey);
+                    .FirstOrDefault();
+                if (oldest.Key != null)
+                {
+                    _memoryCache.Remove(oldest.Key);
+                }
             }
 
             _memoryCache[key] = (image, DateTime.Now);

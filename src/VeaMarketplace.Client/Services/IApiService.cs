@@ -93,6 +93,10 @@ public interface IApiService
 
     // Activity Feed
     Task<List<UserActivityDto>> GetActivityFeedAsync(string? filter = null, int page = 1, int pageSize = 20);
+
+    // Discovery
+    Task<List<SellerProfileDto>> GetTopSellersAsync(int count = 4);
+    Task<List<ProductDto>> GetTrendingProductsAsync(int count = 8);
 }
 
 public class ApiService : IApiService
@@ -620,6 +624,21 @@ public class ApiService : IApiService
         var response = await _httpClient.GetAsync(url).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return [];
         return await response.Content.ReadFromJsonAsync<List<UserActivityDto>>(JsonOptions).ConfigureAwait(false) ?? [];
+    }
+
+    // Discovery
+    public async Task<List<SellerProfileDto>> GetTopSellersAsync(int count = 4)
+    {
+        var response = await _httpClient.GetAsync($"/api/sellers/top?count={count}").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return [];
+        return await response.Content.ReadFromJsonAsync<List<SellerProfileDto>>(JsonOptions).ConfigureAwait(false) ?? [];
+    }
+
+    public async Task<List<ProductDto>> GetTrendingProductsAsync(int count = 8)
+    {
+        var response = await _httpClient.GetAsync($"/api/products/trending?count={count}").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return [];
+        return await response.Content.ReadFromJsonAsync<List<ProductDto>>(JsonOptions).ConfigureAwait(false) ?? [];
     }
 }
 
