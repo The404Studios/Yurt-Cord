@@ -379,7 +379,7 @@
                     <!-- Username Input -->
                     <TextBlock Text="USERNAME" FontSize="11" FontWeight="Bold"
                                Foreground="{StaticResource TextSecondaryBrush}"
-                               Margin="0,0,0,8" LetterSpacing="0.5"/>
+                               Margin="0,0,0,8"/>
                     <TextBox x:Name="UsernameBox"
                              Style="{StaticResource ModernTextBox}"
                              Margin="0,0,0,16"/>
@@ -388,7 +388,7 @@
                     <StackPanel x:Name="EmailPanel" Visibility="Collapsed">
                         <TextBlock Text="EMAIL" FontSize="11" FontWeight="Bold"
                                    Foreground="{StaticResource TextSecondaryBrush}"
-                                   Margin="0,0,0,8" LetterSpacing="0.5"/>
+                                   Margin="0,0,0,8"/>
                         <TextBox x:Name="EmailBox"
                                  Style="{StaticResource ModernTextBox}"
                                  Margin="0,0,0,16"/>
@@ -397,7 +397,7 @@
                     <!-- Password Input -->
                     <TextBlock Text="PASSWORD" FontSize="11" FontWeight="Bold"
                                Foreground="{StaticResource TextSecondaryBrush}"
-                               Margin="0,0,0,8" LetterSpacing="0.5"/>
+                               Margin="0,0,0,8"/>
                     <PasswordBox x:Name="PasswordBox"
                                  Style="{StaticResource ModernPasswordBox}"
                                  Margin="0,0,0,16"/>
@@ -406,7 +406,7 @@
                     <StackPanel x:Name="ConfirmPasswordPanel" Visibility="Collapsed">
                         <TextBlock Text="CONFIRM PASSWORD" FontSize="11" FontWeight="Bold"
                                    Foreground="{StaticResource TextSecondaryBrush}"
-                                   Margin="0,0,0,8" LetterSpacing="0.5"/>
+                                   Margin="0,0,0,8"/>
                         <PasswordBox x:Name="ConfirmPasswordBox"
                                      Style="{StaticResource ModernPasswordBox}"
                                      Margin="0,0,0,16"/>
