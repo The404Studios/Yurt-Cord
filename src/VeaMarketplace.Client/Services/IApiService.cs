@@ -21,6 +21,7 @@ public interface IApiService
     Task<ProductListResponse> GetProductsAsync(int page = 1, ProductCategory? category = null, string? search = null);
     Task<ProductDto?> GetProductAsync(string productId);
     Task<ProductDto> CreateProductAsync(CreateProductRequest request);
+    Task<ProductDto?> UpdateProductAsync(string productId, UpdateProductRequest request);
     Task<bool> PurchaseProductAsync(string productId);
     Task<List<ProductDto>> GetMyProductsAsync();
 
@@ -247,6 +248,13 @@ public class ApiService : IApiService
     {
         var response = await _httpClient.PostAsJsonAsync("/api/products", request, JsonOptions).ConfigureAwait(false);
         return await response.Content.ReadFromJsonAsync<ProductDto>(JsonOptions).ConfigureAwait(false) ?? new ProductDto();
+    }
+
+    public async Task<ProductDto?> UpdateProductAsync(string productId, UpdateProductRequest request)
+    {
+        var response = await _httpClient.PutAsJsonAsync($"/api/products/{productId}", request, JsonOptions).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadFromJsonAsync<ProductDto>(JsonOptions).ConfigureAwait(false);
     }
 
     public async Task<bool> PurchaseProductAsync(string productId)

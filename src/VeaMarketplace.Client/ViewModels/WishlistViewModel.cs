@@ -50,11 +50,14 @@ public partial class WishlistViewModel : BaseViewModel
     {
         try
         {
-            // Purchase the product directly (simplified flow)
-            if (await _apiService.PurchaseProductAsync(item.ProductId))
+            // Add product to cart with quantity of 1
+            var cart = await _apiService.AddToCartAsync(item.ProductId, 1);
+            if (cart != null)
             {
-                // Optionally remove from wishlist after purchase
-                await RemoveFromWishlist(item);
+                // Show success message
+                ErrorMessage = ""; // Clear any previous errors
+                // Optionally navigate to cart or show success notification
+                _navigationService.NavigateToCart();
             }
         }
         catch (Exception ex)

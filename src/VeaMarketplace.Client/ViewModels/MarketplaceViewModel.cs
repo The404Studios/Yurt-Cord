@@ -766,11 +766,7 @@ public partial class MarketplaceViewModel : BaseViewModel
 
         try
         {
-            // For now, we'll delete and recreate since there's no update endpoint
-            // In a real implementation, you'd have an UpdateProductAsync method
-            await _apiService.DeleteProductAsync(ProductToEdit.Id);
-
-            var request = new CreateProductRequest
+            var request = new UpdateProductRequest
             {
                 Title = NewTitle,
                 Description = NewDescription,
@@ -781,16 +777,24 @@ public partial class MarketplaceViewModel : BaseViewModel
                     .ToList(),
                 ImageUrls = string.IsNullOrEmpty(NewImageUrl)
                     ? []
-                    : [NewImageUrl]
+                    : [NewImageUrl],
+                Status = ProductToEdit.Status // Preserve the existing status
             };
 
-            await _apiService.CreateProductAsync(request);
-            IsEditingProduct = false;
-            ProductToEdit = null;
-            ClearNewListingFields();
-            ShowTemporaryMessage("Product updated successfully!");
-            await LoadMyProducts();
-            await LoadProductsAsync();
+            var updatedProduct = await _apiService.UpdateProductAsync(ProductToEdit.Id, request);
+            if (updatedProduct != null)
+            {
+                IsEditingProduct = false;
+                ProductToEdit = null;
+                ClearNewListingFields();
+                ShowTemporaryMessage("Product updated successfully!");
+                await LoadMyProducts();
+                await LoadProductsAsync();
+            }
+            else
+            {
+                SetError("Failed to update product");
+            }
         }
         catch (Exception ex)
         {
