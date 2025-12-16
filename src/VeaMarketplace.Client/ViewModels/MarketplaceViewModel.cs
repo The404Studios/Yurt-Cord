@@ -20,6 +20,7 @@ public enum ProductSortOrder
 public partial class MarketplaceViewModel : BaseViewModel
 {
     private readonly IApiService _apiService;
+    private readonly INavigationService _navigationService;
     private readonly DispatcherTimer _actionMessageTimer;
 
     [ObservableProperty]
@@ -144,9 +145,10 @@ public partial class MarketplaceViewModel : BaseViewModel
 
     public decimal ListingFee => 1.50m;
 
-    public MarketplaceViewModel(IApiService apiService)
+    public MarketplaceViewModel(IApiService apiService, INavigationService navigationService)
     {
         _apiService = apiService;
+        _navigationService = navigationService;
 
         _actionMessageTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
         _actionMessageTimer.Tick += (s, e) =>
@@ -238,9 +240,10 @@ public partial class MarketplaceViewModel : BaseViewModel
                 FeaturedProducts.Add(product);
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore featured products errors
+            // Featured products are optional, but log error for debugging
+            System.Diagnostics.Debug.WriteLine($"Failed to load featured products: {ex.Message}");
         }
     }
 
@@ -251,8 +254,9 @@ public partial class MarketplaceViewModel : BaseViewModel
             var cart = await _apiService.GetCartAsync();
             CartItemCount = cart?.Items?.Count ?? 0;
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"Failed to load cart count: {ex.Message}");
             CartItemCount = 0;
         }
     }
@@ -264,8 +268,9 @@ public partial class MarketplaceViewModel : BaseViewModel
             var wishlist = await _apiService.GetWishlistAsync();
             WishlistCount = wishlist?.Count ?? 0;
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"Failed to load wishlist count: {ex.Message}");
             WishlistCount = 0;
         }
     }
@@ -282,9 +287,10 @@ public partial class MarketplaceViewModel : BaseViewModel
                 MyProducts.Add(product);
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore errors for my products
+            // My products load failure shouldn't block the view, but log for debugging
+            System.Diagnostics.Debug.WriteLine($"Failed to load my products: {ex.Message}");
         }
     }
 
@@ -688,8 +694,9 @@ public partial class MarketplaceViewModel : BaseViewModel
             ShowTemporaryMessage("Link copied to clipboard!");
             CloseShareDialog();
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"Failed to copy link: {ex.Message}");
             SetError("Failed to copy link");
         }
     }
@@ -697,9 +704,22 @@ public partial class MarketplaceViewModel : BaseViewModel
     [RelayCommand]
     private void ShareToFriend()
     {
-        // This would integrate with the friend/DM system
-        ShowTemporaryMessage("Share to friend feature coming soon!");
-        CloseShareDialog();
+        // Copy the product link to clipboard and navigate to friends view
+        try
+        {
+            if (!string.IsNullOrEmpty(ShareLink))
+            {
+                System.Windows.Clipboard.SetText(ShareLink);
+                ShowTemporaryMessage("Link copied! Opening Friends to share...");
+                _navigationService.NavigateToFriends();
+                CloseShareDialog();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to prepare share: {ex.Message}");
+            SetError("Failed to prepare share");
+        }
     }
 
     [RelayCommand]
@@ -824,7 +844,8 @@ public partial class MarketplaceViewModel : BaseViewModel
         var targetProduct = product ?? SelectedProduct ?? QuickViewProduct;
         if (targetProduct == null) return;
 
-        // This would navigate to the seller's profile
-        ShowTemporaryMessage($"Viewing seller: {targetProduct.SellerUsername}");
+        // Navigate to seller's profile
+        _navigationService.NavigateToProfile(targetProduct.SellerId);
+        CloseQuickView(); // Close any open dialogs
     }
 }
