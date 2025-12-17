@@ -497,7 +497,7 @@
                             </Grid>
                         </Border>
 
-                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20">
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20" Margin="0,0,0,12">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -510,6 +510,23 @@
                                                FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
                                 </StackPanel>
                                 <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" IsChecked="True" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Blocked Users" FontSize="14" FontWeight="Medium"
+                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="Manage users you have blocked"
+                                               FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="View Blocked" Style="{StaticResource SecondaryButton}"
+                                        Click="BlockedUsers_Click" Padding="16,8" VerticalAlignment="Center"/>
                             </Grid>
                         </Border>
                     </StackPanel>
