@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -16,13 +17,14 @@ public partial class DiscoverView : UserControl
     public DiscoverView()
     {
         InitializeComponent();
-        Loaded += DiscoverView_Loaded;
-    }
 
-    public DiscoverView(INavigationService navigationService, IApiService apiService) : this()
-    {
-        _navigationService = navigationService;
-        _apiService = apiService;
+        if (DesignerProperties.GetIsInDesignMode(this))
+            return;
+
+        _navigationService = (INavigationService?)App.ServiceProvider.GetService(typeof(INavigationService));
+        _apiService = (IApiService?)App.ServiceProvider.GetService(typeof(IApiService));
+
+        Loaded += DiscoverView_Loaded;
     }
 
     private async void DiscoverView_Loaded(object sender, RoutedEventArgs e)
