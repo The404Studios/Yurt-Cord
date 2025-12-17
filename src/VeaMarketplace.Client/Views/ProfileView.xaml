@@ -193,6 +193,41 @@
                     </Border>
                 </Grid>
 
+                <!-- Quick Links -->
+                <Border Background="{StaticResource SecondaryDarkBrush}"
+                        CornerRadius="8" Margin="24,0" Padding="16">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Style="{StaticResource SecondaryButton}" Padding="20,10" Margin="0,0,8,0"
+                                Click="Wishlist_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="❤️" FontSize="16" Margin="0,0,8,0"/>
+                                <TextBlock Text="My Wishlist" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource SecondaryButton}" Padding="20,10" Margin="0,0,8,0"
+                                Click="OrderHistory_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📦" FontSize="16" Margin="0,0,8,0"/>
+                                <TextBlock Text="Order History" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource SecondaryButton}" Padding="20,10" Margin="0,0,8,0"
+                                Click="MyListings_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🏷️" FontSize="16" Margin="0,0,8,0"/>
+                                <TextBlock Text="My Listings" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource SecondaryButton}" Padding="20,10"
+                                Click="ViewCart_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🛒" FontSize="16" Margin="0,0,8,0"/>
+                                <TextBlock Text="View Cart" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
                 <!-- Two Column Layout for About & Social -->
                 <Grid Margin="24,0">
                     <Grid.ColumnDefinitions>

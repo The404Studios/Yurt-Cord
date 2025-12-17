@@ -15,6 +15,7 @@ public partial class ProfileView : UserControl
 {
     private readonly ProfileViewModel? _viewModel;
     private readonly IApiService? _apiService;
+    private readonly INavigationService? _navigationService;
 
     public ProfileView()
     {
@@ -25,6 +26,7 @@ public partial class ProfileView : UserControl
 
         _viewModel = (ProfileViewModel)App.ServiceProvider.GetService(typeof(ProfileViewModel))!;
         _apiService = (IApiService)App.ServiceProvider.GetService(typeof(IApiService))!;
+        _navigationService = (INavigationService)App.ServiceProvider.GetService(typeof(INavigationService))!;
 
         DataContext = _viewModel;
         Loaded += (s, e) => UpdateUI();
@@ -339,5 +341,25 @@ public partial class ProfileView : UserControl
             UserRank.Bronze => "Bronze",
             _ => "Star"
         };
+    }
+
+    private void Wishlist_Click(object sender, RoutedEventArgs e)
+    {
+        _navigationService?.NavigateToWishlist();
+    }
+
+    private void OrderHistory_Click(object sender, RoutedEventArgs e)
+    {
+        _navigationService?.NavigateTo("Orders");
+    }
+
+    private void MyListings_Click(object sender, RoutedEventArgs e)
+    {
+        _navigationService?.NavigateToMarketplace();
+    }
+
+    private void ViewCart_Click(object sender, RoutedEventArgs e)
+    {
+        _navigationService?.NavigateToCart();
     }
 }
