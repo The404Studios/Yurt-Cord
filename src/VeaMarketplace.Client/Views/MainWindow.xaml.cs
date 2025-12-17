@@ -179,6 +179,7 @@ public partial class MainWindow : Window
         ActivityButtonBorder.Background = _currentView == "Activity" || _currentView == "ActivityFeed" ? activeBrush : inactiveBrush;
         ProfileButtonBorder.Background = _currentView == "Profile" ? activeBrush : inactiveBrush;
         FriendsButtonBorder.Background = _currentView == "Friends" ? activeBrush : inactiveBrush;
+        SettingsButtonBorder.Background = _currentView == "Settings" ? activeBrush : inactiveBrush;
 
         // Animate the corner radius
         var activeRadius = new CornerRadius(16);
@@ -190,6 +191,7 @@ public partial class MainWindow : Window
         ActivityButtonBorder.CornerRadius = _currentView == "Activity" || _currentView == "ActivityFeed" ? activeRadius : inactiveRadius;
         ProfileButtonBorder.CornerRadius = _currentView == "Profile" ? activeRadius : inactiveRadius;
         FriendsButtonBorder.CornerRadius = _currentView == "Friends" ? activeRadius : inactiveRadius;
+        SettingsButtonBorder.CornerRadius = _currentView == "Settings" ? activeRadius : inactiveRadius;
     }
 
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -249,6 +251,11 @@ public partial class MainWindow : Window
     private void FriendsButton_Click(object sender, RoutedEventArgs e)
     {
         _navigationService.NavigateToFriends();
+    }
+
+    private void SettingsButton_Click(object sender, RoutedEventArgs e)
+    {
+        _navigationService.NavigateTo("Settings");
     }
 
     private void NotificationsButton_Click(object sender, RoutedEventArgs e)
