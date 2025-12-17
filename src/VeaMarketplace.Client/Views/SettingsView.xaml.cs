@@ -11,6 +11,8 @@ namespace VeaMarketplace.Client.Views;
 public partial class SettingsView : UserControl
 {
     private SettingsViewModel? _viewModel;
+    private readonly INavigationService _navigationService;
+    private readonly IApiService _apiService;
     private string _currentSection = "Voice";
     private readonly Dictionary<string, Button> _navButtons = new();
     private readonly Dictionary<string, StackPanel> _panels = new();
@@ -23,6 +25,8 @@ public partial class SettingsView : UserControl
             return;
 
         _viewModel = (SettingsViewModel)App.ServiceProvider.GetService(typeof(SettingsViewModel))!;
+        _navigationService = (INavigationService)App.ServiceProvider.GetService(typeof(INavigationService))!;
+        _apiService = (IApiService)App.ServiceProvider.GetService(typeof(IApiService))!;
         DataContext = _viewModel;
 
         Loaded += SettingsView_Loaded;
@@ -50,6 +54,27 @@ public partial class SettingsView : UserControl
 
         // Load user data for Account section
         LoadAccountInfo();
+
+        // Show admin section for moderators/admins
+        CheckAdminAccess();
+    }
+
+    private void CheckAdminAccess()
+    {
+        // Check if current user has moderator or admin privileges
+        var currentUser = _apiService.CurrentUser;
+        if (currentUser != null)
+        {
+            var role = currentUser.Role?.ToLowerInvariant();
+            var isAdminOrMod = role == "admin" || role == "moderator" || role == "owner";
+
+            if (isAdminOrMod)
+            {
+                AdminSectionHeader.Visibility = Visibility.Visible;
+                ModerationNavButton.Visibility = Visibility.Visible;
+                AdminDivider.Visibility = Visibility.Visible;
+            }
+        }
     }
 
     private void LoadAccountInfo()
@@ -121,6 +146,11 @@ public partial class SettingsView : UserControl
             // TODO: Clear auth and return to login
             Application.Current.Shutdown();
         }
+    }
+
+    private void Moderation_Click(object sender, RoutedEventArgs e)
+    {
+        _navigationService.NavigateToModeration();
     }
 
     private void PttKeyButton_Click(object sender, RoutedEventArgs e)
