@@ -244,11 +244,11 @@ public class DiscoveryService
 
             return _db.Products.Query()
                 .Where(p => p.Status == ProductStatus.Active && p.Category == category)
+                .ToEnumerable()
                 .OrderByDescending(p => p.IsFeatured)
                 .ThenByDescending(p => p.CreatedAt)
                 .Skip((page - 1) * pageSize)
-                .Limit(pageSize)
-                .ToList()
+                .Take(pageSize)
                 .Select(MapProductToDto)
                 .ToList();
         }) ?? new List<ProductDto>();
@@ -306,8 +306,13 @@ public class DiscoveryService
     private SellerProfileDto MapSellerToDto(User user)
     {
         var activeListings = _db.Products.Count(p => p.SellerId == user.Id && p.Status == ProductStatus.Active);
+        var sellerProductIds = _db.Products
+            .Find(p => p.SellerId == user.Id)
+            .Select(p => p.Id)
+            .ToHashSet();
         var reviews = _db.ProductReviews
-            .Find(r => _db.Products.FindById(r.ProductId)?.SellerId == user.Id)
+            .FindAll()
+            .Where(r => sellerProductIds.Contains(r.ProductId))
             .ToList();
 
         return new SellerProfileDto

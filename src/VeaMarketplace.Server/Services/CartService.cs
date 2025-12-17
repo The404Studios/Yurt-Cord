@@ -155,7 +155,7 @@ public class CartService
             return new CouponResultDto { IsValid = false, ErrorMessage = "Coupon has expired" };
         }
 
-        if (coupon.UsageLimit.HasValue && coupon.UsageCount >= coupon.UsageLimit.Value)
+        if (coupon.MaxUses.HasValue && coupon.CurrentUses >= coupon.MaxUses.Value)
         {
             return new CouponResultDto { IsValid = false, ErrorMessage = "Coupon usage limit reached" };
         }
@@ -173,14 +173,14 @@ public class CartService
         // Calculate discount
         decimal discount = coupon.Type switch
         {
-            CouponType.Percentage => subtotal * (coupon.DiscountValue / 100m),
-            CouponType.FixedAmount => coupon.DiscountValue,
+            CouponType.Percentage => subtotal * (coupon.Value / 100m),
+            CouponType.FixedAmount => coupon.Value,
             _ => 0
         };
 
-        if (coupon.MaxDiscount.HasValue && discount > coupon.MaxDiscount.Value)
+        if (coupon.MaximumDiscount.HasValue && discount > coupon.MaximumDiscount.Value)
         {
-            discount = coupon.MaxDiscount.Value;
+            discount = coupon.MaximumDiscount.Value;
         }
 
         cart.AppliedCouponCode = coupon.Code;
@@ -194,8 +194,8 @@ public class CartService
             CouponCode = coupon.Code,
             DiscountAmount = discount,
             DiscountDescription = coupon.Type == CouponType.Percentage
-                ? $"{coupon.DiscountValue}% off"
-                : $"${coupon.DiscountValue:F2} off"
+                ? $"{coupon.Value}% off"
+                : $"${coupon.Value:F2} off"
         };
     }
 
@@ -285,7 +285,7 @@ public class CartService
             var coupon = _db.Coupons.FindOne(c => c.Code == cart.AppliedCouponCode);
             if (coupon != null)
             {
-                coupon.UsageCount++;
+                coupon.CurrentUses++;
                 _db.Coupons.Update(coupon);
             }
         }

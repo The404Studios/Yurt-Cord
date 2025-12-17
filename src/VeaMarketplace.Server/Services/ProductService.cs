@@ -157,7 +157,7 @@ public class ProductService
         if (product.SellerId != userId) return false;
         if (product.Status == ProductStatus.Sold) return false;
 
-        product.Status = ProductStatus.Removed;
+        product.Status = ProductStatus.Deleted;
         product.UpdatedAt = DateTime.UtcNow;
         _db.Products.Update(product);
 

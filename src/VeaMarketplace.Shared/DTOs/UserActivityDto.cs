@@ -1,4 +1,5 @@
 using VeaMarketplace.Shared.Models;
+using ActivityType = VeaMarketplace.Shared.Models.ActivityType;
 
 namespace VeaMarketplace.Shared.DTOs;
 
