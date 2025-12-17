@@ -98,12 +98,16 @@ public interface IApiService
     // Discovery
     Task<List<SellerProfileDto>> GetTopSellersAsync(int count = 4);
     Task<List<ProductDto>> GetTrendingProductsAsync(int count = 8);
+    Task<List<ProductDto>> GetFeaturedProductsAsync(int count = 10);
+    Task<List<ProductDto>> GetNewArrivalsAsync(int count = 20);
+    Task<List<ProductDto>> GetRecommendedProductsAsync(int count = 20);
+    Task<List<ProductDto>> GetSimilarProductsAsync(string productId, int count = 10);
 }
 
 public class ApiService : IApiService
 {
     private readonly HttpClient _httpClient;
-    private const string BaseUrl = "http://162.248.94.23:5000";
+    private const string BaseUrl = "http://localhost:5000";
 
     // Shared JSON options for consistent enum serialization with server
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -637,14 +641,42 @@ public class ApiService : IApiService
     // Discovery
     public async Task<List<SellerProfileDto>> GetTopSellersAsync(int count = 4)
     {
-        var response = await _httpClient.GetAsync($"/api/sellers/top?count={count}").ConfigureAwait(false);
+        var response = await _httpClient.GetAsync($"/api/discovery/top-sellers?limit={count}").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return [];
         return await response.Content.ReadFromJsonAsync<List<SellerProfileDto>>(JsonOptions).ConfigureAwait(false) ?? [];
     }
 
     public async Task<List<ProductDto>> GetTrendingProductsAsync(int count = 8)
     {
-        var response = await _httpClient.GetAsync($"/api/products/trending?count={count}").ConfigureAwait(false);
+        var response = await _httpClient.GetAsync($"/api/discovery/trending?limit={count}").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return [];
+        return await response.Content.ReadFromJsonAsync<List<ProductDto>>(JsonOptions).ConfigureAwait(false) ?? [];
+    }
+
+    public async Task<List<ProductDto>> GetFeaturedProductsAsync(int count = 10)
+    {
+        var response = await _httpClient.GetAsync($"/api/discovery/featured?limit={count}").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return [];
+        return await response.Content.ReadFromJsonAsync<List<ProductDto>>(JsonOptions).ConfigureAwait(false) ?? [];
+    }
+
+    public async Task<List<ProductDto>> GetNewArrivalsAsync(int count = 20)
+    {
+        var response = await _httpClient.GetAsync($"/api/discovery/new?limit={count}").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return [];
+        return await response.Content.ReadFromJsonAsync<List<ProductDto>>(JsonOptions).ConfigureAwait(false) ?? [];
+    }
+
+    public async Task<List<ProductDto>> GetRecommendedProductsAsync(int count = 20)
+    {
+        var response = await _httpClient.GetAsync($"/api/discovery/recommended?limit={count}").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return [];
+        return await response.Content.ReadFromJsonAsync<List<ProductDto>>(JsonOptions).ConfigureAwait(false) ?? [];
+    }
+
+    public async Task<List<ProductDto>> GetSimilarProductsAsync(string productId, int count = 10)
+    {
+        var response = await _httpClient.GetAsync($"/api/discovery/similar/{productId}?limit={count}").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return [];
         return await response.Content.ReadFromJsonAsync<List<ProductDto>>(JsonOptions).ConfigureAwait(false) ?? [];
     }

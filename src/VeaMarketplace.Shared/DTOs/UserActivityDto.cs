@@ -9,11 +9,16 @@ public class UserActivityDto
     public string Username { get; set; } = string.Empty;
     public string? UserAvatarUrl { get; set; }
     public ActivityType Type { get; set; }
+    public string? TargetId { get; set; }
+    public string? TargetName { get; set; }
     public string? Description { get; set; }
+    public string? ImageUrl { get; set; }
     public Dictionary<string, string> Metadata { get; set; } = new();
-    public DateTime Timestamp { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime Timestamp => CreatedAt; // Alias for backward compatibility
     public bool IsPublic { get; set; } = true;
     public string Icon { get; set; } = "📝";
+    public string ActionText { get; set; } = string.Empty;
 }
 
 public class UserBadgeDto

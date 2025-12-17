@@ -1,0 +1,449 @@
+<UserControl x:Class="VeaMarketplace.Client.Views.SearchView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:viewmodels="clr-namespace:VeaMarketplace.Client.ViewModels"
+             mc:Ignorable="d"
+             d:DesignHeight="800" d:DesignWidth="1200"
+             Background="#36393F">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Search Header -->
+        <Border Grid.Row="0" Background="#2F3136" Padding="24,16">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Search Bar -->
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Background="#202225" CornerRadius="8" Padding="12,8" Margin="0,0,12,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" Text="&#xE721;" FontFamily="Segoe MDL2 Assets"
+                                       FontSize="16" Foreground="#72767D" VerticalAlignment="Center" Margin="0,0,12,0"/>
+
+                            <TextBox Grid.Column="1" x:Name="SearchTextBox"
+                                     Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
+                                     Background="Transparent" BorderThickness="0"
+                                     Foreground="White" FontSize="14"
+                                     VerticalAlignment="Center"
+                                     CaretBrush="White">
+                                <TextBox.InputBindings>
+                                    <KeyBinding Key="Return" Command="{Binding SearchCommand}"/>
+                                </TextBox.InputBindings>
+                            </TextBox>
+                        </Grid>
+                    </Border>
+
+                    <Button Grid.Column="1" Content="Search"
+                            Command="{Binding SearchCommand}"
+                            Style="{StaticResource PrimaryButton}"
+                            Padding="24,10" Margin="0,0,12,0"/>
+
+                    <ToggleButton Grid.Column="2"
+                                  IsChecked="{Binding ShowFilters}"
+                                  Content="&#xE71C;" FontFamily="Segoe MDL2 Assets"
+                                  Background="#5865F2" Foreground="White"
+                                  BorderThickness="0" Padding="12,10"
+                                  Cursor="Hand">
+                        <ToggleButton.Style>
+                            <Style TargetType="ToggleButton">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border Background="{TemplateBinding Background}"
+                                                    CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsChecked" Value="True">
+                                        <Setter Property="Background" Value="#4752C4"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ToggleButton.Style>
+                    </ToggleButton>
+                </Grid>
+
+                <!-- Search Type Tabs -->
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,16,0,0">
+                    <RadioButton Content="Products" GroupName="SearchType"
+                                 IsChecked="{Binding SearchType, Converter={StaticResource EqualityConverter}, ConverterParameter=products}"
+                                 Style="{StaticResource TabRadioButton}" Margin="0,0,8,0"/>
+                    <RadioButton Content="Sellers" GroupName="SearchType"
+                                 IsChecked="{Binding SearchType, Converter={StaticResource EqualityConverter}, ConverterParameter=sellers}"
+                                 Style="{StaticResource TabRadioButton}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Filters Panel -->
+        <Border Grid.Row="1" Background="#2F3136" Padding="24,16"
+                Visibility="{Binding ShowFilters, Converter={StaticResource BoolToVisibility}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Category Filter -->
+                <StackPanel Grid.Column="0" Margin="0,0,24,0">
+                    <TextBlock Text="Category" Foreground="#B9BBBE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                    <ComboBox ItemsSource="{Binding Categories}"
+                              SelectedItem="{Binding SelectedCategory}"
+                              Width="150" Background="#202225" Foreground="White"
+                              BorderThickness="0">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" Foreground="White"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+
+                <!-- Price Range -->
+                <StackPanel Grid.Column="1" Margin="0,0,24,0">
+                    <TextBlock Text="Price Range" Foreground="#B9BBBE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBox Text="{Binding MinPrice, StringFormat=N2}" Width="80"
+                                 Background="#202225" Foreground="White" BorderThickness="0" Padding="8,6"/>
+                        <TextBlock Text="-" Foreground="White" VerticalAlignment="Center" Margin="8,0"/>
+                        <TextBox Text="{Binding MaxPrice, StringFormat=N2}" Width="80"
+                                 Background="#202225" Foreground="White" BorderThickness="0" Padding="8,6"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Min Rating -->
+                <StackPanel Grid.Column="2" Margin="0,0,24,0">
+                    <TextBlock Text="Min Rating" Foreground="#B9BBBE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                    <ComboBox SelectedIndex="{Binding MinRating}" Width="100"
+                              Background="#202225" Foreground="White" BorderThickness="0">
+                        <ComboBoxItem Content="Any"/>
+                        <ComboBoxItem Content="1+ Stars"/>
+                        <ComboBoxItem Content="2+ Stars"/>
+                        <ComboBoxItem Content="3+ Stars"/>
+                        <ComboBoxItem Content="4+ Stars"/>
+                        <ComboBoxItem Content="5 Stars"/>
+                    </ComboBox>
+                </StackPanel>
+
+                <!-- Sort By -->
+                <StackPanel Grid.Column="3" Margin="0,0,24,0">
+                    <TextBlock Text="Sort By" Foreground="#B9BBBE" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                    <ComboBox ItemsSource="{Binding SortOptions}"
+                              SelectedItem="{Binding SortBy}"
+                              Width="120" Background="#202225" Foreground="White" BorderThickness="0"/>
+                </StackPanel>
+
+                <!-- Checkboxes -->
+                <StackPanel Grid.Column="4" VerticalAlignment="Center">
+                    <CheckBox Content="Featured Only" IsChecked="{Binding FeaturedOnly}"
+                              Foreground="#B9BBBE" Margin="0,0,0,4"/>
+                    <CheckBox Content="Verified Sellers" IsChecked="{Binding VerifiedSellersOnly}"
+                              Foreground="#B9BBBE"/>
+                </StackPanel>
+
+                <!-- Clear Filters -->
+                <Button Grid.Column="6" Content="Clear Filters"
+                        Command="{Binding ClearFiltersCommand}"
+                        Background="Transparent" Foreground="#ED4245"
+                        BorderThickness="0" Cursor="Hand"
+                        VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- Results Area -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="300"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Main Results -->
+            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Padding="24">
+                <Grid>
+                    <!-- Results Header -->
+                    <Grid Margin="0,0,0,16">
+                        <TextBlock Foreground="#B9BBBE" FontSize="14">
+                            <Run Text="{Binding TotalResults, Mode=OneWay}"/>
+                            <Run Text="results found"/>
+                        </TextBlock>
+                    </Grid>
+
+                    <!-- Product Results -->
+                    <ItemsControl ItemsSource="{Binding SearchResults}" Margin="0,40,0,0"
+                                  Visibility="{Binding SearchType, Converter={StaticResource EqualityToVisibility}, ConverterParameter=products}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="#2F3136" CornerRadius="8" Margin="0,0,16,16"
+                                        Width="250" Cursor="Hand"
+                                        MouseLeftButtonUp="ProductCard_Click">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="150"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- Product Image -->
+                                        <Border Grid.Row="0" CornerRadius="8,8,0,0" Background="#202225">
+                                            <Image Source="{Binding ImageUrls[0]}" Stretch="UniformToFill"/>
+                                        </Border>
+
+                                        <!-- Featured Badge -->
+                                        <Border Grid.Row="0" Background="#5865F2" CornerRadius="4"
+                                                HorizontalAlignment="Left" VerticalAlignment="Top"
+                                                Margin="8" Padding="8,4"
+                                                Visibility="{Binding IsFeatured, Converter={StaticResource BoolToVisibility}}">
+                                            <TextBlock Text="FEATURED" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                                        </Border>
+
+                                        <!-- Product Info -->
+                                        <StackPanel Grid.Row="1" Margin="12">
+                                            <TextBlock Text="{Binding Title}" Foreground="White"
+                                                       FontSize="14" FontWeight="SemiBold"
+                                                       TextTrimming="CharacterEllipsis"/>
+
+                                            <TextBlock Foreground="#72767D" FontSize="12" Margin="0,4,0,0">
+                                                <Run Text="by"/>
+                                                <Run Text="{Binding SellerUsername}" Foreground="#00D166"/>
+                                            </TextBlock>
+
+                                            <Grid Margin="0,8,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Grid.Column="0" Foreground="#5865F2" FontSize="18" FontWeight="Bold">
+                                                    <Run Text="$"/><Run Text="{Binding Price, StringFormat=N2}"/>
+                                                </TextBlock>
+
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Text="&#xE735;" FontFamily="Segoe MDL2 Assets"
+                                                               Foreground="#FAA61A" FontSize="12"/>
+                                                    <TextBlock Text="{Binding AverageRating, StringFormat=N1}"
+                                                               Foreground="#B9BBBE" FontSize="12" Margin="4,0,0,0"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Seller Results -->
+                    <ItemsControl ItemsSource="{Binding SellerResults}" Margin="0,40,0,0"
+                                  Visibility="{Binding SearchType, Converter={StaticResource EqualityToVisibility}, ConverterParameter=sellers}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="#2F3136" CornerRadius="8" Margin="0,0,0,12"
+                                        Padding="16" Cursor="Hand"
+                                        MouseLeftButtonUp="SellerCard_Click">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Avatar -->
+                                        <Ellipse Grid.Column="0" Width="56" Height="56" Margin="0,0,16,0">
+                                            <Ellipse.Fill>
+                                                <ImageBrush ImageSource="{Binding AvatarUrl}" Stretch="UniformToFill"/>
+                                            </Ellipse.Fill>
+                                        </Ellipse>
+
+                                        <!-- Info -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding Username}" Foreground="White"
+                                                           FontSize="16" FontWeight="SemiBold"/>
+                                                <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets"
+                                                           Foreground="#3BA55C" FontSize="14" Margin="8,0,0,0"
+                                                           Visibility="{Binding IsVerified, Converter={StaticResource BoolToVisibility}}"
+                                                           ToolTip="Verified Seller"/>
+                                            </StackPanel>
+
+                                            <TextBlock Foreground="#B9BBBE" FontSize="13" Margin="0,4,0,0">
+                                                <Run Text="{Binding TotalSales}"/>
+                                                <Run Text="sales"/>
+                                                <Run Text=" - "/>
+                                                <Run Text="{Binding ActiveListings}"/>
+                                                <Run Text="listings"/>
+                                            </TextBlock>
+                                        </StackPanel>
+
+                                        <!-- Rating -->
+                                        <StackPanel Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE735;" FontFamily="Segoe MDL2 Assets"
+                                                           Foreground="#FAA61A" FontSize="16"/>
+                                                <TextBlock Text="{Binding AverageRating, StringFormat=N1}"
+                                                           Foreground="White" FontSize="16" FontWeight="SemiBold" Margin="4,0,0,0"/>
+                                            </StackPanel>
+                                            <TextBlock Foreground="#72767D" FontSize="12" HorizontalAlignment="Right" Margin="0,4,0,0">
+                                                <Run Text="{Binding TotalReviews}"/>
+                                                <Run Text="reviews"/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Load More Button -->
+                    <Button Content="Load More"
+                            Command="{Binding LoadMoreCommand}"
+                            Visibility="{Binding HasMoreResults, Converter={StaticResource BoolToVisibility}}"
+                            HorizontalAlignment="Center" Margin="0,16"
+                            Style="{StaticResource SecondaryButton}" Padding="32,12"/>
+
+                    <!-- Empty State -->
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Visibility="{Binding TotalResults, Converter={StaticResource ZeroToVisibility}}"
+                                Margin="0,100">
+                        <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets"
+                                   FontSize="48" Foreground="#72767D" HorizontalAlignment="Center"/>
+                        <TextBlock Text="No results found" Foreground="White" FontSize="18"
+                                   FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,16,0,8"/>
+                        <TextBlock Text="Try adjusting your search or filters"
+                                   Foreground="#B9BBBE" FontSize="14" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+
+            <!-- Sidebar -->
+            <Border Grid.Column="1" Background="#2F3136" Padding="16">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <!-- Recent Searches -->
+                        <TextBlock Text="RECENT SEARCHES" Foreground="#72767D" FontSize="11"
+                                   FontWeight="Bold" Margin="0,0,0,12"/>
+
+                        <ItemsControl ItemsSource="{Binding RecentSearches}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#202225" CornerRadius="4" Margin="0,0,0,4"
+                                            Padding="12,8" Cursor="Hand"
+                                            MouseLeftButtonUp="RecentSearch_Click">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Grid.Column="0" Text="&#xE81C;" FontFamily="Segoe MDL2 Assets"
+                                                       Foreground="#72767D" FontSize="12" Margin="0,0,8,0"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding}" Foreground="#B9BBBE" FontSize="13"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <Button Content="Clear History" Command="{Binding ClearRecentSearchesCommand}"
+                                Background="Transparent" Foreground="#72767D" BorderThickness="0"
+                                FontSize="12" HorizontalAlignment="Left" Margin="0,8,0,24" Cursor="Hand"
+                                Visibility="{Binding RecentSearches.Count, Converter={StaticResource CountToVisibility}}"/>
+
+                        <!-- Trending Products -->
+                        <TextBlock Text="TRENDING NOW" Foreground="#72767D" FontSize="11"
+                                   FontWeight="Bold" Margin="0,0,0,12"/>
+
+                        <ItemsControl ItemsSource="{Binding TrendingProducts}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#202225" CornerRadius="4" Margin="0,0,0,8"
+                                            Cursor="Hand" MouseLeftButtonUp="ProductCard_Click">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <Border Grid.Column="0" CornerRadius="4,0,0,4" Background="#36393F">
+                                                <Image Source="{Binding ImageUrls[0]}" Stretch="UniformToFill"
+                                                       Width="60" Height="60"/>
+                                            </Border>
+
+                                            <StackPanel Grid.Column="1" Margin="12,8" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Title}" Foreground="White" FontSize="13"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Foreground="#5865F2" FontSize="13" FontWeight="SemiBold" Margin="0,4,0,0">
+                                                    <Run Text="$"/><Run Text="{Binding Price, StringFormat=N2}"/>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Categories Quick Links -->
+                        <TextBlock Text="BROWSE CATEGORIES" Foreground="#72767D" FontSize="11"
+                                   FontWeight="Bold" Margin="0,24,0,12"/>
+
+                        <WrapPanel>
+                            <Button Content="Software" Tag="Software" Click="CategoryButton_Click"
+                                    Style="{StaticResource TagButton}" Margin="0,0,8,8"/>
+                            <Button Content="Games" Tag="Games" Click="CategoryButton_Click"
+                                    Style="{StaticResource TagButton}" Margin="0,0,8,8"/>
+                            <Button Content="Services" Tag="Services" Click="CategoryButton_Click"
+                                    Style="{StaticResource TagButton}" Margin="0,0,8,8"/>
+                            <Button Content="Digital" Tag="Digital" Click="CategoryButton_Click"
+                                    Style="{StaticResource TagButton}" Margin="0,0,8,8"/>
+                            <Button Content="Accounts" Tag="Accounts" Click="CategoryButton_Click"
+                                    Style="{StaticResource TagButton}" Margin="0,0,8,8"/>
+                            <Button Content="Other" Tag="Other" Click="CategoryButton_Click"
+                                    Style="{StaticResource TagButton}" Margin="0,0,8,8"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!-- Loading Overlay -->
+        <Border Grid.RowSpan="3" Background="#80000000"
+                Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="200"/>
+                <TextBlock Text="Searching..." Foreground="White" FontSize="14"
+                           HorizontalAlignment="Center" Margin="0,16,0,0"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using VeaMarketplace.Server.Services;
 using VeaMarketplace.Shared.DTOs;
 
@@ -6,6 +7,7 @@ namespace VeaMarketplace.Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[EnableRateLimiting("auth")]
 public class AuthController : ControllerBase
 {
     private readonly AuthService _authService;
@@ -42,6 +44,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpGet("validate")]
+    [EnableRateLimiting("api")]
     public ActionResult<UserDto> ValidateToken([FromHeader(Name = "Authorization")] string? authorization)
     {
         if (string.IsNullOrEmpty(authorization) || !authorization.StartsWith("Bearer "))

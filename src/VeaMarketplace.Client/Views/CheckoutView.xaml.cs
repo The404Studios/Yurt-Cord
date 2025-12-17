@@ -1,0 +1,44 @@
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using VeaMarketplace.Client.Services;
+using VeaMarketplace.Client.ViewModels;
+using VeaMarketplace.Shared.DTOs;
+
+namespace VeaMarketplace.Client.Views;
+
+public partial class CheckoutView : UserControl
+{
+    private readonly CheckoutViewModel? _viewModel;
+    private readonly INavigationService? _navigationService;
+
+    public CheckoutView()
+    {
+        InitializeComponent();
+    }
+
+    public CheckoutView(CheckoutViewModel viewModel, INavigationService navigationService) : this()
+    {
+        _viewModel = viewModel;
+        _navigationService = navigationService;
+        DataContext = viewModel;
+
+        Loaded += CheckoutView_Loaded;
+    }
+
+    private async void CheckoutView_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel != null)
+        {
+            await _viewModel.InitializeAsync();
+        }
+    }
+
+    private void ProductImage_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is FrameworkElement element && element.DataContext is CartItemDto item)
+        {
+            _navigationService?.NavigateToProduct(item.ProductId);
+        }
+    }
+}
