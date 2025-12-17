@@ -1,11 +1,117 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.IdentityModel.Tokens;
 using VeaMarketplace.Server.Data;
 using VeaMarketplace.Server.Hubs;
 using VeaMarketplace.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Kestrel for high concurrency
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxConcurrentConnections = 10000;
+    options.Limits.MaxConcurrentUpgradedConnections = 10000;
+    options.Limits.MaxRequestBodySize = 50 * 1024 * 1024; // 50MB max request body
+    options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(2);
+    options.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(30);
+
+    // Enable HTTP/2 for better multiplexing
+    options.ConfigureEndpointDefaults(listenOptions =>
+    {
+        listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1AndHttp2;
+    });
+});
+
+// Configure thread pool for high concurrency
+ThreadPool.SetMinThreads(100, 100);
+
+// Add memory cache for frequently accessed data
+builder.Services.AddMemoryCache(options =>
+{
+    options.SizeLimit = 500 * 1024 * 1024; // 500MB cache limit
+});
+
+// Add response compression
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[]
+    {
+        "application/json",
+        "application/javascript",
+        "text/css",
+        "text/html",
+        "text/plain"
+    });
+});
+
+builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+{
+    options.Level = System.IO.Compression.CompressionLevel.Fastest;
+});
+
+builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+{
+    options.Level = System.IO.Compression.CompressionLevel.Fastest;
+});
+
+// Add rate limiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+    {
+        var userIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        return RateLimitPartition.GetFixedWindowLimiter(userIp, _ =>
+            new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 1000,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 100
+            });
+    });
+
+    // Specific rate limit for API endpoints
+    options.AddPolicy("api", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 500,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 50
+            }));
+
+    // Stricter rate limit for auth endpoints
+    options.AddPolicy("auth", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 5
+            }));
+
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
+
+// Add output caching for frequently accessed endpoints
+builder.Services.AddOutputCache(options =>
+{
+    options.AddBasePolicy(policy => policy.Expire(TimeSpan.FromSeconds(30)));
+    options.AddPolicy("Products", policy => policy.Expire(TimeSpan.FromMinutes(1)));
+    options.AddPolicy("Discovery", policy => policy.Expire(TimeSpan.FromMinutes(5)));
+    options.AddPolicy("Static", policy => policy.Expire(TimeSpan.FromHours(1)));
+});
 
 // Add services
 builder.Services.AddControllers()
@@ -58,6 +164,14 @@ builder.Services.AddScoped<VoiceCallService>();
 builder.Services.AddScoped<RoleService>();
 builder.Services.AddScoped<RoomService>();
 builder.Services.AddScoped<FileService>();
+builder.Services.AddScoped<ReviewService>();
+builder.Services.AddScoped<OrderService>();
+builder.Services.AddScoped<CartService>();
+builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<WishlistService>();
+builder.Services.AddScoped<ModerationService>();
+builder.Services.AddScoped<DiscoveryService>();
+builder.Services.AddScoped<ActivityService>();
 
 // JWT Authentication
 var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "YurtCordSuperSecretKey12345678901234567890";
@@ -115,6 +229,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Enable response compression early in the pipeline
+app.UseResponseCompression();
+
+// Enable rate limiting
+app.UseRateLimiter();
+
+// Enable output caching
+app.UseOutputCache();
+
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
@@ -126,6 +249,7 @@ app.MapHub<FriendHub>("/hubs/friends");
 app.MapHub<ProfileHub>("/hubs/profile");
 app.MapHub<RoomHub>("/hubs/rooms");
 app.MapHub<ContentHub>("/hubs/content");
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 // Ensure data directory exists
 Directory.CreateDirectory("Data");

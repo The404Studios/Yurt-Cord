@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.SignalR;
 using VeaMarketplace.Server.Hubs;
 using VeaMarketplace.Server.Services;
@@ -9,6 +11,7 @@ namespace VeaMarketplace.Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[EnableRateLimiting("api")]
 public class ProductsController : ControllerBase
 {
     private readonly ProductService _productService;
@@ -26,6 +29,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpGet]
+    [OutputCache(PolicyName = "Products")]
     public ActionResult<ProductListResponse> GetProducts(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,

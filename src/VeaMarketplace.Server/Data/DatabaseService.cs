@@ -8,6 +8,7 @@ public class DatabaseService : IDisposable
 {
     private readonly LiteDatabase _database;
 
+    // Core collections
     public ILiteCollection<User> Users => _database.GetCollection<User>("users");
     public ILiteCollection<Product> Products => _database.GetCollection<Product>("products");
     public ILiteCollection<ChatMessage> Messages => _database.GetCollection<ChatMessage>("messages");
@@ -19,6 +20,34 @@ public class DatabaseService : IDisposable
     public ILiteCollection<CustomRole> CustomRoles => _database.GetCollection<CustomRole>("custom_roles");
     public ILiteCollection<Room> Rooms => _database.GetCollection<Room>("rooms");
     public ILiteCollection<StoredFile> StoredFiles => _database.GetCollection<StoredFile>("stored_files");
+
+    // Reviews & Ratings
+    public ILiteCollection<ProductReview> ProductReviews => _database.GetCollection<ProductReview>("product_reviews");
+
+    // Orders & Cart
+    public ILiteCollection<ProductOrder> Orders => _database.GetCollection<ProductOrder>("orders");
+    public ILiteCollection<Cart> Carts => _database.GetCollection<Cart>("carts");
+    public ILiteCollection<Coupon> Coupons => _database.GetCollection<Coupon>("coupons");
+
+    // Wishlist
+    public ILiteCollection<WishlistItem> WishlistItems => _database.GetCollection<WishlistItem>("wishlist_items");
+
+    // Notifications
+    public ILiteCollection<Notification> Notifications => _database.GetCollection<Notification>("notifications");
+
+    // Moderation
+    public ILiteCollection<UserBan> UserBans => _database.GetCollection<UserBan>("user_bans");
+    public ILiteCollection<UserMute> UserMutes => _database.GetCollection<UserMute>("user_mutes");
+    public ILiteCollection<UserWarning> UserWarnings => _database.GetCollection<UserWarning>("user_warnings");
+    public ILiteCollection<MessageReport> MessageReports => _database.GetCollection<MessageReport>("message_reports");
+    public ILiteCollection<ModerationLog> ModerationLogs => _database.GetCollection<ModerationLog>("moderation_logs");
+    public ILiteCollection<AutoModRule> AutoModRules => _database.GetCollection<AutoModRule>("automod_rules");
+
+    // Activity
+    public ILiteCollection<UserActivity> UserActivities => _database.GetCollection<UserActivity>("user_activities");
+
+    // Product Bundles
+    public ILiteCollection<ProductBundle> ProductBundles => _database.GetCollection<ProductBundle>("product_bundles");
 
     public DatabaseService(IConfiguration configuration)
     {
@@ -48,6 +77,52 @@ public class DatabaseService : IDisposable
         Rooms.EnsureIndex(x => x.OwnerId);
         Rooms.EnsureIndex(x => x.IsPublic);
         Rooms.EnsureIndex(x => x.Name);
+
+        // Reviews indexes
+        ProductReviews.EnsureIndex(x => x.ProductId);
+        ProductReviews.EnsureIndex(x => x.UserId);
+        ProductReviews.EnsureIndex(x => x.CreatedAt);
+
+        // Orders indexes
+        Orders.EnsureIndex(x => x.BuyerId);
+        Orders.EnsureIndex(x => x.SellerId);
+        Orders.EnsureIndex(x => x.Status);
+        Orders.EnsureIndex(x => x.CreatedAt);
+
+        // Cart indexes
+        Carts.EnsureIndex(x => x.UserId, true);
+
+        // Wishlist indexes
+        WishlistItems.EnsureIndex(x => x.UserId);
+        WishlistItems.EnsureIndex(x => x.ProductId);
+
+        // Notification indexes
+        Notifications.EnsureIndex(x => x.UserId);
+        Notifications.EnsureIndex(x => x.IsRead);
+        Notifications.EnsureIndex(x => x.CreatedAt);
+
+        // Moderation indexes
+        UserBans.EnsureIndex(x => x.UserId);
+        UserBans.EnsureIndex(x => x.IsActive);
+        UserMutes.EnsureIndex(x => x.UserId);
+        UserMutes.EnsureIndex(x => x.IsActive);
+        UserWarnings.EnsureIndex(x => x.UserId);
+        MessageReports.EnsureIndex(x => x.Status);
+        MessageReports.EnsureIndex(x => x.ReportedUserId);
+        ModerationLogs.EnsureIndex(x => x.ModeratorId);
+        ModerationLogs.EnsureIndex(x => x.CreatedAt);
+
+        // Activity indexes
+        UserActivities.EnsureIndex(x => x.UserId);
+        UserActivities.EnsureIndex(x => x.CreatedAt);
+
+        // Coupon indexes
+        Coupons.EnsureIndex(x => x.Code, true);
+        Coupons.EnsureIndex(x => x.IsActive);
+
+        // Bundle indexes
+        ProductBundles.EnsureIndex(x => x.SellerId);
+        ProductBundles.EnsureIndex(x => x.IsActive);
 
         // Seed default channels
         SeedDefaultData();
