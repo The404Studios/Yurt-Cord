@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -750,19 +751,77 @@ public partial class ChatMessageControl : UserControl
 
     #region User Context Menu Handlers
 
-    private void Avatar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    private async void Avatar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (_currentMessage != null)
+        e.Handled = true;
+        await ShowUserProfilePopup();
+    }
+
+    private async void Username_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        e.Handled = true;
+        await ShowUserProfilePopup();
+    }
+
+    private async Task ShowUserProfilePopup()
+    {
+        if (_currentMessage == null) return;
+
+        // Try to get full user details from API
+        var apiService = (IApiService?)App.ServiceProvider.GetService(typeof(IApiService));
+        if (apiService == null) return;
+
+        try
         {
-            // Could open user profile popup
+            var userDetails = await apiService.GetUserAsync(_currentMessage.SenderId);
+            if (userDetails != null)
+            {
+                // Check if user is online (simplified - based on recent activity)
+                var isOnline = userDetails.LastActive > DateTime.UtcNow.AddMinutes(-5);
+                ProfileCard.SetUser(userDetails, isOnline, showActions: userDetails.Id != apiService.CurrentUser?.Id);
+                UserProfilePopup.IsOpen = true;
+            }
+        }
+        catch
+        {
+            // Fallback: create a basic UserDto from message info
+            var basicUser = new UserDto
+            {
+                Id = _currentMessage.SenderId,
+                Username = _currentMessage.SenderUsername,
+                AvatarUrl = _currentMessage.SenderAvatarUrl ?? string.Empty,
+                Role = _currentMessage.SenderRole,
+                Rank = _currentMessage.SenderRank
+            };
+            ProfileCard.SetUser(basicUser, isOnline: false, showActions: basicUser.Id != apiService.CurrentUser?.Id);
+            UserProfilePopup.IsOpen = true;
         }
     }
 
-    private void Username_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    private void ProfileCard_SendMessageClicked(object? sender, UserDto user)
     {
-        if (_currentMessage != null)
+        UserProfilePopup.IsOpen = false;
+        var navigationService = (INavigationService?)App.ServiceProvider.GetService(typeof(INavigationService));
+        navigationService?.NavigateToFriends();
+    }
+
+    private async void ProfileCard_AddFriendClicked(object? sender, UserDto user)
+    {
+        UserProfilePopup.IsOpen = false;
+        var friendService = (IFriendService?)App.ServiceProvider.GetService(typeof(IFriendService));
+        if (friendService != null)
         {
-            // Could open user profile popup
+            try
+            {
+                await friendService.SendFriendRequestAsync(user.Username);
+                MessageBox.Show($"Friend request sent to {user.Username}!", "Success",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to send friend request: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 

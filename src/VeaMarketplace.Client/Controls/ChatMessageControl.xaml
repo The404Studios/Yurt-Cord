@@ -1,6 +1,7 @@
 <UserControl x:Class="VeaMarketplace.Client.Controls.ChatMessageControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:VeaMarketplace.Client.Controls">
 
     <!-- Converters are available globally from App.xaml -->
 
@@ -240,5 +241,24 @@
                 </Button>
             </StackPanel>
         </Border>
+
+        <!-- User Profile Popup -->
+        <Popup x:Name="UserProfilePopup"
+               PlacementTarget="{Binding ElementName=AvatarBorder}"
+               Placement="Right"
+               HorizontalOffset="8"
+               StaysOpen="False"
+               AllowsTransparency="True"
+               PopupAnimation="Fade">
+            <Border Background="Transparent" Padding="4">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.5"/>
+                </Border.Effect>
+                <controls:UserProfileCard x:Name="ProfileCard"
+                                          ShowActions="True"
+                                          SendMessageClicked="ProfileCard_SendMessageClicked"
+                                          AddFriendClicked="ProfileCard_AddFriendClicked"/>
+            </Border>
+        </Popup>
     </Grid>
 </UserControl>
