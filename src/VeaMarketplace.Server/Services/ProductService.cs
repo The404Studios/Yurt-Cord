@@ -96,7 +96,10 @@ public class ProductService
 
         if (cacheKey != null)
         {
-            _cache.Set(cacheKey, result, CacheDuration);
+            var cacheOptions = new MemoryCacheEntryOptions()
+                .SetAbsoluteExpiration(CacheDuration)
+                .SetSize(pageSize * 1024); // Estimate ~1KB per product
+            _cache.Set(cacheKey, result, cacheOptions);
         }
 
         return result;

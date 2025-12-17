@@ -75,13 +75,21 @@ public partial class NotificationCenterViewModel : BaseViewModel
     /// <summary>
     /// Update unread count from SignalR
     /// </summary>
-    public void OnUnreadCountChanged(int count)
+    public void UpdateUnreadCountFromSignalR(int count)
     {
         System.Windows.Application.Current.Dispatcher.Invoke(() =>
         {
             UnreadCount = count;
             OnPropertyChanged(nameof(HasUnreadNotifications));
         });
+    }
+
+    /// <summary>
+    /// Called by source generator when UnreadCount property changes
+    /// </summary>
+    partial void OnUnreadCountChanged(int value)
+    {
+        OnPropertyChanged(nameof(HasUnreadNotifications));
     }
 
     private bool ShouldShowNotification(NotificationDto notification, string filter)
