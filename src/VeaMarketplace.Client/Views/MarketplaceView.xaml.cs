@@ -100,7 +100,10 @@ public partial class MarketplaceView : UserControl
 
         // Create a product embed message format
         // Format: [PRODUCT_EMBED:id|title|price|seller|imageUrl|description]
-        var embedData = $"[PRODUCT_EMBED:{product.Id}|{product.Title}|{product.Price:F2}|{product.SellerUsername}|{product.ImageUrls?.FirstOrDefault() ?? ""}|{product.Description?.Take(100).ToString() ?? ""}]";
+        var descPreview = string.IsNullOrEmpty(product.Description)
+            ? ""
+            : (product.Description.Length > 100 ? product.Description[..100] + "..." : product.Description);
+        var embedData = $"[PRODUCT_EMBED:{product.Id}|{product.Title}|{product.Price:F2}|{product.SellerUsername}|{product.ImageUrls?.FirstOrDefault() ?? ""}|{descPreview}]";
 
         // Also include a user-friendly message
         var message = $"Check out this listing: {product.Title} - ${product.Price:F2}";
