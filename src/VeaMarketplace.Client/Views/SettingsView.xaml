@@ -144,26 +144,407 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Sidebar Navigation Button Style -->
+        <Style x:Key="SidebarNavButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Margin" Value="0,2"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                CornerRadius="4" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource QuaternaryDarkBrush}"/>
+                                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Color Picker Button Style -->
+        <Style x:Key="ColorPickerBtn" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                CornerRadius="18" BorderThickness="3" BorderBrush="Transparent">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="4" ShadowDepth="0" Opacity="0.3"/>
+                            </Border.Effect>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <Grid>
-        <!-- Header -->
-        <Border Height="48" VerticalAlignment="Top"
-                BorderBrush="{StaticResource PrimaryDarkBrush}" BorderThickness="0,0,0,1">
-            <Grid Margin="16,0">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="Settings" FontSize="16" FontWeight="Bold"
-                               Foreground="{StaticResource TextPrimaryBrush}"/>
-                </StackPanel>
-            </Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Settings Sidebar -->
+        <Border Grid.Column="0" Background="{StaticResource SecondaryDarkBrush}">
+            <StackPanel Margin="12,16">
+                <TextBlock Text="USER SETTINGS" FontSize="11" FontWeight="Bold"
+                           Foreground="{StaticResource TextMutedBrush}" Margin="12,0,0,12"/>
+
+                <Button x:Name="AccountNavButton" Content="👤  My Account"
+                        Style="{StaticResource SidebarNavButton}" Click="NavButton_Click" Tag="Account"/>
+                <Button x:Name="ProfileNavButton" Content="🎨  Profile"
+                        Style="{StaticResource SidebarNavButton}" Click="NavButton_Click" Tag="Profile"/>
+                <Button x:Name="PrivacyNavButton" Content="🔒  Privacy &amp; Safety"
+                        Style="{StaticResource SidebarNavButton}" Click="NavButton_Click" Tag="Privacy"/>
+
+                <Rectangle Height="1" Fill="{StaticResource QuaternaryDarkBrush}" Margin="12,16"/>
+
+                <TextBlock Text="APP SETTINGS" FontSize="11" FontWeight="Bold"
+                           Foreground="{StaticResource TextMutedBrush}" Margin="12,0,0,12"/>
+
+                <Button x:Name="AppearanceNavButton" Content="🖼️  Appearance"
+                        Style="{StaticResource SidebarNavButton}" Click="NavButton_Click" Tag="Appearance"/>
+                <Button x:Name="NotificationsNavButton" Content="🔔  Notifications"
+                        Style="{StaticResource SidebarNavButton}" Click="NavButton_Click" Tag="Notifications"/>
+                <Button x:Name="VoiceNavButton" Content="🎙️  Voice &amp; Audio"
+                        Style="{StaticResource SidebarNavButton}" Click="NavButton_Click" Tag="Voice"
+                        Background="{StaticResource QuaternaryDarkBrush}"/>
+                <Button x:Name="KeybindsNavButton" Content="⌨️  Keybinds"
+                        Style="{StaticResource SidebarNavButton}" Click="NavButton_Click" Tag="Keybinds"/>
+
+                <Rectangle Height="1" Fill="{StaticResource QuaternaryDarkBrush}" Margin="12,16"/>
+
+                <Button Content="🚪  Log Out" Style="{StaticResource SidebarNavButton}"
+                        Click="LogOut_Click" Foreground="{StaticResource AccentRedBrush}"/>
+            </StackPanel>
         </Border>
 
-        <!-- Settings Content -->
-        <ScrollViewer Margin="0,48,0,0" VerticalScrollBarVisibility="Auto"
-                      Style="{StaticResource ModernScrollViewer}">
-            <StackPanel Margin="24" MaxWidth="800">
+        <!-- Settings Content Area -->
+        <Grid Grid.Column="1">
+            <!-- Header -->
+            <Border Height="48" VerticalAlignment="Top"
+                    BorderBrush="{StaticResource PrimaryDarkBrush}" BorderThickness="0,0,0,1">
+                <Grid Margin="16,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock x:Name="SettingsHeader" Text="Voice &amp; Audio" FontSize="16" FontWeight="Bold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
 
-                <!-- Voice & Audio Section -->
+            <!-- All Settings Panels -->
+            <ScrollViewer Margin="0,48,0,0" VerticalScrollBarVisibility="Auto"
+                          Style="{StaticResource ModernScrollViewer}">
+                <Grid>
+                    <!-- Account Settings Panel -->
+                    <StackPanel x:Name="AccountPanel" Visibility="Collapsed" Margin="24" MaxWidth="800">
+                        <TextBlock Text="MY ACCOUNT" FontSize="12" FontWeight="Bold"
+                                   Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,16"/>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20" Margin="0,0,0,12">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Width="80" Height="80" CornerRadius="40" Margin="0,0,20,0">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                            <GradientStop Color="#5865F2" Offset="0"/>
+                                            <GradientStop Color="#EB459E" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                    <TextBlock Text="Y" FontSize="32" FontWeight="Bold" Foreground="White"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock x:Name="AccountUsername" Text="Username" FontSize="18" FontWeight="Bold"
+                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock x:Name="AccountEmail" Text="email@example.com" FontSize="13"
+                                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <Button Grid.Column="2" Content="Edit Profile" Style="{StaticResource PrimaryButton}"
+                                        VerticalAlignment="Center" Click="EditProfile_Click"/>
+                            </Grid>
+                        </Border>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Password" FontSize="14" FontWeight="Medium"
+                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                                <TextBlock Text="••••••••••" FontSize="14" Foreground="{StaticResource TextMutedBrush}"/>
+                                <Button Content="Change Password" Style="{StaticResource SecondaryButton}"
+                                        HorizontalAlignment="Left" Margin="0,12,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20">
+                            <StackPanel>
+                                <TextBlock Text="Two-Factor Authentication" FontSize="14" FontWeight="Medium"
+                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"/>
+                                <TextBlock Text="Add an extra layer of security to your account"
+                                           FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,12"/>
+                                <Button Content="Enable 2FA" Style="{StaticResource SecondaryButton}"
+                                        HorizontalAlignment="Left"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Profile Settings Panel -->
+                    <StackPanel x:Name="ProfilePanel" Visibility="Collapsed" Margin="24" MaxWidth="800">
+                        <TextBlock Text="PROFILE CUSTOMIZATION" FontSize="12" FontWeight="Bold"
+                                   Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,16"/>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Display Name" FontSize="14" FontWeight="Medium"
+                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                                <TextBox x:Name="DisplayNameBox" Style="{StaticResource ModernTextBox}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="About Me" FontSize="14" FontWeight="Medium"
+                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                                <TextBox x:Name="AboutMeBox" Style="{StaticResource ModernTextBox}"
+                                         AcceptsReturn="True" Height="100" TextWrapping="Wrap"/>
+                                <TextBlock Text="0/190" FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                                           HorizontalAlignment="Right" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20">
+                            <StackPanel>
+                                <TextBlock Text="Banner Color" FontSize="14" FontWeight="Medium"
+                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                                <WrapPanel>
+                                    <Button Width="36" Height="36" Margin="4" Background="#5865F2" Style="{StaticResource ColorPickerBtn}"/>
+                                    <Button Width="36" Height="36" Margin="4" Background="#57F287" Style="{StaticResource ColorPickerBtn}"/>
+                                    <Button Width="36" Height="36" Margin="4" Background="#EB459E" Style="{StaticResource ColorPickerBtn}"/>
+                                    <Button Width="36" Height="36" Margin="4" Background="#FAA61A" Style="{StaticResource ColorPickerBtn}"/>
+                                    <Button Width="36" Height="36" Margin="4" Background="#ED4245" Style="{StaticResource ColorPickerBtn}"/>
+                                    <Button Width="36" Height="36" Margin="4" Background="#00D4FF" Style="{StaticResource ColorPickerBtn}"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Appearance Settings Panel -->
+                    <StackPanel x:Name="AppearancePanel" Visibility="Collapsed" Margin="24" MaxWidth="800">
+                        <TextBlock Text="APPEARANCE" FontSize="12" FontWeight="Bold"
+                                   Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,16"/>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Theme" FontSize="14" FontWeight="Medium"
+                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <RadioButton x:Name="DarkTheme" Content="Dark" IsChecked="True"
+                                                 Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,24,0"/>
+                                    <RadioButton x:Name="LightTheme" Content="Light"
+                                                 Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,24,0"/>
+                                    <RadioButton x:Name="SystemTheme" Content="System"
+                                                 Foreground="{StaticResource TextPrimaryBrush}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Accent Color" FontSize="14" FontWeight="Medium"
+                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                                <WrapPanel>
+                                    <Button Width="36" Height="36" Margin="4" Background="#5865F2" Style="{StaticResource ColorPickerBtn}"/>
+                                    <Button Width="36" Height="36" Margin="4" Background="#3BA55C" Style="{StaticResource ColorPickerBtn}"/>
+                                    <Button Width="36" Height="36" Margin="4" Background="#FAA61A" Style="{StaticResource ColorPickerBtn}"/>
+                                    <Button Width="36" Height="36" Margin="4" Background="#ED4245" Style="{StaticResource ColorPickerBtn}"/>
+                                    <Button Width="36" Height="36" Margin="4" Background="#EB459E" Style="{StaticResource ColorPickerBtn}"/>
+                                    <Button Width="36" Height="36" Margin="4" Background="#00D4FF" Style="{StaticResource ColorPickerBtn}"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Compact Mode" FontSize="14" FontWeight="Medium"
+                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="Make elements smaller for more content"
+                                               FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                                </StackPanel>
+                                <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Notifications Settings Panel -->
+                    <StackPanel x:Name="NotificationsPanel" Visibility="Collapsed" Margin="24" MaxWidth="800">
+                        <TextBlock Text="NOTIFICATIONS" FontSize="12" FontWeight="Bold"
+                                   Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,16"/>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20" Margin="0,0,0,12">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Desktop Notifications" FontSize="14" FontWeight="Medium"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Show notifications on your desktop"
+                                                   FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                                    </StackPanel>
+                                    <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" IsChecked="True" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <Grid Margin="0,0,0,16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Message Sounds" FontSize="14" FontWeight="Medium"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Play a sound for new messages"
+                                                   FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                                    </StackPanel>
+                                    <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" IsChecked="True" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Friend Request Notifications" FontSize="14" FontWeight="Medium"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Get notified when someone sends a friend request"
+                                                   FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                                    </StackPanel>
+                                    <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" IsChecked="True" VerticalAlignment="Center"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Privacy Settings Panel -->
+                    <StackPanel x:Name="PrivacyPanel" Visibility="Collapsed" Margin="24" MaxWidth="800">
+                        <TextBlock Text="PRIVACY &amp; SAFETY" FontSize="12" FontWeight="Bold"
+                                   Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,16"/>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Who can send you friend requests" FontSize="14" FontWeight="Medium"
+                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                                <RadioButton Content="Everyone" IsChecked="True"
+                                             Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                                <RadioButton Content="Friends of Friends"
+                                             Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                                <RadioButton Content="No One"
+                                             Foreground="{StaticResource TextPrimaryBrush}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20" Margin="0,0,0,12">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Show Online Status" FontSize="14" FontWeight="Medium"
+                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="Let others see when you're online"
+                                               FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                                </StackPanel>
+                                <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" IsChecked="True" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Allow Direct Messages from Server Members" FontSize="14" FontWeight="Medium"
+                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="People in the same servers can message you"
+                                               FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                                </StackPanel>
+                                <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" IsChecked="True" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Keybinds Panel -->
+                    <StackPanel x:Name="KeybindsPanel" Visibility="Collapsed" Margin="24" MaxWidth="800">
+                        <TextBlock Text="KEYBINDS" FontSize="12" FontWeight="Bold"
+                                   Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,16"/>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20" Margin="0,0,0,12">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="120"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Push to Talk" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" Content="V" Style="{StaticResource SecondaryButton}"/>
+                            </Grid>
+                        </Border>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20" Margin="0,0,0,12">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="120"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Toggle Mute" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" Content="M" Style="{StaticResource SecondaryButton}"/>
+                            </Grid>
+                        </Border>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="120"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Toggle Deafen" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" Content="D" Style="{StaticResource SecondaryButton}"/>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Voice & Audio Panel (Original) -->
+                    <StackPanel x:Name="VoicePanel" Visibility="Visible" Margin="24" MaxWidth="800">
+                        <!-- Voice & Audio Section -->
                 <TextBlock Text="VOICE &amp; AUDIO" FontSize="12" FontWeight="Bold"
                            Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,16"/>
 
@@ -359,7 +740,9 @@
                         Command="{Binding RefreshDevicesCommand}" HorizontalAlignment="Left"
                         Margin="0,8,0,0"/>
 
-            </StackPanel>
-        </ScrollViewer>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
     </Grid>
 </UserControl>
