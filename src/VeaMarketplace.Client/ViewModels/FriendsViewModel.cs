@@ -516,7 +516,19 @@ public partial class FriendsViewModel : BaseViewModel
     private void ToggleVideo()
     {
         IsVideoEnabled = !IsVideoEnabled;
-        // In a full implementation, this would start/stop video capture
+
+        // TODO: Integrate with WebRTC or video capture service
+        // For now, update UI state and show feedback
+        if (IsVideoEnabled)
+        {
+            System.Diagnostics.Debug.WriteLine("Video enabled - would start video capture");
+            // Future: _voiceService.StartVideoAsync();
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine("Video disabled - would stop video capture");
+            // Future: _voiceService.StopVideoAsync();
+        }
     }
 
     [RelayCommand]
