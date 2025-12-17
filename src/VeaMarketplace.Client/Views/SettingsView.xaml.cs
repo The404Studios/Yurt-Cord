@@ -61,12 +61,14 @@ public partial class SettingsView : UserControl
 
     private void CheckAdminAccess()
     {
-        // Check if current user has moderator or admin privileges
+        // Check if current user has moderator, admin, or owner privileges
         var currentUser = _apiService.CurrentUser;
         if (currentUser != null)
         {
-            var role = currentUser.Role?.ToLowerInvariant();
-            var isAdminOrMod = role == "admin" || role == "moderator" || role == "owner";
+            // Owner, Admin, and Moderator roles can access moderation panel
+            var isAdminOrMod = currentUser.Role == VeaMarketplace.Shared.Enums.UserRole.Owner ||
+                               currentUser.Role == VeaMarketplace.Shared.Enums.UserRole.Admin ||
+                               currentUser.Role == VeaMarketplace.Shared.Enums.UserRole.Moderator;
 
             if (isAdminOrMod)
             {
