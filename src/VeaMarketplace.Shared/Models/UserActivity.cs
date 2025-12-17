@@ -6,13 +6,23 @@ public enum ActivityType
     VoiceJoined = 1,
     VoiceLeft = 2,
     ProductListed = 3,
+    ListedProduct = 3, // Alias
     ProductPurchased = 4,
+    PurchasedProduct = 4, // Alias
     FriendAdded = 5,
+    AddedFriend = 5, // Alias
     ProfileUpdated = 6,
     StatusChanged = 7,
+    UpdatedStatus = 7, // Alias
     ScreenShareStarted = 8,
     ScreenShareStopped = 9,
-    Other = 10
+    Other = 10,
+    ViewedProduct = 11,
+    SoldProduct = 12,
+    PostedReview = 13,
+    JoinedRoom = 14,
+    UnlockedAchievement = 15,
+    RankedUp = 16
 }
 
 public class UserActivity
@@ -20,10 +30,15 @@ public class UserActivity
     public string Id { get; set; } = Guid.NewGuid().ToString();
     public string UserId { get; set; } = string.Empty;
     public string Username { get; set; } = string.Empty;
+    public string UserAvatarUrl { get; set; } = string.Empty;
     public ActivityType Type { get; set; }
+    public string? TargetId { get; set; }
+    public string? TargetName { get; set; }
     public string? Description { get; set; }
+    public string? ImageUrl { get; set; }
     public Dictionary<string, string> Metadata { get; set; } = new();
-    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime Timestamp => CreatedAt; // Alias for backward compatibility
     public bool IsPublic { get; set; } = true;
 }
 

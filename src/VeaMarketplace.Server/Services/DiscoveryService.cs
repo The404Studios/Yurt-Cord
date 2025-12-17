@@ -3,6 +3,7 @@ using VeaMarketplace.Server.Data;
 using VeaMarketplace.Shared.DTOs;
 using VeaMarketplace.Shared.Enums;
 using VeaMarketplace.Shared.Models;
+using ActivityType = VeaMarketplace.Shared.Models.ActivityType;
 
 namespace VeaMarketplace.Server.Services;
 

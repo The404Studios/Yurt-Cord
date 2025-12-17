@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using VeaMarketplace.Server.Services;
 using VeaMarketplace.Shared.DTOs;
 using VeaMarketplace.Shared.Models;
+using ActivityType = VeaMarketplace.Shared.Models.ActivityType;
 
 namespace VeaMarketplace.Server.Controllers;
 
