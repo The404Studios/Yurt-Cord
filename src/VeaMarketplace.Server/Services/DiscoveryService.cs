@@ -157,16 +157,16 @@ public class DiscoveryService
         // Get user's purchase history and wishlist
         var purchasedCategories = _db.Orders
             .Find(o => o.BuyerId == userId && o.Status == OrderStatus.Completed)
-            .Select(o => _db.Products.FindById(o.ProductId)?.Category)
-            .Where(c => c.HasValue)
-            .Select(c => c!.Value)
+            .Select(o => _db.Products.FindById(o.ProductId))
+            .Where(p => p != null)
+            .Select(p => p!.Category)
             .ToList();
 
         var wishlistCategories = _db.WishlistItems
             .Find(w => w.UserId == userId)
-            .Select(w => _db.Products.FindById(w.ProductId)?.Category)
-            .Where(c => c.HasValue)
-            .Select(c => c!.Value)
+            .Select(w => _db.Products.FindById(w.ProductId))
+            .Where(p => p != null)
+            .Select(p => p!.Category)
             .ToList();
 
         var preferredCategories = purchasedCategories

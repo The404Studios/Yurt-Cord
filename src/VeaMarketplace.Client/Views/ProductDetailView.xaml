@@ -410,7 +410,7 @@
                                                         </StackPanel>
                                                     </StackPanel>
 
-                                                    <TextBlock Grid.Column="1" Text="{Binding CreatedAt, StringFormat=MMM d, yyyy}"
+                                                    <TextBlock Grid.Column="1" Text="{Binding CreatedAt, StringFormat='MMM d, yyyy'}"
                                                                Foreground="#72767D" FontSize="12"/>
                                                 </Grid>
 
