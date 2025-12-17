@@ -84,18 +84,8 @@ public class TimeAgoConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        DateTime dateTime;
-
-        // Handle both DateTime and DateTime?
-        if (value is DateTime dt)
-        {
-            dateTime = dt;
-        }
-        else if (value is DateTime? nullableDt && nullableDt.HasValue)
-        {
-            dateTime = nullableDt.Value;
-        }
-        else
+        // Handle DateTime (nullable DateTime is unboxed to DateTime when it has a value)
+        if (value is not DateTime dateTime)
         {
             return string.Empty;
         }
@@ -228,24 +218,14 @@ public class TimestampConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        DateTime dateTime;
-
-        // Handle both DateTime and DateTime?
-        if (value is DateTime dt)
+        // Handle DateTime (nullable DateTime is unboxed to DateTime when it has a value)
+        if (value is DateTime dateTime)
         {
-            dateTime = dt;
-        }
-        else if (value is DateTime? nullableDt && nullableDt.HasValue)
-        {
-            dateTime = nullableDt.Value;
-        }
-        else
-        {
-            return string.Empty;
+            var format = parameter as string ?? "g"; // Default to general short date/time
+            return dateTime.ToString(format, culture);
         }
 
-        var format = parameter as string ?? "g"; // Default to general short date/time
-        return dateTime.ToString(format, culture);
+        return string.Empty;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

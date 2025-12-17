@@ -12,7 +12,8 @@ public enum NotificationType
     Moderation = 7,
     Achievement = 8,
     Other = 9,
-    Order = 10
+    Order = 10,
+    ProductUpdate = 11
 }
 
 public class Notification
@@ -22,6 +23,7 @@ public class Notification
     public NotificationType Type { get; set; }
     public string Title { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
+    public string Icon { get; set; } = "🔔";
     public string? IconUrl { get; set; }
     public string? ActionUrl { get; set; }
     public Dictionary<string, string> Data { get; set; } = new();

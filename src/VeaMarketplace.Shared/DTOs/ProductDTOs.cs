@@ -14,13 +14,13 @@ public class CreateProductRequest
 
 public class UpdateProductRequest
 {
-    public string Title { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public decimal Price { get; set; }
-    public ProductCategory Category { get; set; }
-    public List<string> ImageUrls { get; set; } = [];
-    public List<string> Tags { get; set; } = [];
-    public ProductStatus Status { get; set; }
+    public string? Title { get; set; }
+    public string? Description { get; set; }
+    public decimal? Price { get; set; }
+    public ProductCategory? Category { get; set; }
+    public List<string>? ImageUrls { get; set; }
+    public List<string>? Tags { get; set; }
+    public ProductStatus? Status { get; set; }
 }
 
 public class ProductDto
