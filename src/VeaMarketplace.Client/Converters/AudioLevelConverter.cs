@@ -34,7 +34,7 @@ public class SliderWidthConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return Binding.DoNothing;
+        return System.Windows.Data.Binding.DoNothing;
     }
 }
 
@@ -51,6 +51,6 @@ public class AudioLevelToHeightConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return Binding.DoNothing;
+        return System.Windows.Data.Binding.DoNothing;
     }
 }
