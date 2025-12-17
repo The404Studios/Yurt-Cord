@@ -90,6 +90,7 @@ public interface IApiService
 
     // Products - additional
     Task<bool> DeleteProductAsync(string productId);
+    Task<bool> LikeProductAsync(string productId);
     Task<CartDto> AddToCartAsync(string productId, int quantity);
 
     // Activity Feed
@@ -617,6 +618,12 @@ public class ApiService : IApiService
     public async Task<bool> DeleteProductAsync(string productId)
     {
         var response = await _httpClient.DeleteAsync($"/api/products/{productId}").ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> LikeProductAsync(string productId)
+    {
+        var response = await _httpClient.PostAsync($"/api/products/{productId}/like", null).ConfigureAwait(false);
         return response.IsSuccessStatusCode;
     }
 

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VeaMarketplace.Shared.DTOs;
+using VeaMarketplace.Shared.Models;
 
 namespace VeaMarketplace.Client.ViewModels;
 
@@ -20,6 +21,17 @@ public partial class NotificationCenterViewModel : BaseViewModel
     [ObservableProperty]
     private string _currentFilter = "All";
 
+    [ObservableProperty]
+    private int _unreadCount;
+
+    [ObservableProperty]
+    private bool _isRefreshing;
+
+    [ObservableProperty]
+    private ObservableCollection<NotificationDto> _recentNotifications = new();
+
+    public bool HasUnreadNotifications => UnreadCount > 0;
+
     public NotificationCenterViewModel(Services.IApiService apiService, Services.INavigationService navigationService)
     {
         _apiService = apiService;
@@ -27,15 +39,86 @@ public partial class NotificationCenterViewModel : BaseViewModel
         _ = LoadNotificationsAsync();
     }
 
+    /// <summary>
+    /// Handle incoming real-time notification from SignalR
+    /// </summary>
+    public void OnNewNotification(NotificationDto notification)
+    {
+        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+        {
+            // Add to beginning of lists
+            _allNotifications.Insert(0, notification);
+
+            // If matches current filter, add to visible notifications
+            if (ShouldShowNotification(notification, CurrentFilter))
+            {
+                Notifications.Insert(0, notification);
+            }
+
+            // Update recent notifications (top 5)
+            RecentNotifications.Insert(0, notification);
+            while (RecentNotifications.Count > 5)
+            {
+                RecentNotifications.RemoveAt(RecentNotifications.Count - 1);
+            }
+
+            // Update counts
+            if (!notification.IsRead)
+            {
+                UnreadCount++;
+                OnPropertyChanged(nameof(HasUnreadNotifications));
+            }
+            HasNotifications = _allNotifications.Count > 0;
+        });
+    }
+
+    /// <summary>
+    /// Update unread count from SignalR
+    /// </summary>
+    public void OnUnreadCountChanged(int count)
+    {
+        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+        {
+            UnreadCount = count;
+            OnPropertyChanged(nameof(HasUnreadNotifications));
+        });
+    }
+
+    private bool ShouldShowNotification(NotificationDto notification, string filter)
+    {
+        return filter switch
+        {
+            "Unread" => !notification.IsRead,
+            "Friends" => notification.Type == NotificationType.FriendRequest,
+            "Messages" => notification.Type == NotificationType.Message,
+            "Mentions" => notification.Type == NotificationType.Mention,
+            "Orders" => notification.Type == NotificationType.Order,
+            "Reviews" => notification.Type == NotificationType.Review,
+            _ => true
+        };
+    }
+
     private async Task LoadNotificationsAsync()
     {
         try
         {
             IsLoading = true;
+            IsRefreshing = true;
             var notifications = await _apiService.GetNotificationsAsync();
             _allNotifications = notifications;
             ApplyFilter(CurrentFilter);
             HasNotifications = Notifications.Any();
+
+            // Update unread count
+            UnreadCount = notifications.Count(n => !n.IsRead);
+            OnPropertyChanged(nameof(HasUnreadNotifications));
+
+            // Update recent notifications (top 5)
+            RecentNotifications.Clear();
+            foreach (var notification in notifications.Take(5))
+            {
+                RecentNotifications.Add(notification);
+            }
         }
         catch (Exception ex)
         {
@@ -44,6 +127,7 @@ public partial class NotificationCenterViewModel : BaseViewModel
         finally
         {
             IsLoading = false;
+            IsRefreshing = false;
         }
     }
 
@@ -63,6 +147,16 @@ public partial class NotificationCenterViewModel : BaseViewModel
             {
                 notification.IsRead = true;
                 notification.ReadAt = DateTime.UtcNow;
+            }
+
+            // Update unread count
+            UnreadCount = 0;
+            OnPropertyChanged(nameof(HasUnreadNotifications));
+
+            // Re-apply filter in case we're viewing unread only
+            if (CurrentFilter == "Unread")
+            {
+                ApplyFilter(CurrentFilter);
             }
         }
         catch (Exception ex)
@@ -89,17 +183,12 @@ public partial class NotificationCenterViewModel : BaseViewModel
     {
         Notifications.Clear();
 
-        var filtered = filterType switch
-        {
-            "Unread" => _allNotifications.Where(n => !n.IsRead),
-            "Friends" => _allNotifications.Where(n => n.Type == Shared.Models.NotificationType.FriendRequest),
-            "Messages" => _allNotifications.Where(n => n.Type == Shared.Models.NotificationType.Message),
-            "Mentions" => _allNotifications.Where(n => n.Type == Shared.Models.NotificationType.Mention),
-            _ => _allNotifications
-        };
+        var filtered = _allNotifications.Where(n => ShouldShowNotification(n, filterType));
 
         foreach (var notification in filtered)
             Notifications.Add(notification);
+
+        HasNotifications = Notifications.Any();
     }
 
     [RelayCommand]

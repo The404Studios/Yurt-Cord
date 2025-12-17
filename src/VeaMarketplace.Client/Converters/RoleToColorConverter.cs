@@ -30,7 +30,7 @@ public class RoleToColorConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        throw new NotImplementedException();
+        return Binding.DoNothing;
     }
 }
 
@@ -42,23 +42,23 @@ public class RankToBadgeConverter : IValueConverter
         {
             return rank switch
             {
-                UserRank.Legend => "👑 Legend",
-                UserRank.Elite => "🔥 Elite",
-                UserRank.Diamond => "💎 Diamond",
-                UserRank.Platinum => "✨ Platinum",
-                UserRank.Gold => "🥇 Gold",
-                UserRank.Silver => "🥈 Silver",
-                UserRank.Bronze => "🥉 Bronze",
-                _ => "🌟 Newcomer"
+                UserRank.Legend => "Legend",
+                UserRank.Elite => "Elite",
+                UserRank.Diamond => "Diamond",
+                UserRank.Platinum => "Platinum",
+                UserRank.Gold => "Gold",
+                UserRank.Silver => "Silver",
+                UserRank.Bronze => "Bronze",
+                _ => "Newcomer"
             };
         }
 
-        return "🌟 Newcomer";
+        return "Newcomer";
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        throw new NotImplementedException();
+        return Binding.DoNothing;
     }
 }
 
