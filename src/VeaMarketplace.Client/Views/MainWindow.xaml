@@ -20,6 +20,9 @@
             <!-- Login View -->
             <views:LoginView x:Name="LoginView" Visibility="Visible"/>
 
+            <!-- Profile Setup View (shown after registration) -->
+            <views:ProfileSetupView x:Name="ProfileSetupView" Visibility="Collapsed"/>
+
             <!-- Main App View -->
             <Grid x:Name="MainAppGrid" Visibility="Collapsed">
                 <Grid.ColumnDefinitions>

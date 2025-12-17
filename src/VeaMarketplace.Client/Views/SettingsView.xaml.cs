@@ -2,6 +2,8 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using VeaMarketplace.Client.Services;
 using VeaMarketplace.Client.ViewModels;
 
 namespace VeaMarketplace.Client.Views;
@@ -9,6 +11,9 @@ namespace VeaMarketplace.Client.Views;
 public partial class SettingsView : UserControl
 {
     private SettingsViewModel? _viewModel;
+    private string _currentSection = "Voice";
+    private readonly Dictionary<string, Button> _navButtons = new();
+    private readonly Dictionary<string, StackPanel> _panels = new();
 
     public SettingsView()
     {
@@ -19,6 +24,103 @@ public partial class SettingsView : UserControl
 
         _viewModel = (SettingsViewModel)App.ServiceProvider.GetService(typeof(SettingsViewModel))!;
         DataContext = _viewModel;
+
+        Loaded += SettingsView_Loaded;
+    }
+
+    private void SettingsView_Loaded(object sender, RoutedEventArgs e)
+    {
+        // Map nav buttons
+        _navButtons["Account"] = AccountNavButton;
+        _navButtons["Profile"] = ProfileNavButton;
+        _navButtons["Privacy"] = PrivacyNavButton;
+        _navButtons["Appearance"] = AppearanceNavButton;
+        _navButtons["Notifications"] = NotificationsNavButton;
+        _navButtons["Voice"] = VoiceNavButton;
+        _navButtons["Keybinds"] = KeybindsNavButton;
+
+        // Map panels
+        _panels["Account"] = AccountPanel;
+        _panels["Profile"] = ProfilePanel;
+        _panels["Privacy"] = PrivacyPanel;
+        _panels["Appearance"] = AppearancePanel;
+        _panels["Notifications"] = NotificationsPanel;
+        _panels["Voice"] = VoicePanel;
+        _panels["Keybinds"] = KeybindsPanel;
+
+        // Load user data for Account section
+        LoadAccountInfo();
+    }
+
+    private void LoadAccountInfo()
+    {
+        var apiService = (IApiService)App.ServiceProvider.GetService(typeof(IApiService))!;
+        if (apiService.CurrentUser != null)
+        {
+            AccountUsername.Text = apiService.CurrentUser.Username;
+            AccountEmail.Text = apiService.CurrentUser.Email ?? "Not set";
+        }
+    }
+
+    private void NavButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && button.Tag is string section)
+        {
+            NavigateToSection(section);
+        }
+    }
+
+    private void NavigateToSection(string section)
+    {
+        _currentSection = section;
+
+        // Update header
+        SettingsHeader.Text = section switch
+        {
+            "Account" => "My Account",
+            "Profile" => "Profile",
+            "Privacy" => "Privacy & Safety",
+            "Appearance" => "Appearance",
+            "Notifications" => "Notifications",
+            "Voice" => "Voice & Audio",
+            "Keybinds" => "Keybinds",
+            _ => section
+        };
+
+        // Update button backgrounds
+        var activeBrush = (SolidColorBrush)FindResource("QuaternaryDarkBrush");
+        var inactiveBrush = new SolidColorBrush(Colors.Transparent);
+
+        foreach (var kvp in _navButtons)
+        {
+            kvp.Value.Background = kvp.Key == section ? activeBrush : inactiveBrush;
+        }
+
+        // Show/hide panels
+        foreach (var kvp in _panels)
+        {
+            kvp.Value.Visibility = kvp.Key == section ? Visibility.Visible : Visibility.Collapsed;
+        }
+    }
+
+    private void EditProfile_Click(object sender, RoutedEventArgs e)
+    {
+        NavigateToSection("Profile");
+    }
+
+    private void LogOut_Click(object sender, RoutedEventArgs e)
+    {
+        var result = MessageBox.Show(
+            "Are you sure you want to log out?",
+            "Log Out",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (result == MessageBoxResult.Yes)
+        {
+            // TODO: Clear auth and return to login
+            Application.Current.Shutdown();
+        }
     }
 
     private void PttKeyButton_Click(object sender, RoutedEventArgs e)

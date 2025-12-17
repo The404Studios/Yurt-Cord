@@ -15,6 +15,7 @@ public partial class LoginView : UserControl
     private Storyboard? _spinnerStoryboard;
 
     public event Action? OnLoginSuccess;
+    public event Action<string>? OnRegistrationSuccess; // Passes username for profile setup
 
     public LoginView()
     {
@@ -120,10 +121,11 @@ public partial class LoginView : UserControl
                     if (result.Token != null)
                         await chatService.ConnectAsync(result.Token);
 
-                    UpdateLoadingText("Welcome!", "Preparing your experience...");
+                    UpdateLoadingText("Welcome!", "Let's set up your profile...");
                     await Task.Delay(300);
 
-                    OnLoginSuccess?.Invoke();
+                    // Trigger profile setup for new registrations
+                    OnRegistrationSuccess?.Invoke(username);
                 }
                 else
                 {

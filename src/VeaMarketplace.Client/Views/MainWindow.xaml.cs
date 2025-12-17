@@ -70,11 +70,74 @@ public partial class MainWindow : Window
             });
         };
 
+        // Subscribe to registration success - show profile setup
+        LoginView.OnRegistrationSuccess += (username) =>
+        {
+            Dispatcher.Invoke(() =>
+            {
+                // Animate transition to profile setup
+                var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(300));
+                fadeOut.Completed += (s, e) =>
+                {
+                    LoginView.Visibility = Visibility.Collapsed;
+                    ProfileSetupView.Visibility = Visibility.Visible;
+                    ProfileSetupView.SetUsername(username);
+
+                    var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300));
+                    ProfileSetupView.BeginAnimation(OpacityProperty, fadeIn);
+                };
+                LoginView.BeginAnimation(OpacityProperty, fadeOut);
+            });
+        };
+
+        // Subscribe to profile setup completion
+        ProfileSetupView.OnSetupComplete += () =>
+        {
+            Dispatcher.Invoke(() =>
+            {
+                TransitionToMainApp("Profile setup complete!");
+            });
+        };
+
+        ProfileSetupView.OnSetupSkipped += () =>
+        {
+            Dispatcher.Invoke(() =>
+            {
+                TransitionToMainApp("Welcome! You can customize your profile later.");
+            });
+        };
+
         // Navigation changes
         _navigationService.OnNavigate += view =>
         {
             Dispatcher.Invoke(() => SwitchView(view));
         };
+    }
+
+    private void TransitionToMainApp(string welcomeMessage)
+    {
+        var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(300));
+        fadeOut.Completed += (s, e) =>
+        {
+            ProfileSetupView.Visibility = Visibility.Collapsed;
+            LoginView.Visibility = Visibility.Collapsed;
+            MainAppGrid.Visibility = Visibility.Visible;
+
+            var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300));
+            MainAppGrid.BeginAnimation(OpacityProperty, fadeIn);
+
+            // Show welcome toast
+            _toastService.ShowSuccess("Welcome!", welcomeMessage);
+        };
+
+        if (ProfileSetupView.Visibility == Visibility.Visible)
+        {
+            ProfileSetupView.BeginAnimation(OpacityProperty, fadeOut);
+        }
+        else
+        {
+            LoginView.BeginAnimation(OpacityProperty, fadeOut);
+        }
     }
 
     private void SwitchView(string view)
