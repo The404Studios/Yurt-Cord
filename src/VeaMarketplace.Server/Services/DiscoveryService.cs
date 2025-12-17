@@ -244,11 +244,12 @@ public class DiscoveryService
 
             return _db.Products.Query()
                 .Where(p => p.Status == ProductStatus.Active && p.Category == category)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToEnumerable()
                 .OrderByDescending(p => p.IsFeatured)
                 .ThenByDescending(p => p.CreatedAt)
                 .Skip((page - 1) * pageSize)
-                .Limit(pageSize)
-                .ToList()
+                .Take(pageSize)
                 .Select(MapProductToDto)
                 .ToList();
         }) ?? new List<ProductDto>();

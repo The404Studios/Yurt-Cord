@@ -6,5 +6,6 @@ public enum ProductStatus
     Active = 1,
     Sold = 2,
     Suspended = 3,
-    Deleted = 4
+    Deleted = 4,
+    Removed = 5
 }

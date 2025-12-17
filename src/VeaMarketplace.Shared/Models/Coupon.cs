@@ -21,4 +21,29 @@ public class Coupon
     public DateTime? ExpiresAt { get; set; }
     public bool IsOneTimePerUser { get; set; } = false;
     public List<string> UsedByUserIds { get; set; } = new();
+
+    // Aliases for backward compatibility
+    public decimal DiscountValue
+    {
+        get => Value;
+        set => Value = value;
+    }
+
+    public decimal? MaxDiscount
+    {
+        get => MaximumDiscount;
+        set => MaximumDiscount = value;
+    }
+
+    public int? UsageLimit
+    {
+        get => MaxUses;
+        set => MaxUses = value;
+    }
+
+    public int UsageCount
+    {
+        get => CurrentUses;
+        set => CurrentUses = value;
+    }
 }
