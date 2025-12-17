@@ -14,6 +14,7 @@ public partial class ProductCard : UserControl
     public event RoutedEventHandler? AddToCartClick;
     public event RoutedEventHandler? AddToWishlistClick;
     public event RoutedEventHandler? QuickViewClick;
+    public event RoutedEventHandler? ShareClick;
 
     private bool _isInWishlist;
 
@@ -117,6 +118,14 @@ public partial class ProductCard : UserControl
 
     private void Card_Click(object sender, MouseButtonEventArgs e)
     {
+        // Shift+click to share the product
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
+        {
+            e.Handled = true;
+            ShareClick?.Invoke(this, new RoutedEventArgs());
+            return;
+        }
+
         Click?.Invoke(this, new RoutedEventArgs());
     }
 
@@ -138,6 +147,12 @@ public partial class ProductCard : UserControl
     {
         e.Handled = true; // Prevent card click
         QuickViewClick?.Invoke(this, e);
+    }
+
+    private void Share_Click(object sender, RoutedEventArgs e)
+    {
+        e.Handled = true; // Prevent card click
+        ShareClick?.Invoke(this, e);
     }
 
     private static Color GetRoleColor(UserRole role)

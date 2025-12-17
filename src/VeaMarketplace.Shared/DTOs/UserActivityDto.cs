@@ -52,3 +52,9 @@ public class UpdateProfileThemeRequest
     public string? BackgroundUrl { get; set; }
 }
 
+public class FollowStatusDto
+{
+    public bool IsFollowing { get; set; }
+    public int FollowerCount { get; set; }
+    public int FollowingCount { get; set; }
+}

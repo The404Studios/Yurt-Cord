@@ -172,6 +172,7 @@ builder.Services.AddScoped<WishlistService>();
 builder.Services.AddScoped<ModerationService>();
 builder.Services.AddScoped<DiscoveryService>();
 builder.Services.AddScoped<ActivityService>();
+builder.Services.AddSingleton<RoleConfigurationService>();
 
 // JWT Authentication
 var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "YurtCordSuperSecretKey12345678901234567890";
@@ -260,6 +261,11 @@ Directory.CreateDirectory("uploads/avatars");
 Directory.CreateDirectory("uploads/banners");
 Directory.CreateDirectory("uploads/attachments");
 Directory.CreateDirectory("uploads/thumbnails");
+
+// Load role configuration from JSON file on startup
+var roleConfigService = app.Services.GetRequiredService<RoleConfigurationService>();
+roleConfigService.LoadRolesFromConfig();
+Console.WriteLine("[INFO] Role configuration loaded from Data/roles-config.json");
 
 Console.WriteLine(@"
 ╔═══════════════════════════════════════════════════════════════╗

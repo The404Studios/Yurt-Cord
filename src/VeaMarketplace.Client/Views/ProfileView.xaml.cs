@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -15,6 +16,10 @@ public partial class ProfileView : UserControl
 {
     private readonly ProfileViewModel? _viewModel;
     private readonly IApiService? _apiService;
+    private readonly INavigationService? _navigationService;
+    private readonly IFriendService? _friendService;
+    private bool _isFollowing;
+    private bool _isFriend;
 
     public ProfileView()
     {
@@ -25,6 +30,8 @@ public partial class ProfileView : UserControl
 
         _viewModel = (ProfileViewModel)App.ServiceProvider.GetService(typeof(ProfileViewModel))!;
         _apiService = (IApiService)App.ServiceProvider.GetService(typeof(IApiService))!;
+        _navigationService = (INavigationService)App.ServiceProvider.GetService(typeof(INavigationService))!;
+        _friendService = (IFriendService?)App.ServiceProvider.GetService(typeof(IFriendService));
 
         DataContext = _viewModel;
         Loaded += (s, e) => UpdateUI();
@@ -42,6 +49,22 @@ public partial class ProfileView : UserControl
     {
         var user = _viewModel?.User ?? _apiService?.CurrentUser;
         if (user == null) return;
+
+        // Determine if viewing own profile or another user's
+        var currentUser = _apiService?.CurrentUser;
+        var isOwnProfile = currentUser != null && user.Id == currentUser.Id;
+
+        // Show/hide buttons based on profile ownership
+        EditProfileButton.Visibility = isOwnProfile ? Visibility.Visible : Visibility.Collapsed;
+        FollowButton.Visibility = isOwnProfile ? Visibility.Collapsed : Visibility.Visible;
+        AddFriendButton.Visibility = isOwnProfile ? Visibility.Collapsed : Visibility.Visible;
+        MessageButton.Visibility = isOwnProfile ? Visibility.Collapsed : Visibility.Visible;
+
+        // Update follow/friend button states for other users
+        if (!isOwnProfile)
+        {
+            UpdateFollowFriendStates(user);
+        }
 
         // Display Name and Username
         var displayName = user.GetDisplayName();
@@ -92,6 +115,9 @@ public partial class ProfileView : UserControl
         ReputationText.Text = user.Reputation.ToString();
         SalesText.Text = user.TotalSales.ToString();
         PurchasesText.Text = user.TotalPurchases.ToString();
+
+        // Load follower/following counts
+        _ = LoadFollowStatsAsync(user.Id);
 
         // Accent Color for Avatar Ring
         try
@@ -339,5 +365,184 @@ public partial class ProfileView : UserControl
             UserRank.Bronze => "Bronze",
             _ => "Star"
         };
+    }
+
+    private void Wishlist_Click(object sender, RoutedEventArgs e)
+    {
+        _navigationService?.NavigateToWishlist();
+    }
+
+    private void OrderHistory_Click(object sender, RoutedEventArgs e)
+    {
+        _navigationService?.NavigateTo("Orders");
+    }
+
+    private void MyListings_Click(object sender, RoutedEventArgs e)
+    {
+        _navigationService?.NavigateToMarketplace();
+    }
+
+    private void ViewCart_Click(object sender, RoutedEventArgs e)
+    {
+        _navigationService?.NavigateToCart();
+    }
+
+    private void UpdateFollowFriendStates(UserDto user)
+    {
+        // Check if already following
+        _isFollowing = user.IsFollowedByCurrentUser;
+        UpdateFollowButtonUI();
+
+        // Check if already friends
+        if (_friendService?.Friends != null)
+        {
+            _isFriend = _friendService.Friends.Any(f => f.UserId == user.Id);
+            UpdateFriendButtonUI();
+        }
+    }
+
+    private void UpdateFollowButtonUI()
+    {
+        if (_isFollowing)
+        {
+            FollowIcon.Text = "✓";
+            FollowText.Text = "Following";
+            FollowButton.Background = (Brush)FindResource("AccentBrush");
+        }
+        else
+        {
+            FollowIcon.Text = "👁";
+            FollowText.Text = "Follow";
+            FollowButton.Background = (Brush)FindResource("SecondaryDarkBrush");
+        }
+    }
+
+    private void UpdateFriendButtonUI()
+    {
+        if (_isFriend)
+        {
+            FriendIcon.Text = "✓";
+            FriendText.Text = "Friends";
+            AddFriendButton.IsEnabled = false;
+        }
+        else
+        {
+            FriendIcon.Text = "👥";
+            FriendText.Text = "Add Friend";
+            AddFriendButton.IsEnabled = true;
+        }
+    }
+
+    private async void FollowUser_Click(object sender, RoutedEventArgs e)
+    {
+        var user = _viewModel?.User;
+        if (user == null || _apiService == null) return;
+
+        try
+        {
+            if (_isFollowing)
+            {
+                await _apiService.UnfollowUserAsync(user.Id);
+                _isFollowing = false;
+            }
+            else
+            {
+                await _apiService.FollowUserAsync(user.Id);
+                _isFollowing = true;
+            }
+            UpdateFollowButtonUI();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Failed to update follow status: {ex.Message}", "Error",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private async void AddFriend_Click(object sender, RoutedEventArgs e)
+    {
+        var user = _viewModel?.User;
+        if (user == null || _friendService == null) return;
+
+        try
+        {
+            await _friendService.SendFriendRequestAsync(user.Username);
+            MessageBox.Show($"Friend request sent to {user.Username}!", "Success",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+            FriendText.Text = "Request Sent";
+            AddFriendButton.IsEnabled = false;
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Failed to send friend request: {ex.Message}", "Error",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void MessageUser_Click(object sender, RoutedEventArgs e)
+    {
+        var user = _viewModel?.User;
+        if (user == null) return;
+
+        // Navigate to friends view with DM to this user
+        _navigationService?.NavigateToFriends();
+    }
+
+    private async Task LoadFollowStatsAsync(string userId)
+    {
+        if (_apiService == null) return;
+
+        try
+        {
+            var followStatus = await _apiService.GetFollowStatusAsync(userId);
+            Dispatcher.Invoke(() =>
+            {
+                FollowersCountText.Text = followStatus.FollowerCount.ToString("N0");
+                FollowingCountText.Text = followStatus.FollowingCount.ToString("N0");
+
+                // Update follow button state if viewing another user's profile
+                var currentUser = _apiService?.CurrentUser;
+                if (currentUser != null && userId != currentUser.Id)
+                {
+                    _isFollowing = followStatus.IsFollowing;
+                    UpdateFollowButtonUI();
+                }
+            });
+        }
+        catch
+        {
+            // Default to 0 on error
+            Dispatcher.Invoke(() =>
+            {
+                FollowersCountText.Text = "0";
+                FollowingCountText.Text = "0";
+            });
+        }
+    }
+
+    private void Followers_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        var user = _viewModel?.User ?? _apiService?.CurrentUser;
+        if (user == null) return;
+
+        // Show followers list dialog
+        ShowFollowListDialog(user.Id, "Followers");
+    }
+
+    private void Following_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        var user = _viewModel?.User ?? _apiService?.CurrentUser;
+        if (user == null) return;
+
+        // Show following list dialog
+        ShowFollowListDialog(user.Id, "Following");
+    }
+
+    private void ShowFollowListDialog(string userId, string listType)
+    {
+        // For now, show a simple message - can be expanded to a full dialog later
+        var displayName = _viewModel?.User?.GetDisplayName() ?? _apiService?.CurrentUser?.GetDisplayName() ?? "User";
+        MessageBox.Show($"View {listType} list for {displayName}\n\n(Full list view coming soon!)",
+            listType, MessageBoxButton.OK, MessageBoxImage.Information);
     }
 }

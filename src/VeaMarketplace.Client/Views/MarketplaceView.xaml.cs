@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using VeaMarketplace.Client.Services;
 using VeaMarketplace.Client.ViewModels;
 using VeaMarketplace.Shared.DTOs;
 using VeaMarketplace.Shared.Enums;
@@ -13,6 +14,7 @@ namespace VeaMarketplace.Client.Views;
 public partial class MarketplaceView : UserControl
 {
     private readonly MarketplaceViewModel? _viewModel;
+    private readonly IChatService? _chatService;
     private ProductDto? _selectedProduct;
 
     public MarketplaceView()
@@ -23,6 +25,7 @@ public partial class MarketplaceView : UserControl
             return;
 
         _viewModel = (MarketplaceViewModel)App.ServiceProvider.GetService(typeof(MarketplaceViewModel))!;
+        _chatService = (IChatService?)App.ServiceProvider.GetService(typeof(IChatService));
         DataContext = _viewModel;
 
         ProductsItemsControl.ItemsSource = _viewModel.Products;
@@ -75,6 +78,45 @@ public partial class MarketplaceView : UserControl
         {
             _selectedProduct = product;
             ShowProductDetail(product);
+        }
+    }
+
+    private async void ProductCard_ShareClick(object sender, RoutedEventArgs e)
+    {
+        var card = (FrameworkElement)sender;
+        if (card.DataContext is ProductDto product)
+        {
+            await ShareProductToChat(product);
+        }
+    }
+
+    private async Task ShareProductToChat(ProductDto product)
+    {
+        if (_chatService == null)
+        {
+            ShowToast("Chat service not available");
+            return;
+        }
+
+        // Create a product embed message format
+        // Format: [PRODUCT_EMBED:id|title|price|seller|imageUrl|description]
+        var descPreview = string.IsNullOrEmpty(product.Description)
+            ? ""
+            : (product.Description.Length > 100 ? product.Description[..100] + "..." : product.Description);
+        var embedData = $"[PRODUCT_EMBED:{product.Id}|{product.Title}|{product.Price:F2}|{product.SellerUsername}|{product.ImageUrls?.FirstOrDefault() ?? ""}|{descPreview}]";
+
+        // Also include a user-friendly message
+        var message = $"Check out this listing: {product.Title} - ${product.Price:F2}";
+
+        try
+        {
+            await _chatService.SendMessageAsync(embedData);
+            ShowToast($"Shared \"{product.Title}\" to chat!");
+        }
+        catch
+        {
+            // Fallback: show share dialog instead
+            ShowShareDialog(product);
         }
     }
 

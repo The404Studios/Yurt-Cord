@@ -153,6 +153,11 @@ public partial class SettingsView : UserControl
         _navigationService.NavigateToModeration();
     }
 
+    private void BlockedUsers_Click(object sender, RoutedEventArgs e)
+    {
+        _navigationService.NavigateTo("BlockedUsers");
+    }
+
     private void PttKeyButton_Click(object sender, RoutedEventArgs e)
     {
         _viewModel?.StartRecordingPttKeyCommand.Execute(null);

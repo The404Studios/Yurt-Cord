@@ -95,6 +95,12 @@ public interface IApiService
 
     // Activity Feed
     Task<List<UserActivityDto>> GetActivityFeedAsync(string? filter = null, int page = 1, int pageSize = 20);
+    Task<List<UserActivityDto>> GetFollowingActivityFeedAsync(int page = 1, int pageSize = 20);
+
+    // Following
+    Task<bool> FollowUserAsync(string userId);
+    Task<bool> UnfollowUserAsync(string userId);
+    Task<FollowStatusDto> GetFollowStatusAsync(string userId);
 
     // Discovery
     Task<List<SellerProfileDto>> GetTopSellersAsync(int count = 4);
@@ -643,6 +649,33 @@ public class ApiService : IApiService
         var response = await _httpClient.GetAsync(url).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return [];
         return await response.Content.ReadFromJsonAsync<List<UserActivityDto>>(JsonOptions).ConfigureAwait(false) ?? [];
+    }
+
+    public async Task<List<UserActivityDto>> GetFollowingActivityFeedAsync(int page = 1, int pageSize = 20)
+    {
+        var response = await _httpClient.GetAsync($"/api/activity/following?page={page}&pageSize={pageSize}").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return [];
+        return await response.Content.ReadFromJsonAsync<List<UserActivityDto>>(JsonOptions).ConfigureAwait(false) ?? [];
+    }
+
+    // Following
+    public async Task<bool> FollowUserAsync(string userId)
+    {
+        var response = await _httpClient.PostAsync($"/api/activity/follow/{userId}", null).ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> UnfollowUserAsync(string userId)
+    {
+        var response = await _httpClient.DeleteAsync($"/api/activity/follow/{userId}").ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<FollowStatusDto> GetFollowStatusAsync(string userId)
+    {
+        var response = await _httpClient.GetAsync($"/api/activity/follow/{userId}/status").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return new FollowStatusDto();
+        return await response.Content.ReadFromJsonAsync<FollowStatusDto>(JsonOptions).ConfigureAwait(false) ?? new FollowStatusDto();
     }
 
     // Discovery

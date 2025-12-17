@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -16,6 +18,11 @@ namespace VeaMarketplace.Client.Controls;
 public partial class ChatMessageControl : UserControl
 {
     private ChatMessageDto? _currentMessage;
+
+    // Regex pattern to match product embeds: [PRODUCT_EMBED:id|title|price|seller|imageUrl|description]
+    private static readonly Regex ProductEmbedPattern = new(
+        @"\[PRODUCT_EMBED:([^\|]+)\|([^\|]*)\|([^\|]*)\|([^\|]*)\|([^\|]*)\|([^\]]*)\]",
+        RegexOptions.Compiled);
 
     // Events for parent to handle
     public static readonly RoutedEvent ReplyRequestedEvent = EventManager.RegisterRoutedEvent(
@@ -111,8 +118,10 @@ public partial class ChatMessageControl : UserControl
         // Set timestamp
         TimestampText.Text = FormatTimestamp(message.Timestamp);
 
-        // Set message content
-        MessageText.Text = message.Content;
+        // Set message content (parse for product embeds)
+        var displayContent = message.Content;
+        var parsedEmbeds = ParseProductEmbedsFromContent(ref displayContent);
+        MessageText.Text = displayContent;
 
         // Style for system messages
         if (message.Type != MessageType.Text)
@@ -161,18 +170,64 @@ public partial class ChatMessageControl : UserControl
         // Display attachments
         DisplayAttachments(message.Attachments);
 
-        // Display embeds (shared posts, products, auctions)
-        DisplayEmbeds(message.Embeds);
+        // Display embeds (shared posts, products, auctions) - combine server embeds with parsed embeds
+        DisplayEmbeds(message.Embeds, parsedEmbeds);
 
         // Display reactions
         DisplayReactions(message.Reactions);
     }
 
-    private void DisplayEmbeds(List<MessageEmbedDto>? embeds)
+    /// <summary>
+    /// Parses product embed format from message content and returns parsed embeds.
+    /// Modifies the content to remove the embed markers.
+    /// Format: [PRODUCT_EMBED:id|title|price|seller|imageUrl|description]
+    /// </summary>
+    private List<EmbeddedContent> ParseProductEmbedsFromContent(ref string content)
+    {
+        var embeds = new List<EmbeddedContent>();
+        var matches = ProductEmbedPattern.Matches(content);
+
+        foreach (Match match in matches)
+        {
+            if (match.Success && match.Groups.Count >= 7)
+            {
+                var productId = match.Groups[1].Value;
+                var title = match.Groups[2].Value;
+                var priceStr = match.Groups[3].Value;
+                var seller = match.Groups[4].Value;
+                var imageUrl = match.Groups[5].Value;
+                var description = match.Groups[6].Value;
+
+                decimal.TryParse(priceStr, out var price);
+
+                var embed = new EmbeddedContent
+                {
+                    Id = productId,
+                    Type = EmbedType.Product,
+                    Title = title,
+                    Description = description,
+                    ImageUrl = string.IsNullOrEmpty(imageUrl) ? null : imageUrl,
+                    Price = price,
+                    SellerUsername = seller
+                };
+
+                embeds.Add(embed);
+            }
+        }
+
+        // Remove embed markers from display content
+        content = ProductEmbedPattern.Replace(content, "").Trim();
+
+        return embeds;
+    }
+
+    private void DisplayEmbeds(List<MessageEmbedDto>? embeds, List<EmbeddedContent>? parsedEmbeds = null)
     {
         EmbedsContainer.Children.Clear();
 
-        if (embeds == null || embeds.Count == 0)
+        var hasEmbeds = (embeds != null && embeds.Count > 0) || (parsedEmbeds != null && parsedEmbeds.Count > 0);
+
+        if (!hasEmbeds)
         {
             EmbedsContainer.Visibility = Visibility.Collapsed;
             return;
@@ -180,39 +235,63 @@ public partial class ChatMessageControl : UserControl
 
         EmbedsContainer.Visibility = Visibility.Visible;
 
-        foreach (var embed in embeds)
+        // Display server-side embeds first
+        if (embeds != null)
         {
-            var embedControl = new SharedPostEmbed();
-
-            var content = new EmbeddedContent
+            foreach (var embed in embeds)
             {
-                Id = embed.ContentId ?? embed.Id,
-                Type = MapEmbedType(embed.Type),
-                Title = embed.Title,
-                Subtitle = embed.Subtitle,
-                Description = embed.Description,
-                ImageUrl = embed.ImageUrl ?? embed.ThumbnailUrl,
-                Price = embed.Price,
-                OriginalPrice = embed.OriginalPrice,
-                CurrentBid = embed.CurrentBid,
-                MinBidIncrement = embed.MinBidIncrement ?? 1,
-                AuctionEndsAt = embed.AuctionEndsAt,
-                SellerUsername = embed.SellerUsername,
-                SellerAvatarUrl = embed.SellerAvatarUrl,
-                SellerRole = embed.SellerRole
-            };
+                var embedControl = new SharedPostEmbed();
 
-            embedControl.SetContent(content);
-            embedControl.Margin = new Thickness(0, 0, 0, 8);
+                var content = new EmbeddedContent
+                {
+                    Id = embed.ContentId ?? embed.Id,
+                    Type = MapEmbedType(embed.Type),
+                    Title = embed.Title,
+                    Subtitle = embed.Subtitle,
+                    Description = embed.Description,
+                    ImageUrl = embed.ImageUrl ?? embed.ThumbnailUrl,
+                    Price = embed.Price,
+                    OriginalPrice = embed.OriginalPrice,
+                    CurrentBid = embed.CurrentBid,
+                    MinBidIncrement = embed.MinBidIncrement ?? 1,
+                    AuctionEndsAt = embed.AuctionEndsAt,
+                    SellerUsername = embed.SellerUsername,
+                    SellerAvatarUrl = embed.SellerAvatarUrl,
+                    SellerRole = embed.SellerRole
+                };
 
-            // Wire up events
-            embedControl.ViewClicked += EmbedControl_ViewClicked;
-            embedControl.ShareClicked += EmbedControl_ShareClicked;
-            embedControl.LinkCopied += EmbedControl_LinkCopied;
-            embedControl.BidClicked += EmbedControl_BidClicked;
-            embedControl.ReactionClicked += EmbedControl_ReactionClicked;
+                embedControl.SetContent(content);
+                embedControl.Margin = new Thickness(0, 0, 0, 8);
 
-            EmbedsContainer.Children.Add(embedControl);
+                // Wire up events
+                embedControl.ViewClicked += EmbedControl_ViewClicked;
+                embedControl.ShareClicked += EmbedControl_ShareClicked;
+                embedControl.LinkCopied += EmbedControl_LinkCopied;
+                embedControl.BidClicked += EmbedControl_BidClicked;
+                embedControl.ReactionClicked += EmbedControl_ReactionClicked;
+
+                EmbedsContainer.Children.Add(embedControl);
+            }
+        }
+
+        // Display parsed embeds from message content (product shares)
+        if (parsedEmbeds != null)
+        {
+            foreach (var content in parsedEmbeds)
+            {
+                var embedControl = new SharedPostEmbed();
+                embedControl.SetContent(content);
+                embedControl.Margin = new Thickness(0, 0, 0, 8);
+
+                // Wire up events
+                embedControl.ViewClicked += EmbedControl_ViewClicked;
+                embedControl.ShareClicked += EmbedControl_ShareClicked;
+                embedControl.LinkCopied += EmbedControl_LinkCopied;
+                embedControl.BidClicked += EmbedControl_BidClicked;
+                embedControl.ReactionClicked += EmbedControl_ReactionClicked;
+
+                EmbedsContainer.Children.Add(embedControl);
+            }
         }
     }
 
@@ -672,19 +751,77 @@ public partial class ChatMessageControl : UserControl
 
     #region User Context Menu Handlers
 
-    private void Avatar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    private async void Avatar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (_currentMessage != null)
+        e.Handled = true;
+        await ShowUserProfilePopup();
+    }
+
+    private async void Username_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        e.Handled = true;
+        await ShowUserProfilePopup();
+    }
+
+    private async Task ShowUserProfilePopup()
+    {
+        if (_currentMessage == null) return;
+
+        // Try to get full user details from API
+        var apiService = (IApiService?)App.ServiceProvider.GetService(typeof(IApiService));
+        if (apiService == null) return;
+
+        try
         {
-            // Could open user profile popup
+            var userDetails = await apiService.GetUserAsync(_currentMessage.SenderId);
+            if (userDetails != null)
+            {
+                // Check if user is online (simplified - based on recent activity)
+                var isOnline = userDetails.LastActive > DateTime.UtcNow.AddMinutes(-5);
+                ProfileCard.SetUser(userDetails, isOnline, showActions: userDetails.Id != apiService.CurrentUser?.Id);
+                UserProfilePopup.IsOpen = true;
+            }
+        }
+        catch
+        {
+            // Fallback: create a basic UserDto from message info
+            var basicUser = new UserDto
+            {
+                Id = _currentMessage.SenderId,
+                Username = _currentMessage.SenderUsername,
+                AvatarUrl = _currentMessage.SenderAvatarUrl ?? string.Empty,
+                Role = _currentMessage.SenderRole,
+                Rank = _currentMessage.SenderRank
+            };
+            ProfileCard.SetUser(basicUser, isOnline: false, showActions: basicUser.Id != apiService.CurrentUser?.Id);
+            UserProfilePopup.IsOpen = true;
         }
     }
 
-    private void Username_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    private void ProfileCard_SendMessageClicked(object? sender, UserDto user)
     {
-        if (_currentMessage != null)
+        UserProfilePopup.IsOpen = false;
+        var navigationService = (INavigationService?)App.ServiceProvider.GetService(typeof(INavigationService));
+        navigationService?.NavigateToFriends();
+    }
+
+    private async void ProfileCard_AddFriendClicked(object? sender, UserDto user)
+    {
+        UserProfilePopup.IsOpen = false;
+        var friendService = (IFriendService?)App.ServiceProvider.GetService(typeof(IFriendService));
+        if (friendService != null)
         {
-            // Could open user profile popup
+            try
+            {
+                await friendService.SendFriendRequestAsync(user.Username);
+                MessageBox.Show($"Friend request sent to {user.Username}!", "Success",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to send friend request: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 

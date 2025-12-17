@@ -98,7 +98,8 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <controls:ProductCard Margin="8" Click="ProductCard_Click"/>
+                        <controls:ProductCard Margin="8" Click="ProductCard_Click"
+                                               ShareClick="ProductCard_ShareClick"/>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

@@ -199,6 +199,11 @@ public partial class ChannelSidebar : UserControl
         _navigationService?.NavigateToSettings();
     }
 
+    private void BrowseRooms_Click(object sender, RoutedEventArgs e)
+    {
+        _navigationService?.NavigateTo("ServerBrowser");
+    }
+
     private async void DisconnectVoice_Click(object sender, RoutedEventArgs e)
     {
         if (_viewModel == null) return;

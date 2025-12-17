@@ -127,11 +127,44 @@
                                        Margin="0,12,0,0"/>
                         </StackPanel>
 
-                        <!-- Edit Button -->
-                        <Button Grid.Column="2" Content="Edit Profile"
-                                Style="{StaticResource SecondaryButton}"
-                                VerticalAlignment="Top" Padding="16,10"
-                                Click="EditProfile_Click"/>
+                        <!-- Action Buttons -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
+                            <!-- Edit button (own profile) -->
+                            <Button x:Name="EditProfileButton" Content="Edit Profile"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Padding="16,10" Margin="0,0,8,0"
+                                    Click="EditProfile_Click"/>
+
+                            <!-- Follow button (other profiles) -->
+                            <Button x:Name="FollowButton" Style="{StaticResource SecondaryButton}"
+                                    Padding="16,10" Margin="0,0,8,0"
+                                    Click="FollowUser_Click" Visibility="Collapsed">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock x:Name="FollowIcon" Text="👁" Margin="0,0,6,0"/>
+                                    <TextBlock x:Name="FollowText" Text="Follow"/>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Add Friend button (other profiles) -->
+                            <Button x:Name="AddFriendButton" Style="{StaticResource PrimaryButton}"
+                                    Padding="16,10" Visibility="Collapsed"
+                                    Click="AddFriend_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock x:Name="FriendIcon" Text="👥" Margin="0,0,6,0"/>
+                                    <TextBlock x:Name="FriendText" Text="Add Friend"/>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Message button (other profiles) -->
+                            <Button x:Name="MessageButton" Style="{StaticResource SecondaryButton}"
+                                    Padding="16,10" Margin="8,0,0,0" Visibility="Collapsed"
+                                    Click="MessageUser_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="💬" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Message"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
                     </Grid>
                 </Border>
 
@@ -192,6 +225,77 @@
                         </StackPanel>
                     </Border>
                 </Grid>
+
+                <!-- Social Stats (Followers/Following) -->
+                <Grid Margin="24,16,24,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Followers -->
+                    <Border Grid.Column="0" Background="{StaticResource SecondaryDarkBrush}"
+                            CornerRadius="8" Padding="20" Margin="0,0,8,0"
+                            Cursor="Hand" x:Name="FollowersBorder" MouseLeftButtonDown="Followers_Click">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock x:Name="FollowersCountText" FontSize="28" FontWeight="Bold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       HorizontalAlignment="Center" Text="0"/>
+                            <TextBlock Text="Followers" FontSize="14"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Following -->
+                    <Border Grid.Column="1" Background="{StaticResource SecondaryDarkBrush}"
+                            CornerRadius="8" Padding="20" Margin="8,0,0,0"
+                            Cursor="Hand" x:Name="FollowingBorder" MouseLeftButtonDown="Following_Click">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock x:Name="FollowingCountText" FontSize="28" FontWeight="Bold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       HorizontalAlignment="Center" Text="0"/>
+                            <TextBlock Text="Following" FontSize="14"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Quick Links -->
+                <Border Background="{StaticResource SecondaryDarkBrush}"
+                        CornerRadius="8" Margin="24,0" Padding="16">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Style="{StaticResource SecondaryButton}" Padding="20,10" Margin="0,0,8,0"
+                                Click="Wishlist_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="❤️" FontSize="16" Margin="0,0,8,0"/>
+                                <TextBlock Text="My Wishlist" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource SecondaryButton}" Padding="20,10" Margin="0,0,8,0"
+                                Click="OrderHistory_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="📦" FontSize="16" Margin="0,0,8,0"/>
+                                <TextBlock Text="Order History" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource SecondaryButton}" Padding="20,10" Margin="0,0,8,0"
+                                Click="MyListings_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🏷️" FontSize="16" Margin="0,0,8,0"/>
+                                <TextBlock Text="My Listings" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource SecondaryButton}" Padding="20,10"
+                                Click="ViewCart_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🛒" FontSize="16" Margin="0,0,8,0"/>
+                                <TextBlock Text="View Cart" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
 
                 <!-- Two Column Layout for About & Social -->
                 <Grid Margin="24,0">

@@ -153,6 +153,10 @@
                             <TextBlock x:Name="WishlistIcon" Text="&#x2661;" FontSize="16"/>
                         </Button>
                         <Button Style="{StaticResource QuickActionButton}"
+                                ToolTip="Share to Chat (Shift+Click)" Click="Share_Click" Margin="0,0,8,0">
+                            <TextBlock Text="&#x1F517;" FontSize="14"/>
+                        </Button>
+                        <Button Style="{StaticResource QuickActionButton}"
                                 ToolTip="Quick View" Click="QuickView_Click">
                             <TextBlock Text="&#x1F441;" FontSize="14"/>
                         </Button>
