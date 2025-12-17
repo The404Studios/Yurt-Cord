@@ -1,0 +1,505 @@
+<UserControl x:Class="VeaMarketplace.Client.Views.ProfileSetupView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="Transparent">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <!-- Card Entry Animation -->
+        <Storyboard x:Key="CardEntryAnimation">
+            <DoubleAnimation Storyboard.TargetName="SetupCard"
+                             Storyboard.TargetProperty="Opacity"
+                             From="0" To="1" Duration="0:0:0.5">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="CardTranslate"
+                             Storyboard.TargetProperty="Y"
+                             From="30" To="0" Duration="0:0:0.5">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+
+        <!-- Step Transition Animation -->
+        <Storyboard x:Key="StepFadeIn">
+            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                             From="0" To="1" Duration="0:0:0.3"/>
+            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                             From="20" To="0" Duration="0:0:0.3">
+                <DoubleAnimation.EasingFunction>
+                    <QuadraticEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+
+        <!-- Avatar Button Style -->
+        <Style x:Key="AvatarSelectButton" TargetType="Button">
+            <Setter Property="Width" Value="80"/>
+            <Setter Property="Height" Value="80"/>
+            <Setter Property="Margin" Value="6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Border x:Name="SelectionRing"
+                                    CornerRadius="44"
+                                    BorderThickness="3"
+                                    BorderBrush="Transparent"
+                                    Padding="2">
+                                <Border x:Name="AvatarBorder" CornerRadius="40">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="{TemplateBinding Tag}" Stretch="UniformToFill"/>
+                                    </Border.Background>
+                                </Border>
+                            </Border>
+                            <Border x:Name="HoverOverlay" CornerRadius="40" Background="#40000000" Opacity="0"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="HoverOverlay" Property="Opacity" Value="1"/>
+                                <Setter TargetName="SelectionRing" Property="BorderBrush" Value="#505865F2"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Color Picker Button Style -->
+        <Style x:Key="ColorPickerButton" TargetType="Button">
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Border x:Name="ColorBorder" CornerRadius="20"
+                                    Background="{TemplateBinding Background}"
+                                    BorderThickness="3" BorderBrush="Transparent">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="8" ShadowDepth="0" Opacity="0.3"/>
+                                </Border.Effect>
+                            </Border>
+                            <Border x:Name="SelectRing" CornerRadius="22"
+                                    BorderThickness="2" BorderBrush="White" Opacity="0"
+                                    Margin="-2"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="SelectRing" Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <UserControl.Triggers>
+        <EventTrigger RoutedEvent="Loaded">
+            <BeginStoryboard Storyboard="{StaticResource CardEntryAnimation}"/>
+        </EventTrigger>
+    </UserControl.Triggers>
+
+    <Grid>
+        <!-- Animated Background -->
+        <Border>
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#1a1a2e" Offset="0"/>
+                    <GradientStop Color="#16213e" Offset="0.5"/>
+                    <GradientStop Color="#0f3460" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+        </Border>
+
+        <!-- Decorative Elements -->
+        <Canvas IsHitTestVisible="False">
+            <Ellipse Width="300" Height="300" Opacity="0.03" Canvas.Left="-50" Canvas.Top="-50">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#5865F2" Offset="0"/>
+                        <GradientStop Color="Transparent" Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+            <Ellipse Width="400" Height="400" Opacity="0.03" Canvas.Right="-100" Canvas.Bottom="-100">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#EB459E" Offset="0"/>
+                        <GradientStop Color="Transparent" Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+        </Canvas>
+
+        <!-- Setup Card -->
+        <Border x:Name="SetupCard"
+                Background="{StaticResource SecondaryDarkBrush}"
+                CornerRadius="16"
+                Width="520"
+                MaxHeight="680"
+                Padding="32"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Opacity="0"
+                RenderTransformOrigin="0.5,0.5">
+
+            <Border.RenderTransform>
+                <TranslateTransform x:Name="CardTranslate"/>
+            </Border.RenderTransform>
+
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="50" ShadowDepth="0" Opacity="0.4" Color="Black"/>
+            </Border.Effect>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,0,0,20">
+                    <TextBlock x:Name="StepTitle" Text="Customize Your Profile"
+                               FontSize="24" FontWeight="Bold" Foreground="White"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="StepSubtitle" Text="Let's make your profile unique"
+                               FontSize="13" Foreground="#72767D"
+                               HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                </StackPanel>
+
+                <!-- Progress Indicator -->
+                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,24">
+                    <Ellipse x:Name="Step1Dot" Width="10" Height="10" Fill="#5865F2" Margin="4"/>
+                    <Ellipse x:Name="Step2Dot" Width="10" Height="10" Fill="#40444B" Margin="4"/>
+                    <Ellipse x:Name="Step3Dot" Width="10" Height="10" Fill="#40444B" Margin="4"/>
+                </StackPanel>
+
+                <!-- Step Content -->
+                <Grid Grid.Row="2">
+                    <!-- Step 1: Avatar Selection -->
+                    <StackPanel x:Name="Step1Panel" Visibility="Visible">
+                        <StackPanel.RenderTransform>
+                            <TranslateTransform/>
+                        </StackPanel.RenderTransform>
+
+                        <!-- Preview -->
+                        <Grid HorizontalAlignment="Center" Margin="0,0,0,24">
+                            <Ellipse Width="120" Height="120" Opacity="0.3">
+                                <Ellipse.Fill>
+                                    <RadialGradientBrush>
+                                        <GradientStop Color="#5865F2" Offset="0"/>
+                                        <GradientStop Color="Transparent" Offset="1"/>
+                                    </RadialGradientBrush>
+                                </Ellipse.Fill>
+                            </Ellipse>
+                            <Border x:Name="AvatarPreview" Width="100" Height="100" CornerRadius="50"
+                                    BorderThickness="4" BorderBrush="#5865F2">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#5865F2" Offset="0"/>
+                                        <GradientStop Color="#EB459E" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <TextBlock x:Name="AvatarInitial" Text="?" FontSize="42" FontWeight="Bold"
+                                           Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+
+                        <TextBlock Text="Choose an avatar style" FontSize="13" Foreground="#B5BAC1"
+                                   HorizontalAlignment="Center" Margin="0,0,0,16"/>
+
+                        <!-- Avatar Grid -->
+                        <WrapPanel HorizontalAlignment="Center" Margin="0,0,0,20">
+                            <Button x:Name="Avatar1" Style="{StaticResource AvatarSelectButton}"
+                                    Click="Avatar_Click" Background="#5865F2">
+                                <Button.Template>
+                                    <ControlTemplate>
+                                        <Border CornerRadius="40" Width="72" Height="72">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                    <GradientStop Color="#5865F2" Offset="0"/>
+                                                    <GradientStop Color="#7289DA" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                            <TextBlock Text="😊" FontSize="32" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            <Button x:Name="Avatar2" Style="{StaticResource AvatarSelectButton}"
+                                    Click="Avatar_Click" Background="#57F287">
+                                <Button.Template>
+                                    <ControlTemplate>
+                                        <Border CornerRadius="40" Width="72" Height="72">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                    <GradientStop Color="#57F287" Offset="0"/>
+                                                    <GradientStop Color="#3BA55C" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                            <TextBlock Text="😎" FontSize="32" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            <Button x:Name="Avatar3" Style="{StaticResource AvatarSelectButton}"
+                                    Click="Avatar_Click" Background="#EB459E">
+                                <Button.Template>
+                                    <ControlTemplate>
+                                        <Border CornerRadius="40" Width="72" Height="72">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                    <GradientStop Color="#EB459E" Offset="0"/>
+                                                    <GradientStop Color="#FEE75C" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                            <TextBlock Text="🎮" FontSize="32" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            <Button x:Name="Avatar4" Style="{StaticResource AvatarSelectButton}"
+                                    Click="Avatar_Click" Background="#FAA61A">
+                                <Button.Template>
+                                    <ControlTemplate>
+                                        <Border CornerRadius="40" Width="72" Height="72">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                    <GradientStop Color="#FAA61A" Offset="0"/>
+                                                    <GradientStop Color="#ED4245" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                            <TextBlock Text="🔥" FontSize="32" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            <Button x:Name="Avatar5" Style="{StaticResource AvatarSelectButton}"
+                                    Click="Avatar_Click" Background="#00D4FF">
+                                <Button.Template>
+                                    <ControlTemplate>
+                                        <Border CornerRadius="40" Width="72" Height="72">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                    <GradientStop Color="#00D4FF" Offset="0"/>
+                                                    <GradientStop Color="#5865F2" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                            <TextBlock Text="💎" FontSize="32" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            <Button x:Name="Avatar6" Style="{StaticResource AvatarSelectButton}"
+                                    Click="Avatar_Click" Background="#9B59B6">
+                                <Button.Template>
+                                    <ControlTemplate>
+                                        <Border CornerRadius="40" Width="72" Height="72">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                    <GradientStop Color="#9B59B6" Offset="0"/>
+                                                    <GradientStop Color="#EB459E" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                            <TextBlock Text="🌟" FontSize="32" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </WrapPanel>
+
+                        <!-- Custom URL Option -->
+                        <StackPanel Margin="0,8,0,0">
+                            <TextBlock Text="Or enter a custom image URL" FontSize="11"
+                                       Foreground="#72767D" Margin="0,0,0,8"/>
+                            <TextBox x:Name="CustomAvatarUrl" Style="{StaticResource ModernTextBox}"
+                                     TextChanged="CustomAvatarUrl_TextChanged"
+                                     Tag="https://example.com/avatar.png"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Step 2: Banner Color -->
+                    <StackPanel x:Name="Step2Panel" Visibility="Collapsed">
+                        <StackPanel.RenderTransform>
+                            <TranslateTransform/>
+                        </StackPanel.RenderTransform>
+
+                        <!-- Banner Preview -->
+                        <Border x:Name="BannerPreview" Height="120" CornerRadius="8" Margin="0,0,0,24">
+                            <Border.Background>
+                                <LinearGradientBrush x:Name="BannerGradient" StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop x:Name="BannerColor1" Color="#5865F2" Offset="0"/>
+                                    <GradientStop x:Name="BannerColor2" Color="#EB459E" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <!-- Mini Avatar Preview on Banner -->
+                            <Border Width="64" Height="64" CornerRadius="32"
+                                    VerticalAlignment="Bottom" HorizontalAlignment="Left"
+                                    Margin="16,-32,0,0" BorderThickness="4" BorderBrush="#2B2D31">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#5865F2" Offset="0"/>
+                                        <GradientStop Color="#EB459E" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <TextBlock x:Name="BannerAvatarInitial" Text="?" FontSize="24" FontWeight="Bold"
+                                           Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Border>
+
+                        <TextBlock Text="Pick your banner colors" FontSize="13" Foreground="#B5BAC1"
+                                   HorizontalAlignment="Center" Margin="0,20,0,16"/>
+
+                        <!-- Primary Color -->
+                        <StackPanel Margin="0,0,0,16">
+                            <TextBlock Text="PRIMARY COLOR" FontSize="11" FontWeight="Bold"
+                                       Foreground="#72767D" Margin="0,0,0,8"/>
+                            <WrapPanel>
+                                <Button Style="{StaticResource ColorPickerButton}" Background="#5865F2" Click="PrimaryColor_Click"/>
+                                <Button Style="{StaticResource ColorPickerButton}" Background="#57F287" Click="PrimaryColor_Click"/>
+                                <Button Style="{StaticResource ColorPickerButton}" Background="#EB459E" Click="PrimaryColor_Click"/>
+                                <Button Style="{StaticResource ColorPickerButton}" Background="#FAA61A" Click="PrimaryColor_Click"/>
+                                <Button Style="{StaticResource ColorPickerButton}" Background="#ED4245" Click="PrimaryColor_Click"/>
+                                <Button Style="{StaticResource ColorPickerButton}" Background="#00D4FF" Click="PrimaryColor_Click"/>
+                                <Button Style="{StaticResource ColorPickerButton}" Background="#9B59B6" Click="PrimaryColor_Click"/>
+                                <Button Style="{StaticResource ColorPickerButton}" Background="#1ABC9C" Click="PrimaryColor_Click"/>
+                            </WrapPanel>
+                        </StackPanel>
+
+                        <!-- Secondary Color -->
+                        <StackPanel>
+                            <TextBlock Text="SECONDARY COLOR" FontSize="11" FontWeight="Bold"
+                                       Foreground="#72767D" Margin="0,0,0,8"/>
+                            <WrapPanel>
+                                <Button Style="{StaticResource ColorPickerButton}" Background="#EB459E" Click="SecondaryColor_Click"/>
+                                <Button Style="{StaticResource ColorPickerButton}" Background="#5865F2" Click="SecondaryColor_Click"/>
+                                <Button Style="{StaticResource ColorPickerButton}" Background="#FEE75C" Click="SecondaryColor_Click"/>
+                                <Button Style="{StaticResource ColorPickerButton}" Background="#57F287" Click="SecondaryColor_Click"/>
+                                <Button Style="{StaticResource ColorPickerButton}" Background="#00D4FF" Click="SecondaryColor_Click"/>
+                                <Button Style="{StaticResource ColorPickerButton}" Background="#F47FFF" Click="SecondaryColor_Click"/>
+                                <Button Style="{StaticResource ColorPickerButton}" Background="#3498DB" Click="SecondaryColor_Click"/>
+                                <Button Style="{StaticResource ColorPickerButton}" Background="#2C3E50" Click="SecondaryColor_Click"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Step 3: Display Name & Bio -->
+                    <StackPanel x:Name="Step3Panel" Visibility="Collapsed">
+                        <StackPanel.RenderTransform>
+                            <TranslateTransform/>
+                        </StackPanel.RenderTransform>
+
+                        <!-- Final Preview Card -->
+                        <Border Background="#1E1F22" CornerRadius="8" Margin="0,0,0,24" Padding="0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="80"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Mini Banner -->
+                                <Border Grid.Row="0" CornerRadius="8,8,0,0">
+                                    <Border.Background>
+                                        <LinearGradientBrush x:Name="PreviewBannerGradient" StartPoint="0,0" EndPoint="1,1">
+                                            <GradientStop Color="#5865F2" Offset="0"/>
+                                            <GradientStop Color="#EB459E" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                </Border>
+
+                                <!-- Profile Info -->
+                                <StackPanel Grid.Row="1" Margin="16,0,16,16">
+                                    <!-- Avatar overlapping banner -->
+                                    <Border Width="72" Height="72" CornerRadius="36"
+                                            Margin="0,-36,0,12" HorizontalAlignment="Left"
+                                            BorderThickness="6" BorderBrush="#1E1F22">
+                                        <Border.Background>
+                                            <LinearGradientBrush x:Name="PreviewAvatarGradient" StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#5865F2" Offset="0"/>
+                                                <GradientStop Color="#EB459E" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                        <TextBlock x:Name="PreviewInitial" Text="?" FontSize="28" FontWeight="Bold"
+                                                   Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+
+                                    <TextBlock x:Name="PreviewDisplayName" Text="Display Name"
+                                               FontSize="18" FontWeight="Bold" Foreground="White"/>
+                                    <TextBlock x:Name="PreviewBio" Text="Your bio will appear here..."
+                                               FontSize="13" Foreground="#B5BAC1" TextWrapping="Wrap"
+                                               Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Display Name Input -->
+                        <StackPanel Margin="0,0,0,16">
+                            <TextBlock Text="DISPLAY NAME" FontSize="11" FontWeight="Bold"
+                                       Foreground="#72767D" Margin="0,0,0,8"/>
+                            <TextBox x:Name="DisplayNameBox" Style="{StaticResource ModernTextBox}"
+                                     TextChanged="DisplayName_TextChanged"
+                                     MaxLength="32"/>
+                        </StackPanel>
+
+                        <!-- Bio Input -->
+                        <StackPanel>
+                            <TextBlock Text="ABOUT ME" FontSize="11" FontWeight="Bold"
+                                       Foreground="#72767D" Margin="0,0,0,8"/>
+                            <TextBox x:Name="BioBox" Style="{StaticResource ModernTextBox}"
+                                     TextWrapping="Wrap" AcceptsReturn="True"
+                                     Height="80" VerticalContentAlignment="Top"
+                                     TextChanged="Bio_TextChanged"
+                                     MaxLength="190"/>
+                            <TextBlock x:Name="BioCounter" Text="0/190" FontSize="11"
+                                       Foreground="#72767D" HorizontalAlignment="Right"
+                                       Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Navigation Buttons -->
+                <Grid Grid.Row="3" Margin="0,24,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Button x:Name="BackButton" Grid.Column="0"
+                            Content="Back" Style="{StaticResource SecondaryButton}"
+                            Height="44" Click="Back_Click" Visibility="Collapsed"/>
+
+                    <Button x:Name="SkipButton" Grid.Column="0"
+                            Content="Skip for now" Style="{StaticResource SecondaryButton}"
+                            Height="44" Click="Skip_Click"/>
+
+                    <Button x:Name="NextButton" Grid.Column="2"
+                            Content="Next" Style="{StaticResource PrimaryButton}"
+                            Height="44" Click="Next_Click"/>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- Window Controls -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                    VerticalAlignment="Top" Margin="0,8,8,0">
+            <Button Content="─" Width="36" Height="36"
+                    Style="{StaticResource IconButton}"
+                    Click="MinimizeButton_Click" FontSize="14"/>
+            <Button Content="✕" Width="36" Height="36"
+                    Style="{StaticResource IconButton}"
+                    Click="CloseButton_Click" FontSize="14"/>
+        </StackPanel>
+    </Grid>
+</UserControl>
