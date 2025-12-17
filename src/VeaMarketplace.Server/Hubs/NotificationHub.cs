@@ -161,12 +161,150 @@ public class NotificationHub : Hub
             Type = NotificationType.System,
             Title = title,
             Message = message,
-            Icon = "📢",
+            Icon = "System",
             ActionUrl = actionUrl,
             CreatedAt = DateTime.UtcNow
         };
 
         await hubContext.Clients.All.SendAsync("SystemNotification", notification);
+    }
+
+    /// <summary>
+    /// Notify user of a new order
+    /// </summary>
+    public static async Task NotifyNewOrder(
+        IHubContext<NotificationHub> hubContext,
+        string sellerId,
+        string buyerUsername,
+        string productTitle,
+        decimal amount,
+        string orderId)
+    {
+        var notification = new NotificationDto
+        {
+            Id = Guid.NewGuid().ToString(),
+            Type = NotificationType.Order,
+            Title = "New Order Received",
+            Message = $"{buyerUsername} purchased '{productTitle}' for ${amount:F2}",
+            Icon = "Order",
+            ActionUrl = $"/orders/{orderId}",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await SendNotificationToUser(hubContext, sellerId, notification);
+    }
+
+    /// <summary>
+    /// Notify user of order status change
+    /// </summary>
+    public static async Task NotifyOrderStatusChange(
+        IHubContext<NotificationHub> hubContext,
+        string userId,
+        string orderId,
+        string productTitle,
+        string newStatus)
+    {
+        var notification = new NotificationDto
+        {
+            Id = Guid.NewGuid().ToString(),
+            Type = NotificationType.Order,
+            Title = "Order Update",
+            Message = $"Order for '{productTitle}' is now {newStatus}",
+            Icon = "Order",
+            ActionUrl = $"/orders/{orderId}",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await SendNotificationToUser(hubContext, userId, notification);
+    }
+
+    /// <summary>
+    /// Notify user of a new review on their product
+    /// </summary>
+    public static async Task NotifyNewReview(
+        IHubContext<NotificationHub> hubContext,
+        string sellerId,
+        string reviewerUsername,
+        string productTitle,
+        int rating,
+        string productId)
+    {
+        var stars = new string('*', rating);
+        var notification = new NotificationDto
+        {
+            Id = Guid.NewGuid().ToString(),
+            Type = NotificationType.Review,
+            Title = "New Review",
+            Message = $"{reviewerUsername} left a {rating}-star review on '{productTitle}'",
+            Icon = "Review",
+            ActionUrl = $"/products/{productId}",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await SendNotificationToUser(hubContext, sellerId, notification);
+    }
+
+    /// <summary>
+    /// Notify user of a new message
+    /// </summary>
+    public static async Task NotifyNewMessage(
+        IHubContext<NotificationHub> hubContext,
+        string userId,
+        string senderUsername,
+        string preview,
+        string channelId)
+    {
+        var notification = new NotificationDto
+        {
+            Id = Guid.NewGuid().ToString(),
+            Type = NotificationType.Message,
+            Title = $"Message from {senderUsername}",
+            Message = preview.Length > 100 ? preview[..97] + "..." : preview,
+            Icon = "Message",
+            ActionUrl = $"/chat/{channelId}",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await SendNotificationToUser(hubContext, userId, notification);
+    }
+
+    /// <summary>
+    /// Notify user of a friend request
+    /// </summary>
+    public static async Task NotifyFriendRequest(
+        IHubContext<NotificationHub> hubContext,
+        string userId,
+        string requesterId,
+        string requesterUsername)
+    {
+        var notification = new NotificationDto
+        {
+            Id = Guid.NewGuid().ToString(),
+            Type = NotificationType.FriendRequest,
+            Title = "Friend Request",
+            Message = $"{requesterUsername} sent you a friend request",
+            Icon = "FriendRequest",
+            ActionUrl = $"/friends",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await SendNotificationToUser(hubContext, userId, notification);
+    }
+
+    /// <summary>
+    /// Check if user is currently connected
+    /// </summary>
+    public static bool IsUserConnected(string userId)
+    {
+        return _userConnections.TryGetValue(userId, out var connections) && connections.Count > 0;
+    }
+
+    /// <summary>
+    /// Get count of connected users
+    /// </summary>
+    public static int GetConnectedUserCount()
+    {
+        return _userConnections.Count;
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)

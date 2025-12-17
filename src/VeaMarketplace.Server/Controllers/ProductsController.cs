@@ -123,6 +123,53 @@ public class ProductsController : ControllerBase
         return Ok(products);
     }
 
+    [HttpPut("{id}")]
+    public ActionResult<ProductDto> UpdateProduct(
+        string id,
+        [FromHeader(Name = "Authorization")] string? authorization,
+        [FromBody] UpdateProductRequest request)
+    {
+        var user = GetUserFromToken(authorization);
+        if (user == null)
+            return Unauthorized();
+
+        var product = _productService.UpdateProduct(user.Id, id, request);
+        if (product == null)
+            return NotFound(new { Message = "Product not found or you don't have permission to update it" });
+
+        return Ok(product);
+    }
+
+    [HttpDelete("{id}")]
+    public ActionResult DeleteProduct(
+        string id,
+        [FromHeader(Name = "Authorization")] string? authorization)
+    {
+        var user = GetUserFromToken(authorization);
+        if (user == null)
+            return Unauthorized();
+
+        if (_productService.DeleteProduct(user.Id, id))
+            return Ok(new { Success = true, Message = "Product deleted successfully" });
+
+        return NotFound(new { Success = false, Message = "Product not found or you don't have permission to delete it" });
+    }
+
+    [HttpPost("{id}/like")]
+    public ActionResult LikeProduct(
+        string id,
+        [FromHeader(Name = "Authorization")] string? authorization)
+    {
+        var user = GetUserFromToken(authorization);
+        if (user == null)
+            return Unauthorized();
+
+        if (_productService.LikeProduct(user.Id, id))
+            return Ok(new { Success = true });
+
+        return NotFound(new { Success = false, Message = "Product not found" });
+    }
+
     private Shared.Models.User? GetUserFromToken(string? authorization)
     {
         if (string.IsNullOrEmpty(authorization) || !authorization.StartsWith("Bearer "))

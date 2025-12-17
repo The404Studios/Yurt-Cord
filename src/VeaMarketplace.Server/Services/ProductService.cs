@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Caching.Memory;
 using VeaMarketplace.Server.Data;
 using VeaMarketplace.Shared.DTOs;
 using VeaMarketplace.Shared.Enums;
@@ -8,10 +9,13 @@ namespace VeaMarketplace.Server.Services;
 public class ProductService
 {
     private readonly DatabaseService _db;
+    private readonly IMemoryCache _cache;
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(1);
 
-    public ProductService(DatabaseService db)
+    public ProductService(DatabaseService db, IMemoryCache cache)
     {
         _db = db;
+        _cache = cache;
     }
 
     public ProductDto CreateProduct(string userId, CreateProductRequest request)
@@ -40,6 +44,16 @@ public class ProductService
 
     public ProductListResponse GetProducts(int page = 1, int pageSize = 20, ProductCategory? category = null, string? search = null)
     {
+        // Use cache for non-search queries
+        var cacheKey = string.IsNullOrEmpty(search)
+            ? $"products_{page}_{pageSize}_{category?.ToString() ?? "all"}"
+            : null;
+
+        if (cacheKey != null && _cache.TryGetValue(cacheKey, out ProductListResponse? cached) && cached != null)
+        {
+            return cached;
+        }
+
         var query = _db.Products.Query()
             .Where(p => p.Status == ProductStatus.Active);
 
@@ -57,7 +71,6 @@ public class ProductService
         }
 
         var totalCount = query.Count();
-        // LiteDB doesn't support ThenByDescending, so we fetch and sort in memory
         var products = query
             .OrderByDescending(p => p.CreatedAt)
             .ToEnumerable()
@@ -73,13 +86,20 @@ public class ProductService
             return MapToDto(p, seller);
         }).ToList();
 
-        return new ProductListResponse
+        var result = new ProductListResponse
         {
             Products = productDtos,
             TotalCount = totalCount,
             Page = page,
             PageSize = pageSize
         };
+
+        if (cacheKey != null)
+        {
+            _cache.Set(cacheKey, result, CacheDuration);
+        }
+
+        return result;
     }
 
     public ProductDto? GetProduct(string productId)
@@ -101,6 +121,58 @@ public class ProductService
 
         var products = _db.Products.Find(p => p.SellerId == userId).ToList();
         return products.Select(p => MapToDto(p, user)).ToList();
+    }
+
+    public ProductDto? UpdateProduct(string userId, string productId, UpdateProductRequest request)
+    {
+        var product = _db.Products.FindById(productId);
+        if (product == null) return null;
+        if (product.SellerId != userId) return null;
+        if (product.Status == ProductStatus.Sold) return null;
+
+        if (!string.IsNullOrWhiteSpace(request.Title))
+            product.Title = request.Title;
+        if (!string.IsNullOrWhiteSpace(request.Description))
+            product.Description = request.Description;
+        if (request.Price.HasValue && request.Price.Value > 0)
+            product.Price = request.Price.Value;
+        if (request.Category.HasValue)
+            product.Category = request.Category.Value;
+        if (request.ImageUrls != null && request.ImageUrls.Count > 0)
+            product.ImageUrls = request.ImageUrls;
+        if (request.Tags != null)
+            product.Tags = request.Tags;
+
+        product.UpdatedAt = DateTime.UtcNow;
+        _db.Products.Update(product);
+
+        var seller = _db.Users.FindById(product.SellerId);
+        return MapToDto(product, seller);
+    }
+
+    public bool DeleteProduct(string userId, string productId)
+    {
+        var product = _db.Products.FindById(productId);
+        if (product == null) return false;
+        if (product.SellerId != userId) return false;
+        if (product.Status == ProductStatus.Sold) return false;
+
+        product.Status = ProductStatus.Removed;
+        product.UpdatedAt = DateTime.UtcNow;
+        _db.Products.Update(product);
+
+        return true;
+    }
+
+    public bool LikeProduct(string userId, string productId)
+    {
+        var product = _db.Products.FindById(productId);
+        if (product == null) return false;
+
+        product.LikeCount++;
+        _db.Products.Update(product);
+
+        return true;
     }
 
     public bool PurchaseProduct(string buyerId, string productId)
