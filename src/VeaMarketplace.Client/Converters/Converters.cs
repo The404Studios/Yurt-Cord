@@ -275,3 +275,226 @@ public class DefaultAvatarConverter : IValueConverter
         return System.Windows.Data.Binding.DoNothing;
     }
 }
+
+/// <summary>
+/// Converts zero count to Visibility (0 = Visible, >0 = Collapsed)
+/// </summary>
+public class ZeroToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is int count)
+        {
+            return count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+        return Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return System.Windows.Data.Binding.DoNothing;
+    }
+}
+
+/// <summary>
+/// Converts count to Visibility (0 = Collapsed, >0 = Visible)
+/// </summary>
+public class CountToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is int count)
+        {
+            return count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+        if (value is System.Collections.ICollection collection)
+        {
+            return collection.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+        return Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return System.Windows.Data.Binding.DoNothing;
+    }
+}
+
+/// <summary>
+/// Converts positive number to Visibility (>0 = Visible, <=0 = Collapsed)
+/// </summary>
+public class PositiveToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is int intVal)
+            return intVal > 0 ? Visibility.Visible : Visibility.Collapsed;
+        if (value is decimal decVal)
+            return decVal > 0 ? Visibility.Visible : Visibility.Collapsed;
+        if (value is double dblVal)
+            return dblVal > 0 ? Visibility.Visible : Visibility.Collapsed;
+        return Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return System.Windows.Data.Binding.DoNothing;
+    }
+}
+
+/// <summary>
+/// Converts positive number to bool (>0 = true, <=0 = false)
+/// </summary>
+public class PositiveToBoolConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is int intVal)
+            return intVal > 0;
+        if (value is decimal decVal)
+            return decVal > 0;
+        if (value is double dblVal)
+            return dblVal > 0;
+        return false;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return System.Windows.Data.Binding.DoNothing;
+    }
+}
+
+/// <summary>
+/// Converts bool to text (true = "Yes"/"TrueText", false = "No"/"FalseText")
+/// Use ConverterParameter to specify custom text: "TrueText|FalseText"
+/// </summary>
+public class BoolToTextConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        bool boolValue = value is bool b && b;
+
+        if (parameter is string paramStr && paramStr.Contains('|'))
+        {
+            var parts = paramStr.Split('|');
+            return boolValue ? parts[0] : parts[1];
+        }
+
+        return boolValue ? "Yes" : "No";
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return System.Windows.Data.Binding.DoNothing;
+    }
+}
+
+/// <summary>
+/// Converts bool to color brush
+/// Use ConverterParameter to specify colors: "TrueColor|FalseColor" (e.g., "#00FF00|#FF0000")
+/// </summary>
+public class BoolToColorConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        bool boolValue = value is bool b && b;
+
+        if (parameter is string paramStr && paramStr.Contains('|'))
+        {
+            var parts = paramStr.Split('|');
+            var colorStr = boolValue ? parts[0] : parts[1];
+            try
+            {
+                var color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(colorStr);
+                return new System.Windows.Media.SolidColorBrush(color);
+            }
+            catch
+            {
+                // Fall through to default
+            }
+        }
+
+        // Default: green for true, red for false
+        return boolValue
+            ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(67, 181, 129))
+            : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(240, 71, 71));
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return System.Windows.Data.Binding.DoNothing;
+    }
+}
+
+/// <summary>
+/// Converts percentage (0-100 or 0-1) to width based on container
+/// ConverterParameter specifies max width (default 100)
+/// </summary>
+public class PercentageToWidthConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        double percentage = 0;
+        double maxWidth = 100;
+
+        if (value is double d)
+            percentage = d > 1 ? d / 100 : d;
+        else if (value is int i)
+            percentage = i > 1 ? i / 100.0 : i;
+        else if (value is decimal dec)
+            percentage = (double)(dec > 1 ? dec / 100 : dec);
+
+        if (parameter is double maxW)
+            maxWidth = maxW;
+        else if (parameter is string paramStr && double.TryParse(paramStr, out double parsed))
+            maxWidth = parsed;
+
+        return Math.Max(0, Math.Min(maxWidth, percentage * maxWidth));
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return System.Windows.Data.Binding.DoNothing;
+    }
+}
+
+/// <summary>
+/// Compares value to parameter and returns bool
+/// </summary>
+public class EqualityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value == null && parameter == null)
+            return true;
+        if (value == null || parameter == null)
+            return false;
+
+        return string.Equals(value.ToString(), parameter.ToString(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return System.Windows.Data.Binding.DoNothing;
+    }
+}
+
+/// <summary>
+/// Converts value greater than one to Visibility (>1 = Visible, <=1 = Collapsed)
+/// </summary>
+public class GreaterThanOneToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is int count)
+            return count > 1 ? Visibility.Visible : Visibility.Collapsed;
+        if (value is System.Collections.ICollection collection)
+            return collection.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+        return Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return System.Windows.Data.Binding.DoNothing;
+    }
+}

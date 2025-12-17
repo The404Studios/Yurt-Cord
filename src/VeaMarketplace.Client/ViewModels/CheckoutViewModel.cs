@@ -108,11 +108,11 @@ public partial class CheckoutViewModel : BaseViewModel
         }, "Failed to load cart");
     }
 
-    private async Task LoadUserBalanceAsync()
+    private Task LoadUserBalanceAsync()
     {
         try
         {
-            var user = await _apiService.GetCurrentUserAsync();
+            var user = _apiService.CurrentUser;
             if (user != null)
             {
                 UserBalance = user.Balance;
@@ -122,6 +122,7 @@ public partial class CheckoutViewModel : BaseViewModel
         {
             // Ignore errors
         }
+        return Task.CompletedTask;
     }
 
     private void UpdateTotals()
@@ -199,7 +200,8 @@ public partial class CheckoutViewModel : BaseViewModel
 
         await ExecuteAsync(async () =>
         {
-            Cart = await _apiService.UpdateCartItemAsync(item.Id, item.Quantity);
+            var request = new UpdateCartItemRequest { ItemId = item.Id, Quantity = item.Quantity };
+            Cart = await _apiService.UpdateCartItemAsync(request);
             UpdateTotals();
         }, "Failed to update quantity");
     }
@@ -211,8 +213,9 @@ public partial class CheckoutViewModel : BaseViewModel
 
         await ExecuteAsync(async () =>
         {
-            Cart = await _apiService.RemoveFromCartAsync(item.Id);
+            await _apiService.RemoveFromCartAsync(item.Id);
             CartItems.Remove(item);
+            Cart = await _apiService.GetCartAsync();
             UpdateTotals();
         }, "Failed to remove item");
     }
@@ -275,7 +278,7 @@ public partial class CheckoutViewModel : BaseViewModel
     [RelayCommand]
     private void ViewOrders()
     {
-        _navigationService.NavigateToOrderHistory();
+        _navigationService.NavigateToOrders();
     }
 
     [RelayCommand]

@@ -28,12 +28,32 @@
             <converters:RoleToColorConverter x:Key="RoleToColorConverter"/>
             <converters:RankToBadgeConverter x:Key="RankToBadgeConverter"/>
             <converters:DefaultAvatarConverter x:Key="DefaultAvatarConverter"/>
+            <converters:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverter"/>
+            <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
+            <converters:PositiveToVisibilityConverter x:Key="PositiveToVisibilityConverter"/>
+            <converters:PositiveToBoolConverter x:Key="PositiveToBoolConverter"/>
+            <converters:BoolToTextConverter x:Key="BoolToTextConverter"/>
+            <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
+            <converters:PercentageToWidthConverter x:Key="PercentageToWidthConverter"/>
+            <converters:EqualityConverter x:Key="EqualityConverter"/>
+            <converters:GreaterThanOneToVisibilityConverter x:Key="GreaterThanOneToVisibilityConverter"/>
 
-            <!-- Converter Aliases -->
+            <!-- Converter Aliases for backward compatibility -->
             <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
             <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
+            <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility"/>
             <converters:StringToVisibilityConverter x:Key="StringToVisConverter"/>
             <converters:NullToVisibilityConverter x:Key="NullToVisibility"/>
+            <converters:ZeroToVisibilityConverter x:Key="ZeroToVisibility"/>
+            <converters:CountToVisibilityConverter x:Key="CountToVisibility"/>
+            <converters:PositiveToVisibilityConverter x:Key="PositiveToVisibility"/>
+            <converters:PositiveToBoolConverter x:Key="PositiveToBool"/>
+            <converters:BoolToTextConverter x:Key="BoolToText"/>
+            <converters:BoolToColorConverter x:Key="BoolToColor"/>
+            <converters:PercentageToWidthConverter x:Key="PercentageToWidth"/>
+            <converters:GreaterThanOneToVisibilityConverter x:Key="GreaterThanOneToVisibility"/>
+            <converters:EqualityToVisibilityConverter x:Key="EqualityToVisibility"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
