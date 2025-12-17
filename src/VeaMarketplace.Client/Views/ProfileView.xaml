@@ -127,11 +127,44 @@
                                        Margin="0,12,0,0"/>
                         </StackPanel>
 
-                        <!-- Edit Button -->
-                        <Button Grid.Column="2" Content="Edit Profile"
-                                Style="{StaticResource SecondaryButton}"
-                                VerticalAlignment="Top" Padding="16,10"
-                                Click="EditProfile_Click"/>
+                        <!-- Action Buttons -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
+                            <!-- Edit button (own profile) -->
+                            <Button x:Name="EditProfileButton" Content="Edit Profile"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Padding="16,10" Margin="0,0,8,0"
+                                    Click="EditProfile_Click"/>
+
+                            <!-- Follow button (other profiles) -->
+                            <Button x:Name="FollowButton" Style="{StaticResource SecondaryButton}"
+                                    Padding="16,10" Margin="0,0,8,0"
+                                    Click="FollowUser_Click" Visibility="Collapsed">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock x:Name="FollowIcon" Text="👁" Margin="0,0,6,0"/>
+                                    <TextBlock x:Name="FollowText" Text="Follow"/>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Add Friend button (other profiles) -->
+                            <Button x:Name="AddFriendButton" Style="{StaticResource PrimaryButton}"
+                                    Padding="16,10" Visibility="Collapsed"
+                                    Click="AddFriend_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock x:Name="FriendIcon" Text="👥" Margin="0,0,6,0"/>
+                                    <TextBlock x:Name="FriendText" Text="Add Friend"/>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Message button (other profiles) -->
+                            <Button x:Name="MessageButton" Style="{StaticResource SecondaryButton}"
+                                    Padding="16,10" Margin="8,0,0,0" Visibility="Collapsed"
+                                    Click="MessageUser_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="💬" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Message"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
                     </Grid>
                 </Border>
 
