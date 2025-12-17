@@ -46,6 +46,9 @@ public class DatabaseService : IDisposable
     // Activity
     public ILiteCollection<UserActivity> UserActivities => _database.GetCollection<UserActivity>("user_activities");
 
+    // Following
+    public ILiteCollection<UserFollow> UserFollows => _database.GetCollection<UserFollow>("user_follows");
+
     // Product Bundles
     public ILiteCollection<ProductBundle> ProductBundles => _database.GetCollection<ProductBundle>("product_bundles");
 
@@ -115,6 +118,10 @@ public class DatabaseService : IDisposable
         // Activity indexes
         UserActivities.EnsureIndex(x => x.UserId);
         UserActivities.EnsureIndex(x => x.CreatedAt);
+
+        // Follow indexes
+        UserFollows.EnsureIndex(x => x.FollowerId);
+        UserFollows.EnsureIndex(x => x.FollowedId);
 
         // Coupon indexes
         Coupons.EnsureIndex(x => x.Code, true);

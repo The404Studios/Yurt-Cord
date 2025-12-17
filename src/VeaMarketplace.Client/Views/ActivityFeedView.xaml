@@ -57,6 +57,9 @@
                 <Button Content="All" Style="{StaticResource FilterTabButton}"
                         Command="{Binding FilterByTypeCommand}" CommandParameter="All"
                         Tag="{Binding CurrentFilter}"/>
+                <Button Content="👁 Following" Style="{StaticResource FilterTabButton}" Margin="8,0,0,0"
+                        Command="{Binding FilterByTypeCommand}" CommandParameter="Following"
+                        Tag="{Binding CurrentFilter}"/>
                 <Button Content="🤝 Friends" Style="{StaticResource FilterTabButton}" Margin="8,0,0,0"
                         Command="{Binding FilterByTypeCommand}" CommandParameter="Friends"
                         Tag="{Binding CurrentFilter}"/>

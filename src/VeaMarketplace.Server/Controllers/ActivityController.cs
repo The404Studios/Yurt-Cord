@@ -86,6 +86,72 @@ public class ActivityController : ControllerBase
         return Ok(new { Success = true });
     }
 
+    // Following endpoints
+
+    [HttpGet("following")]
+    public ActionResult<List<UserActivityDto>> GetFollowingFeed(
+        [FromHeader(Name = "Authorization")] string? authorization,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50)
+    {
+        var user = GetUserFromToken(authorization);
+        if (user == null)
+            return Unauthorized();
+
+        var activities = _activityService.GetFollowingFeed(user.Id, page, pageSize);
+        return Ok(activities);
+    }
+
+    [HttpPost("follow/{userId}")]
+    public ActionResult FollowUser(
+        [FromHeader(Name = "Authorization")] string? authorization,
+        string userId)
+    {
+        var user = GetUserFromToken(authorization);
+        if (user == null)
+            return Unauthorized();
+
+        var result = _activityService.FollowUser(user.Id, userId);
+        if (!result)
+            return BadRequest("Cannot follow this user");
+
+        return Ok(new { Success = true, Message = "Now following user" });
+    }
+
+    [HttpDelete("follow/{userId}")]
+    public ActionResult UnfollowUser(
+        [FromHeader(Name = "Authorization")] string? authorization,
+        string userId)
+    {
+        var user = GetUserFromToken(authorization);
+        if (user == null)
+            return Unauthorized();
+
+        var result = _activityService.UnfollowUser(user.Id, userId);
+        return Ok(new { Success = true, Message = result ? "Unfollowed user" : "Was not following" });
+    }
+
+    [HttpGet("follow/{userId}/status")]
+    public ActionResult GetFollowStatus(
+        [FromHeader(Name = "Authorization")] string? authorization,
+        string userId)
+    {
+        var user = GetUserFromToken(authorization);
+        if (user == null)
+            return Unauthorized();
+
+        var isFollowing = _activityService.IsFollowing(user.Id, userId);
+        var followerCount = _activityService.GetFollowerCount(userId);
+        var followingCount = _activityService.GetFollowingCount(userId);
+
+        return Ok(new
+        {
+            IsFollowing = isFollowing,
+            FollowerCount = followerCount,
+            FollowingCount = followingCount
+        });
+    }
+
     private Shared.Models.User? GetUserFromToken(string? authorization)
     {
         if (string.IsNullOrEmpty(authorization) || !authorization.StartsWith("Bearer "))

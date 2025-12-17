@@ -66,6 +66,107 @@ public class ActivityService
             .ToList();
     }
 
+    /// <summary>
+    /// Gets activity feed from users the current user follows
+    /// </summary>
+    public List<UserActivityDto> GetFollowingFeed(string userId, int page = 1, int pageSize = 50)
+    {
+        // Get followed user IDs
+        var followedIds = _db.UserFollows
+            .Find(f => f.FollowerId == userId)
+            .Select(f => f.FollowedId)
+            .ToList();
+
+        // Include own activities
+        followedIds.Add(userId);
+
+        return _db.UserActivities.Query()
+            .Where(a => a.IsPublic)
+            .ToEnumerable()
+            .Where(a => followedIds.Contains(a.UserId))
+            .OrderByDescending(a => a.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(MapToDto)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Follow a user to see their activities in your feed
+    /// </summary>
+    public bool FollowUser(string followerId, string followedId)
+    {
+        if (followerId == followedId) return false;
+
+        // Check if already following
+        var existing = _db.UserFollows.FindOne(f =>
+            f.FollowerId == followerId && f.FollowedId == followedId);
+        if (existing != null) return true;
+
+        var follow = new UserFollow
+        {
+            FollowerId = followerId,
+            FollowedId = followedId
+        };
+
+        _db.UserFollows.Insert(follow);
+
+        // Log as activity
+        var followedUser = _db.Users.FindById(followedId);
+        if (followedUser != null)
+        {
+            LogActivity(followerId, ActivityType.AddedFriend, followedId, followedUser.Username,
+                $"Started following {followedUser.Username}", followedUser.AvatarUrl);
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Unfollow a user
+    /// </summary>
+    public bool UnfollowUser(string followerId, string followedId)
+    {
+        return _db.UserFollows.DeleteMany(f =>
+            f.FollowerId == followerId && f.FollowedId == followedId) > 0;
+    }
+
+    /// <summary>
+    /// Check if a user is following another user
+    /// </summary>
+    public bool IsFollowing(string followerId, string followedId)
+    {
+        return _db.UserFollows.Exists(f =>
+            f.FollowerId == followerId && f.FollowedId == followedId);
+    }
+
+    /// <summary>
+    /// Get the list of user IDs that a user is following
+    /// </summary>
+    public List<string> GetFollowingIds(string userId)
+    {
+        return _db.UserFollows
+            .Find(f => f.FollowerId == userId)
+            .Select(f => f.FollowedId)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Get follower count for a user
+    /// </summary>
+    public int GetFollowerCount(string userId)
+    {
+        return _db.UserFollows.Count(f => f.FollowedId == userId);
+    }
+
+    /// <summary>
+    /// Get following count for a user
+    /// </summary>
+    public int GetFollowingCount(string userId)
+    {
+        return _db.UserFollows.Count(f => f.FollowerId == userId);
+    }
+
     public UserActivityDto? LogActivity(
         string userId,
         ActivityType type,

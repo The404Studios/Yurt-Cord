@@ -57,8 +57,20 @@ public partial class ActivityFeedViewModel : BaseViewModel
             IsRefreshing = refresh;
             ErrorMessage = null;
 
-            var filter = ShowFriendsOnly ? "friends" : null;
-            var activities = await _apiService.GetActivityFeedAsync(filter, _currentPage, PageSize);
+            List<UserActivityDto> activities;
+
+            // Handle different filter types
+            if (CurrentFilter == "Following")
+            {
+                // Get activities from followed users
+                activities = await _apiService.GetFollowingActivityFeedAsync(_currentPage, PageSize);
+            }
+            else
+            {
+                // Use existing filter logic
+                var filter = ShowFriendsOnly || CurrentFilter == "Friends" ? "friends" : null;
+                activities = await _apiService.GetActivityFeedAsync(filter, _currentPage, PageSize);
+            }
 
             if (activities.Count < PageSize)
             {
