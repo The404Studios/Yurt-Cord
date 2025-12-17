@@ -29,7 +29,48 @@ public partial class ServerBrowserView : UserControl
         RoomsItemsControl.ItemsSource = _rooms;
 
         SetupEventHandlers();
+        SetupVoiceServiceHandlers();
         LoadRooms();
+    }
+
+    private void SetupVoiceServiceHandlers()
+    {
+        _voiceService.OnPublicVoiceRoomsReceived += (rooms, total, page, pageSize) =>
+        {
+            UpdateRooms(rooms);
+        };
+
+        _voiceService.OnVoiceRoomAdded += room =>
+        {
+            AddRoom(room);
+        };
+
+        _voiceService.OnVoiceRoomUpdated += room =>
+        {
+            UpdateRoom(room);
+        };
+
+        _voiceService.OnVoiceRoomRemoved += roomId =>
+        {
+            RemoveRoom(roomId);
+        };
+
+        _voiceService.OnVoiceRoomJoined += room =>
+        {
+            MessageBox.Show($"Joined room: {room.Name}", "Joined", MessageBoxButton.OK, MessageBoxImage.Information);
+        };
+
+        _voiceService.OnVoiceRoomCreated += room =>
+        {
+            MessageBox.Show($"Room '{room.Name}' created!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            CreateRoomModal.Visibility = Visibility.Collapsed;
+            AddRoom(room);
+        };
+
+        _voiceService.OnVoiceRoomError += error =>
+        {
+            MessageBox.Show(error, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        };
     }
 
     private void SetupEventHandlers()
@@ -58,10 +99,8 @@ public partial class ServerBrowserView : UserControl
         try
         {
             // Request rooms from the voice service
-            // The voice service will need to handle this and store results
-            await Task.Delay(100); // Small delay to show loading
-
-            // For now, show the no rooms panel if empty
+            await _voiceService.GetPublicVoiceRoomsAsync(_selectedCategory, SearchBox.Text?.Trim());
+            await Task.Delay(100); // Small delay to let hub response come back
             UpdateRoomDisplay();
         }
         finally
@@ -108,11 +147,20 @@ public partial class ServerBrowserView : UserControl
         FilterRooms(SearchBox.Text?.Trim(), _selectedCategory);
     }
 
-    private void FilterRooms(string? query, VoiceRoomCategory? category)
+    private async void FilterRooms(string? query, VoiceRoomCategory? category)
     {
-        // In a real implementation, this would request filtered rooms from the server
-        // For now, we'll filter the existing collection
-        UpdateRoomDisplay();
+        LoadingOverlay.Visibility = Visibility.Visible;
+        try
+        {
+            // Request filtered rooms from the server
+            await _voiceService.GetPublicVoiceRoomsAsync(category, query);
+            await Task.Delay(100); // Small delay to let hub response come back
+            UpdateRoomDisplay();
+        }
+        finally
+        {
+            LoadingOverlay.Visibility = Visibility.Collapsed;
+        }
     }
 
     private void RoomCard_Click(object sender, MouseButtonEventArgs e)
@@ -156,9 +204,7 @@ public partial class ServerBrowserView : UserControl
         try
         {
             // Call the voice service to join the room
-            // This would invoke the hub method
-            MessageBox.Show($"Joining room: {room.Name}\n\nThis feature will connect to the voice room when fully integrated.",
-                "Joining Room", MessageBoxButton.OK, MessageBoxImage.Information);
+            await _voiceService.JoinVoiceRoomAsync(room.Id, password);
         }
         catch (Exception ex)
         {
@@ -214,11 +260,8 @@ public partial class ServerBrowserView : UserControl
             };
 
             // Call the voice service to create the room
-            // This would invoke the hub method
-            MessageBox.Show($"Room '{name}' would be created.\n\nThis feature will create the voice room when fully integrated.",
-                "Room Created", MessageBoxButton.OK, MessageBoxImage.Information);
-
-            CreateRoomModal.Visibility = Visibility.Collapsed;
+            await _voiceService.CreateVoiceRoomAsync(dto);
+            // The OnVoiceRoomCreated event handler will close the modal and show success
         }
         catch (Exception ex)
         {

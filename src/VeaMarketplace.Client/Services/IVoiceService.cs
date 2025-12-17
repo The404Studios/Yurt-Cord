@@ -150,6 +150,20 @@ public interface IVoiceService
     Task LeaveGroupCallAsync(string callId);
     Task InviteToGroupCallAsync(string callId, string userId);
     Task DeclineGroupCallAsync(string callId);
+
+    // Voice rooms (public rooms browser)
+    event Action<List<VoiceRoomDto>, int, int, int>? OnPublicVoiceRoomsReceived;
+    event Action<VoiceRoomDto>? OnVoiceRoomCreated;
+    event Action<VoiceRoomDto>? OnVoiceRoomJoined;
+    event Action<VoiceRoomDto>? OnVoiceRoomUpdated;
+    event Action<VoiceRoomDto>? OnVoiceRoomAdded;
+    event Action<string>? OnVoiceRoomRemoved;
+    event Action<string>? OnVoiceRoomError;
+
+    Task GetPublicVoiceRoomsAsync(VoiceRoomCategory? category = null, string? query = null, int page = 1, int pageSize = 20);
+    Task CreateVoiceRoomAsync(CreateVoiceRoomDto dto);
+    Task JoinVoiceRoomAsync(string roomId, string? password = null);
+    Task LeaveVoiceRoomAsync(string roomId);
 }
 
 public class VoiceUserState
@@ -332,6 +346,15 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     public event Action<string, string>? OnGroupCallParticipantLeft;
     public event Action<string, string>? OnGroupCallEnded;
     public event Action<string>? OnGroupCallError;
+
+    // Voice room events
+    public event Action<List<VoiceRoomDto>, int, int, int>? OnPublicVoiceRoomsReceived;
+    public event Action<VoiceRoomDto>? OnVoiceRoomCreated;
+    public event Action<VoiceRoomDto>? OnVoiceRoomJoined;
+    public event Action<VoiceRoomDto>? OnVoiceRoomUpdated;
+    public event Action<VoiceRoomDto>? OnVoiceRoomAdded;
+    public event Action<string>? OnVoiceRoomRemoved;
+    public event Action<string>? OnVoiceRoomError;
 
     // Call state
     public bool IsInCall { get; private set; }
@@ -1545,6 +1568,63 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                 DecodeAndPlayAudio(senderConnectionId, audioData);
             }
         });
+
+        // Voice room handlers
+        _connection.On<List<VoiceRoomDto>, int, int, int>("PublicVoiceRooms", (rooms, totalCount, page, pageSize) =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnPublicVoiceRoomsReceived?.Invoke(rooms, totalCount, page, pageSize);
+            });
+        });
+
+        _connection.On<VoiceRoomDto>("VoiceRoomCreated", room =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnVoiceRoomCreated?.Invoke(room);
+            });
+        });
+
+        _connection.On<VoiceRoomDto>("VoiceRoomJoined", room =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnVoiceRoomJoined?.Invoke(room);
+            });
+        });
+
+        _connection.On<VoiceRoomDto>("VoiceRoomUpdated", room =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnVoiceRoomUpdated?.Invoke(room);
+            });
+        });
+
+        _connection.On<VoiceRoomDto>("VoiceRoomAdded", room =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnVoiceRoomAdded?.Invoke(room);
+            });
+        });
+
+        _connection.On<string>("VoiceRoomRemoved", roomId =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnVoiceRoomRemoved?.Invoke(roomId);
+            });
+        });
+
+        _connection.On<string>("VoiceRoomError", error =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnVoiceRoomError?.Invoke(error);
+            });
+        });
     }
 
     public async Task SendNudgeAsync(string targetUserId, string? message = null)
@@ -1652,6 +1732,63 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         catch
         {
             // Ignore errors
+        }
+    }
+
+    // Voice Room Methods
+    public async Task GetPublicVoiceRoomsAsync(VoiceRoomCategory? category = null, string? query = null, int page = 1, int pageSize = 20)
+    {
+        if (_connection == null || !IsConnected) return;
+
+        try
+        {
+            await _connection.InvokeAsync("GetPublicVoiceRooms", category, query, page, pageSize);
+        }
+        catch (Exception ex)
+        {
+            OnVoiceRoomError?.Invoke($"Failed to get rooms: {ex.Message}");
+        }
+    }
+
+    public async Task CreateVoiceRoomAsync(CreateVoiceRoomDto dto)
+    {
+        if (_connection == null || !IsConnected) return;
+
+        try
+        {
+            await _connection.InvokeAsync("CreateVoiceRoom", dto, _currentUserId, _currentUsername, _currentAvatarUrl);
+        }
+        catch (Exception ex)
+        {
+            OnVoiceRoomError?.Invoke($"Failed to create room: {ex.Message}");
+        }
+    }
+
+    public async Task JoinVoiceRoomAsync(string roomId, string? password = null)
+    {
+        if (_connection == null || !IsConnected) return;
+
+        try
+        {
+            await _connection.InvokeAsync("JoinVoiceRoom", roomId, _currentUserId, _currentUsername, _currentAvatarUrl, password);
+        }
+        catch (Exception ex)
+        {
+            OnVoiceRoomError?.Invoke($"Failed to join room: {ex.Message}");
+        }
+    }
+
+    public async Task LeaveVoiceRoomAsync(string roomId)
+    {
+        if (_connection == null || !IsConnected) return;
+
+        try
+        {
+            await _connection.InvokeAsync("LeaveVoiceRoom", roomId);
+        }
+        catch (Exception ex)
+        {
+            OnVoiceRoomError?.Invoke($"Failed to leave room: {ex.Message}");
         }
     }
 
