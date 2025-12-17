@@ -19,7 +19,7 @@ public interface IFileUploadService
 public class FileUploadService : IFileUploadService
 {
     private readonly HttpClient _httpClient;
-    private const string BaseUrl = "http://162.248.94.23:5000/api/files";
+    private const string BaseUrl = "http://localhost:5000/api/files";
 
     // Shared JSON options for consistent serialization
     private static readonly JsonSerializerOptions JsonOptions = new()
