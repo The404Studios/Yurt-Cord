@@ -226,6 +226,42 @@
                     </Border>
                 </Grid>
 
+                <!-- Social Stats (Followers/Following) -->
+                <Grid Margin="24,16,24,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Followers -->
+                    <Border Grid.Column="0" Background="{StaticResource SecondaryDarkBrush}"
+                            CornerRadius="8" Padding="20" Margin="0,0,8,0"
+                            Cursor="Hand" x:Name="FollowersBorder" MouseLeftButtonDown="Followers_Click">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock x:Name="FollowersCountText" FontSize="28" FontWeight="Bold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       HorizontalAlignment="Center" Text="0"/>
+                            <TextBlock Text="Followers" FontSize="14"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Following -->
+                    <Border Grid.Column="1" Background="{StaticResource SecondaryDarkBrush}"
+                            CornerRadius="8" Padding="20" Margin="8,0,0,0"
+                            Cursor="Hand" x:Name="FollowingBorder" MouseLeftButtonDown="Following_Click">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock x:Name="FollowingCountText" FontSize="28" FontWeight="Bold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       HorizontalAlignment="Center" Text="0"/>
+                            <TextBlock Text="Following" FontSize="14"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
                 <!-- Quick Links -->
                 <Border Background="{StaticResource SecondaryDarkBrush}"
                         CornerRadius="8" Margin="24,0" Padding="16">

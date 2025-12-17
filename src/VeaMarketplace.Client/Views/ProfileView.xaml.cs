@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -114,6 +115,9 @@ public partial class ProfileView : UserControl
         ReputationText.Text = user.Reputation.ToString();
         SalesText.Text = user.TotalSales.ToString();
         PurchasesText.Text = user.TotalPurchases.ToString();
+
+        // Load follower/following counts
+        _ = LoadFollowStatsAsync(user.Id);
 
         // Accent Color for Avatar Ring
         try
@@ -482,5 +486,63 @@ public partial class ProfileView : UserControl
 
         // Navigate to friends view with DM to this user
         _navigationService?.NavigateToFriends();
+    }
+
+    private async Task LoadFollowStatsAsync(string userId)
+    {
+        if (_apiService == null) return;
+
+        try
+        {
+            var followStatus = await _apiService.GetFollowStatusAsync(userId);
+            Dispatcher.Invoke(() =>
+            {
+                FollowersCountText.Text = followStatus.FollowerCount.ToString("N0");
+                FollowingCountText.Text = followStatus.FollowingCount.ToString("N0");
+
+                // Update follow button state if viewing another user's profile
+                var currentUser = _apiService?.CurrentUser;
+                if (currentUser != null && userId != currentUser.Id)
+                {
+                    _isFollowing = followStatus.IsFollowing;
+                    UpdateFollowButtonUI();
+                }
+            });
+        }
+        catch
+        {
+            // Default to 0 on error
+            Dispatcher.Invoke(() =>
+            {
+                FollowersCountText.Text = "0";
+                FollowingCountText.Text = "0";
+            });
+        }
+    }
+
+    private void Followers_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        var user = _viewModel?.User ?? _apiService?.CurrentUser;
+        if (user == null) return;
+
+        // Show followers list dialog
+        ShowFollowListDialog(user.Id, "Followers");
+    }
+
+    private void Following_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        var user = _viewModel?.User ?? _apiService?.CurrentUser;
+        if (user == null) return;
+
+        // Show following list dialog
+        ShowFollowListDialog(user.Id, "Following");
+    }
+
+    private void ShowFollowListDialog(string userId, string listType)
+    {
+        // For now, show a simple message - can be expanded to a full dialog later
+        var displayName = _viewModel?.User?.GetDisplayName() ?? _apiService?.CurrentUser?.GetDisplayName() ?? "User";
+        MessageBox.Show($"View {listType} list for {displayName}\n\n(Full list view coming soon!)",
+            listType, MessageBoxButton.OK, MessageBoxImage.Information);
     }
 }
