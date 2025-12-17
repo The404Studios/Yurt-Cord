@@ -308,7 +308,11 @@ public class DiscoveryService
     {
         var activeListings = _db.Products.Count(p => p.SellerId == user.Id && p.Status == ProductStatus.Active);
         var reviews = _db.ProductReviews
-            .Find(r => _db.Products.FindById(r.ProductId)?.SellerId == user.Id)
+            .FindAll()
+            .Where(r => {
+                var product = _db.Products.FindById(r.ProductId);
+                return product != null && product.SellerId == user.Id;
+            })
             .ToList();
 
         return new SellerProfileDto
