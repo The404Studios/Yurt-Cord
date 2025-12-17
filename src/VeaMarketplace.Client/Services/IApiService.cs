@@ -107,7 +107,7 @@ public interface IApiService
 public class ApiService : IApiService
 {
     private readonly HttpClient _httpClient;
-    private const string BaseUrl = "http://162.248.94.23:5000";
+    private const string BaseUrl = "http://localhost:5000";
 
     // Shared JSON options for consistent enum serialization with server
     private static readonly JsonSerializerOptions JsonOptions = new()

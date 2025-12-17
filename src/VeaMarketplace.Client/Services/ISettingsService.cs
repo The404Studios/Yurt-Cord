@@ -17,7 +17,7 @@ public class AppSettings
     public string? SavedToken { get; set; }
     public string? SavedUsername { get; set; }
     public bool RememberMe { get; set; }
-    public string ServerUrl { get; set; } = "http://162.248.94.23:5000";
+    public string ServerUrl { get; set; } = "http://localhost:5000";
     public double Volume { get; set; } = 1.0;
     public double MicrophoneVolume { get; set; } = 1.0;
     public bool PushToTalk { get; set; }
