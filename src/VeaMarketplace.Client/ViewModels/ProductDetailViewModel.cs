@@ -97,7 +97,7 @@ public partial class ProductDetailViewModel : BaseViewModel
     {
         try
         {
-            Reviews = await _apiService.GetProductReviewsAsync(ProductId, 1, 5);
+            Reviews = await _apiService.GetProductReviewsAsync(ProductId, 1);
         }
         catch
         {
@@ -297,9 +297,9 @@ public partial class ProductDetailViewModel : BaseViewModel
     partial void OnQuantityChanged(int value)
     {
         if (value < 1) Quantity = 1;
-        if (Product != null && value > Product.StockQuantity)
+        if (Product != null && Product.Stock > 0 && value > Product.Stock)
         {
-            Quantity = Product.StockQuantity;
+            Quantity = Product.Stock;
         }
     }
 }

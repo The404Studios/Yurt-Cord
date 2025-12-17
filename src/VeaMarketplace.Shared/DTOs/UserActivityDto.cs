@@ -1,5 +1,3 @@
-using VeaMarketplace.Shared.Models;
-
 namespace VeaMarketplace.Shared.DTOs;
 
 public class UserActivityDto
@@ -8,7 +6,7 @@ public class UserActivityDto
     public string UserId { get; set; } = string.Empty;
     public string Username { get; set; } = string.Empty;
     public string? UserAvatarUrl { get; set; }
-    public ActivityType Type { get; set; }
+    public VeaMarketplace.Shared.Models.ActivityType Type { get; set; }
     public string? TargetId { get; set; }
     public string? TargetName { get; set; }
     public string? Description { get; set; }
