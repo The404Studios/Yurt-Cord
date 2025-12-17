@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using VeaMarketplace.Client.Services;
 
 namespace VeaMarketplace.Client.Controls;
 
@@ -234,7 +235,30 @@ public partial class SocialActivityPanel : UserControl
 
     private void MoreOptions_Click(object sender, RoutedEventArgs e)
     {
-        // Show more options menu
+        if (sender is not Button button) return;
+
+        var contextMenu = new ContextMenu();
+
+        var refreshItem = new MenuItem { Header = "Refresh Activity" };
+        refreshItem.Click += (s, args) => _ = LoadDataAsync();
+        contextMenu.Items.Add(refreshItem);
+
+        var hideItem = new MenuItem { Header = "Hide This Panel" };
+        hideItem.Click += (s, args) => this.Visibility = Visibility.Collapsed;
+        contextMenu.Items.Add(hideItem);
+
+        contextMenu.Items.Add(new Separator());
+
+        var settingsItem = new MenuItem { Header = "Activity Settings..." };
+        settingsItem.Click += (s, args) =>
+        {
+            var navService = (INavigationService?)App.ServiceProvider?.GetService(typeof(INavigationService));
+            navService?.NavigateToSettings();
+        };
+        contextMenu.Items.Add(settingsItem);
+
+        contextMenu.PlacementTarget = button;
+        contextMenu.IsOpen = true;
     }
 
     private void StartGroupCall_Click(object sender, RoutedEventArgs e)

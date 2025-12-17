@@ -150,7 +150,7 @@
 
                                         <!-- Metadata (if any) -->
                                         <ItemsControl ItemsSource="{Binding Metadata}" Margin="0,4,0,0"
-                                                      Visibility="{Binding Metadata.Count, Converter={StaticResource BoolToVis}}">
+                                                      Visibility="{Binding Metadata.Count, Converter={StaticResource CountToVisibilityConverter}}">
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate>
                                                     <WrapPanel/>

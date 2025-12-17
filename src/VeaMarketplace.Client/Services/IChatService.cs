@@ -31,6 +31,8 @@ public interface IChatService
     Task SendTypingAsync(string channel);
     Task UpdateProfileAsync(string? avatarUrl = null, string? bannerUrl = null);
     Task<string?> CreateGroupChatAsync(string name, List<string> memberIds, string? iconPath = null);
+    Task AddReactionAsync(string messageId, string emoji);
+    Task RemoveReactionAsync(string messageId, string emoji);
 }
 
 public class ChatService : IChatService, IAsyncDisposable
@@ -236,6 +238,22 @@ public class ChatService : IChatService, IAsyncDisposable
         catch
         {
             return null;
+        }
+    }
+
+    public async Task AddReactionAsync(string messageId, string emoji)
+    {
+        if (_connection != null && IsConnected)
+        {
+            await _connection.InvokeAsync("AddReaction", messageId, emoji).ConfigureAwait(false);
+        }
+    }
+
+    public async Task RemoveReactionAsync(string messageId, string emoji)
+    {
+        if (_connection != null && IsConnected)
+        {
+            await _connection.InvokeAsync("RemoveReaction", messageId, emoji).ConfigureAwait(false);
         }
     }
 
