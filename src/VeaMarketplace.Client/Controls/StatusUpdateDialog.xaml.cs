@@ -173,7 +173,22 @@ public partial class StatusUpdateDialog : UserControl
 
     private void StatusOption_Checked(object sender, RoutedEventArgs e)
     {
-        // Optional: Add visual feedback when status changes
+        // Update emoji placeholder based on status selection
+        if (sender is RadioButton radio && radio.IsChecked == true)
+        {
+            var statusEmojis = new Dictionary<string, string>
+            {
+                { "OnlineOption", "😊" },
+                { "IdleOption", "🌙" },
+                { "DoNotDisturbOption", "⛔" },
+                { "InvisibleOption", "👻" }
+            };
+
+            if (statusEmojis.TryGetValue(radio.Name, out var emoji) && SelectedEmoji != null)
+            {
+                SelectedEmoji.Text = emoji;
+            }
+        }
     }
 
     private void SelectEmoji_Click(object sender, RoutedEventArgs e)
@@ -207,7 +222,23 @@ public partial class StatusUpdateDialog : UserControl
 
     private void ClearAfter_Changed(object sender, SelectionChangedEventArgs e)
     {
-        // Optional: Show preview of when status will clear
+        // Calculate when status will clear for potential future UI display
+        if (ClearAfterCombo?.SelectedItem is ComboBoxItem item)
+        {
+            var duration = item.Content?.ToString() ?? "";
+            var clearTime = duration switch
+            {
+                "30 minutes" => DateTime.Now.AddMinutes(30),
+                "1 hour" => DateTime.Now.AddHours(1),
+                "4 hours" => DateTime.Now.AddHours(4),
+                "Today" => DateTime.Today.AddDays(1),
+                "Don't clear" or "Never" => (DateTime?)null,
+                _ => (DateTime?)null
+            };
+            System.Diagnostics.Debug.WriteLine(clearTime.HasValue
+                ? $"Status will clear at {clearTime:h:mm tt}"
+                : "Status won't auto-clear");
+        }
     }
 
     private void ClearStatus_Click(object sender, RoutedEventArgs e)

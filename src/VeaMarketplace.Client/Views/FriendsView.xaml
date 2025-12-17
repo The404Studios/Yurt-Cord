@@ -58,7 +58,7 @@
                                 <TextBlock Text="DMs"/>
                                 <Border Background="{StaticResource AccentRedBrush}" CornerRadius="8"
                                         Padding="6,2" Margin="6,0,0,0"
-                                        Visibility="{Binding UnreadConversationsCount, Converter={StaticResource BoolToVis}}">
+                                        Visibility="{Binding UnreadConversationsCount, Converter={StaticResource CountToVisibilityConverter}}">
                                     <TextBlock Text="{Binding UnreadConversationsCount}" FontSize="10" Foreground="White"/>
                                 </Border>
                             </StackPanel>
@@ -70,7 +70,7 @@
                                 <TextBlock Text="Pending"/>
                                 <Border Background="{StaticResource AccentGreenBrush}" CornerRadius="8"
                                         Padding="6,2" Margin="6,0,0,0"
-                                        Visibility="{Binding PendingRequestsCount, Converter={StaticResource BoolToVis}}">
+                                        Visibility="{Binding PendingRequestsCount, Converter={StaticResource CountToVisibilityConverter}}">
                                     <TextBlock Text="{Binding PendingRequestsCount}" FontSize="10" Foreground="White"/>
                                 </Border>
                             </StackPanel>
@@ -427,7 +427,7 @@
                                                 <Border Grid.Column="2" Background="{StaticResource AccentRedBrush}"
                                                         CornerRadius="10" Padding="8,2"
                                                         VerticalAlignment="Center"
-                                                        Visibility="{Binding UnreadCount, Converter={StaticResource BoolToVis}}">
+                                                        Visibility="{Binding UnreadCount, Converter={StaticResource CountToVisibilityConverter}}">
                                                     <TextBlock Text="{Binding UnreadCount}" FontSize="11"
                                                                Foreground="White" FontWeight="Bold"/>
                                                 </Border>

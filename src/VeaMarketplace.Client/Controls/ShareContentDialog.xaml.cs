@@ -224,7 +224,41 @@ public partial class ShareContentDialog : UserControl
 
     private void Friend_Click(object sender, MouseButtonEventArgs e)
     {
-        // Visual feedback on click
+        // Visual selection feedback - highlight the clicked friend card
+        if (sender is Border border)
+        {
+            // Reset all friend borders to default
+            foreach (var item in FriendsList.Items)
+            {
+                if (FriendsList.ItemContainerGenerator.ContainerFromItem(item) is ContentPresenter presenter)
+                {
+                    var childBorder = FindVisualChild<Border>(presenter);
+                    if (childBorder != null)
+                    {
+                        childBorder.BorderThickness = new Thickness(0);
+                    }
+                }
+            }
+
+            // Highlight selected friend
+            border.BorderBrush = (System.Windows.Media.Brush)FindResource("AccentBrush");
+            border.BorderThickness = new Thickness(2);
+        }
+    }
+
+    private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+    {
+        for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+            if (child is T typedChild)
+                return typedChild;
+
+            var found = FindVisualChild<T>(child);
+            if (found != null)
+                return found;
+        }
+        return null;
     }
 
     private void SendToFriend_Click(object sender, RoutedEventArgs e)

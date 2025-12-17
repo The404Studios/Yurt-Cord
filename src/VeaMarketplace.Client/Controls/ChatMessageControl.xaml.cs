@@ -376,17 +376,73 @@ public partial class ChatMessageControl : UserControl
     {
         if (_currentMessage == null) return;
 
-        var chatService = (IChatService?)App.ServiceProvider.GetService(typeof(IChatService));
-        if (chatService != null)
+        try
         {
-            // Toggle reaction - add or remove based on current state
-            // This would call the appropriate service method
+            var chatService = (IChatService?)App.ServiceProvider.GetService(typeof(IChatService));
+            if (chatService != null)
+            {
+                // Toggle reaction - add or remove based on current state
+                if (hasReacted)
+                {
+                    await chatService.RemoveReactionAsync(_currentMessage.Id, emoji);
+                }
+                else
+                {
+                    await chatService.AddReactionAsync(_currentMessage.Id, emoji);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to toggle reaction: {ex.Message}");
         }
     }
 
     private void ShowReactionPicker()
     {
-        // Could show a popup with common emojis
+        // Create a simple reaction picker popup
+        var popup = new System.Windows.Controls.Primitives.Popup
+        {
+            PlacementTarget = ReactionsContainer,
+            Placement = System.Windows.Controls.Primitives.PlacementMode.Top,
+            StaysOpen = false,
+            AllowsTransparency = true
+        };
+
+        var border = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(47, 49, 54)),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(8)
+        };
+
+        var panel = new StackPanel { Orientation = Orientation.Horizontal };
+        var commonEmojis = new[] { "👍", "❤️", "😂", "😮", "😢", "🎉", "🔥", "👀" };
+
+        foreach (var emoji in commonEmojis)
+        {
+            var btn = new Button
+            {
+                Content = emoji,
+                FontSize = 18,
+                Width = 36,
+                Height = 36,
+                Margin = new Thickness(2),
+                Background = System.Windows.Media.Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+                Cursor = WpfCursors.Hand
+            };
+            btn.Click += (s, e) =>
+            {
+                popup.IsOpen = false;
+                ToggleReaction(emoji, false);
+            };
+            panel.Children.Add(btn);
+        }
+
+        border.Child = panel;
+        popup.Child = border;
+        popup.IsOpen = true;
     }
 
     private static EmbedType MapEmbedType(EmbedContentType type)
