@@ -21,6 +21,12 @@ public partial class FriendsView : UserControl
         // Set up typing debounce timer
         _typingTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _typingTimer.Tick += TypingTimer_Tick;
+
+        // Cleanup timer when unloaded
+        Unloaded += (s, e) =>
+        {
+            _typingTimer?.Stop();
+        };
     }
 
     private void DmInput_TextChanged(object sender, TextChangedEventArgs e)

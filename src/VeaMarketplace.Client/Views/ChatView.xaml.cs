@@ -59,6 +59,13 @@ public partial class ChatView : UserControl
         };
         _typingCleanupTimer.Tick += TypingCleanupTimer_Tick;
 
+        // Ensure timer is stopped when control is unloaded
+        Unloaded += (s, e) =>
+        {
+            _typingCleanupTimer.Stop();
+            _typingCleanupTimer.Tick -= TypingCleanupTimer_Tick;
+        };
+
         if (DesignerProperties.GetIsInDesignMode(this))
             return;
 

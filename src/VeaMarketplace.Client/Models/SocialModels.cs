@@ -80,6 +80,12 @@ public class FriendGroup
         (Color)System.Windows.Media.ColorConverter.ConvertFromString(Color));
     public int MemberCount => MemberIds.Count;
     public string DisplayName => string.IsNullOrEmpty(Emoji) ? Name : $"{Emoji} {Name}";
+
+    /// <summary>
+    /// Populated member data for UI binding - set by the ViewModel when loading friends
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public List<VeaMarketplace.Shared.DTOs.FriendDto> Members { get; set; } = new();
 }
 
 /// <summary>

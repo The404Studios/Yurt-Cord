@@ -45,7 +45,9 @@ public class UserDto
     public decimal Balance { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime LastSeenAt { get; set; }
+    public DateTime LastActive => LastSeenAt; // Alias for compatibility
     public bool IsOnline { get; set; }
+    public bool IsFollowedByCurrentUser { get; set; }
     public List<string> Badges { get; set; } = new();
     public List<CustomRoleDto> CustomRoles { get; set; } = new();
 

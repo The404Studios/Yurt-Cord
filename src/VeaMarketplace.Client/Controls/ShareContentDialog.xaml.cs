@@ -228,9 +228,9 @@ public partial class ShareContentDialog : UserControl
         if (sender is Border border)
         {
             // Reset all friend borders to default
-            foreach (var item in FriendsList.Items)
+            foreach (var item in FriendsListControl.Items)
             {
-                if (FriendsList.ItemContainerGenerator.ContainerFromItem(item) is ContentPresenter presenter)
+                if (FriendsListControl.ItemContainerGenerator.ContainerFromItem(item) is ContentPresenter presenter)
                 {
                     var childBorder = FindVisualChild<Border>(presenter);
                     if (childBorder != null)
