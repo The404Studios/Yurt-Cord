@@ -8,14 +8,14 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <AssemblyName>YurtCord</AssemblyName>
+    <AssemblyName>Plugin</AssemblyName>
     <RootNamespace>VeaMarketplace.Client</RootNamespace>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <Version>2.6.0</Version>
     <AssemblyVersion>2.6.0.0</AssemblyVersion>
     <FileVersion>2.6.0.0</FileVersion>
-    <Product>YurtCord</Product>
-    <Description>YurtCord - Marketplace and Communication Platform</Description>
+    <Product>Plugin</Product>
+    <Description>Plugin - Marketplace and Communication Platform</Description>
   </PropertyGroup>
 
   <!-- Performance settings for high-throughput streaming -->

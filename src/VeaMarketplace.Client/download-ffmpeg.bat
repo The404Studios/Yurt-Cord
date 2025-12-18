@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 echo ============================================
-echo  FFmpeg Dependency Downloader for YurtCord
+echo  FFmpeg Dependency Downloader for Plugin
 echo ============================================
 echo.
 
@@ -87,7 +87,7 @@ echo.
 echo Installed files:
 dir /b "%OUTPUT_DIR%\*.dll"
 echo.
-echo You can now run YurtCord with hardware encoding support.
+echo You can now run Plugin with hardware encoding support.
 echo.
 echo Supported encoders:
 echo   - NVENC (NVIDIA GPUs)

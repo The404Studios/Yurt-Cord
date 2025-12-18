@@ -255,7 +255,7 @@ public class SettingsService : ISettingsService
     public SettingsService()
     {
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        var appFolder = Path.Combine(appData, "YurtCord");
+        var appFolder = Path.Combine(appData, "Plugin");
         Directory.CreateDirectory(appFolder);
         _settingsPath = Path.Combine(appFolder, "settings.json");
 

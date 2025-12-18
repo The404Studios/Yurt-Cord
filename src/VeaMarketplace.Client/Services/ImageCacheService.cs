@@ -38,7 +38,7 @@ public class ImageCacheService : IImageCacheService
 
         // Set up cache directory
         var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        _cacheDirectory = Path.Combine(appDataPath, "YurtCord", "ImageCache");
+        _cacheDirectory = Path.Combine(appDataPath, "Plugin", "ImageCache");
 
         if (!Directory.Exists(_cacheDirectory))
         {
