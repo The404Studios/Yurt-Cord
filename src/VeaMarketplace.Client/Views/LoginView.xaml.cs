@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
+using VeaMarketplace.Client.Helpers;
 using VeaMarketplace.Client.Services;
 using VeaMarketplace.Client.ViewModels;
 
@@ -61,40 +62,37 @@ public partial class LoginView : UserControl
         var email = EmailBox.Text;
         var confirmPassword = ConfirmPasswordBox.Password;
 
-        // Validation
-        if (string.IsNullOrWhiteSpace(username))
+        // Validation using centralized helper
+        var usernameValidation = ValidationHelper.ValidateUsername(username);
+        if (!usernameValidation)
         {
-            ShowError("Please enter a username");
+            ShowError(usernameValidation.ErrorMessage!);
             ShakeCard();
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(password))
+        var passwordValidation = ValidationHelper.ValidatePassword(password);
+        if (!passwordValidation)
         {
-            ShowError("Please enter a password");
+            ShowError(passwordValidation.ErrorMessage!);
             ShakeCard();
             return;
         }
 
         if (_isRegistering)
         {
-            if (string.IsNullOrWhiteSpace(email))
+            var emailValidation = ValidationHelper.ValidateEmail(email);
+            if (!emailValidation)
             {
-                ShowError("Please enter an email");
+                ShowError(emailValidation.ErrorMessage!);
                 ShakeCard();
                 return;
             }
 
-            if (password != confirmPassword)
+            var matchValidation = ValidationHelper.ValidatePasswordMatch(password, confirmPassword);
+            if (!matchValidation)
             {
-                ShowError("Passwords do not match");
-                ShakeCard();
-                return;
-            }
-
-            if (password.Length < 6)
-            {
-                ShowError("Password must be at least 6 characters");
+                ShowError(matchValidation.ErrorMessage!);
                 ShakeCard();
                 return;
             }
