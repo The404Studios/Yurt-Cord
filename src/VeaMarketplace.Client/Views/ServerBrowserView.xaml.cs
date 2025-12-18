@@ -12,6 +12,7 @@ public partial class ServerBrowserView : UserControl
 {
     private readonly IVoiceService _voiceService = null!;
     private readonly IApiService _apiService = null!;
+    private readonly IToastNotificationService _toastService = null!;
     private readonly ObservableCollection<VoiceRoomDto> _rooms = [];
     private VoiceRoomCategory? _selectedCategory;
     private VoiceRoomDto? _pendingPasswordRoom;
@@ -25,6 +26,7 @@ public partial class ServerBrowserView : UserControl
 
         _voiceService = (IVoiceService)App.ServiceProvider.GetService(typeof(IVoiceService))!;
         _apiService = (IApiService)App.ServiceProvider.GetService(typeof(IApiService))!;
+        _toastService = (IToastNotificationService)App.ServiceProvider.GetService(typeof(IToastNotificationService))!;
 
         RoomsItemsControl.ItemsSource = _rooms;
 
@@ -57,19 +59,19 @@ public partial class ServerBrowserView : UserControl
 
         _voiceService.OnVoiceRoomJoined += room =>
         {
-            MessageBox.Show($"Joined room: {room.Name}", "Joined", MessageBoxButton.OK, MessageBoxImage.Information);
+            _toastService.ShowSuccess("Joined", $"Joined room: {room.Name}");
         };
 
         _voiceService.OnVoiceRoomCreated += room =>
         {
-            MessageBox.Show($"Room '{room.Name}' created!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            _toastService.ShowSuccess("Room Created", $"Room '{room.Name}' created!");
             CreateRoomModal.Visibility = Visibility.Collapsed;
             AddRoom(room);
         };
 
         _voiceService.OnVoiceRoomError += error =>
         {
-            MessageBox.Show(error, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            _toastService.ShowError("Error", error);
         };
     }
 
@@ -208,8 +210,7 @@ public partial class ServerBrowserView : UserControl
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Failed to join room: {ex.Message}", "Error",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            _toastService.ShowError("Join Failed", ex.Message);
         }
     }
 
@@ -229,8 +230,7 @@ public partial class ServerBrowserView : UserControl
         var name = NewRoomNameBox.Text?.Trim();
         if (string.IsNullOrEmpty(name))
         {
-            MessageBox.Show("Please enter a room name", "Validation Error",
-                MessageBoxButton.OK, MessageBoxImage.Warning);
+            _toastService.ShowWarning("Validation Error", "Please enter a room name");
             return;
         }
 
@@ -265,8 +265,7 @@ public partial class ServerBrowserView : UserControl
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Failed to create room: {ex.Message}", "Error",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            _toastService.ShowError("Create Failed", ex.Message);
         }
     }
 

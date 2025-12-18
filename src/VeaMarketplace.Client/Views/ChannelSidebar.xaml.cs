@@ -14,6 +14,7 @@ public partial class ChannelSidebar : UserControl
     private readonly IApiService? _apiService;
     private readonly IVoiceService? _voiceService;
     private readonly INavigationService? _navigationService;
+    private readonly IToastNotificationService? _toastService;
     private bool _isMuted;
     private bool _isDeafened;
 
@@ -36,6 +37,7 @@ public partial class ChannelSidebar : UserControl
         _apiService = (IApiService)App.ServiceProvider.GetService(typeof(IApiService))!;
         _voiceService = (IVoiceService)App.ServiceProvider.GetService(typeof(IVoiceService))!;
         _navigationService = (INavigationService)App.ServiceProvider.GetService(typeof(INavigationService))!;
+        _toastService = (IToastNotificationService)App.ServiceProvider.GetService(typeof(IToastNotificationService))!;
 
         ChannelsItemsControl.ItemsSource = _viewModel.Channels;
         VoiceUsersItemsControl.ItemsSource = _viewModel.VoiceUsers;
@@ -113,7 +115,7 @@ public partial class ChannelSidebar : UserControl
             {
                 Dispatcher.Invoke(() =>
                 {
-                    MessageBox.Show(reason, "Disconnected", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    _toastService?.ShowWarning("Disconnected", reason);
                 });
             };
 
@@ -123,7 +125,7 @@ public partial class ChannelSidebar : UserControl
                 {
                     var channelName = ChannelDisplayNames.TryGetValue(channelId, out var name) ? name : channelId;
                     VoiceChannelNameText.Text = channelName;
-                    MessageBox.Show($"You were moved to {channelName}", "Moved", MessageBoxButton.OK, MessageBoxImage.Information);
+                    _toastService?.ShowInfo("Moved", $"You were moved to {channelName}");
                 });
             };
         }
@@ -281,13 +283,11 @@ public partial class ChannelSidebar : UserControl
             try
             {
                 await friendService.SendFriendRequestAsync(user.Username);
-                MessageBox.Show($"Friend request sent to {user.Username}!", "Success",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                _toastService?.ShowSuccess("Friend Request Sent", $"Sent to {user.Username}");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to send friend request: {ex.Message}", "Error",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+                _toastService?.ShowError("Request Failed", ex.Message);
             }
         }
     }
@@ -301,8 +301,7 @@ public partial class ChannelSidebar : UserControl
         _voiceService.SetUserMuted(user.ConnectionId, !isMuted);
 
         var action = isMuted ? "Unmuted" : "Muted";
-        MessageBox.Show($"{action} {user.Username} for yourself", $"User {action}",
-            MessageBoxButton.OK, MessageBoxImage.Information);
+        _toastService?.ShowInfo($"User {action}", $"{action} {user.Username} for yourself");
     }
 
     private void VoiceAdjustVolume_Click(object sender, RoutedEventArgs e)
@@ -321,8 +320,7 @@ public partial class ChannelSidebar : UserControl
         {
             volume = Math.Clamp(volume, 0, 200);
             _voiceService.SetUserVolume(user.ConnectionId, volume / 100f);
-            MessageBox.Show($"Set {user.Username}'s volume to {volume}%", "Volume Adjusted",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            _toastService?.ShowInfo("Volume Adjusted", $"{user.Username}'s volume set to {volume}%");
         }
     }
 
@@ -347,8 +345,7 @@ public partial class ChannelSidebar : UserControl
         {
             await _voiceService.MoveUserToChannelAsync(user.ConnectionId, channelId);
             var channelName = ChannelDisplayNames.TryGetValue(channelId, out var name) ? name : channelId;
-            MessageBox.Show($"Moved {user.Username} to {channelName}", "User Moved",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            _toastService?.ShowInfo("User Moved", $"Moved {user.Username} to {channelName}");
         }
     }
 
@@ -390,8 +387,7 @@ public partial class ChannelSidebar : UserControl
             if (result == MessageBoxResult.Yes)
             {
                 await _voiceService.KickUserAsync(user.UserId, reason);
-                MessageBox.Show($"Kicked {user.Username}", "User Kicked",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                _toastService?.ShowSuccess("User Kicked", $"Kicked {user.Username}");
             }
         }
     }
@@ -429,8 +425,7 @@ public partial class ChannelSidebar : UserControl
             if (result == MessageBoxResult.Yes)
             {
                 await _voiceService.BanUserAsync(user.UserId, reason, duration);
-                MessageBox.Show($"Banned {user.Username}", "User Banned",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                _toastService?.ShowSuccess("User Banned", $"Banned {user.Username}");
             }
         }
     }
@@ -441,8 +436,7 @@ public partial class ChannelSidebar : UserControl
         if (user == null) return;
 
         Clipboard.SetText(user.UserId);
-        MessageBox.Show("User ID copied to clipboard", "Copied",
-            MessageBoxButton.OK, MessageBoxImage.Information);
+        _toastService?.ShowInfo("Copied", "User ID copied to clipboard");
     }
 
     #endregion

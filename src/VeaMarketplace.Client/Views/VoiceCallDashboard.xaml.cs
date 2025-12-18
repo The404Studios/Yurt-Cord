@@ -13,6 +13,7 @@ public partial class VoiceCallDashboard : UserControl
 {
     private readonly IVoiceService _voiceService = null!;
     private readonly IApiService _apiService = null!;
+    private readonly IToastNotificationService _toastService = null!;
     private readonly ObservableCollection<VoiceParticipant> _participants = new();
     private readonly ObservableCollection<ActiveScreenShare> _activeShares = new();
     private bool _isMuted;
@@ -43,6 +44,7 @@ public partial class VoiceCallDashboard : UserControl
 
         _voiceService = (IVoiceService)App.ServiceProvider.GetService(typeof(IVoiceService))!;
         _apiService = (IApiService)App.ServiceProvider.GetService(typeof(IApiService))!;
+        _toastService = (IToastNotificationService)App.ServiceProvider.GetService(typeof(IToastNotificationService))!;
 
         ParticipantsItemsControl.ItemsSource = _participants;
         ActiveSharesItemsControl.ItemsSource = _activeShares;
@@ -319,7 +321,7 @@ public partial class VoiceCallDashboard : UserControl
         {
             Dispatcher.Invoke(() =>
             {
-                MessageBox.Show(reason, "Disconnected", MessageBoxButton.OK, MessageBoxImage.Warning);
+                _toastService.ShowWarning("Disconnected", reason);
             });
         };
 
@@ -584,8 +586,7 @@ public partial class VoiceCallDashboard : UserControl
         _voiceService.SetUserMuted(participant.ConnectionId, !isMuted);
 
         var action = isMuted ? "Unmuted" : "Muted";
-        MessageBox.Show($"{action} {participant.Username} for yourself", $"User {action}",
-            MessageBoxButton.OK, MessageBoxImage.Information);
+        _toastService.ShowInfo($"User {action}", $"{action} {participant.Username} for yourself");
     }
 
     private void AdjustVolume_Click(object sender, RoutedEventArgs e)
@@ -603,8 +604,7 @@ public partial class VoiceCallDashboard : UserControl
         {
             volume = Math.Clamp(volume, 0, 200);
             _voiceService.SetUserVolume(participant.ConnectionId, volume / 100f);
-            MessageBox.Show($"Set {participant.Username}'s volume to {volume}%", "Volume Adjusted",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            _toastService.ShowInfo("Volume Adjusted", $"{participant.Username}'s volume set to {volume}%");
         }
     }
 
@@ -617,8 +617,7 @@ public partial class VoiceCallDashboard : UserControl
         if (participant.IsScreenSharing || _currentScreenSharerConnectionId == participant.ConnectionId)
         {
             // Already showing their stream in main view
-            MessageBox.Show($"Now watching {participant.Username}'s screen", "Screen Share",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            _toastService.ShowInfo("Screen Share", $"Now watching {participant.Username}'s screen");
         }
         else
         {

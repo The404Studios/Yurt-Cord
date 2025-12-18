@@ -11,6 +11,7 @@ public partial class PrivacySettingsView : UserControl
     private readonly ISettingsService? _settingsService;
     private readonly INavigationService? _navigationService;
     private readonly IFriendService? _friendService;
+    private readonly IToastNotificationService? _toastService;
     private bool _isLoading = true;
 
     public PrivacySettingsView()
@@ -23,6 +24,7 @@ public partial class PrivacySettingsView : UserControl
         _settingsService = App.ServiceProvider.GetService(typeof(ISettingsService)) as ISettingsService;
         _navigationService = App.ServiceProvider.GetService(typeof(INavigationService)) as INavigationService;
         _friendService = App.ServiceProvider.GetService(typeof(IFriendService)) as IFriendService;
+        _toastService = App.ServiceProvider.GetService(typeof(IToastNotificationService)) as IToastNotificationService;
 
         Loaded += OnLoaded;
     }
@@ -149,11 +151,7 @@ public partial class PrivacySettingsView : UserControl
         if (result == MessageBoxResult.Yes)
         {
             // Send data request to server
-            MessageBox.Show(
-                "Your data request has been submitted. You will receive an email when your data is ready.",
-                "Request Submitted",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            _toastService?.ShowSuccess("Request Submitted", "Your data request has been submitted. Check your email.");
         }
     }
 
@@ -184,11 +182,7 @@ public partial class PrivacySettingsView : UserControl
             if (confirm == MessageBoxResult.OK)
             {
                 // In a real implementation, show a dialog to type DELETE
-                MessageBox.Show(
-                    "Account deletion has been scheduled. You will be logged out shortly.",
-                    "Account Scheduled for Deletion",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                _toastService?.ShowWarning("Account Scheduled", "Account deletion has been scheduled. You will be logged out shortly.");
             }
         }
     }
