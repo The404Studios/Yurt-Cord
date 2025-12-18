@@ -31,6 +31,7 @@
             <converters:DefaultAvatarConverter x:Key="DefaultAvatarConverter"/>
             <converters:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverter"/>
             <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
+            <converters:CountToVisibilityInverseConverter x:Key="CountToVisibilityInverseConverter"/>
             <converters:PositiveToVisibilityConverter x:Key="PositiveToVisibilityConverter"/>
             <converters:PositiveToBoolConverter x:Key="PositiveToBoolConverter"/>
             <converters:BoolToTextConverter x:Key="BoolToTextConverter"/>

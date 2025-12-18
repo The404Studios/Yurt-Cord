@@ -323,6 +323,30 @@ public class CountToVisibilityConverter : IValueConverter
 }
 
 /// <summary>
+/// Converts count to Visibility inversely (0 = Visible, >0 = Collapsed)
+/// </summary>
+public class CountToVisibilityInverseConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is int count)
+        {
+            return count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+        if (value is System.Collections.ICollection collection)
+        {
+            return collection.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+        return Visibility.Visible;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return System.Windows.Data.Binding.DoNothing;
+    }
+}
+
+/// <summary>
 /// Converts positive number to Visibility (>0 = Visible, <=0 = Collapsed)
 /// </summary>
 public class PositiveToVisibilityConverter : IValueConverter
