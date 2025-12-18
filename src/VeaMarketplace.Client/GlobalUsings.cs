@@ -24,4 +24,6 @@ global using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 global using Orientation = System.Windows.Controls.Orientation;
 global using Point = System.Windows.Point;
 global using Rectangle = System.Windows.Shapes.Rectangle;
+global using RadioButton = System.Windows.Controls.RadioButton;
+global using TextBox = System.Windows.Controls.TextBox;
 global using UserControl = System.Windows.Controls.UserControl;

@@ -174,7 +174,7 @@ public partial class StatusUpdateDialog : UserControl
     private void StatusOption_Checked(object sender, RoutedEventArgs e)
     {
         // Update emoji placeholder based on status selection
-        if (sender is RadioButton radio && radio.IsChecked == true)
+        if (sender is System.Windows.Controls.RadioButton radio && radio.IsChecked == true)
         {
             var statusEmojis = new Dictionary<string, string>
             {

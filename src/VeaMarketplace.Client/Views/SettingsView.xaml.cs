@@ -240,15 +240,15 @@ public partial class SettingsView : UserControl
         var panel = new StackPanel { Margin = new Thickness(20) };
 
         var nameLabel = new TextBlock { Text = "Template Name:", Foreground = (SolidColorBrush)FindResource("TextPrimaryBrush"), Margin = new Thickness(0, 0, 0, 4) };
-        var nameBox = new TextBox { Style = (Style)FindResource("ModernTextBox") };
+        var nameBox = new System.Windows.Controls.TextBox { Style = (Style)FindResource("ModernTextBox") };
 
         var shortcutLabel = new TextBlock { Text = "Shortcut (e.g., /afk):", Foreground = (SolidColorBrush)FindResource("TextPrimaryBrush"), Margin = new Thickness(0, 12, 0, 4) };
-        var shortcutBox = new TextBox { Style = (Style)FindResource("ModernTextBox") };
+        var shortcutBox = new System.Windows.Controls.TextBox { Style = (Style)FindResource("ModernTextBox") };
 
         var contentLabel = new TextBlock { Text = "Message Content:", Foreground = (SolidColorBrush)FindResource("TextPrimaryBrush"), Margin = new Thickness(0, 12, 0, 4) };
-        var contentBox = new TextBox { Style = (Style)FindResource("ModernTextBox"), AcceptsReturn = true, Height = 80, TextWrapping = TextWrapping.Wrap };
+        var contentBox = new System.Windows.Controls.TextBox { Style = (Style)FindResource("ModernTextBox"), AcceptsReturn = true, Height = 80, TextWrapping = TextWrapping.Wrap };
 
-        var saveBtn = new Button { Content = "Save Template", Style = (Style)FindResource("PrimaryButton"), Margin = new Thickness(0, 16, 0, 0), HorizontalAlignment = HorizontalAlignment.Right };
+        var saveBtn = new System.Windows.Controls.Button { Content = "Save Template", Style = (Style)FindResource("PrimaryButton"), Margin = new Thickness(0, 16, 0, 0), HorizontalAlignment = System.Windows.HorizontalAlignment.Right };
         saveBtn.Click += (s, args) =>
         {
             var qolService = App.ServiceProvider.GetService(typeof(IQoLService)) as IQoLService;
@@ -293,15 +293,15 @@ public partial class SettingsView : UserControl
         var panel = new StackPanel { Margin = new Thickness(20) };
 
         var messageLabel = new TextBlock { Text = "Message:", Foreground = (SolidColorBrush)FindResource("TextPrimaryBrush"), Margin = new Thickness(0, 0, 0, 4) };
-        var messageBox = new TextBox { Style = (Style)FindResource("ModernTextBox"), AcceptsReturn = true, Height = 80, TextWrapping = TextWrapping.Wrap };
+        var messageBox = new System.Windows.Controls.TextBox { Style = (Style)FindResource("ModernTextBox"), AcceptsReturn = true, Height = 80, TextWrapping = TextWrapping.Wrap };
 
         var channelLabel = new TextBlock { Text = "Target Channel:", Foreground = (SolidColorBrush)FindResource("TextPrimaryBrush"), Margin = new Thickness(0, 12, 0, 4) };
-        var channelBox = new TextBox { Style = (Style)FindResource("ModernTextBox"), Text = "#general" };
+        var channelBox = new System.Windows.Controls.TextBox { Style = (Style)FindResource("ModernTextBox"), Text = "#general" };
 
         var dateLabel = new TextBlock { Text = "Send Date & Time:", Foreground = (SolidColorBrush)FindResource("TextPrimaryBrush"), Margin = new Thickness(0, 12, 0, 4) };
         var datePicker = new DatePicker { SelectedDate = DateTime.Now.AddDays(1), Background = (SolidColorBrush)FindResource("PrimaryDarkBrush") };
 
-        var scheduleBtn = new Button { Content = "Schedule Message", Style = (Style)FindResource("PrimaryButton"), Margin = new Thickness(0, 16, 0, 0), HorizontalAlignment = HorizontalAlignment.Right };
+        var scheduleBtn = new System.Windows.Controls.Button { Content = "Schedule Message", Style = (Style)FindResource("PrimaryButton"), Margin = new Thickness(0, 16, 0, 0), HorizontalAlignment = System.Windows.HorizontalAlignment.Right };
         scheduleBtn.Click += (s, args) =>
         {
             var qolService = App.ServiceProvider.GetService(typeof(IQoLService)) as IQoLService;

@@ -107,6 +107,7 @@ public partial class SocialActivityPanel : UserControl
     public event EventHandler<ActivityItem>? ActivityActionClicked;
     public event EventHandler<OnlineFriend>? OnlineFriendClicked;
     public event EventHandler<SuggestedFriend>? AddFriendRequested;
+    public event EventHandler? RefreshRequested;
 
     public SocialActivityPanel()
     {
@@ -240,7 +241,7 @@ public partial class SocialActivityPanel : UserControl
         var contextMenu = new ContextMenu();
 
         var refreshItem = new MenuItem { Header = "Refresh Activity" };
-        refreshItem.Click += (s, args) => _ = LoadDataAsync();
+        refreshItem.Click += (s, args) => RefreshRequested?.Invoke(this, EventArgs.Empty);
         contextMenu.Items.Add(refreshItem);
 
         var hideItem = new MenuItem { Header = "Hide This Panel" };

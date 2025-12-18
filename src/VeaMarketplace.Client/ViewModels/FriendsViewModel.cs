@@ -1328,8 +1328,9 @@ public partial class FriendsViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    private async Task AddFriendToGroupAsync(FriendDto friend, FriendGroup group)
+    private async Task AddFriendToGroupAsync((FriendDto Friend, FriendGroup Group) parameter)
     {
+        var (friend, group) = parameter;
         if (friend == null || group == null || _socialService == null) return;
         await _socialService.AddFriendToGroupAsync(group.Id, friend.UserId);
         OnPropertyChanged(nameof(FriendGroups));
