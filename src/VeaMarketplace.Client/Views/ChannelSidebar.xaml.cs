@@ -216,19 +216,26 @@ public partial class ChannelSidebar : UserControl
     {
         if (_voiceService == null) return;
 
-        if (_voiceService.IsScreenSharing)
+        try
         {
-            await _voiceService.StopScreenShareAsync();
-            ScreenShareIcon.Text = "🖥";
-            ScreenShareButton.Background = null;
-            ScreenShareButton.ToolTip = "Share Screen";
+            if (_voiceService.IsScreenSharing)
+            {
+                await _voiceService.StopScreenShareAsync();
+                ScreenShareIcon.Text = "🖥";
+                ScreenShareButton.Background = null;
+                ScreenShareButton.ToolTip = "Share Screen";
+            }
+            else
+            {
+                await _voiceService.StartScreenShareAsync();
+                ScreenShareIcon.Text = "🛑";
+                ScreenShareButton.Background = (System.Windows.Media.Brush)FindResource("AccentGreenBrush");
+                ScreenShareButton.ToolTip = "Stop Sharing";
+            }
         }
-        else
+        catch (Exception ex)
         {
-            await _voiceService.StartScreenShareAsync();
-            ScreenShareIcon.Text = "🛑";
-            ScreenShareButton.Background = (System.Windows.Media.Brush)FindResource("AccentGreenBrush");
-            ScreenShareButton.ToolTip = "Stop Sharing";
+            _toastService?.ShowError("Screen Share", $"Failed: {ex.Message}");
         }
     }
 
