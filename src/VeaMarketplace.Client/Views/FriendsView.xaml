@@ -644,7 +644,7 @@
                                                 </Button>
 
                                                 <!-- Group Members (when expanded) -->
-                                                <ItemsControl ItemsSource="{Binding DataContext.GetGroupMembers, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                <ItemsControl ItemsSource="{Binding Members}"
                                                               Margin="24,0,8,8"
                                                               Visibility="{Binding IsCollapsed, Converter={StaticResource InverseBoolToVis}}">
                                                     <ItemsControl.ItemTemplate>

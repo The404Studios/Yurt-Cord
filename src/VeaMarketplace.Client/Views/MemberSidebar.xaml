@@ -164,7 +164,7 @@
                                                    Foreground="{StaticResource TextMutedBrush}"
                                                    TextTrimming="CharacterEllipsis"
                                                    MaxWidth="130" Margin="0,2,0,0"
-                                                   Visibility="{Binding HasStatus, Converter={StaticResource BoolToVis}}"/>
+                                                   Visibility="{Binding StatusMessage, Converter={StaticResource StringToVisConverter}}"/>
                                     </StackPanel>
 
                                     <!-- Quick Actions -->

@@ -229,6 +229,21 @@ public partial class FriendsViewModel : BaseViewModel
     public ObservableCollection<FriendGroup>? FriendGroups => _socialService?.FriendGroups;
     public bool HasFriendGroups => FriendGroups?.Count > 0;
 
+    /// <summary>
+    /// Populates the Members property of each FriendGroup from the Friends collection
+    /// </summary>
+    private void PopulateFriendGroupMembers()
+    {
+        if (FriendGroups == null) return;
+
+        foreach (var group in FriendGroups)
+        {
+            group.Members = Friends
+                .Where(f => group.MemberIds.Contains(f.UserId))
+                .ToList();
+        }
+    }
+
     // Activity tracking
     public ObservableCollection<InteractionEvent>? RecentInteractions => _socialService?.RecentInteractions;
     public ObservableCollection<FriendRecommendation>? FriendRecommendations => _socialService?.Recommendations;
@@ -276,6 +291,16 @@ public partial class FriendsViewModel : BaseViewModel
         {
             SetError(error);
         };
+
+        // Populate friend group members when friends or groups change
+        Friends.CollectionChanged += (s, e) => PopulateFriendGroupMembers();
+        if (_socialService?.FriendGroups != null)
+        {
+            _socialService.FriendGroups.CollectionChanged += (s, e) => PopulateFriendGroupMembers();
+        }
+
+        // Initial population
+        PopulateFriendGroupMembers();
 
         _friendService.OnSuccess += message =>
         {
