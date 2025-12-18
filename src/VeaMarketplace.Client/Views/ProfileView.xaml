@@ -372,6 +372,113 @@
                     </StackPanel>
                 </Border>
 
+                <!-- Profile Posts Section -->
+                <Border Background="{StaticResource SecondaryDarkBrush}"
+                        CornerRadius="8" Margin="24,16,24,0" Padding="24">
+                    <StackPanel>
+                        <TextBlock Text="WALL POSTS" FontSize="12" FontWeight="Bold"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   Margin="0,0,0,16"/>
+
+                        <!-- New Post Input -->
+                        <Border Background="{StaticResource PrimaryDarkBrush}"
+                                CornerRadius="8" Padding="16" Margin="0,0,0,16">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBox Grid.Row="0" Style="{StaticResource ModernTextBox}"
+                                         Text="{Binding NewPostContent, UpdateSourceTrigger=PropertyChanged}"
+                                         Tag="Write something on the wall..."
+                                         AcceptsReturn="True" TextWrapping="Wrap"
+                                         MinHeight="60" MaxHeight="120"/>
+
+                                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                                    <Button Content="Post" Style="{StaticResource PrimaryButton}"
+                                            Padding="20,8"
+                                            Command="{Binding CreatePostCommand}"
+                                            IsEnabled="{Binding IsPostingEnabled}"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Posts List -->
+                        <ItemsControl ItemsSource="{Binding ProfilePosts}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource PrimaryDarkBrush}"
+                                            CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <!-- Post Header -->
+                                            <Grid Grid.Row="0" Margin="0,0,0,12">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <!-- Author Avatar -->
+                                                <Ellipse Grid.Column="0" Width="40" Height="40" Margin="0,0,12,0">
+                                                    <Ellipse.Fill>
+                                                        <ImageBrush ImageSource="{Binding AuthorAvatarUrl, TargetNullValue='/Assets/default-avatar.png'}"/>
+                                                    </Ellipse.Fill>
+                                                </Ellipse>
+
+                                                <!-- Author Info -->
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding AuthorUsername}" FontWeight="SemiBold"
+                                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                    <TextBlock Text="{Binding TimeAgo}" FontSize="12"
+                                                               Foreground="{StaticResource TextMutedBrush}"/>
+                                                </StackPanel>
+
+                                                <!-- Delete Button -->
+                                                <Button Grid.Column="2" Content="✕" Style="{StaticResource IconButton}"
+                                                        Width="28" Height="28" ToolTip="Delete post"
+                                                        Command="{Binding DataContext.DeletePostCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}"/>
+                                            </Grid>
+
+                                            <!-- Post Content -->
+                                            <TextBlock Grid.Row="1" Text="{Binding Content}"
+                                                       TextWrapping="Wrap" FontSize="14"
+                                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                                       Margin="0,0,0,12"/>
+
+                                            <!-- Post Actions -->
+                                            <StackPanel Grid.Row="2" Orientation="Horizontal">
+                                                <Button Style="{StaticResource SecondaryButton}"
+                                                        Padding="12,6"
+                                                        Command="{Binding DataContext.LikePostCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="❤️" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="{Binding LikeCount}"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Empty State -->
+                        <TextBlock Text="No posts yet. Be the first to write something!"
+                                   FontSize="13" Foreground="{StaticResource TextMutedBrush}"
+                                   HorizontalAlignment="Center" Margin="0,12,0,0"
+                                   Visibility="{Binding ProfilePosts.Count, Converter={StaticResource CountToVisibilityInverseConverter}}"/>
+                    </StackPanel>
+                </Border>
+
                 <!-- Payment Methods -->
                 <Border Background="{StaticResource SecondaryDarkBrush}"
                         CornerRadius="8" Margin="24,16,24,24" Padding="24">

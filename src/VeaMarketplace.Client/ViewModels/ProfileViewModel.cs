@@ -12,6 +12,7 @@ public partial class ProfileViewModel : BaseViewModel
 {
     private readonly IApiService _apiService;
     private readonly INavigationService _navigationService;
+    private readonly ILeaderboardService? _leaderboardService;
 
     [ObservableProperty]
     private UserDto? _user;
@@ -27,6 +28,19 @@ public partial class ProfileViewModel : BaseViewModel
 
     [ObservableProperty]
     private string _editAvatarUrl = string.Empty;
+
+    // Profile Posts
+    [ObservableProperty]
+    private ObservableCollection<ProfilePost> _profilePosts = new();
+
+    [ObservableProperty]
+    private string _newPostContent = string.Empty;
+
+    [ObservableProperty]
+    private bool _isPostingEnabled = true;
+
+    [ObservableProperty]
+    private UserStats? _profileStats;
 
     // Custom Status Properties
     [ObservableProperty]
@@ -77,13 +91,39 @@ public partial class ProfileViewModel : BaseViewModel
         "☕", "🔥", "✨", "💪", "🎯", "🚀", "💤", "🔇"
     };
 
-    public ProfileViewModel(IApiService apiService, INavigationService navigationService)
+    public ProfileViewModel(IApiService apiService, INavigationService navigationService, ILeaderboardService? leaderboardService = null)
     {
         _apiService = apiService;
         _navigationService = navigationService;
+        _leaderboardService = leaderboardService;
 
         // Subscribe to profile view changes
         _navigationService.OnViewUserProfile += OnViewUserProfile;
+
+        // Subscribe to leaderboard events
+        if (_leaderboardService != null)
+        {
+            _leaderboardService.OnNewProfilePost += post =>
+            {
+                if (post.ProfileUserId == User?.Id)
+                {
+                    System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+                    {
+                        ProfilePosts.Insert(0, post);
+                    });
+                }
+            };
+
+            _leaderboardService.OnProfilePostDeleted += postId =>
+            {
+                System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+                {
+                    var post = ProfilePosts.FirstOrDefault(p => p.Id == postId);
+                    if (post != null)
+                        ProfilePosts.Remove(post);
+                });
+            };
+        }
 
         // Initialize with current user
         User = _apiService.CurrentUser;
@@ -96,6 +136,7 @@ public partial class ProfileViewModel : BaseViewModel
             // View own profile
             IsOwnProfile = true;
             User = _apiService.CurrentUser;
+            userId = _apiService.CurrentUser?.Id;
         }
         else
         {
@@ -134,6 +175,46 @@ public partial class ProfileViewModel : BaseViewModel
         }
 
         IsEditing = false;
+
+        // Load profile posts and stats
+        if (!string.IsNullOrEmpty(userId))
+        {
+            await LoadProfilePostsAsync(userId);
+            await LoadProfileStatsAsync(userId);
+        }
+    }
+
+    private async Task LoadProfilePostsAsync(string userId)
+    {
+        if (_leaderboardService == null) return;
+
+        try
+        {
+            var posts = await _leaderboardService.GetProfilePostsAsync(userId);
+            ProfilePosts.Clear();
+            foreach (var post in posts)
+            {
+                ProfilePosts.Add(post);
+            }
+        }
+        catch
+        {
+            // Silently fail
+        }
+    }
+
+    private async Task LoadProfileStatsAsync(string userId)
+    {
+        if (_leaderboardService == null) return;
+
+        try
+        {
+            ProfileStats = await _leaderboardService.GetUserStatsAsync(userId);
+        }
+        catch
+        {
+            // Silently fail
+        }
     }
 
     [RelayCommand]
@@ -379,4 +460,100 @@ public partial class ProfileViewModel : BaseViewModel
             _ => "Online"
         };
     }
+
+    #region Profile Posts Commands
+
+    [RelayCommand]
+    private async Task CreatePostAsync()
+    {
+        if (_leaderboardService == null || User == null || string.IsNullOrWhiteSpace(NewPostContent))
+            return;
+
+        IsPostingEnabled = false;
+        try
+        {
+            await _leaderboardService.CreateProfilePostAsync(User.Id, NewPostContent);
+            NewPostContent = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to create post: {ex.Message}");
+        }
+        finally
+        {
+            IsPostingEnabled = true;
+        }
+    }
+
+    [RelayCommand]
+    private async Task LikePostAsync(ProfilePost post)
+    {
+        if (_leaderboardService == null || post == null) return;
+
+        var currentUserId = _apiService.CurrentUser?.Id;
+        if (string.IsNullOrEmpty(currentUserId)) return;
+
+        try
+        {
+            if (post.LikedByUserIds.Contains(currentUserId))
+            {
+                await _leaderboardService.UnlikeProfilePostAsync(post.Id);
+                post.LikedByUserIds.Remove(currentUserId);
+                post.LikeCount = Math.Max(0, post.LikeCount - 1);
+            }
+            else
+            {
+                await _leaderboardService.LikeProfilePostAsync(post.Id);
+                post.LikedByUserIds.Add(currentUserId);
+                post.LikeCount++;
+            }
+
+            // Force UI refresh
+            var index = ProfilePosts.IndexOf(post);
+            if (index >= 0)
+            {
+                ProfilePosts.RemoveAt(index);
+                ProfilePosts.Insert(index, post);
+            }
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to like post: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private async Task DeletePostAsync(ProfilePost post)
+    {
+        if (_leaderboardService == null || post == null) return;
+
+        // Only allow deleting own posts or posts on own profile
+        var currentUserId = _apiService.CurrentUser?.Id;
+        if (post.AuthorId != currentUserId && post.ProfileUserId != currentUserId)
+            return;
+
+        try
+        {
+            await _leaderboardService.DeleteProfilePostAsync(post.Id);
+            ProfilePosts.Remove(post);
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to delete post: {ex.Message}");
+        }
+    }
+
+    public bool IsPostLikedByCurrentUser(ProfilePost post)
+    {
+        var currentUserId = _apiService.CurrentUser?.Id;
+        return !string.IsNullOrEmpty(currentUserId) && post.LikedByUserIds.Contains(currentUserId);
+    }
+
+    public bool CanDeletePost(ProfilePost post)
+    {
+        var currentUserId = _apiService.CurrentUser?.Id;
+        return post.AuthorId == currentUserId || post.ProfileUserId == currentUserId;
+    }
+
+    #endregion
 }
