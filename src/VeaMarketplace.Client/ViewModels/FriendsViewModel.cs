@@ -22,6 +22,15 @@ public partial class FriendsViewModel : BaseViewModel
     private string _searchQuery = string.Empty;
 
     [ObservableProperty]
+    private string _friendFilter = "All"; // All, Online, Offline, GroupName
+
+    [ObservableProperty]
+    private string _friendSort = "Name"; // Name, Status, RecentActivity
+
+    [ObservableProperty]
+    private bool _sortAscending = true;
+
+    [ObservableProperty]
     private string _friendRequestUsername = string.Empty;
 
     [ObservableProperty]
@@ -105,6 +114,116 @@ public partial class FriendsViewModel : BaseViewModel
     public int TotalFriendsCount => Friends.Count;
     public int PendingRequestsCount => PendingRequests.Count;
     public int UnreadConversationsCount => Conversations.Count(c => c.UnreadCount > 0);
+
+    // Filtered and sorted friends list
+    public IEnumerable<FriendDto> FilteredFriends
+    {
+        get
+        {
+            var filtered = Friends.AsEnumerable();
+
+            // Apply search query filter
+            if (!string.IsNullOrWhiteSpace(SearchQuery))
+            {
+                var query = SearchQuery.ToLowerInvariant();
+                filtered = filtered.Where(f =>
+                    (f.Username?.ToLowerInvariant().Contains(query) == true) ||
+                    (f.DisplayName?.ToLowerInvariant().Contains(query) == true) ||
+                    GetFriendNickname(f.UserId)?.ToLowerInvariant().Contains(query) == true ||
+                    GetFriendTags(f.UserId).Any(t => t.ToLowerInvariant().Contains(query)));
+            }
+
+            // Apply status filter
+            filtered = FriendFilter switch
+            {
+                "Online" => filtered.Where(f => f.IsOnline),
+                "Offline" => filtered.Where(f => !f.IsOnline),
+                "All" => filtered,
+                _ => FilterByGroup(filtered, FriendFilter) // Group name
+            };
+
+            // Apply sort
+            filtered = (FriendSort, SortAscending) switch
+            {
+                ("Name", true) => filtered.OrderBy(f => f.DisplayName ?? f.Username),
+                ("Name", false) => filtered.OrderByDescending(f => f.DisplayName ?? f.Username),
+                ("Status", true) => filtered.OrderByDescending(f => f.IsOnline).ThenBy(f => f.Username),
+                ("Status", false) => filtered.OrderBy(f => f.IsOnline).ThenBy(f => f.Username),
+                ("RecentActivity", true) => filtered.OrderByDescending(f => GetFriendLastActivity(f.UserId)),
+                ("RecentActivity", false) => filtered.OrderBy(f => GetFriendLastActivity(f.UserId)),
+                _ => filtered.OrderBy(f => f.Username)
+            };
+
+            return filtered;
+        }
+    }
+
+    // Filter options available
+    public IEnumerable<string> FilterOptions
+    {
+        get
+        {
+            var options = new List<string> { "All", "Online", "Offline" };
+            if (FriendGroups != null)
+            {
+                options.AddRange(FriendGroups.Select(g => g.Name));
+            }
+            return options;
+        }
+    }
+
+    public IEnumerable<string> SortOptions => new[] { "Name", "Status", "RecentActivity" };
+
+    private IEnumerable<FriendDto> FilterByGroup(IEnumerable<FriendDto> friends, string groupName)
+    {
+        if (_socialService == null) return friends;
+
+        var group = FriendGroups?.FirstOrDefault(g => g.Name == groupName);
+        if (group == null) return friends;
+
+        return friends.Where(f => group.MemberIds.Contains(f.UserId));
+    }
+
+    private string? GetFriendNickname(string userId)
+    {
+        var qolService = App.ServiceProvider?.GetService(typeof(IQoLService)) as IQoLService;
+        return qolService?.GetFriendNote(userId)?.Nickname;
+    }
+
+    private List<string> GetFriendTags(string userId)
+    {
+        var qolService = App.ServiceProvider?.GetService(typeof(IQoLService)) as IQoLService;
+        return qolService?.GetFriendNote(userId)?.Tags ?? new List<string>();
+    }
+
+    private DateTime GetFriendLastActivity(string userId)
+    {
+        var history = _socialService?.RecentInteractions?
+            .Where(i => i.FriendId == userId)
+            .OrderByDescending(i => i.Timestamp)
+            .FirstOrDefault();
+        return history?.Timestamp ?? DateTime.MinValue;
+    }
+
+    partial void OnSearchQueryChanged(string value)
+    {
+        OnPropertyChanged(nameof(FilteredFriends));
+    }
+
+    partial void OnFriendFilterChanged(string value)
+    {
+        OnPropertyChanged(nameof(FilteredFriends));
+    }
+
+    partial void OnFriendSortChanged(string value)
+    {
+        OnPropertyChanged(nameof(FilteredFriends));
+    }
+
+    partial void OnSortAscendingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(FilteredFriends));
+    }
 
     // Friend Groups (from SocialService)
     public ObservableCollection<FriendGroup>? FriendGroups => _socialService?.FriendGroups;
@@ -1266,6 +1385,52 @@ public partial class FriendsViewModel : BaseViewModel
         await _socialService.DismissRecommendationAsync(recommendation.UserId);
         OnPropertyChanged(nameof(FriendRecommendations));
         OnPropertyChanged(nameof(HasRecommendations));
+    }
+
+    #endregion
+
+    #region Friend Search and Filter Commands
+
+    [RelayCommand]
+    private void ClearSearch()
+    {
+        SearchQuery = string.Empty;
+    }
+
+    [RelayCommand]
+    private void SetFilter(string filter)
+    {
+        FriendFilter = filter;
+    }
+
+    [RelayCommand]
+    private void SetSort(string sort)
+    {
+        if (FriendSort == sort)
+        {
+            // Toggle direction if same sort
+            SortAscending = !SortAscending;
+        }
+        else
+        {
+            FriendSort = sort;
+            SortAscending = true;
+        }
+    }
+
+    [RelayCommand]
+    private void ToggleSortDirection()
+    {
+        SortAscending = !SortAscending;
+    }
+
+    [RelayCommand]
+    private void ResetFilters()
+    {
+        SearchQuery = string.Empty;
+        FriendFilter = "All";
+        FriendSort = "Name";
+        SortAscending = true;
     }
 
     #endregion

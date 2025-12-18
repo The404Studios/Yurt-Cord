@@ -51,6 +51,7 @@ public partial class App : Application
         services.AddSingleton<IContentService, ContentService>();
         services.AddSingleton<IQoLService, QoLService>();
         services.AddSingleton<ISocialService, SocialService>();
+        services.AddSingleton<ILeaderboardService, LeaderboardService>();
 
         // ViewModels
         services.AddTransient<LoginViewModel>();
@@ -71,8 +72,16 @@ public partial class App : Application
         services.AddTransient<ModerationPanelViewModel>();
         services.AddTransient<ProductReviewsViewModel>();
         services.AddTransient<ActivityFeedViewModel>();
+        services.AddTransient<LeaderboardViewModel>();
 
         ServiceProvider = services.BuildServiceProvider();
+
+        // Initialize services that need async startup
+        var socialService = ServiceProvider.GetRequiredService<ISocialService>();
+        _ = socialService.LoadAsync(); // Fire and forget - load in background
+
+        var leaderboardService = ServiceProvider.GetRequiredService<ILeaderboardService>();
+        _ = leaderboardService.LoadAsync(); // Fire and forget - load in background
 
         // Wait for splash to complete
         await Task.Delay(2500);
