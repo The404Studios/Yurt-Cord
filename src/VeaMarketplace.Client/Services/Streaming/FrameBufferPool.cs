@@ -195,6 +195,8 @@ public class FrameBufferPool : IDisposable
         {
             try { stream.Dispose(); } catch { }
         }
+
+        GC.SuppressFinalize(this);
     }
 }
 
@@ -231,6 +233,8 @@ public class PooledBitmap : IDisposable
         {
             Bitmap.Dispose();
         }
+
+        GC.SuppressFinalize(this);
     }
 
     // Implicit conversion for ease of use
@@ -260,6 +264,7 @@ public class RentedBuffer : IDisposable
         if (_disposed) return;
         _disposed = true;
         _pool.ReturnBuffer(Data);
+        GC.SuppressFinalize(this);
     }
 
     // Allow indexing

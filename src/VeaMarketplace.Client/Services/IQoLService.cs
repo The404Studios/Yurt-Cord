@@ -882,5 +882,6 @@ public class QoLService : IQoLService, IDisposable
     {
         _schedulerTimer.Stop();
         _autoAwayTimer.Stop();
+        GC.SuppressFinalize(this);
     }
 }
