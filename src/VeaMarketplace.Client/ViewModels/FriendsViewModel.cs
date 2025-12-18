@@ -659,21 +659,17 @@ public partial class FriendsViewModel : BaseViewModel
     public string? SelfAvatarUrl => _apiService.CurrentUser?.AvatarUrl;
 
     [RelayCommand]
-    private void ToggleVideo()
+    private async Task ToggleVideoAsync()
     {
         IsVideoEnabled = !IsVideoEnabled;
 
-        // TODO: Integrate with WebRTC or video capture service
-        // For now, update UI state and show feedback
         if (IsVideoEnabled)
         {
-            System.Diagnostics.Debug.WriteLine("Video enabled - would start video capture");
-            // Future: _voiceService.StartVideoAsync();
+            await _voiceService.StartVideoAsync();
         }
         else
         {
-            System.Diagnostics.Debug.WriteLine("Video disabled - would stop video capture");
-            // Future: _voiceService.StopVideoAsync();
+            await _voiceService.StopVideoAsync();
         }
     }
 

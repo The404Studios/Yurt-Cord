@@ -221,6 +221,7 @@
                         <views:BlockedUsersView x:Name="BlockedUsersViewControl" Visibility="Collapsed"/>
                         <views:PrivacySettingsView x:Name="PrivacySettingsViewControl" Visibility="Collapsed"/>
                         <views:DiscoverView x:Name="DiscoverViewControl" Visibility="Collapsed"/>
+                        <views:LeaderboardView x:Name="LeaderboardViewControl" Visibility="Collapsed"/>
                     </Grid>
                 </Border>
 
