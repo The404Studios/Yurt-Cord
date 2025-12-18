@@ -1602,8 +1602,17 @@ public partial class FriendsViewModel : BaseViewModel
     {
         if (message == null) return;
 
-        // Could show a context menu with more options
-        // For now, this is a placeholder for future expansion
+        // Copy message content to clipboard
+        try
+        {
+            System.Windows.Clipboard.SetText(message.Content);
+            var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+            toastService?.ShowInfo("Copied", "Message copied to clipboard");
+        }
+        catch
+        {
+            // Clipboard operation failed silently
+        }
     }
 
     #endregion

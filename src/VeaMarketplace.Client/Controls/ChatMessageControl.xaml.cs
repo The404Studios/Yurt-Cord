@@ -646,7 +646,11 @@ public partial class ChatMessageControl : UserControl
                 {
                     Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+                    toastService?.ShowError("Open Failed", $"Could not open file: {ex.Message}");
+                }
             }
         };
 
@@ -722,7 +726,11 @@ public partial class ChatMessageControl : UserControl
                 {
                     Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+                    toastService?.ShowError("Download Failed", $"Could not download file: {ex.Message}");
+                }
             }
         };
 

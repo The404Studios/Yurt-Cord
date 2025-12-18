@@ -120,12 +120,12 @@
             </Border.Background>
         </Border>
 
-        <!-- Decorative Elements -->
+        <!-- Decorative Elements - Plugin Orange Theme -->
         <Canvas IsHitTestVisible="False">
             <Ellipse Width="300" Height="300" Opacity="0.03" Canvas.Left="-50" Canvas.Top="-50">
                 <Ellipse.Fill>
                     <RadialGradientBrush>
-                        <GradientStop Color="#5865F2" Offset="0"/>
+                        <GradientStop Color="#FF6B00" Offset="0"/>
                         <GradientStop Color="Transparent" Offset="1"/>
                     </RadialGradientBrush>
                 </Ellipse.Fill>
@@ -133,7 +133,7 @@
             <Ellipse Width="400" Height="400" Opacity="0.03" Canvas.Right="-100" Canvas.Bottom="-100">
                 <Ellipse.Fill>
                     <RadialGradientBrush>
-                        <GradientStop Color="#EB459E" Offset="0"/>
+                        <GradientStop Color="#FF8533" Offset="0"/>
                         <GradientStop Color="Transparent" Offset="1"/>
                     </RadialGradientBrush>
                 </Ellipse.Fill>
@@ -178,9 +178,9 @@
                                HorizontalAlignment="Center" Margin="0,6,0,0"/>
                 </StackPanel>
 
-                <!-- Progress Indicator -->
+                <!-- Progress Indicator - Plugin Orange Theme -->
                 <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,24">
-                    <Ellipse x:Name="Step1Dot" Width="10" Height="10" Fill="#5865F2" Margin="4"/>
+                    <Ellipse x:Name="Step1Dot" Width="10" Height="10" Fill="#FF6B00" Margin="4"/>
                     <Ellipse x:Name="Step2Dot" Width="10" Height="10" Fill="#40444B" Margin="4"/>
                     <Ellipse x:Name="Step3Dot" Width="10" Height="10" Fill="#40444B" Margin="4"/>
                 </StackPanel>
@@ -193,22 +193,22 @@
                             <TranslateTransform/>
                         </StackPanel.RenderTransform>
 
-                        <!-- Preview -->
+                        <!-- Preview - Plugin Orange Theme -->
                         <Grid HorizontalAlignment="Center" Margin="0,0,0,24">
                             <Ellipse Width="120" Height="120" Opacity="0.3">
                                 <Ellipse.Fill>
                                     <RadialGradientBrush>
-                                        <GradientStop Color="#5865F2" Offset="0"/>
+                                        <GradientStop Color="#FF6B00" Offset="0"/>
                                         <GradientStop Color="Transparent" Offset="1"/>
                                     </RadialGradientBrush>
                                 </Ellipse.Fill>
                             </Ellipse>
                             <Border x:Name="AvatarPreview" Width="100" Height="100" CornerRadius="50"
-                                    BorderThickness="4" BorderBrush="#5865F2">
+                                    BorderThickness="4" BorderBrush="#FF6B00">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Color="#5865F2" Offset="0"/>
-                                        <GradientStop Color="#EB459E" Offset="1"/>
+                                        <GradientStop Color="#FF6B00" Offset="0"/>
+                                        <GradientStop Color="#FF8533" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
                                 <TextBlock x:Name="AvatarInitial" Text="?" FontSize="42" FontWeight="Bold"
@@ -335,12 +335,12 @@
                             <TranslateTransform/>
                         </StackPanel.RenderTransform>
 
-                        <!-- Banner Preview -->
+                        <!-- Banner Preview - Plugin Orange Theme -->
                         <Border x:Name="BannerPreview" Height="120" CornerRadius="8" Margin="0,0,0,24">
                             <Border.Background>
                                 <LinearGradientBrush x:Name="BannerGradient" StartPoint="0,0" EndPoint="1,1">
-                                    <GradientStop x:Name="BannerColor1" Color="#5865F2" Offset="0"/>
-                                    <GradientStop x:Name="BannerColor2" Color="#EB459E" Offset="1"/>
+                                    <GradientStop x:Name="BannerColor1" Color="#FF6B00" Offset="0"/>
+                                    <GradientStop x:Name="BannerColor2" Color="#FF8533" Offset="1"/>
                                 </LinearGradientBrush>
                             </Border.Background>
                             <!-- Mini Avatar Preview on Banner -->
@@ -349,8 +349,8 @@
                                     Margin="16,-32,0,0" BorderThickness="4" BorderBrush="#2B2D31">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Color="#5865F2" Offset="0"/>
-                                        <GradientStop Color="#EB459E" Offset="1"/>
+                                        <GradientStop Color="#FF6B00" Offset="0"/>
+                                        <GradientStop Color="#FF8533" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
                                 <TextBlock x:Name="BannerAvatarInitial" Text="?" FontSize="24" FontWeight="Bold"
@@ -361,11 +361,12 @@
                         <TextBlock Text="Pick your banner colors" FontSize="13" Foreground="#B5BAC1"
                                    HorizontalAlignment="Center" Margin="0,20,0,16"/>
 
-                        <!-- Primary Color -->
+                        <!-- Primary Color - Plugin Orange first -->
                         <StackPanel Margin="0,0,0,16">
                             <TextBlock Text="PRIMARY COLOR" FontSize="11" FontWeight="Bold"
                                        Foreground="#72767D" Margin="0,0,0,8"/>
                             <WrapPanel>
+                                <Button Style="{StaticResource ColorPickerButton}" Background="#FF6B00" Click="PrimaryColor_Click"/>
                                 <Button Style="{StaticResource ColorPickerButton}" Background="#5865F2" Click="PrimaryColor_Click"/>
                                 <Button Style="{StaticResource ColorPickerButton}" Background="#57F287" Click="PrimaryColor_Click"/>
                                 <Button Style="{StaticResource ColorPickerButton}" Background="#EB459E" Click="PrimaryColor_Click"/>
@@ -373,22 +374,21 @@
                                 <Button Style="{StaticResource ColorPickerButton}" Background="#ED4245" Click="PrimaryColor_Click"/>
                                 <Button Style="{StaticResource ColorPickerButton}" Background="#00D4FF" Click="PrimaryColor_Click"/>
                                 <Button Style="{StaticResource ColorPickerButton}" Background="#9B59B6" Click="PrimaryColor_Click"/>
-                                <Button Style="{StaticResource ColorPickerButton}" Background="#1ABC9C" Click="PrimaryColor_Click"/>
                             </WrapPanel>
                         </StackPanel>
 
-                        <!-- Secondary Color -->
+                        <!-- Secondary Color - Plugin Orange Light first -->
                         <StackPanel>
                             <TextBlock Text="SECONDARY COLOR" FontSize="11" FontWeight="Bold"
                                        Foreground="#72767D" Margin="0,0,0,8"/>
                             <WrapPanel>
+                                <Button Style="{StaticResource ColorPickerButton}" Background="#FF8533" Click="SecondaryColor_Click"/>
                                 <Button Style="{StaticResource ColorPickerButton}" Background="#EB459E" Click="SecondaryColor_Click"/>
                                 <Button Style="{StaticResource ColorPickerButton}" Background="#5865F2" Click="SecondaryColor_Click"/>
                                 <Button Style="{StaticResource ColorPickerButton}" Background="#FEE75C" Click="SecondaryColor_Click"/>
                                 <Button Style="{StaticResource ColorPickerButton}" Background="#57F287" Click="SecondaryColor_Click"/>
                                 <Button Style="{StaticResource ColorPickerButton}" Background="#00D4FF" Click="SecondaryColor_Click"/>
                                 <Button Style="{StaticResource ColorPickerButton}" Background="#F47FFF" Click="SecondaryColor_Click"/>
-                                <Button Style="{StaticResource ColorPickerButton}" Background="#3498DB" Click="SecondaryColor_Click"/>
                                 <Button Style="{StaticResource ColorPickerButton}" Background="#2C3E50" Click="SecondaryColor_Click"/>
                             </WrapPanel>
                         </StackPanel>
@@ -408,12 +408,12 @@
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
 
-                                <!-- Mini Banner -->
+                                <!-- Mini Banner - Plugin Orange Theme -->
                                 <Border Grid.Row="0" CornerRadius="8,8,0,0">
                                     <Border.Background>
                                         <LinearGradientBrush x:Name="PreviewBannerGradient" StartPoint="0,0" EndPoint="1,1">
-                                            <GradientStop Color="#5865F2" Offset="0"/>
-                                            <GradientStop Color="#EB459E" Offset="1"/>
+                                            <GradientStop Color="#FF6B00" Offset="0"/>
+                                            <GradientStop Color="#FF8533" Offset="1"/>
                                         </LinearGradientBrush>
                                     </Border.Background>
                                 </Border>
@@ -426,8 +426,8 @@
                                             BorderThickness="6" BorderBrush="#1E1F22">
                                         <Border.Background>
                                             <LinearGradientBrush x:Name="PreviewAvatarGradient" StartPoint="0,0" EndPoint="1,1">
-                                                <GradientStop Color="#5865F2" Offset="0"/>
-                                                <GradientStop Color="#EB459E" Offset="1"/>
+                                                <GradientStop Color="#FF6B00" Offset="0"/>
+                                                <GradientStop Color="#FF8533" Offset="1"/>
                                             </LinearGradientBrush>
                                         </Border.Background>
                                         <TextBlock x:Name="PreviewInitial" Text="?" FontSize="28" FontWeight="Bold"
