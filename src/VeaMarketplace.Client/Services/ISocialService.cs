@@ -355,7 +355,7 @@ public class SocialService : ISocialService
             OnlineFriends = _friendService.Friends.Count(f => f.IsOnline),
             TotalConversations = _friendService.Conversations.Count,
             ActiveConversationsToday = _friendService.Conversations.Count(c =>
-                c.LastMessageAt.Date == DateTime.UtcNow.Date),
+                c.LastMessageAt.HasValue && c.LastMessageAt.Value.Date == DateTime.UtcNow.Date),
             TotalMessagesThisWeek = _data.InteractionHistories
                 .Sum(h => h.RecentInteractions
                     .Count(i => i.Timestamp > DateTime.UtcNow.AddDays(-7) &&

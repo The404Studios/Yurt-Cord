@@ -130,8 +130,13 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <RadioButton GroupName="PaymentMethod"
-                                                     IsChecked="{Binding DataContext.SelectedPaymentMethod, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource EqualityConverter}, ConverterParameter={Binding}}"
                                                      Margin="0,0,0,8">
+                                            <RadioButton.IsChecked>
+                                                <MultiBinding Converter="{StaticResource EqualityMultiConverter}">
+                                                    <Binding Path="DataContext.SelectedPaymentMethod" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                                                    <Binding />
+                                                </MultiBinding>
+                                            </RadioButton.IsChecked>
                                             <RadioButton.Template>
                                                 <ControlTemplate TargetType="RadioButton">
                                                     <Border x:Name="Border" Background="#202225" CornerRadius="8"

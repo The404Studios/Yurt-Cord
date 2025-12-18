@@ -54,3 +54,32 @@ public class AudioLevelToHeightConverter : IValueConverter
         return System.Windows.Data.Binding.DoNothing;
     }
 }
+
+/// <summary>
+/// MultiValueConverter that compares two values for equality.
+/// Returns true if the values are equal, false otherwise.
+/// </summary>
+public class EqualityMultiConverter : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (values == null || values.Length < 2)
+            return false;
+
+        var value1 = values[0];
+        var value2 = values[1];
+
+        if (value1 == null && value2 == null)
+            return true;
+
+        if (value1 == null || value2 == null)
+            return false;
+
+        return value1.Equals(value2);
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+    {
+        return Array.Empty<object>();
+    }
+}

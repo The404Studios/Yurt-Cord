@@ -37,6 +37,7 @@
             <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
             <converters:PercentageToWidthConverter x:Key="PercentageToWidthConverter"/>
             <converters:EqualityConverter x:Key="EqualityConverter"/>
+            <converters:EqualityMultiConverter x:Key="EqualityMultiConverter"/>
             <converters:GreaterThanOneToVisibilityConverter x:Key="GreaterThanOneToVisibilityConverter"/>
 
             <!-- Converter Aliases for backward compatibility -->
