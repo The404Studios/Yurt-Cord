@@ -66,6 +66,12 @@ public partial class VoiceCallDashboard : UserControl
             _selfPreviewFrameCount = 0;
         };
         _statsTimer.Start();
+
+        // Cleanup timer when unloaded
+        Unloaded += (s, e) =>
+        {
+            _statsTimer?.Stop();
+        };
     }
 
     private void LoadOutputDevices()

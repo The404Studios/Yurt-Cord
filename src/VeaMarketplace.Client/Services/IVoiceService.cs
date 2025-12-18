@@ -1158,7 +1158,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         // Check every 8th sample instead of every sample - still accurate enough for VAD
         var sum = 0L;
         var sampleCount = 0;
-        for (var i = 0; i < e.BytesRecorded; i += 16) // Every 8th sample (16 bytes = 8 samples * 2 bytes)
+        for (var i = 0; i + 1 < e.BytesRecorded; i += 16) // Every 8th sample (16 bytes = 8 samples * 2 bytes)
         {
             var sample = (short)(e.Buffer[i] | (e.Buffer[i + 1] << 8));
             sum += sample * sample;
@@ -1247,7 +1247,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
             // Copy and apply mic gain boost - optimized with unsafe for speed
             var audioData = new byte[e.BytesRecorded];
-            for (int i = 0; i < e.BytesRecorded; i += 2)
+            for (int i = 0; i + 1 < e.BytesRecorded; i += 2)
             {
                 var sample = (short)(e.Buffer[i] | (e.Buffer[i + 1] << 8));
                 // Apply gain with clipping protection
