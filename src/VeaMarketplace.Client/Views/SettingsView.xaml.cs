@@ -170,8 +170,9 @@ public partial class SettingsView : UserControl
 
         if (result == MessageBoxResult.Yes)
         {
-            // TODO: Clear auth and return to login
-            Application.Current.Shutdown();
+            // Request logout through navigation service
+            // This will disconnect all services, clear auth, and return to login
+            _navigationService.RequestLogout();
         }
     }
 

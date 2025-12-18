@@ -112,6 +112,67 @@ public partial class MainWindow : Window
         {
             Dispatcher.Invoke(() => SwitchView(view));
         };
+
+        // Handle logout request
+        _navigationService.OnLogoutRequested += () =>
+        {
+            Dispatcher.Invoke(async () => await HandleLogoutAsync());
+        };
+    }
+
+    private async Task HandleLogoutAsync()
+    {
+        // Get services that need to be disconnected
+        var apiService = (IApiService)App.ServiceProvider.GetService(typeof(IApiService))!;
+        var chatService = (IChatService)App.ServiceProvider.GetService(typeof(IChatService))!;
+        var profileService = (IProfileService)App.ServiceProvider.GetService(typeof(IProfileService))!;
+        var contentService = (IContentService)App.ServiceProvider.GetService(typeof(IContentService))!;
+        var settingsService = (ISettingsService)App.ServiceProvider.GetService(typeof(ISettingsService))!;
+
+        // Disconnect from voice channel if connected
+        if (_voiceService.IsInVoiceChannel)
+        {
+            await _voiceService.LeaveVoiceChannelAsync();
+        }
+
+        // Disconnect all services
+        try
+        {
+            await Task.WhenAll(
+                _voiceService.DisconnectAsync(),
+                chatService.DisconnectAsync(),
+                _friendService.DisconnectAsync(),
+                profileService.DisconnectAsync(),
+                contentService.DisconnectAsync()
+            );
+        }
+        catch
+        {
+            // Ignore disconnect errors
+        }
+
+        // Clear auth token
+        apiService.Logout();
+
+        // Clear saved token from settings
+        settingsService.Settings.SavedToken = null;
+        settingsService.SaveSettings();
+
+        // Animate transition back to login
+        var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(300));
+        fadeOut.Completed += (s, e) =>
+        {
+            MainAppGrid.Visibility = Visibility.Collapsed;
+            LoginView.Visibility = Visibility.Visible;
+            LoginView.Reset(); // Reset login form state
+
+            var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300));
+            LoginView.BeginAnimation(OpacityProperty, fadeIn);
+
+            // Show toast
+            _toastService.ShowInfo("Logged Out", "You have been logged out successfully.");
+        };
+        MainAppGrid.BeginAnimation(OpacityProperty, fadeOut);
     }
 
     private void TransitionToMainApp(string welcomeMessage)
@@ -163,6 +224,7 @@ public partial class MainWindow : Window
         BlockedUsersViewControl.Visibility = baseView == "BlockedUsers" ? Visibility.Visible : Visibility.Collapsed;
         PrivacySettingsViewControl.Visibility = baseView == "Privacy" || baseView == "PrivacySettings" ? Visibility.Visible : Visibility.Collapsed;
         DiscoverViewControl.Visibility = baseView == "Discover" ? Visibility.Visible : Visibility.Collapsed;
+        LeaderboardViewControl.Visibility = baseView == "Leaderboard" ? Visibility.Visible : Visibility.Collapsed;
 
         // Update sidebar button states
         UpdateButtonStates();

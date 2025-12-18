@@ -317,4 +317,33 @@ public partial class LoginView : UserControl
     {
         Application.Current.Shutdown();
     }
+
+    /// <summary>
+    /// Resets the login view to its initial state (called after logout)
+    /// </summary>
+    public void Reset()
+    {
+        // Clear form fields
+        UsernameBox.Text = string.Empty;
+        PasswordBox.Password = string.Empty;
+        EmailBox.Text = string.Empty;
+        ConfirmPasswordBox.Password = string.Empty;
+        RememberMeCheck.IsChecked = false;
+
+        // Reset to login mode if in registration mode
+        if (_isRegistering)
+        {
+            _isRegistering = false;
+            UpdateUI();
+        }
+
+        // Clear any errors
+        ClearError();
+
+        // Reset loading state
+        ShowLoading(false);
+
+        // Focus username field
+        Dispatcher.BeginInvoke(new Action(() => UsernameBox.Focus()), System.Windows.Threading.DispatcherPriority.Input);
+    }
 }

@@ -4,6 +4,7 @@ public interface INavigationService
 {
     event Action<string>? OnNavigate;
     event Action<string?>? OnViewUserProfile;
+    event Action? OnLogoutRequested;
     string CurrentView { get; }
     string? ViewingUserId { get; }
 
@@ -27,12 +28,14 @@ public interface INavigationService
     void NavigateToModeration();
     void NavigateToLeaderboard();
     void NavigateToActivityFeed();
+    void RequestLogout();
 }
 
 public class NavigationService : INavigationService
 {
     public event Action<string>? OnNavigate;
     public event Action<string?>? OnViewUserProfile;
+    public event Action? OnLogoutRequested;
     public string CurrentView { get; private set; } = "Chat";
     public string? ViewingUserId { get; private set; }
 
@@ -107,4 +110,9 @@ public class NavigationService : INavigationService
     public void NavigateToLeaderboard() => NavigateTo("Leaderboard");
 
     public void NavigateToActivityFeed() => NavigateTo("ActivityFeed");
+
+    public void RequestLogout()
+    {
+        OnLogoutRequested?.Invoke();
+    }
 }

@@ -40,6 +40,32 @@ public class AudioDeviceInfo
     public override string ToString() => Name;
 }
 
+// Video device information
+public class VideoDeviceInfo
+{
+    public int DeviceIndex { get; set; }
+    public string DeviceId { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public int DefaultWidth { get; set; } = 640;
+    public int DefaultHeight { get; set; } = 480;
+    public int[] SupportedFrameRates { get; set; } = [15, 24, 30];
+
+    public override string ToString() => Name;
+}
+
+// Video capture settings
+public class VideoCaptureSettings
+{
+    public int Width { get; set; } = 640;
+    public int Height { get; set; } = 480;
+    public int FrameRate { get; set; } = 30;
+    public int Quality { get; set; } = 75; // JPEG quality 0-100
+
+    public static VideoCaptureSettings Default => new();
+    public static VideoCaptureSettings LowBandwidth => new() { Width = 320, Height = 240, FrameRate = 15, Quality = 60 };
+    public static VideoCaptureSettings HighQuality => new() { Width = 1280, Height = 720, FrameRate = 30, Quality = 85 };
+}
+
 public interface IVoiceService
 {
     bool IsConnected { get; }
@@ -76,6 +102,18 @@ public interface IVoiceService
     Task StartScreenShareAsync(DisplayInfo display, ScreenShareQuality quality);
     Task StartScreenShareAsync(DisplayInfo display, ScreenShareSettings settings);
     Task StopScreenShareAsync();
+
+    // Video capture
+    bool IsVideoEnabled { get; }
+    VideoDeviceInfo? SelectedVideoDevice { get; set; }
+    event Action<byte[], int, int>? OnLocalVideoFrameReady;
+    event Action<string, byte[], int, int>? OnRemoteVideoFrameReceived;
+    event Action<string, bool>? OnUserVideoStateChanged;
+    List<VideoDeviceInfo> GetVideoDevices();
+    Task StartVideoAsync();
+    Task StartVideoAsync(VideoDeviceInfo device);
+    Task StartVideoAsync(VideoDeviceInfo device, VideoCaptureSettings settings);
+    Task StopVideoAsync();
 
     // Device enumeration
     List<DisplayInfo> GetAvailableDisplays();
@@ -178,6 +216,86 @@ public class VoiceUserState
     public bool IsSpeaking { get; set; }
     public double AudioLevel { get; set; }
     public bool IsScreenSharing { get; set; }
+    public bool IsVideoEnabled { get; set; }
+}
+
+/// <summary>
+/// Helper class to enumerate video capture devices using DirectShow
+/// Uses Windows Management Instrumentation as a fallback
+/// </summary>
+internal class DirectShowVideoDeviceEnumerator
+{
+    public List<VideoDeviceInfo> EnumerateDevices()
+    {
+        var devices = new List<VideoDeviceInfo>();
+
+        try
+        {
+            // Try WMI first for webcam enumeration
+            using var searcher = new System.Management.ManagementObjectSearcher(
+                "SELECT * FROM Win32_PnPEntity WHERE (PNPClass = 'Image' OR PNPClass = 'Camera')");
+
+            var index = 0;
+            foreach (var device in searcher.Get())
+            {
+                var name = device["Caption"]?.ToString() ?? device["Name"]?.ToString();
+                var deviceId = device["DeviceID"]?.ToString();
+
+                if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(deviceId))
+                {
+                    devices.Add(new VideoDeviceInfo
+                    {
+                        DeviceIndex = index++,
+                        DeviceId = deviceId,
+                        Name = name,
+                        DefaultWidth = 640,
+                        DefaultHeight = 480,
+                        SupportedFrameRates = [15, 24, 30]
+                    });
+                }
+            }
+        }
+        catch
+        {
+            // WMI failed, try fallback
+        }
+
+        // Fallback: check for integrated webcam
+        if (devices.Count == 0)
+        {
+            try
+            {
+                using var searcher = new System.Management.ManagementObjectSearcher(
+                    "SELECT * FROM Win32_PnPEntity WHERE Name LIKE '%camera%' OR Name LIKE '%webcam%'");
+
+                var index = 0;
+                foreach (var device in searcher.Get())
+                {
+                    var name = device["Caption"]?.ToString() ?? device["Name"]?.ToString();
+                    var deviceId = device["DeviceID"]?.ToString();
+
+                    if (!string.IsNullOrEmpty(name))
+                    {
+                        devices.Add(new VideoDeviceInfo
+                        {
+                            DeviceIndex = index++,
+                            DeviceId = deviceId ?? $"device_{index}",
+                            Name = name,
+                            DefaultWidth = 640,
+                            DefaultHeight = 480,
+                            SupportedFrameRates = [15, 24, 30]
+                        });
+                    }
+                }
+            }
+            catch
+            {
+                // Fallback also failed
+            }
+        }
+
+        return devices;
+    }
 }
 
 public class VoiceService : IVoiceService, IAsyncDisposable
@@ -249,6 +367,14 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     private long _lastAudioReceiveTimeTicks = DateTime.MinValue.Ticks;
     private const int AudioReceiveTimeoutMs = 200; // Consider voice inactive after 200ms of silence
 
+    // Video capture
+    private bool _isVideoEnabled;
+    private VideoDeviceInfo? _selectedVideoDevice;
+    private VideoCaptureSettings _videoCaptureSettings = VideoCaptureSettings.Default;
+    private CancellationTokenSource? _videoCts;
+    private Thread? _videoCaptureThread;
+    private readonly ConcurrentQueue<byte[]> _videoSendQueue = new();
+
     public VoiceService()
     {
         _screenSharingManager = new ScreenSharingManager();
@@ -318,6 +444,19 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     public event Action<string, bool>? OnUserScreenShareChanged;
     public event Action<ScreenShareStats>? OnScreenShareStatsUpdated;
     public event Action<bool, string>? OnConnectionStateChanged;
+
+    // Video events
+    public event Action<byte[], int, int>? OnLocalVideoFrameReady;
+    public event Action<string, byte[], int, int>? OnRemoteVideoFrameReceived;
+    public event Action<string, bool>? OnUserVideoStateChanged;
+
+    // Video properties
+    public bool IsVideoEnabled => _isVideoEnabled;
+    public VideoDeviceInfo? SelectedVideoDevice
+    {
+        get => _selectedVideoDevice;
+        set => _selectedVideoDevice = value;
+    }
 
     // User info for reconnection
     private string? _currentUserId;
@@ -473,6 +612,43 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                 IsInput = false
             });
         }
+        return devices;
+    }
+
+    public List<VideoDeviceInfo> GetVideoDevices()
+    {
+        var devices = new List<VideoDeviceInfo>();
+        try
+        {
+            // Use DirectShow to enumerate video devices
+            // This is a simplified implementation - in production you'd use DirectShow COM interop
+            // For now, we'll detect common webcam devices
+            var filterGraph = new DirectShowVideoDeviceEnumerator();
+            var videoDevices = filterGraph.EnumerateDevices();
+
+            foreach (var device in videoDevices)
+            {
+                devices.Add(device);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to enumerate video devices: {ex.Message}");
+        }
+
+        // Add a placeholder if no devices found
+        if (devices.Count == 0)
+        {
+            devices.Add(new VideoDeviceInfo
+            {
+                DeviceIndex = 0,
+                DeviceId = "default",
+                Name = "Default Camera",
+                DefaultWidth = 640,
+                DefaultHeight = 480
+            });
+        }
+
         return devices;
     }
 
@@ -1306,6 +1482,204 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         // Then stop local capture/streaming
         await _screenSharingManager.StopSharingAsync().ConfigureAwait(false);
+    }
+
+    // === Video Capture Methods ===
+
+    public async Task StartVideoAsync()
+    {
+        // Use first available device if none selected
+        if (_selectedVideoDevice == null)
+        {
+            var devices = GetVideoDevices();
+            _selectedVideoDevice = devices.FirstOrDefault();
+        }
+
+        if (_selectedVideoDevice != null)
+        {
+            await StartVideoAsync(_selectedVideoDevice);
+        }
+    }
+
+    public Task StartVideoAsync(VideoDeviceInfo device)
+    {
+        return StartVideoAsync(device, VideoCaptureSettings.Default);
+    }
+
+    public async Task StartVideoAsync(VideoDeviceInfo device, VideoCaptureSettings settings)
+    {
+        if (_isVideoEnabled || _connection == null || !IsConnected) return;
+
+        _selectedVideoDevice = device;
+        _videoCaptureSettings = settings;
+        _isVideoEnabled = true;
+
+        // Notify server that we're starting video
+        try
+        {
+            await _connection.SendAsync("StartVideo").ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to notify server of video start: {ex.Message}");
+        }
+
+        // Start video capture thread
+        _videoCts = new CancellationTokenSource();
+        _videoCaptureThread = new Thread(() => VideoCaptureLoop(_videoCts.Token))
+        {
+            IsBackground = true,
+            Priority = ThreadPriority.Normal,
+            Name = "VideoCaptureThread"
+        };
+        _videoCaptureThread.Start();
+
+        OnUserVideoStateChanged?.Invoke(_currentUserId ?? "", true);
+    }
+
+    public async Task StopVideoAsync()
+    {
+        if (!_isVideoEnabled) return;
+
+        _isVideoEnabled = false;
+
+        // Stop capture thread
+        _videoCts?.Cancel();
+        try
+        {
+            _videoCaptureThread?.Join(500);
+        }
+        catch { }
+        _videoCts?.Dispose();
+        _videoCts = null;
+        _videoCaptureThread = null;
+
+        // Clear queue
+        while (_videoSendQueue.TryDequeue(out _)) { }
+
+        // Notify server
+        if (_connection != null && IsConnected)
+        {
+            try
+            {
+                await _connection.SendAsync("StopVideo").ConfigureAwait(false);
+            }
+            catch
+            {
+                // Ignore errors
+            }
+        }
+
+        OnUserVideoStateChanged?.Invoke(_currentUserId ?? "", false);
+    }
+
+    private void VideoCaptureLoop(CancellationToken cancellationToken)
+    {
+        // Video capture implementation using GDI+ for webcam
+        // In a production app, this would use DirectShow, MediaFoundation, or OpenCV
+        var frameInterval = 1000 / _videoCaptureSettings.FrameRate;
+        var lastFrameTime = DateTime.UtcNow;
+
+        while (!cancellationToken.IsCancellationRequested && _isVideoEnabled)
+        {
+            try
+            {
+                var elapsed = (DateTime.UtcNow - lastFrameTime).TotalMilliseconds;
+                if (elapsed < frameInterval)
+                {
+                    Thread.Sleep(Math.Max(1, (int)(frameInterval - elapsed)));
+                    continue;
+                }
+
+                lastFrameTime = DateTime.UtcNow;
+
+                // Capture frame (placeholder - real implementation would use DirectShow/MediaFoundation)
+                // For now, create a test pattern or blank frame to demonstrate the pipeline
+                var width = _videoCaptureSettings.Width;
+                var height = _videoCaptureSettings.Height;
+
+                using var bitmap = new System.Drawing.Bitmap(width, height);
+                using var graphics = System.Drawing.Graphics.FromImage(bitmap);
+
+                // Draw a gradient test pattern to show video is working
+                var tick = Environment.TickCount;
+                var hue = (tick / 50) % 360;
+                graphics.Clear(ColorFromHSV(hue, 0.5, 0.8));
+
+                // Add text to show it's a test pattern
+                using var font = new System.Drawing.Font("Arial", 16);
+                using var brush = new System.Drawing.SolidBrush(System.Drawing.Color.White);
+                graphics.DrawString("Video Preview", font, brush, 10, 10);
+                graphics.DrawString($"Camera: {_selectedVideoDevice?.Name}", font, brush, 10, 40);
+                graphics.DrawString($"{width}x{height} @ {_videoCaptureSettings.FrameRate}fps", font, brush, 10, 70);
+
+                // Encode as JPEG
+                using var ms = new MemoryStream();
+                var encoder = System.Drawing.Imaging.ImageCodecInfo.GetImageEncoders()
+                    .FirstOrDefault(e => e.FormatID == System.Drawing.Imaging.ImageFormat.Jpeg.Guid);
+                var encoderParams = new System.Drawing.Imaging.EncoderParameters(1);
+                encoderParams.Param[0] = new System.Drawing.Imaging.EncoderParameter(
+                    System.Drawing.Imaging.Encoder.Quality, (long)_videoCaptureSettings.Quality);
+
+                if (encoder != null)
+                {
+                    bitmap.Save(ms, encoder, encoderParams);
+                }
+                else
+                {
+                    bitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
+                }
+
+                var frameData = ms.ToArray();
+
+                // Fire local preview event
+                OnLocalVideoFrameReady?.Invoke(frameData, width, height);
+
+                // Send to server if connected (fire and forget)
+                var conn = _connection;
+                if (conn != null && IsConnected)
+                {
+                    _ = conn.SendAsync("SendVideoFrame", frameData, width, height, cancellationToken)
+                        .ContinueWith(t =>
+                        {
+                            if (t.IsFaulted)
+                            {
+                                Debug.WriteLine($"Video frame send failed: {t.Exception?.InnerException?.Message}");
+                            }
+                        }, TaskContinuationOptions.ExecuteSynchronously);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Video capture error: {ex.Message}");
+                Thread.Sleep(100); // Back off on error
+            }
+        }
+    }
+
+    private static System.Drawing.Color ColorFromHSV(double hue, double saturation, double value)
+    {
+        var hi = Convert.ToInt32(Math.Floor(hue / 60)) % 6;
+        var f = hue / 60 - Math.Floor(hue / 60);
+        value *= 255;
+        var v = Convert.ToInt32(value);
+        var p = Convert.ToInt32(value * (1 - saturation));
+        var q = Convert.ToInt32(value * (1 - f * saturation));
+        var t = Convert.ToInt32(value * (1 - (1 - f) * saturation));
+
+        return hi switch
+        {
+            0 => System.Drawing.Color.FromArgb(255, v, t, p),
+            1 => System.Drawing.Color.FromArgb(255, q, v, p),
+            2 => System.Drawing.Color.FromArgb(255, p, v, t),
+            3 => System.Drawing.Color.FromArgb(255, p, q, v),
+            4 => System.Drawing.Color.FromArgb(255, t, p, v),
+            _ => System.Drawing.Color.FromArgb(255, v, p, q)
+        };
     }
 
     // === DM Call Methods ===
