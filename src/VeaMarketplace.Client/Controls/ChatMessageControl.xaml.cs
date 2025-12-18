@@ -957,6 +957,8 @@ public partial class ChatMessageControl : UserControl
     {
         if (_currentMessage == null) return;
         Clipboard.SetText(_currentMessage.SenderId);
+        var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+        toastService?.ShowInfo("Copied", "User ID copied to clipboard");
     }
 
     #endregion
@@ -971,19 +973,26 @@ public partial class ChatMessageControl : UserControl
 
     private void React_Click(object sender, RoutedEventArgs e)
     {
-        // Could open emoji picker
+        if (_currentMessage == null) return;
+        // Show reaction picker (feature pending full implementation)
+        var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+        toastService?.ShowInfo("Reactions", "Emoji picker coming soon!");
     }
 
     private void CopyText_Click(object sender, RoutedEventArgs e)
     {
         if (_currentMessage == null) return;
         Clipboard.SetText(_currentMessage.Content);
+        var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+        toastService?.ShowInfo("Copied", "Message text copied to clipboard");
     }
 
     private void CopyMessageLink_Click(object sender, RoutedEventArgs e)
     {
         if (_currentMessage == null) return;
-        Clipboard.SetText($"yurtcord://message/{_currentMessage.Id}");
+        Clipboard.SetText($"{AppConstants.UrlScheme}message/{_currentMessage.Id}");
+        var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+        toastService?.ShowInfo("Copied", "Message link copied to clipboard");
     }
 
     private void PinMessage_Click(object sender, RoutedEventArgs e)
@@ -997,7 +1006,9 @@ public partial class ChatMessageControl : UserControl
     private void EditMessage_Click(object sender, RoutedEventArgs e)
     {
         if (_currentMessage == null) return;
-        // Implement message editing - could show edit textbox inline
+        // Message editing (feature pending full implementation)
+        var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+        toastService?.ShowInfo("Edit Message", "Message editing coming soon!");
     }
 
     private async void DeleteMessage_Click(object sender, RoutedEventArgs e)
@@ -1024,6 +1035,8 @@ public partial class ChatMessageControl : UserControl
     {
         if (_currentMessage == null) return;
         Clipboard.SetText(_currentMessage.Id);
+        var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+        toastService?.ShowInfo("Copied", "Message ID copied to clipboard");
     }
 
     #endregion

@@ -286,5 +286,6 @@ public partial class MemberSidebar : UserControl
         if (user == null) return;
 
         Clipboard.SetText(user.Id);
+        _toastService?.ShowInfo("Copied", "User ID copied to clipboard");
     }
 }
