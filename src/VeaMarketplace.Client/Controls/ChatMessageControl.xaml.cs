@@ -990,7 +990,7 @@ public partial class ChatMessageControl : UserControl
     private void CopyMessageLink_Click(object sender, RoutedEventArgs e)
     {
         if (_currentMessage == null) return;
-        Clipboard.SetText($"plugin://message/{_currentMessage.Id}");
+        Clipboard.SetText($"{AppConstants.UrlScheme}message/{_currentMessage.Id}");
         var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
         toastService?.ShowInfo("Copied", "Message link copied to clipboard");
     }
