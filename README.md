@@ -1,6 +1,6 @@
-# Yurt Cord
+# Plugin
 
-A Discord-like marketplace and chat application built with .NET 8, WPF, and SignalR.
+A modern marketplace and community platform built with .NET 8, WPF, and SignalR. Featuring a sleek orange and black theme with smooth animations.
 
 ## Features
 
@@ -16,21 +16,23 @@ A Discord-like marketplace and chat application built with .NET 8, WPF, and Sign
 - Voice activity visualization
 - Mute/Deafen controls
 - Audio level indicators
+- Screen sharing support
 
 ### Marketplace
-- List items for sale (like Craigslist)
+- List items for sale
 - Category filtering (Software, Games, Services, Digital, etc.)
-- Search functionality
+- Advanced search functionality
 - Product detail views
 - $1.50 listing fee
 - PayPal and Bitcoin payment support
+- Product reviews and ratings
 
 ### User System
 - User registration and login
 - JWT authentication
 - Role system:
   - Owner (Gold)
-  - Admin (Red)
+  - Admin (Orange)
   - Moderator (Purple)
   - VIP (Green)
   - Verified (Blue)
@@ -45,12 +47,27 @@ A Discord-like marketplace and chat application built with .NET 8, WPF, and Sign
   - Bronze
   - Newcomer
 
+### Social Features
+- Friend system with requests
+- Direct messaging
+- User profiles with customization
+- Activity feed
+- Leaderboards
+
+### Moderation
+- Ban system (temporary and permanent)
+- Mute system
+- Warning system
+- Auto-moderation with filters
+- Moderation logs
+
 ### UI/UX
-- Discord-like dark theme
+- Premium dark theme with orange accent
+- Orange glow effects on interactive elements
 - Smooth animations and transitions
 - Custom window chrome
 - Responsive design
-- Beautiful gradients and shadows
+- Modern button hover effects with scale and glow
 
 ## Project Structure
 
@@ -66,7 +83,7 @@ VeaMarketplace/
 │   │   ├── Hubs/
 │   │   ├── Services/
 │   │   └── Data/
-│   └── VeaMarketplace.Client/     # WPF Client (Yurt Cord)
+│   └── VeaMarketplace.Client/     # WPF Client (Plugin)
 │       ├── Views/
 │       ├── ViewModels/
 │       ├── Controls/
@@ -144,15 +161,15 @@ dotnet build VeaMarketplace.sln
   - NAudio for voice
   - Custom animations and styles
 
-## Screenshots
+## Theme
 
-The application features a Discord-like interface with:
-- Dark theme with purple/pink accent colors
-- Animated login screen
-- Channel sidebar with voice channels
-- Member list with role badges
-- Marketplace with product cards
-- Profile page with stats and badges
+Plugin features a premium dark theme with:
+- Deep black backgrounds (#0A0A0B, #111113, #18181B)
+- Vibrant orange accent (#FF6B00)
+- Fire gradient effects (orange to gold)
+- Orange glow on hover states
+- Smooth scale animations on buttons
+- High contrast text for readability
 
 ## License
 
