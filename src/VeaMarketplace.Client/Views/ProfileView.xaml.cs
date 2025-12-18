@@ -18,6 +18,7 @@ public partial class ProfileView : UserControl
     private readonly IApiService? _apiService;
     private readonly INavigationService? _navigationService;
     private readonly IFriendService? _friendService;
+    private readonly IToastNotificationService? _toastService;
     private bool _isFollowing;
     private bool _isFriend;
 
@@ -32,6 +33,7 @@ public partial class ProfileView : UserControl
         _apiService = (IApiService)App.ServiceProvider.GetService(typeof(IApiService))!;
         _navigationService = (INavigationService)App.ServiceProvider.GetService(typeof(INavigationService))!;
         _friendService = (IFriendService?)App.ServiceProvider.GetService(typeof(IFriendService));
+        _toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
 
         DataContext = _viewModel;
         Loaded += (s, e) => UpdateUI();
@@ -454,8 +456,7 @@ public partial class ProfileView : UserControl
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Failed to update follow status: {ex.Message}", "Error",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            _toastService?.ShowError("Follow Failed", ex.Message);
         }
     }
 
@@ -467,15 +468,13 @@ public partial class ProfileView : UserControl
         try
         {
             await _friendService.SendFriendRequestAsync(user.Username);
-            MessageBox.Show($"Friend request sent to {user.Username}!", "Success",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            _toastService?.ShowSuccess("Friend Request Sent", $"Sent to {user.Username}");
             FriendText.Text = "Request Sent";
             AddFriendButton.IsEnabled = false;
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Failed to send friend request: {ex.Message}", "Error",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            _toastService?.ShowError("Request Failed", ex.Message);
         }
     }
 
@@ -540,9 +539,8 @@ public partial class ProfileView : UserControl
 
     private void ShowFollowListDialog(string userId, string listType)
     {
-        // For now, show a simple message - can be expanded to a full dialog later
+        // For now, show a simple toast - can be expanded to a full dialog later
         var displayName = _viewModel?.User?.GetDisplayName() ?? _apiService?.CurrentUser?.GetDisplayName() ?? "User";
-        MessageBox.Show($"View {listType} list for {displayName}\n\n(Full list view coming soon!)",
-            listType, MessageBoxButton.OK, MessageBoxImage.Information);
+        _toastService?.ShowInfo(listType, $"View {listType} list for {displayName} - coming soon!");
     }
 }

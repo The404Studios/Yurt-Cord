@@ -13,6 +13,7 @@ public partial class VoiceCallDashboard : UserControl
 {
     private readonly IVoiceService _voiceService = null!;
     private readonly IApiService _apiService = null!;
+    private readonly IToastNotificationService _toastService = null!;
     private readonly ObservableCollection<VoiceParticipant> _participants = new();
     private readonly ObservableCollection<ActiveScreenShare> _activeShares = new();
     private bool _isMuted;
@@ -43,6 +44,7 @@ public partial class VoiceCallDashboard : UserControl
 
         _voiceService = (IVoiceService)App.ServiceProvider.GetService(typeof(IVoiceService))!;
         _apiService = (IApiService)App.ServiceProvider.GetService(typeof(IApiService))!;
+        _toastService = (IToastNotificationService)App.ServiceProvider.GetService(typeof(IToastNotificationService))!;
 
         ParticipantsItemsControl.ItemsSource = _participants;
         ActiveSharesItemsControl.ItemsSource = _activeShares;
@@ -319,7 +321,7 @@ public partial class VoiceCallDashboard : UserControl
         {
             Dispatcher.Invoke(() =>
             {
-                MessageBox.Show(reason, "Disconnected", MessageBoxButton.OK, MessageBoxImage.Warning);
+                _toastService.ShowWarning("Disconnected", reason);
             });
         };
 
@@ -471,50 +473,57 @@ public partial class VoiceCallDashboard : UserControl
 
     private async void ScreenShare_Click(object sender, RoutedEventArgs e)
     {
-        if (_voiceService.IsScreenSharing)
+        try
         {
-            await _voiceService.StopScreenShareAsync();
-            ScreenShareIcon.Text = "🖥";
-            ScreenShareBtn.Background = null;
-            ScreenShareBtn.ToolTip = "Share Screen";
-
-            // Reset self preview state
-            _isViewingSelfPreview = false;
-            _previewHidden = false;
-            SelfSharePreviewToggle.Visibility = Visibility.Collapsed;
-            UpdateActiveSharesVisibility();
-
-            // If we were viewing self preview, clear the screen
-            if (StreamerNameText.Text.Contains("You"))
+            if (_voiceService.IsScreenSharing)
             {
-                ClearScreenShare();
+                await _voiceService.StopScreenShareAsync();
+                ScreenShareIcon.Text = "🖥";
+                ScreenShareBtn.Background = null;
+                ScreenShareBtn.ToolTip = "Share Screen";
+
+                // Reset self preview state
+                _isViewingSelfPreview = false;
+                _previewHidden = false;
+                SelfSharePreviewToggle.Visibility = Visibility.Collapsed;
+                UpdateActiveSharesVisibility();
+
+                // If we were viewing self preview, clear the screen
+                if (StreamerNameText.Text.Contains("You"))
+                {
+                    ClearScreenShare();
+                }
+            }
+            else
+            {
+                // Show screen share picker dialog
+                var picker = new ScreenSharePicker(_voiceService)
+                {
+                    Owner = Window.GetWindow(this)
+                };
+
+                if (picker.ShowDialog() == true && picker.SelectedDisplay != null)
+                {
+                    // Start screen sharing with the selected display and settings
+                    var settings = picker.GetSettings();
+                    await _voiceService.StartScreenShareAsync(picker.SelectedDisplay, settings);
+                    ScreenShareIcon.Text = "🛑";
+                    ScreenShareBtn.Background = new System.Windows.Media.SolidColorBrush(
+                        System.Windows.Media.Color.FromRgb(67, 181, 129));
+                    ScreenShareBtn.ToolTip = $"Stop Sharing ({picker.SelectedDisplay.FriendlyName}) - {settings.TargetWidth}x{settings.TargetHeight} @ {settings.TargetFps}fps";
+
+                    // Enable self preview by default when starting to share
+                    _isViewingSelfPreview = true;
+                    _previewHidden = false;
+                    _currentScreenSharerConnectionId = null; // Clear any other viewer to show self
+                    SelfSharePreviewToggle.Visibility = Visibility.Visible;
+                    UpdateActiveSharesVisibility();
+                }
             }
         }
-        else
+        catch (Exception ex)
         {
-            // Show screen share picker dialog
-            var picker = new ScreenSharePicker(_voiceService)
-            {
-                Owner = Window.GetWindow(this)
-            };
-
-            if (picker.ShowDialog() == true && picker.SelectedDisplay != null)
-            {
-                // Start screen sharing with the selected display and settings
-                var settings = picker.GetSettings();
-                await _voiceService.StartScreenShareAsync(picker.SelectedDisplay, settings);
-                ScreenShareIcon.Text = "🛑";
-                ScreenShareBtn.Background = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(67, 181, 129));
-                ScreenShareBtn.ToolTip = $"Stop Sharing ({picker.SelectedDisplay.FriendlyName}) - {settings.TargetWidth}x{settings.TargetHeight} @ {settings.TargetFps}fps";
-
-                // Enable self preview by default when starting to share
-                _isViewingSelfPreview = true;
-                _previewHidden = false;
-                _currentScreenSharerConnectionId = null; // Clear any other viewer to show self
-                SelfSharePreviewToggle.Visibility = Visibility.Visible;
-                UpdateActiveSharesVisibility();
-            }
+            _toastService.ShowError("Screen Share", $"Failed: {ex.Message}");
         }
     }
 
@@ -555,7 +564,14 @@ public partial class VoiceCallDashboard : UserControl
 
     private async void Leave_Click(object sender, RoutedEventArgs e)
     {
-        await _voiceService.LeaveVoiceChannelAsync();
+        try
+        {
+            await _voiceService.LeaveVoiceChannelAsync();
+        }
+        catch (Exception ex)
+        {
+            _toastService.ShowError("Leave Channel", $"Failed: {ex.Message}");
+        }
     }
 
     private void VolumeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -584,8 +600,7 @@ public partial class VoiceCallDashboard : UserControl
         _voiceService.SetUserMuted(participant.ConnectionId, !isMuted);
 
         var action = isMuted ? "Unmuted" : "Muted";
-        MessageBox.Show($"{action} {participant.Username} for yourself", $"User {action}",
-            MessageBoxButton.OK, MessageBoxImage.Information);
+        _toastService.ShowInfo($"User {action}", $"{action} {participant.Username} for yourself");
     }
 
     private void AdjustVolume_Click(object sender, RoutedEventArgs e)
@@ -603,8 +618,7 @@ public partial class VoiceCallDashboard : UserControl
         {
             volume = Math.Clamp(volume, 0, 200);
             _voiceService.SetUserVolume(participant.ConnectionId, volume / 100f);
-            MessageBox.Show($"Set {participant.Username}'s volume to {volume}%", "Volume Adjusted",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            _toastService.ShowInfo("Volume Adjusted", $"{participant.Username}'s volume set to {volume}%");
         }
     }
 
@@ -617,8 +631,7 @@ public partial class VoiceCallDashboard : UserControl
         if (participant.IsScreenSharing || _currentScreenSharerConnectionId == participant.ConnectionId)
         {
             // Already showing their stream in main view
-            MessageBox.Show($"Now watching {participant.Username}'s screen", "Screen Share",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            _toastService.ShowInfo("Screen Share", $"Now watching {participant.Username}'s screen");
         }
         else
         {

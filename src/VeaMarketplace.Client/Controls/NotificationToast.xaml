@@ -57,16 +57,16 @@
                 </DoubleAnimationUsingKeyFrames>
             </Storyboard>
 
-            <!-- Toast Type Brushes -->
+            <!-- Toast Type Brushes - Plugin Orange Theme -->
             <SolidColorBrush x:Key="ToastSuccessBrush" Color="#57F287"/>
             <SolidColorBrush x:Key="ToastErrorBrush" Color="#ED4245"/>
-            <SolidColorBrush x:Key="ToastWarningBrush" Color="#FEE75C"/>
-            <SolidColorBrush x:Key="ToastInfoBrush" Color="#5865F2"/>
+            <SolidColorBrush x:Key="ToastWarningBrush" Color="#FFB347"/>
+            <SolidColorBrush x:Key="ToastInfoBrush" Color="#FF6B00"/>
 
             <!-- Action Button Style -->
             <Style x:Key="ToastActionButton" TargetType="Button">
                 <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="Foreground" Value="{StaticResource AccentBlurpleBrush}"/>
+                <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
                 <Setter Property="BorderThickness" Value="0"/>
                 <Setter Property="Padding" Value="12,6"/>
                 <Setter Property="Margin" Value="0,0,8,0"/>
@@ -125,7 +125,7 @@
                 <Border x:Name="IconBorder" Grid.Column="0"
                         Width="40" Height="40"
                         CornerRadius="20"
-                        Background="{StaticResource AccentBlurpleBrush}"
+                        Background="{StaticResource AccentBrush}"
                         Margin="0,0,14,0"
                         VerticalAlignment="Top"
                         RenderTransformOrigin="0.5,0.5">
@@ -209,7 +209,7 @@
                 <Border Background="{StaticResource QuaternaryDarkBrush}"
                         CornerRadius="0,0,10,10"/>
                 <Border x:Name="ProgressBar"
-                        Background="{StaticResource AccentBlurpleBrush}"
+                        Background="{StaticResource AccentBrush}"
                         CornerRadius="0,0,10,10"
                         HorizontalAlignment="Left"
                         RenderTransformOrigin="0,0.5">
@@ -222,7 +222,7 @@
             <!-- Accent Bar at Left -->
             <Border x:Name="AccentBar"
                     Width="4"
-                    Background="{StaticResource AccentBlurpleBrush}"
+                    Background="{StaticResource AccentBrush}"
                     CornerRadius="10,0,0,10"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Stretch"/>

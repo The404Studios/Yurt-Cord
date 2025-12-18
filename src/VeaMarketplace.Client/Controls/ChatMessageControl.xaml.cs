@@ -865,18 +865,17 @@ public partial class ChatMessageControl : UserControl
     {
         UserProfilePopup.IsOpen = false;
         var friendService = (IFriendService?)App.ServiceProvider.GetService(typeof(IFriendService));
+        var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
         if (friendService != null)
         {
             try
             {
                 await friendService.SendFriendRequestAsync(user.Username);
-                MessageBox.Show($"Friend request sent to {user.Username}!", "Success",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                toastService?.ShowSuccess("Friend Request Sent", $"Sent to {user.Username}");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to send friend request: {ex.Message}", "Error",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+                toastService?.ShowError("Request Failed", ex.Message);
             }
         }
     }
@@ -907,18 +906,17 @@ public partial class ChatMessageControl : UserControl
         if (_currentMessage == null) return;
 
         var friendService = (IFriendService?)App.ServiceProvider.GetService(typeof(IFriendService));
+        var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
         if (friendService != null)
         {
             try
             {
                 await friendService.SendFriendRequestAsync(_currentMessage.SenderUsername);
-                MessageBox.Show($"Friend request sent to {_currentMessage.SenderUsername}!", "Success",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                toastService?.ShowSuccess("Friend Request Sent", $"Sent to {_currentMessage.SenderUsername}");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to send friend request: {ex.Message}", "Error",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+                toastService?.ShowError("Request Failed", ex.Message);
             }
         }
     }
@@ -933,8 +931,8 @@ public partial class ChatMessageControl : UserControl
     {
         if (_currentMessage == null) return;
         // Implement user muting
-        MessageBox.Show($"Muted {_currentMessage.SenderUsername}", "User Muted",
-            MessageBoxButton.OK, MessageBoxImage.Information);
+        var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+        toastService?.ShowInfo("User Muted", $"Muted {_currentMessage.SenderUsername}");
     }
 
     private void BlockUser_Click(object sender, RoutedEventArgs e)
@@ -950,8 +948,8 @@ public partial class ChatMessageControl : UserControl
         if (result == MessageBoxResult.Yes)
         {
             // Implement user blocking
-            MessageBox.Show($"Blocked {_currentMessage.SenderUsername}", "User Blocked",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+            toastService?.ShowSuccess("User Blocked", $"Blocked {_currentMessage.SenderUsername}");
         }
     }
 
@@ -992,7 +990,8 @@ public partial class ChatMessageControl : UserControl
     {
         if (_currentMessage == null) return;
         // Implement message pinning
-        MessageBox.Show("Message pinned!", "Pinned", MessageBoxButton.OK, MessageBoxImage.Information);
+        var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+        toastService?.ShowInfo("Pinned", "Message pinned!");
     }
 
     private void EditMessage_Click(object sender, RoutedEventArgs e)

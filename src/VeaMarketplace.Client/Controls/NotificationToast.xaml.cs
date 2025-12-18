@@ -146,16 +146,17 @@ public partial class NotificationToast : UserControl
 
     public void SetNotificationType(NotificationType type)
     {
+        // Plugin Orange Theme - #FF6B00 is the primary accent
         var (icon, color) = type switch
         {
             NotificationType.Success => ("\u2714", Color.FromRgb(87, 242, 135)),      // Checkmark, Green
-            NotificationType.Warning => ("\u26A0", Color.FromRgb(254, 231, 92)),      // Warning, Yellow
+            NotificationType.Warning => ("\u26A0", Color.FromRgb(255, 179, 71)),      // Warning, Orange-Gold
             NotificationType.Error => ("\u2716", Color.FromRgb(237, 66, 69)),         // X, Red
-            NotificationType.FriendRequest => ("\uD83D\uDC64", Color.FromRgb(88, 101, 242)), // Person, Blurple
-            NotificationType.Message => ("\uD83D\uDCAC", Color.FromRgb(0, 175, 244)), // Chat, Cyan
+            NotificationType.FriendRequest => ("\uD83D\uDC64", Color.FromRgb(255, 107, 0)), // Person, Plugin Orange
+            NotificationType.Message => ("\uD83D\uDCAC", Color.FromRgb(255, 133, 51)), // Chat, Light Orange
             NotificationType.Purchase => ("\uD83D\uDED2", Color.FromRgb(87, 242, 135)), // Cart, Green
-            NotificationType.Achievement => ("\uD83C\uDFC6", Color.FromRgb(255, 215, 0)), // Trophy, Gold
-            _ => ("\uD83D\uDD14", Color.FromRgb(88, 101, 242))                         // Bell, Blurple
+            NotificationType.Achievement => ("\uD83C\uDFC6", Color.FromRgb(255, 179, 71)), // Trophy, Gold-Orange
+            _ => ("\uD83D\uDD14", Color.FromRgb(255, 107, 0))                         // Bell, Plugin Orange
         };
 
         IconText.Text = icon;

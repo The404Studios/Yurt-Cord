@@ -16,6 +16,7 @@ public partial class MemberSidebar : UserControl
     private readonly ChatViewModel? _viewModel;
     private readonly IVoiceService? _voiceService;
     private readonly IFriendService? _friendService;
+    private readonly IToastNotificationService? _toastService;
     private OnlineUserDto? _selectedUser;
 
     public MemberSidebar()
@@ -28,6 +29,7 @@ public partial class MemberSidebar : UserControl
         _viewModel = (ChatViewModel)App.ServiceProvider.GetService(typeof(ChatViewModel))!;
         _voiceService = (IVoiceService)App.ServiceProvider.GetService(typeof(IVoiceService))!;
         _friendService = (IFriendService)App.ServiceProvider.GetService(typeof(IFriendService))!;
+        _toastService = (IToastNotificationService)App.ServiceProvider.GetService(typeof(IToastNotificationService))!;
 
         OnlineMembersControl.ItemsSource = _viewModel.OnlineUsers;
 
@@ -158,13 +160,11 @@ public partial class MemberSidebar : UserControl
         try
         {
             await _friendService.SendFriendRequestAsync(_selectedUser.Username);
-            MessageBox.Show($"Friend request sent to {_selectedUser.Username}!", "Success",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            _toastService?.ShowSuccess("Friend Request Sent", $"Sent to {_selectedUser.Username}");
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Failed to send friend request: {ex.Message}", "Error",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            _toastService?.ShowError("Request Failed", ex.Message);
         }
 
         ProfilePopup.IsOpen = false;
@@ -177,13 +177,11 @@ public partial class MemberSidebar : UserControl
         try
         {
             await _voiceService.SendNudgeAsync(_selectedUser.Id);
-            MessageBox.Show($"Nudged {_selectedUser.Username}!", "Nudge Sent",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            _toastService?.ShowInfo("Nudge Sent", $"Nudged {_selectedUser.Username}!");
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Failed to nudge: {ex.Message}", "Error",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            _toastService?.ShowError("Nudge Failed", ex.Message);
         }
 
         ProfilePopup.IsOpen = false;
@@ -230,13 +228,11 @@ public partial class MemberSidebar : UserControl
             try
             {
                 await friendService.SendFriendRequestAsync(user.Username);
-                MessageBox.Show($"Friend request sent to {user.Username}!", "Success",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                _toastService?.ShowSuccess("Friend Request Sent", $"Sent to {user.Username}");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to send friend request: {ex.Message}", "Error",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+                _toastService?.ShowError("Request Failed", ex.Message);
             }
         }
     }
@@ -248,8 +244,7 @@ public partial class MemberSidebar : UserControl
 
         // Could emit an event to insert @username in chat input
         Clipboard.SetText($"@{user.Username}");
-        MessageBox.Show($"Copied @{user.Username} to clipboard", "Mention",
-            MessageBoxButton.OK, MessageBoxImage.Information);
+        _toastService?.ShowInfo("Copied", $"@{user.Username} copied to clipboard");
     }
 
     private void InviteToVoice_Click(object sender, RoutedEventArgs e)
@@ -257,8 +252,7 @@ public partial class MemberSidebar : UserControl
         var user = GetUserFromSender(sender);
         if (user == null) return;
 
-        MessageBox.Show($"Invited {user.Username} to voice channel", "Invite Sent",
-            MessageBoxButton.OK, MessageBoxImage.Information);
+        _toastService?.ShowInfo("Invite Sent", $"Invited {user.Username} to voice channel");
     }
 
     private void MuteUser_Click(object sender, RoutedEventArgs e)
@@ -266,8 +260,7 @@ public partial class MemberSidebar : UserControl
         var user = GetUserFromSender(sender);
         if (user == null) return;
 
-        MessageBox.Show($"Muted {user.Username}", "User Muted",
-            MessageBoxButton.OK, MessageBoxImage.Information);
+        _toastService?.ShowInfo("User Muted", $"Muted {user.Username}");
     }
 
     private void BlockUser_Click(object sender, RoutedEventArgs e)
@@ -283,8 +276,7 @@ public partial class MemberSidebar : UserControl
 
         if (result == MessageBoxResult.Yes)
         {
-            MessageBox.Show($"Blocked {user.Username}", "User Blocked",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            _toastService?.ShowSuccess("User Blocked", $"Blocked {user.Username}");
         }
     }
 
