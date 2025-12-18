@@ -299,6 +299,16 @@
                                                               Command="{Binding DataContext.SendNudgeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                               CommandParameter="{Binding}"/>
                                                     <Separator/>
+                                                    <MenuItem Header="📝 Edit Note"
+                                                              Command="{Binding DataContext.EditFriendNoteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                              CommandParameter="{Binding}"/>
+                                                    <MenuItem Header="🎂 Set Birthday"
+                                                              Command="{Binding DataContext.SetFriendBirthdayCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                              CommandParameter="{Binding}"/>
+                                                    <MenuItem Header="🏷️ Add Tag"
+                                                              Command="{Binding DataContext.AddFriendTagCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                              CommandParameter="{Binding}"/>
+                                                    <Separator/>
                                                     <MenuItem Header="Remove Friend" Foreground="{StaticResource AccentRedBrush}"
                                                               Command="{Binding DataContext.RemoveFriendCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                               CommandParameter="{Binding}"/>

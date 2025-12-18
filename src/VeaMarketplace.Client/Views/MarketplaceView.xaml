@@ -6,12 +6,30 @@
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <!-- Marquee Animation Storyboard -->
+        <Storyboard x:Key="MarqueeAnimation" RepeatBehavior="Forever">
+            <DoubleAnimation Storyboard.TargetName="MarqueeTransform"
+                             Storyboard.TargetProperty="X"
+                             From="800" To="-1200"
+                             Duration="0:0:20"/>
+        </Storyboard>
     </UserControl.Resources>
+
+    <UserControl.Triggers>
+        <EventTrigger RoutedEvent="Loaded">
+            <BeginStoryboard Storyboard="{StaticResource MarqueeAnimation}"/>
+        </EventTrigger>
+    </UserControl.Triggers>
 
     <Grid>
         <Grid.RowDefinitions>
+            <!-- Moving MOTD Banner -->
+            <RowDefinition Height="36"/>
             <!-- Header -->
             <RowDefinition Height="60"/>
+            <!-- Rules Panel (Collapsible) -->
+            <RowDefinition Height="Auto"/>
             <!-- Filters -->
             <RowDefinition Height="Auto"/>
             <!-- Products Grid -->
@@ -20,8 +38,37 @@
             <RowDefinition Height="50"/>
         </Grid.RowDefinitions>
 
+        <!-- Moving MOTD Marquee Banner -->
+        <Border Grid.Row="0" Background="{StaticResource AccentBrush}" ClipToBounds="True">
+            <Grid>
+                <Canvas>
+                    <TextBlock x:Name="MarqueeText" Canvas.Top="8" FontSize="14" FontWeight="SemiBold"
+                               Foreground="White">
+                        <TextBlock.RenderTransform>
+                            <TranslateTransform x:Name="MarqueeTransform" X="800"/>
+                        </TextBlock.RenderTransform>
+                        <Run Text="Welcome to VEA Marketplace!"/>
+                        <Run Text="    "/>
+                        <Run Text="New: Seller verification badges now available"/>
+                        <Run Text="    "/>
+                        <Run Text="Holiday Sale: 20% off listing fees this week!"/>
+                        <Run Text="    "/>
+                        <Run Text="Tip: Use escrow for secure transactions"/>
+                        <Run Text="    "/>
+                        <Run Text="Report suspicious listings - keep our community safe"/>
+                        <Run Text="    "/>
+                        <Run Text="Join our Discord for support and updates"/>
+                    </TextBlock>
+                </Canvas>
+                <Button Content="Read Rules" Style="{StaticResource SecondaryButton}"
+                        HorizontalAlignment="Right" VerticalAlignment="Center"
+                        Margin="0,0,12,0" Padding="12,4" FontSize="11"
+                        Click="ToggleRulesPanel_Click"/>
+            </Grid>
+        </Border>
+
         <!-- Header -->
-        <Border Grid.Row="0" Background="{StaticResource TertiaryDarkBrush}"
+        <Border Grid.Row="1" Background="{StaticResource TertiaryDarkBrush}"
                 BorderBrush="{StaticResource PrimaryDarkBrush}" BorderThickness="0,0,0,1">
             <Grid Margin="24,0">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -43,8 +90,127 @@
             </Grid>
         </Border>
 
+        <!-- Rules Panel (Collapsible) -->
+        <Border x:Name="RulesPanel" Grid.Row="2" Background="{StaticResource SecondaryDarkBrush}"
+                Visibility="Collapsed" Padding="24,16">
+            <StackPanel>
+                <Grid Margin="0,0,0,16">
+                    <TextBlock Text="📜 Marketplace Rules &amp; Guidelines" FontSize="18" FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <Button Content="✕" Style="{StaticResource IconButton}"
+                            HorizontalAlignment="Right" Click="ToggleRulesPanel_Click"/>
+                </Grid>
+
+                <!-- Rule Categories -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Allowed Items -->
+                    <Border Grid.Column="0" Background="{StaticResource QuaternaryDarkBrush}"
+                            CornerRadius="8" Padding="16" Margin="0,0,8,0">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                <TextBlock Text="✅" FontSize="18" Margin="0,0,8,0"/>
+                                <TextBlock Text="Allowed" FontSize="14" FontWeight="Bold"
+                                           Foreground="{StaticResource AccentGreenBrush}"/>
+                            </StackPanel>
+                            <TextBlock Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" FontSize="12">
+                                <Run Text="• Digital products &amp; software"/>
+                                <LineBreak/>
+                                <Run Text="• Game accounts (with ToS disclosure)"/>
+                                <LineBreak/>
+                                <Run Text="• Graphics &amp; design services"/>
+                                <LineBreak/>
+                                <Run Text="• Coding &amp; development services"/>
+                                <LineBreak/>
+                                <Run Text="• Educational content"/>
+                                <LineBreak/>
+                                <Run Text="• Virtual items &amp; in-game currency"/>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Prohibited Items -->
+                    <Border Grid.Column="1" Background="{StaticResource QuaternaryDarkBrush}"
+                            CornerRadius="8" Padding="16" Margin="4,0">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                <TextBlock Text="🚫" FontSize="18" Margin="0,0,8,0"/>
+                                <TextBlock Text="Prohibited" FontSize="14" FontWeight="Bold"
+                                           Foreground="{StaticResource AccentRedBrush}"/>
+                            </StackPanel>
+                            <TextBlock Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" FontSize="12">
+                                <Run Text="• Illegal items or services"/>
+                                <LineBreak/>
+                                <Run Text="• Stolen accounts or data"/>
+                                <LineBreak/>
+                                <Run Text="• Malware or harmful software"/>
+                                <LineBreak/>
+                                <Run Text="• Personal information"/>
+                                <LineBreak/>
+                                <Run Text="• Counterfeit goods"/>
+                                <LineBreak/>
+                                <Run Text="• Weapons or dangerous items"/>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Best Practices -->
+                    <Border Grid.Column="2" Background="{StaticResource QuaternaryDarkBrush}"
+                            CornerRadius="8" Padding="16" Margin="8,0,0,0">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                <TextBlock Text="💡" FontSize="18" Margin="0,0,8,0"/>
+                                <TextBlock Text="Best Practices" FontSize="14" FontWeight="Bold"
+                                           Foreground="{StaticResource AccentYellowBrush}"/>
+                            </StackPanel>
+                            <TextBlock Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" FontSize="12">
+                                <Run Text="• Use detailed descriptions"/>
+                                <LineBreak/>
+                                <Run Text="• Include clear images"/>
+                                <LineBreak/>
+                                <Run Text="• Respond promptly to buyers"/>
+                                <LineBreak/>
+                                <Run Text="• Use escrow for high-value trades"/>
+                                <LineBreak/>
+                                <Run Text="• Keep transaction records"/>
+                                <LineBreak/>
+                                <Run Text="• Build your seller reputation"/>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Trust &amp; Safety Info -->
+                <Border Background="{StaticResource PrimaryDarkBrush}" CornerRadius="8"
+                        Padding="16" Margin="0,16,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="🛡️" FontSize="24" Margin="0,0,16,0"
+                                   VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Trust &amp; Safety" FontWeight="Bold" FontSize="14"
+                                       Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="Use our escrow service for secure transactions. Report suspicious activity immediately."
+                                       Foreground="{StaticResource TextMutedBrush}" FontSize="12" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <Button Grid.Column="2" Content="Learn More" Style="{StaticResource SecondaryButton}"
+                                VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </Border>
+
         <!-- Search and Filters -->
-        <Border Grid.Row="1" Padding="24,16">
+        <Border Grid.Row="3" Padding="24,16">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -88,7 +254,7 @@
         </Border>
 
         <!-- Products Grid -->
-        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto"
+        <ScrollViewer Grid.Row="4" VerticalScrollBarVisibility="Auto"
                       Style="{StaticResource ModernScrollViewer}">
             <ItemsControl x:Name="ProductsItemsControl" Margin="16,0">
                 <ItemsControl.ItemsPanel>
@@ -106,7 +272,7 @@
         </ScrollViewer>
 
         <!-- Pagination -->
-        <Border Grid.Row="3" Background="{StaticResource SecondaryDarkBrush}">
+        <Border Grid.Row="5" Background="{StaticResource SecondaryDarkBrush}">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
                         VerticalAlignment="Center">
                 <Button x:Name="PrevPageButton" Content="← Previous"
@@ -122,7 +288,7 @@
         </Border>
 
         <!-- Create Listing Modal -->
-        <Border x:Name="CreateListingModal" Grid.RowSpan="4" Visibility="Collapsed"
+        <Border x:Name="CreateListingModal" Grid.RowSpan="6" Visibility="Collapsed"
                 Background="#80000000">
             <Border Background="{StaticResource SecondaryDarkBrush}"
                     CornerRadius="8" Width="500" Padding="24"
@@ -214,7 +380,7 @@
         </Border>
 
         <!-- Product Detail Modal -->
-        <Border x:Name="ProductDetailModal" Grid.RowSpan="4" Visibility="Collapsed"
+        <Border x:Name="ProductDetailModal" Grid.RowSpan="6" Visibility="Collapsed"
                 Background="#80000000">
             <Border Background="{StaticResource SecondaryDarkBrush}"
                     CornerRadius="8" Width="600" MaxHeight="600" Padding="24"
@@ -329,7 +495,7 @@
         </Border>
 
         <!-- Loading Overlay -->
-        <Border x:Name="LoadingOverlay" Grid.RowSpan="4" Visibility="Collapsed"
+        <Border x:Name="LoadingOverlay" Grid.RowSpan="6" Visibility="Collapsed"
                 Background="#80000000">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <Border Width="50" Height="50" CornerRadius="25"
@@ -355,7 +521,7 @@
         </Border>
 
         <!-- Share Dialog -->
-        <Border x:Name="ShareDialog" Grid.RowSpan="4" Visibility="Collapsed"
+        <Border x:Name="ShareDialog" Grid.RowSpan="6" Visibility="Collapsed"
                 Background="#80000000" MouseDown="ShareDialogOverlay_MouseDown">
             <controls:ShareContentDialog x:Name="ShareContentDialogControl"
                                           HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -366,7 +532,7 @@
         </Border>
 
         <!-- My Listings Panel -->
-        <Border x:Name="MyListingsPanel" Grid.RowSpan="4" Visibility="Collapsed"
+        <Border x:Name="MyListingsPanel" Grid.RowSpan="6" Visibility="Collapsed"
                 Background="#80000000" MouseDown="MyListingsOverlay_MouseDown">
             <Border Background="{StaticResource SecondaryDarkBrush}"
                     CornerRadius="8" Width="700" MaxHeight="600" Padding="24"
@@ -490,7 +656,7 @@
         </Border>
 
         <!-- Toast Notification -->
-        <Border x:Name="ToastNotification" Grid.RowSpan="4"
+        <Border x:Name="ToastNotification" Grid.RowSpan="6"
                 VerticalAlignment="Bottom" HorizontalAlignment="Center"
                 Margin="0,0,0,80" Visibility="Collapsed">
             <Border Background="{StaticResource QuaternaryDarkBrush}"
@@ -506,7 +672,7 @@
         </Border>
 
         <!-- Quick Actions Toolbar -->
-        <controls:QuickActionsToolbar x:Name="QuickActionsToolbar" Grid.RowSpan="4"
+        <controls:QuickActionsToolbar x:Name="QuickActionsToolbar" Grid.RowSpan="6"
                                        HorizontalAlignment="Right" VerticalAlignment="Bottom"
                                        Margin="0,0,24,24"
                                        ScrollTopRequested="QuickActions_ScrollTopRequested"
