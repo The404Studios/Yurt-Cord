@@ -459,6 +459,7 @@ public partial class ChannelSidebar : UserControl
                 var channelName = element.Tag?.ToString() ??
                     (element.DataContext as ChannelDto)?.Id ?? "unknown";
                 Clipboard.SetText(channelName);
+                _toastService?.ShowInfo("Copied", "Channel ID copied to clipboard");
             }
         }
     }
