@@ -256,6 +256,7 @@ public class HttpScreenStreamService : IDisposable
         catch { }
 
         _httpClient.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     private class StartStreamResponse

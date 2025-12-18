@@ -328,5 +328,6 @@ public class DeltaFrameEncoder : IDisposable
     {
         _previousFrameData = null;
         _previousBlockChecksums = null;
+        GC.SuppressFinalize(this);
     }
 }

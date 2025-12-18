@@ -175,6 +175,7 @@ public class SmartCompressor : IDisposable
         }
         _qualityParams.Clear();
         _encodeStream.Dispose();
+        GC.SuppressFinalize(this);
     }
 }
 

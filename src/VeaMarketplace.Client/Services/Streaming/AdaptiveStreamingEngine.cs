@@ -173,6 +173,7 @@ public class AdaptiveStreamingEngine : IDisposable
         _deltaEncoder.Dispose();
         _compressor.Dispose();
         _bufferPool.Dispose();
+        GC.SuppressFinalize(this);
     }
 }
 
