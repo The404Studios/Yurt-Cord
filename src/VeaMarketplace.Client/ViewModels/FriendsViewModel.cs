@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VeaMarketplace.Client.Models;
 using VeaMarketplace.Client.Services;
 using VeaMarketplace.Shared.DTOs;
 
@@ -13,6 +14,7 @@ public partial class FriendsViewModel : BaseViewModel
     private readonly IApiService _apiService;
     private readonly IVoiceService _voiceService;
     private readonly INavigationService _navigationService;
+    private readonly ISocialService? _socialService;
     private readonly DispatcherTimer _callTimer;
     private DateTime _callStartTime;
 
@@ -104,12 +106,37 @@ public partial class FriendsViewModel : BaseViewModel
     public int PendingRequestsCount => PendingRequests.Count;
     public int UnreadConversationsCount => Conversations.Count(c => c.UnreadCount > 0);
 
+    // Friend Groups (from SocialService)
+    public ObservableCollection<FriendGroup>? FriendGroups => _socialService?.FriendGroups;
+    public bool HasFriendGroups => FriendGroups?.Count > 0;
+
+    // Activity tracking
+    public ObservableCollection<InteractionEvent>? RecentInteractions => _socialService?.RecentInteractions;
+    public ObservableCollection<FriendRecommendation>? FriendRecommendations => _socialService?.Recommendations;
+    public bool HasRecommendations => FriendRecommendations?.Count > 0;
+
+    // Friendship stats
+    [ObservableProperty]
+    private FriendshipStats? _friendshipStats;
+
+    // Top friends by interaction
+    [ObservableProperty]
+    private List<FriendInteractionSummary>? _topFriendsByInteraction;
+
+    // Pinned messages
+    public ObservableCollection<PinnedMessage>? PinnedMessages => _socialService?.PinnedMessages;
+    public bool HasPinnedMessages => PinnedMessages?.Count > 0;
+    public int PinnedMessagesCount => PinnedMessages?.Count ?? 0;
+
     public FriendsViewModel(IFriendService friendService, IApiService apiService, IVoiceService voiceService, INavigationService navigationService)
     {
         _friendService = friendService;
         _apiService = apiService;
         _voiceService = voiceService;
         _navigationService = navigationService;
+
+        // Try to get optional social service (handles groups, activity, reactions)
+        _socialService = App.ServiceProvider?.GetService(typeof(ISocialService)) as ISocialService;
 
         // Set up call timer
         _callTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -685,26 +712,6 @@ public partial class FriendsViewModel : BaseViewModel
         }
     }
 
-    partial void OnCurrentViewChanged(string value)
-    {
-        if (value == "Blocked")
-        {
-            _ = LoadBlockedUsersAsync();
-        }
-        else if (value == "Conversations")
-        {
-            _ = RefreshConversationsAsync();
-        }
-        else if (value == "Add")
-        {
-            // Reset search state when switching to Add view
-            SearchedUser = null;
-            UserSearchCompleted = false;
-            UserSearchMessage = string.Empty;
-            FriendRequestUsername = string.Empty;
-        }
-    }
-
     partial void OnFriendRequestUsernameChanged(string value)
     {
         // Reset search state on new input
@@ -732,4 +739,685 @@ public partial class FriendsViewModel : BaseViewModel
     }
 
     public bool CanSendFriendRequest => SearchedUser != null && !SearchedUser.IsFriend && UserSearchCompleted;
+
+    #region Friend Notes Commands (QoL Feature)
+
+    [RelayCommand]
+    private void EditFriendNote(FriendDto friend)
+    {
+        if (friend == null) return;
+
+        // Get QoL service
+        var qolService = App.ServiceProvider.GetService(typeof(IQoLService)) as IQoLService;
+        if (qolService == null) return;
+
+        var existingNote = qolService.GetFriendNote(friend.UserId);
+
+        // Show dialog with current note
+        var dialog = new System.Windows.Window
+        {
+            Title = $"Note for {friend.Username}",
+            Width = 400,
+            Height = 250,
+            WindowStartupLocation = System.Windows.WindowStartupLocation.CenterScreen,
+            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(47, 49, 54))
+        };
+
+        var panel = new System.Windows.Controls.StackPanel { Margin = new System.Windows.Thickness(20) };
+
+        var label = new System.Windows.Controls.TextBlock
+        {
+            Text = "Private note (only visible to you):",
+            Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+            Margin = new System.Windows.Thickness(0, 0, 0, 8)
+        };
+
+        var noteBox = new System.Windows.Controls.TextBox
+        {
+            Text = existingNote?.Note ?? "",
+            AcceptsReturn = true,
+            Height = 100,
+            TextWrapping = System.Windows.TextWrapping.Wrap,
+            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(32, 34, 37)),
+            Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+            BorderThickness = new System.Windows.Thickness(0),
+            Padding = new System.Windows.Thickness(12)
+        };
+
+        var saveBtn = new System.Windows.Controls.Button
+        {
+            Content = "Save Note",
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
+            Margin = new System.Windows.Thickness(0, 12, 0, 0),
+            Padding = new System.Windows.Thickness(16, 8, 16, 8),
+            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(88, 101, 242)),
+            Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+            BorderThickness = new System.Windows.Thickness(0)
+        };
+
+        saveBtn.Click += (s, e) =>
+        {
+            qolService.SetFriendNote(new FriendNote
+            {
+                UserId = friend.UserId,
+                Note = noteBox.Text,
+                Nickname = existingNote?.Nickname,
+                Tags = existingNote?.Tags ?? [],
+                Birthday = existingNote?.Birthday,
+                Timezone = existingNote?.Timezone
+            });
+            dialog.Close();
+        };
+
+        panel.Children.Add(label);
+        panel.Children.Add(noteBox);
+        panel.Children.Add(saveBtn);
+
+        dialog.Content = panel;
+        dialog.ShowDialog();
+    }
+
+    [RelayCommand]
+    private void SetFriendBirthday(FriendDto friend)
+    {
+        if (friend == null) return;
+
+        var qolService = App.ServiceProvider.GetService(typeof(IQoLService)) as IQoLService;
+        if (qolService == null) return;
+
+        var existingNote = qolService.GetFriendNote(friend.UserId);
+
+        var dialog = new System.Windows.Window
+        {
+            Title = $"Set Birthday for {friend.Username}",
+            Width = 350,
+            Height = 180,
+            WindowStartupLocation = System.Windows.WindowStartupLocation.CenterScreen,
+            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(47, 49, 54))
+        };
+
+        var panel = new System.Windows.Controls.StackPanel { Margin = new System.Windows.Thickness(20) };
+
+        var label = new System.Windows.Controls.TextBlock
+        {
+            Text = "Birthday:",
+            Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+            Margin = new System.Windows.Thickness(0, 0, 0, 8)
+        };
+
+        var datePicker = new System.Windows.Controls.DatePicker
+        {
+            SelectedDate = existingNote?.Birthday ?? DateTime.Today.AddYears(-20),
+            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(32, 34, 37))
+        };
+
+        var saveBtn = new System.Windows.Controls.Button
+        {
+            Content = "Save Birthday",
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
+            Margin = new System.Windows.Thickness(0, 12, 0, 0),
+            Padding = new System.Windows.Thickness(16, 8, 16, 8),
+            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(88, 101, 242)),
+            Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+            BorderThickness = new System.Windows.Thickness(0)
+        };
+
+        saveBtn.Click += (s, e) =>
+        {
+            qolService.SetFriendNote(new FriendNote
+            {
+                UserId = friend.UserId,
+                Note = existingNote?.Note ?? "",
+                Nickname = existingNote?.Nickname,
+                Tags = existingNote?.Tags ?? [],
+                Birthday = datePicker.SelectedDate,
+                Timezone = existingNote?.Timezone
+            });
+            dialog.Close();
+        };
+
+        panel.Children.Add(label);
+        panel.Children.Add(datePicker);
+        panel.Children.Add(saveBtn);
+
+        dialog.Content = panel;
+        dialog.ShowDialog();
+    }
+
+    [RelayCommand]
+    private void AddFriendTag(FriendDto friend)
+    {
+        if (friend == null) return;
+
+        var qolService = App.ServiceProvider.GetService(typeof(IQoLService)) as IQoLService;
+        if (qolService == null) return;
+
+        var existingNote = qolService.GetFriendNote(friend.UserId);
+        var currentTags = existingNote?.Tags ?? [];
+
+        var dialog = new System.Windows.Window
+        {
+            Title = $"Tags for {friend.Username}",
+            Width = 350,
+            Height = 220,
+            WindowStartupLocation = System.Windows.WindowStartupLocation.CenterScreen,
+            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(47, 49, 54))
+        };
+
+        var panel = new System.Windows.Controls.StackPanel { Margin = new System.Windows.Thickness(20) };
+
+        var label = new System.Windows.Controls.TextBlock
+        {
+            Text = "Current tags: " + (currentTags.Count > 0 ? string.Join(", ", currentTags) : "None"),
+            Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+            Margin = new System.Windows.Thickness(0, 0, 0, 12),
+            TextWrapping = System.Windows.TextWrapping.Wrap
+        };
+
+        var newTagLabel = new System.Windows.Controls.TextBlock
+        {
+            Text = "Add new tag:",
+            Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+            Margin = new System.Windows.Thickness(0, 0, 0, 4)
+        };
+
+        var tagBox = new System.Windows.Controls.TextBox
+        {
+            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(32, 34, 37)),
+            Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+            BorderThickness = new System.Windows.Thickness(0),
+            Padding = new System.Windows.Thickness(12, 8, 12, 8)
+        };
+
+        var addBtn = new System.Windows.Controls.Button
+        {
+            Content = "Add Tag",
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
+            Margin = new System.Windows.Thickness(0, 12, 0, 0),
+            Padding = new System.Windows.Thickness(16, 8, 16, 8),
+            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(88, 101, 242)),
+            Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+            BorderThickness = new System.Windows.Thickness(0)
+        };
+
+        addBtn.Click += (s, e) =>
+        {
+            if (!string.IsNullOrWhiteSpace(tagBox.Text))
+            {
+                var newTags = currentTags.ToList();
+                if (!newTags.Contains(tagBox.Text.Trim()))
+                {
+                    newTags.Add(tagBox.Text.Trim());
+                }
+
+                qolService.SetFriendNote(new FriendNote
+                {
+                    UserId = friend.UserId,
+                    Note = existingNote?.Note ?? "",
+                    Nickname = existingNote?.Nickname,
+                    Tags = newTags,
+                    Birthday = existingNote?.Birthday,
+                    Timezone = existingNote?.Timezone
+                });
+                dialog.Close();
+            }
+        };
+
+        panel.Children.Add(label);
+        panel.Children.Add(newTagLabel);
+        panel.Children.Add(tagBox);
+        panel.Children.Add(addBtn);
+
+        dialog.Content = panel;
+        dialog.ShowDialog();
+    }
+
+    #endregion
+
+    #region Friend Groups Commands
+
+    [RelayCommand]
+    private async Task CreateFriendGroupAsync()
+    {
+        if (_socialService == null) return;
+
+        var dialog = new System.Windows.Window
+        {
+            Title = "Create Friend Group",
+            Width = 400,
+            Height = 300,
+            WindowStartupLocation = System.Windows.WindowStartupLocation.CenterScreen,
+            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(47, 49, 54))
+        };
+
+        var panel = new System.Windows.Controls.StackPanel { Margin = new System.Windows.Thickness(20) };
+
+        var nameLabel = new System.Windows.Controls.TextBlock
+        {
+            Text = "Group Name:",
+            Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+            Margin = new System.Windows.Thickness(0, 0, 0, 4)
+        };
+
+        var nameBox = new System.Windows.Controls.TextBox
+        {
+            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(32, 34, 37)),
+            Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+            BorderThickness = new System.Windows.Thickness(0),
+            Padding = new System.Windows.Thickness(12, 8, 12, 8)
+        };
+
+        var emojiLabel = new System.Windows.Controls.TextBlock
+        {
+            Text = "Emoji (optional):",
+            Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+            Margin = new System.Windows.Thickness(0, 12, 0, 4)
+        };
+
+        var emojiBox = new System.Windows.Controls.TextBox
+        {
+            Text = "⭐",
+            MaxLength = 4,
+            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(32, 34, 37)),
+            Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+            BorderThickness = new System.Windows.Thickness(0),
+            Padding = new System.Windows.Thickness(12, 8, 12, 8)
+        };
+
+        var colorLabel = new System.Windows.Controls.TextBlock
+        {
+            Text = "Color:",
+            Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+            Margin = new System.Windows.Thickness(0, 12, 0, 4)
+        };
+
+        var colorBox = new System.Windows.Controls.TextBox
+        {
+            Text = "#5865F2",
+            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(32, 34, 37)),
+            Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+            BorderThickness = new System.Windows.Thickness(0),
+            Padding = new System.Windows.Thickness(12, 8, 12, 8)
+        };
+
+        var createBtn = new System.Windows.Controls.Button
+        {
+            Content = "Create Group",
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
+            Margin = new System.Windows.Thickness(0, 16, 0, 0),
+            Padding = new System.Windows.Thickness(16, 8, 16, 8),
+            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(88, 101, 242)),
+            Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+            BorderThickness = new System.Windows.Thickness(0)
+        };
+
+        createBtn.Click += async (s, e) =>
+        {
+            if (!string.IsNullOrWhiteSpace(nameBox.Text))
+            {
+                await _socialService.CreateFriendGroupAsync(nameBox.Text, emojiBox.Text, colorBox.Text);
+                OnPropertyChanged(nameof(FriendGroups));
+                OnPropertyChanged(nameof(HasFriendGroups));
+                dialog.Close();
+            }
+        };
+
+        panel.Children.Add(nameLabel);
+        panel.Children.Add(nameBox);
+        panel.Children.Add(emojiLabel);
+        panel.Children.Add(emojiBox);
+        panel.Children.Add(colorLabel);
+        panel.Children.Add(colorBox);
+        panel.Children.Add(createBtn);
+
+        dialog.Content = panel;
+        dialog.ShowDialog();
+    }
+
+    [RelayCommand]
+    private void ToggleGroupExpanded(FriendGroup group)
+    {
+        if (group == null) return;
+        group.IsCollapsed = !group.IsCollapsed;
+        OnPropertyChanged(nameof(FriendGroups));
+    }
+
+    [RelayCommand]
+    private void EditFriendGroup(FriendGroup group)
+    {
+        if (group == null || _socialService == null) return;
+
+        var dialog = new System.Windows.Window
+        {
+            Title = $"Edit {group.Name}",
+            Width = 400,
+            Height = 350,
+            WindowStartupLocation = System.Windows.WindowStartupLocation.CenterScreen,
+            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(47, 49, 54))
+        };
+
+        var panel = new System.Windows.Controls.StackPanel { Margin = new System.Windows.Thickness(20) };
+
+        var nameBox = new System.Windows.Controls.TextBox
+        {
+            Text = group.Name,
+            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(32, 34, 37)),
+            Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+            BorderThickness = new System.Windows.Thickness(0),
+            Padding = new System.Windows.Thickness(12, 8, 12, 8)
+        };
+
+        var emojiBox = new System.Windows.Controls.TextBox
+        {
+            Text = group.Emoji ?? "",
+            MaxLength = 4,
+            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(32, 34, 37)),
+            Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+            BorderThickness = new System.Windows.Thickness(0),
+            Padding = new System.Windows.Thickness(12, 8, 12, 8),
+            Margin = new System.Windows.Thickness(0, 12, 0, 0)
+        };
+
+        var colorBox = new System.Windows.Controls.TextBox
+        {
+            Text = group.Color,
+            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(32, 34, 37)),
+            Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+            BorderThickness = new System.Windows.Thickness(0),
+            Padding = new System.Windows.Thickness(12, 8, 12, 8),
+            Margin = new System.Windows.Thickness(0, 12, 0, 0)
+        };
+
+        var buttonsPanel = new System.Windows.Controls.StackPanel
+        {
+            Orientation = System.Windows.Controls.Orientation.Horizontal,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
+            Margin = new System.Windows.Thickness(0, 16, 0, 0)
+        };
+
+        var deleteBtn = new System.Windows.Controls.Button
+        {
+            Content = "Delete",
+            Margin = new System.Windows.Thickness(0, 0, 8, 0),
+            Padding = new System.Windows.Thickness(16, 8, 16, 8),
+            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(237, 66, 69)),
+            Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+            BorderThickness = new System.Windows.Thickness(0)
+        };
+
+        deleteBtn.Click += async (s, e) =>
+        {
+            await _socialService.DeleteFriendGroupAsync(group.Id);
+            OnPropertyChanged(nameof(FriendGroups));
+            OnPropertyChanged(nameof(HasFriendGroups));
+            dialog.Close();
+        };
+
+        var saveBtn = new System.Windows.Controls.Button
+        {
+            Content = "Save",
+            Padding = new System.Windows.Thickness(16, 8, 16, 8),
+            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(88, 101, 242)),
+            Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+            BorderThickness = new System.Windows.Thickness(0)
+        };
+
+        saveBtn.Click += async (s, e) =>
+        {
+            group.Name = nameBox.Text;
+            group.Emoji = emojiBox.Text;
+            group.Color = colorBox.Text;
+            await _socialService.UpdateFriendGroupAsync(group);
+            OnPropertyChanged(nameof(FriendGroups));
+            dialog.Close();
+        };
+
+        buttonsPanel.Children.Add(deleteBtn);
+        buttonsPanel.Children.Add(saveBtn);
+
+        panel.Children.Add(new System.Windows.Controls.TextBlock { Text = "Group Name:", Foreground = System.Windows.Media.Brushes.White, Margin = new System.Windows.Thickness(0, 0, 0, 4) });
+        panel.Children.Add(nameBox);
+        panel.Children.Add(new System.Windows.Controls.TextBlock { Text = "Emoji:", Foreground = System.Windows.Media.Brushes.White, Margin = new System.Windows.Thickness(0, 8, 0, 4) });
+        panel.Children.Add(emojiBox);
+        panel.Children.Add(new System.Windows.Controls.TextBlock { Text = "Color:", Foreground = System.Windows.Media.Brushes.White, Margin = new System.Windows.Thickness(0, 8, 0, 4) });
+        panel.Children.Add(colorBox);
+        panel.Children.Add(buttonsPanel);
+
+        dialog.Content = panel;
+        dialog.ShowDialog();
+    }
+
+    [RelayCommand]
+    private async Task AddFriendToGroupAsync(FriendDto friend, FriendGroup group)
+    {
+        if (friend == null || group == null || _socialService == null) return;
+        await _socialService.AddFriendToGroupAsync(group.Id, friend.UserId);
+        OnPropertyChanged(nameof(FriendGroups));
+    }
+
+    #endregion
+
+    #region Activity Commands
+
+    partial void OnCurrentViewChanged(string value)
+    {
+        if (value == "Blocked")
+        {
+            _ = LoadBlockedUsersAsync();
+        }
+        else if (value == "Conversations")
+        {
+            _ = RefreshConversationsAsync();
+        }
+        else if (value == "Add")
+        {
+            // Reset search state when switching to Add view
+            SearchedUser = null;
+            UserSearchCompleted = false;
+            UserSearchMessage = string.Empty;
+            FriendRequestUsername = string.Empty;
+        }
+        else if (value == "Activity")
+        {
+            _ = LoadActivityDataAsync();
+        }
+    }
+
+    private async Task LoadActivityDataAsync()
+    {
+        if (_socialService == null) return;
+
+        FriendshipStats = await _socialService.GetFriendshipStatsAsync();
+        TopFriendsByInteraction = await _socialService.GetTopFriendsByInteractionAsync(5);
+
+        OnPropertyChanged(nameof(FriendshipStats));
+        OnPropertyChanged(nameof(TopFriendsByInteraction));
+        OnPropertyChanged(nameof(RecentInteractions));
+        OnPropertyChanged(nameof(FriendRecommendations));
+        OnPropertyChanged(nameof(HasRecommendations));
+    }
+
+    [RelayCommand]
+    private async Task AddRecommendedFriendAsync(FriendRecommendation recommendation)
+    {
+        if (recommendation == null) return;
+
+        try
+        {
+            await _friendService.SendFriendRequestByIdAsync(recommendation.UserId);
+            if (_socialService != null)
+            {
+                await _socialService.DismissRecommendationAsync(recommendation.UserId);
+                OnPropertyChanged(nameof(FriendRecommendations));
+                OnPropertyChanged(nameof(HasRecommendations));
+            }
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to send friend request: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private async Task DismissRecommendationAsync(FriendRecommendation recommendation)
+    {
+        if (recommendation == null || _socialService == null) return;
+
+        await _socialService.DismissRecommendationAsync(recommendation.UserId);
+        OnPropertyChanged(nameof(FriendRecommendations));
+        OnPropertyChanged(nameof(HasRecommendations));
+    }
+
+    #endregion
+
+    #region Message Reactions and Pinned Messages Commands
+
+    [RelayCommand]
+    private async Task AddReactionAsync(DirectMessageDto message)
+    {
+        if (message == null || _socialService == null) return;
+
+        // Show emoji picker or use default reaction
+        var emojis = new[] { "👍", "❤️", "😂", "😮", "😢", "😡" };
+        var random = new Random();
+        var emoji = emojis[random.Next(emojis.Length)];
+
+        await _socialService.AddReactionAsync(message.Id, emoji);
+    }
+
+    [RelayCommand]
+    private async Task ToggleReactionAsync(ReactionGroup reaction)
+    {
+        if (reaction == null || _socialService == null) return;
+
+        // For now, just toggle the reaction off if user reacted
+        if (reaction.CurrentUserReacted)
+        {
+            await _socialService.RemoveReactionAsync(reaction.Emoji, reaction.Emoji);
+        }
+    }
+
+    [RelayCommand]
+    private void ReplyToMessage(DirectMessageDto message)
+    {
+        if (message == null) return;
+
+        // Set the message input to reference the reply
+        DmMessageInput = $"[Reply to {message.SenderUsername}] ";
+    }
+
+    [RelayCommand]
+    private async Task TogglePinMessageAsync(DirectMessageDto message)
+    {
+        if (message == null || _socialService == null || SelectedFriend == null) return;
+
+        // Check if message is already pinned
+        var isPinned = PinnedMessages?.Any(p => p.MessageId == message.Id) ?? false;
+
+        if (isPinned)
+        {
+            var pinned = PinnedMessages?.FirstOrDefault(p => p.MessageId == message.Id);
+            if (pinned != null)
+            {
+                await _socialService.UnpinMessageAsync(pinned.Id);
+            }
+        }
+        else
+        {
+            await _socialService.PinMessageAsync(SelectedFriend.UserId, message.Id);
+        }
+
+        OnPropertyChanged(nameof(PinnedMessages));
+        OnPropertyChanged(nameof(HasPinnedMessages));
+        OnPropertyChanged(nameof(PinnedMessagesCount));
+    }
+
+    [RelayCommand]
+    private void ShowPinnedMessages()
+    {
+        if (SelectedFriend == null || PinnedMessages == null) return;
+
+        var dialog = new System.Windows.Window
+        {
+            Title = $"Pinned Messages with {SelectedFriend.Username}",
+            Width = 450,
+            Height = 500,
+            WindowStartupLocation = System.Windows.WindowStartupLocation.CenterScreen,
+            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(47, 49, 54))
+        };
+
+        var scrollViewer = new System.Windows.Controls.ScrollViewer
+        {
+            VerticalScrollBarVisibility = System.Windows.Controls.ScrollBarVisibility.Auto
+        };
+
+        var panel = new System.Windows.Controls.StackPanel { Margin = new System.Windows.Thickness(16) };
+
+        if (PinnedMessages.Count == 0)
+        {
+            panel.Children.Add(new System.Windows.Controls.TextBlock
+            {
+                Text = "No pinned messages yet",
+                Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(148, 155, 164)),
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                Margin = new System.Windows.Thickness(0, 32, 0, 0)
+            });
+        }
+        else
+        {
+            foreach (var pin in PinnedMessages.OrderByDescending(p => p.PinnedAt))
+            {
+                var card = new System.Windows.Controls.Border
+                {
+                    Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(54, 57, 63)),
+                    CornerRadius = new System.Windows.CornerRadius(8),
+                    Padding = new System.Windows.Thickness(12),
+                    Margin = new System.Windows.Thickness(0, 0, 0, 8)
+                };
+
+                var cardPanel = new System.Windows.Controls.StackPanel();
+
+                cardPanel.Children.Add(new System.Windows.Controls.TextBlock
+                {
+                    Text = $"📌 Pinned by {pin.PinnedByUsername}",
+                    FontSize = 11,
+                    Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(148, 155, 164)),
+                    Margin = new System.Windows.Thickness(0, 0, 0, 8)
+                });
+
+                cardPanel.Children.Add(new System.Windows.Controls.TextBlock
+                {
+                    Text = pin.SenderUsername,
+                    FontWeight = System.Windows.FontWeights.SemiBold,
+                    Foreground = System.Windows.Media.Brushes.White
+                });
+
+                cardPanel.Children.Add(new System.Windows.Controls.TextBlock
+                {
+                    Text = pin.Content,
+                    TextWrapping = System.Windows.TextWrapping.Wrap,
+                    Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(220, 221, 222)),
+                    Margin = new System.Windows.Thickness(0, 4, 0, 0)
+                });
+
+                card.Child = cardPanel;
+                panel.Children.Add(card);
+            }
+        }
+
+        scrollViewer.Content = panel;
+        dialog.Content = scrollViewer;
+        dialog.ShowDialog();
+    }
+
+    [RelayCommand]
+    private void ShowMessageOptions(DirectMessageDto message)
+    {
+        if (message == null) return;
+
+        // Could show a context menu with more options
+        // For now, this is a placeholder for future expansion
+    }
+
+    #endregion
 }

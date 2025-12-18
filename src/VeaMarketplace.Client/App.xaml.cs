@@ -49,6 +49,8 @@ public partial class App : Application
         services.AddSingleton<IFileUploadService, FileUploadService>();
         services.AddSingleton<IImageCacheService, ImageCacheService>();
         services.AddSingleton<IContentService, ContentService>();
+        services.AddSingleton<IQoLService, QoLService>();
+        services.AddSingleton<ISocialService, SocialService>();
 
         // ViewModels
         services.AddTransient<LoginViewModel>();

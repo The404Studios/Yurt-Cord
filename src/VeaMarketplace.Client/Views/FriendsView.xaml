@@ -51,6 +51,9 @@
                         <Button Content="All" Style="{StaticResource SecondaryButton}"
                                 Margin="0,0,4,0" Padding="12,6"
                                 Command="{Binding SwitchViewCommand}" CommandParameter="Friends"/>
+                        <Button Content="Groups" Style="{StaticResource SecondaryButton}"
+                                Margin="0,0,4,0" Padding="12,6"
+                                Command="{Binding SwitchViewCommand}" CommandParameter="Groups"/>
                         <Button Style="{StaticResource SecondaryButton}"
                                 Margin="0,0,4,0" Padding="12,6"
                                 Command="{Binding SwitchViewCommand}" CommandParameter="Conversations">
@@ -75,6 +78,9 @@
                                 </Border>
                             </StackPanel>
                         </Button>
+                        <Button Content="Activity" Style="{StaticResource SecondaryButton}"
+                                Margin="0,0,4,0" Padding="12,6"
+                                Command="{Binding SwitchViewCommand}" CommandParameter="Activity"/>
                         <Button Content="Add" Style="{StaticResource SecondaryButton}"
                                 Margin="0,0,4,0" Padding="12,6"
                                 Command="{Binding SwitchViewCommand}" CommandParameter="Add"/>
@@ -299,6 +305,16 @@
                                                               Command="{Binding DataContext.SendNudgeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                               CommandParameter="{Binding}"/>
                                                     <Separator/>
+                                                    <MenuItem Header="📝 Edit Note"
+                                                              Command="{Binding DataContext.EditFriendNoteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                              CommandParameter="{Binding}"/>
+                                                    <MenuItem Header="🎂 Set Birthday"
+                                                              Command="{Binding DataContext.SetFriendBirthdayCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                              CommandParameter="{Binding}"/>
+                                                    <MenuItem Header="🏷️ Add Tag"
+                                                              Command="{Binding DataContext.AddFriendTagCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                              CommandParameter="{Binding}"/>
+                                                    <Separator/>
                                                     <MenuItem Header="Remove Friend" Foreground="{StaticResource AccentRedBrush}"
                                                               Command="{Binding DataContext.RemoveFriendCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                               CommandParameter="{Binding}"/>
@@ -341,20 +357,39 @@
                                                     <TextBlock Text="{Binding Username}"
                                                                Foreground="{StaticResource TextPrimaryBrush}"
                                                                FontWeight="Medium"/>
-                                                    <TextBlock FontSize="11">
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock">
-                                                                <Setter Property="Text" Value="Offline"/>
-                                                                <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsOnline}" Value="True">
-                                                                        <Setter Property="Text" Value="Online"/>
-                                                                        <Setter Property="Foreground" Value="{StaticResource AccentGreenBrush}"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
+                                                    <!-- Rich Presence / Status -->
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <!-- Custom Activity Status -->
+                                                        <TextBlock FontSize="11" Margin="0,0,8,0"
+                                                                   Visibility="{Binding CustomStatus, Converter={StaticResource NullToVisibilityConverter}}">
+                                                            <Run Text="{Binding StatusEmoji}" FontSize="12"/>
+                                                            <Run Text="{Binding CustomStatus}"
+                                                                 Foreground="{StaticResource TextMutedBrush}"/>
+                                                        </TextBlock>
+                                                        <!-- Activity Type (Playing, Streaming, Listening) -->
+                                                        <TextBlock FontSize="11"
+                                                                   Visibility="{Binding Activity, Converter={StaticResource NullToVisibilityConverter}}">
+                                                            <Run Text="🎮" FontSize="10"/>
+                                                            <Run Text="{Binding Activity}"
+                                                                 Foreground="{StaticResource AccentBlueBrush}"/>
+                                                        </TextBlock>
+                                                        <!-- Default Online/Offline Status -->
+                                                        <TextBlock FontSize="11"
+                                                                   Visibility="{Binding CustomStatus, Converter={StaticResource NullToVisibilityInverseConverter}}">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Text" Value="Offline"/>
+                                                                    <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsOnline}" Value="True">
+                                                                            <Setter Property="Text" Value="Online"/>
+                                                                            <Setter Property="Foreground" Value="{StaticResource AccentGreenBrush}"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </StackPanel>
                                                 </StackPanel>
 
                                                 <!-- Call button -->
@@ -480,6 +515,339 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </StackPanel>
+
+                        <!-- Friend Groups View -->
+                        <StackPanel Visibility="{Binding CurrentView, Converter={StaticResource StringToVisConverter}, ConverterParameter=Groups}">
+                            <!-- Create New Group Button -->
+                            <Button Style="{StaticResource SecondaryButton}" Margin="8,8,8,16"
+                                    Padding="12,8" HorizontalAlignment="Stretch"
+                                    Command="{Binding CreateFriendGroupCommand}">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock Text="➕" FontSize="14" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Create New Group" FontWeight="Medium"/>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Friend Groups List -->
+                            <ItemsControl ItemsSource="{Binding FriendGroups}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource QuaternaryDarkBrush}"
+                                                CornerRadius="8" Margin="8,4" Padding="0">
+                                            <StackPanel>
+                                                <!-- Group Header -->
+                                                <Button Style="{StaticResource ChannelButton}"
+                                                        Command="{Binding DataContext.ToggleGroupExpandedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}">
+                                                    <Grid Margin="12,10">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <!-- Expand/Collapse Arrow -->
+                                                        <TextBlock Grid.Column="0" FontSize="10"
+                                                                   Foreground="{StaticResource TextMutedBrush}"
+                                                                   Margin="0,0,8,0" VerticalAlignment="Center">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Text" Value="▶"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsCollapsed}" Value="False">
+                                                                            <Setter Property="Text" Value="▼"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+
+                                                        <!-- Group Name with Emoji and Color -->
+                                                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                            <TextBlock Text="{Binding Emoji}" FontSize="16" Margin="0,0,8,0"
+                                                                       Visibility="{Binding Emoji, Converter={StaticResource NullToVisibilityConverter}}"/>
+                                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                                       Foreground="{Binding ColorBrush}"/>
+                                                        </StackPanel>
+
+                                                        <!-- Member Count -->
+                                                        <Border Grid.Column="2" Background="{StaticResource PrimaryDarkBrush}"
+                                                                CornerRadius="8" Padding="6,2" Margin="0,0,8,0">
+                                                            <TextBlock FontSize="11" Foreground="{StaticResource TextMutedBrush}">
+                                                                <Run Text="{Binding MemberCount, Mode=OneWay}"/>
+                                                                <Run Text="friends"/>
+                                                            </TextBlock>
+                                                        </Border>
+
+                                                        <!-- Settings Button -->
+                                                        <Button Grid.Column="3" Style="{StaticResource IconButton}"
+                                                                Width="24" Height="24"
+                                                                Command="{Binding DataContext.EditFriendGroupCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                CommandParameter="{Binding}">
+                                                            <TextBlock Text="⚙" FontSize="12"/>
+                                                        </Button>
+                                                    </Grid>
+                                                </Button>
+
+                                                <!-- Group Members (when expanded) -->
+                                                <ItemsControl ItemsSource="{Binding DataContext.GetGroupMembers, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                              Margin="24,0,8,8"
+                                                              Visibility="{Binding IsCollapsed, Converter={StaticResource InverseBoolToVis}}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Border Background="Transparent" Margin="0,2"
+                                                                    CornerRadius="4" Padding="8,4">
+                                                                <Grid>
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="Auto"/>
+                                                                        <ColumnDefinition Width="*"/>
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <Grid Grid.Column="0" Margin="0,0,8,0">
+                                                                        <Ellipse Width="24" Height="24">
+                                                                            <Ellipse.Fill>
+                                                                                <ImageBrush ImageSource="{Binding AvatarUrl}"/>
+                                                                            </Ellipse.Fill>
+                                                                        </Ellipse>
+                                                                        <Ellipse Width="8" Height="8"
+                                                                                 HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                                                 Stroke="{StaticResource QuaternaryDarkBrush}" StrokeThickness="1">
+                                                                            <Ellipse.Style>
+                                                                                <Style TargetType="Ellipse">
+                                                                                    <Setter Property="Fill" Value="{StaticResource TextMutedBrush}"/>
+                                                                                    <Style.Triggers>
+                                                                                        <DataTrigger Binding="{Binding IsOnline}" Value="True">
+                                                                                            <Setter Property="Fill" Value="{StaticResource AccentGreenBrush}"/>
+                                                                                        </DataTrigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </Ellipse.Style>
+                                                                        </Ellipse>
+                                                                    </Grid>
+                                                                    <TextBlock Grid.Column="1" Text="{Binding Username}"
+                                                                               FontSize="13"
+                                                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                                                               VerticalAlignment="Center"/>
+                                                                </Grid>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Empty State -->
+                            <StackPanel Margin="16,32"
+                                        Visibility="{Binding HasFriendGroups, Converter={StaticResource InverseBoolToVis}}">
+                                <TextBlock Text="📁" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                                <TextBlock Text="No friend groups yet" FontSize="16" FontWeight="Medium"
+                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock Text="Create groups to organize your friends" FontSize="13"
+                                           Foreground="{StaticResource TextMutedBrush}"
+                                           HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Activity View -->
+                        <StackPanel Visibility="{Binding CurrentView, Converter={StaticResource StringToVisConverter}, ConverterParameter=Activity}">
+                            <!-- Friendship Stats -->
+                            <Border Background="{StaticResource QuaternaryDarkBrush}" CornerRadius="8"
+                                    Margin="8" Padding="16">
+                                <StackPanel>
+                                    <TextBlock Text="YOUR ACTIVITY" FontSize="11" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextMutedBrush}"
+                                               Margin="0,0,0,12"/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                                            <TextBlock Text="{Binding FriendshipStats.TotalMessagesThisWeek}"
+                                                       FontSize="24" FontWeight="Bold"
+                                                       Foreground="{StaticResource AccentBlueBrush}"
+                                                       HorizontalAlignment="Center"/>
+                                            <TextBlock Text="Messages" FontSize="11"
+                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                       HorizontalAlignment="Center"/>
+                                            <TextBlock Text="this week" FontSize="10"
+                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                       HorizontalAlignment="Center"/>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                                            <TextBlock Text="{Binding FriendshipStats.TotalVoiceMinutesThisWeek}"
+                                                       FontSize="24" FontWeight="Bold"
+                                                       Foreground="{StaticResource AccentGreenBrush}"
+                                                       HorizontalAlignment="Center"/>
+                                            <TextBlock Text="Voice mins" FontSize="11"
+                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                       HorizontalAlignment="Center"/>
+                                            <TextBlock Text="this week" FontSize="10"
+                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                       HorizontalAlignment="Center"/>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                                            <TextBlock Text="{Binding FriendshipStats.CurrentDailyStreak}"
+                                                       FontSize="24" FontWeight="Bold"
+                                                       Foreground="{StaticResource AccentYellowBrush}"
+                                                       HorizontalAlignment="Center"/>
+                                            <TextBlock Text="Day streak" FontSize="11"
+                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                       HorizontalAlignment="Center"/>
+                                            <TextBlock Text="🔥" FontSize="12" HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Top Friends by Interaction -->
+                            <TextBlock Text="TOP FRIENDS" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextMutedBrush}"
+                                       Margin="16,16,16,8"/>
+                            <ItemsControl ItemsSource="{Binding TopFriendsByInteraction}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource QuaternaryDarkBrush}"
+                                                CornerRadius="4" Margin="8,2" Padding="12,8">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <Ellipse Grid.Column="0" Width="36" Height="36" Margin="0,0,12,0">
+                                                    <Ellipse.Fill>
+                                                        <ImageBrush ImageSource="{Binding FriendAvatarUrl}"/>
+                                                    </Ellipse.Fill>
+                                                </Ellipse>
+
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding FriendUsername}" FontWeight="Medium"
+                                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                    <TextBlock FontSize="11" Foreground="{StaticResource TextMutedBrush}">
+                                                        <Run Text="Friends for"/>
+                                                        <Run Text="{Binding FriendshipDurationText, Mode=OneWay}"/>
+                                                    </TextBlock>
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Column="2" VerticalAlignment="Center"
+                                                            HorizontalAlignment="Right">
+                                                    <TextBlock FontSize="12" FontWeight="Medium"
+                                                               Foreground="{StaticResource AccentBlueBrush}"
+                                                               HorizontalAlignment="Right">
+                                                        <Run Text="{Binding TotalInteractions}"/>
+                                                        <Run Text="interactions"/>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Recent Interactions -->
+                            <TextBlock Text="RECENT ACTIVITY" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextMutedBrush}"
+                                       Margin="16,24,16,8"/>
+                            <ItemsControl ItemsSource="{Binding RecentInteractions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="Transparent" Margin="8,2" Padding="12,6">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Grid.Column="0" Text="{Binding Icon}" FontSize="16"
+                                                           Margin="0,0,12,0" VerticalAlignment="Center"/>
+
+                                                <TextBlock Grid.Column="1" Text="{Binding Description}"
+                                                           FontSize="13"
+                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           VerticalAlignment="Center"/>
+
+                                                <TextBlock Grid.Column="2" FontSize="11"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           VerticalAlignment="Center">
+                                                    <TextBlock.Text>
+                                                        <Binding Path="Timestamp" StringFormat="{}{0:MMM d, h:mm tt}"/>
+                                                    </TextBlock.Text>
+                                                </TextBlock>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Friend Recommendations -->
+                            <TextBlock Text="FRIEND SUGGESTIONS" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextMutedBrush}"
+                                       Margin="16,24,16,8"
+                                       Visibility="{Binding HasRecommendations, Converter={StaticResource BoolToVis}}"/>
+                            <ItemsControl ItemsSource="{Binding FriendRecommendations}"
+                                          Visibility="{Binding HasRecommendations, Converter={StaticResource BoolToVis}}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource QuaternaryDarkBrush}"
+                                                CornerRadius="8" Margin="8,4" Padding="12">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <Ellipse Grid.Column="0" Width="44" Height="44" Margin="0,0,12,0">
+                                                    <Ellipse.Fill>
+                                                        <ImageBrush ImageSource="{Binding AvatarUrl}"/>
+                                                    </Ellipse.Fill>
+                                                </Ellipse>
+
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Username}" FontWeight="Medium"
+                                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                        <TextBlock Text="{Binding ReasonIcon}" FontSize="12"
+                                                                   Margin="0,0,4,0"/>
+                                                        <TextBlock Text="{Binding ReasonText}" FontSize="12"
+                                                                   Foreground="{StaticResource TextMutedBrush}"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                                            VerticalAlignment="Center">
+                                                    <Button Style="{StaticResource PrimaryButton}"
+                                                            Padding="12,6"
+                                                            Command="{Binding DataContext.AddRecommendedFriendCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}">
+                                                        <TextBlock Text="Add"/>
+                                                    </Button>
+                                                    <Button Style="{StaticResource IconButton}"
+                                                            Width="28" Height="28" Margin="4,0,0,0"
+                                                            ToolTip="Dismiss"
+                                                            Command="{Binding DataContext.DismissRecommendationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}">
+                                                        <TextBlock Text="✕" FontSize="12"
+                                                                   Foreground="{StaticResource TextMutedBrush}"/>
+                                                    </Button>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
             </Grid>
@@ -553,40 +921,186 @@
                         </Grid>
                     </Border>
 
+                    <!-- Pinned Messages Bar -->
+                    <Border Grid.Row="1" Background="{StaticResource QuaternaryDarkBrush}"
+                            Padding="12,8"
+                            Visibility="{Binding HasPinnedMessages, Converter={StaticResource BoolToVis}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" Text="📌" FontSize="14" VerticalAlignment="Center"
+                                       Margin="0,0,8,0"/>
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center">
+                                <Run Text="{Binding PinnedMessagesCount, Mode=OneWay}" FontWeight="Medium"
+                                     Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <Run Text=" pinned message(s)" Foreground="{StaticResource TextMutedBrush}"/>
+                            </TextBlock>
+                            <Button Grid.Column="2" Style="{StaticResource SecondaryButton}"
+                                    Padding="8,4" Content="View All"
+                                    Command="{Binding ShowPinnedMessagesCommand}"/>
+                        </Grid>
+                    </Border>
+
                     <!-- Messages -->
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
-                                  Style="{StaticResource ModernScrollViewer}">
+                                  Style="{StaticResource ModernScrollViewer}"
+                                  Margin="0,0,0,0">
                         <ItemsControl ItemsSource="{Binding CurrentDMHistory}" Margin="16,8">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Margin="0,4">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
+                                    <Border x:Name="MessageContainer" Background="Transparent"
+                                            Margin="0,4" Padding="8,6" CornerRadius="4">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="{StaticResource QuaternaryDarkBrush}"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
 
-                                        <Ellipse Grid.Column="0" Width="40" Height="40"
-                                                 Margin="0,0,12,0" VerticalAlignment="Top">
-                                            <Ellipse.Fill>
-                                                <ImageBrush ImageSource="{Binding SenderAvatarUrl}"/>
-                                            </Ellipse.Fill>
-                                        </Ellipse>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
 
-                                        <StackPanel Grid.Column="1">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="{Binding SenderUsername}"
-                                                           FontWeight="Medium"
-                                                           Foreground="{StaticResource TextPrimaryBrush}"/>
-                                                <TextBlock Text="{Binding Timestamp, StringFormat=' {0:h:mm tt}'}"
-                                                           FontSize="11"
-                                                           Foreground="{StaticResource TextMutedBrush}"
-                                                           Margin="8,0,0,0"/>
+                                            <Ellipse Grid.Column="0" Width="40" Height="40"
+                                                     Margin="0,0,12,0" VerticalAlignment="Top">
+                                                <Ellipse.Fill>
+                                                    <ImageBrush ImageSource="{Binding SenderAvatarUrl}"/>
+                                                </Ellipse.Fill>
+                                            </Ellipse>
+
+                                            <StackPanel Grid.Column="1">
+                                                <!-- Message Header -->
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding SenderUsername}"
+                                                               FontWeight="Medium"
+                                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                    <TextBlock Text="{Binding Timestamp, StringFormat=' {0:h:mm tt}'}"
+                                                               FontSize="11"
+                                                               Foreground="{StaticResource TextMutedBrush}"
+                                                               Margin="8,0,0,0"/>
+                                                    <!-- Edited indicator -->
+                                                    <TextBlock Text="(edited)" FontSize="10"
+                                                               Foreground="{StaticResource TextMutedBrush}"
+                                                               Margin="6,0,0,0"
+                                                               Visibility="{Binding IsEdited, Converter={StaticResource BoolToVis}}"/>
+                                                    <!-- Pinned indicator -->
+                                                    <TextBlock Text="📌" FontSize="12" Margin="6,0,0,0"
+                                                               Visibility="{Binding IsPinned, Converter={StaticResource BoolToVis}}"
+                                                               ToolTip="Pinned message"/>
+                                                </StackPanel>
+
+                                                <!-- Message Content -->
+                                                <TextBlock Text="{Binding Content}"
+                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           TextWrapping="Wrap"/>
+
+                                                <!-- Reactions Row -->
+                                                <ItemsControl ItemsSource="{Binding Reactions}" Margin="0,6,0,0"
+                                                              Visibility="{Binding HasReactions, Converter={StaticResource BoolToVis}}">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <WrapPanel/>
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Button Margin="0,0,4,4" Padding="6,2"
+                                                                    ToolTip="{Binding Tooltip}"
+                                                                    Command="{Binding DataContext.ToggleReactionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                    CommandParameter="{Binding}">
+                                                                <Button.Style>
+                                                                    <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                                                        <Setter Property="Background" Value="{StaticResource PrimaryDarkBrush}"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding CurrentUserReacted}" Value="True">
+                                                                                <Setter Property="Background" Value="{StaticResource AccentBlueBrush}"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Button.Style>
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <TextBlock Text="{Binding Emoji}" FontSize="14"/>
+                                                                    <TextBlock Text="{Binding Count}" FontSize="12"
+                                                                               Foreground="{StaticResource TextPrimaryBrush}"
+                                                                               Margin="4,0,0,0"/>
+                                                                </StackPanel>
+                                                            </Button>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
                                             </StackPanel>
-                                            <TextBlock Text="{Binding Content}"
-                                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                                       TextWrapping="Wrap"/>
-                                        </StackPanel>
-                                    </Grid>
+
+                                            <!-- Quick Action Buttons (visible on hover) -->
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                                        VerticalAlignment="Top" Margin="8,0,0,0"
+                                                        Visibility="{Binding IsMouseOver, ElementName=MessageContainer, Converter={StaticResource BoolToVis}}">
+                                                <!-- Add Reaction -->
+                                                <Button Style="{StaticResource IconButton}" Width="28" Height="28"
+                                                        ToolTip="Add Reaction"
+                                                        Command="{Binding DataContext.AddReactionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}">
+                                                    <TextBlock Text="😀" FontSize="14"/>
+                                                </Button>
+                                                <!-- Reply -->
+                                                <Button Style="{StaticResource IconButton}" Width="28" Height="28"
+                                                        ToolTip="Reply"
+                                                        Command="{Binding DataContext.ReplyToMessageCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}">
+                                                    <TextBlock Text="↩" FontSize="14"/>
+                                                </Button>
+                                                <!-- Pin/Unpin -->
+                                                <Button Style="{StaticResource IconButton}" Width="28" Height="28"
+                                                        Command="{Binding DataContext.TogglePinMessageCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}">
+                                                    <Button.ToolTip>
+                                                        <ToolTip>
+                                                            <TextBlock>
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Text" Value="Pin Message"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsPinned}" Value="True">
+                                                                                <Setter Property="Text" Value="Unpin Message"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                        </ToolTip>
+                                                    </Button.ToolTip>
+                                                    <TextBlock FontSize="14">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Text" Value="📌"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsPinned}" Value="True">
+                                                                        <Setter Property="Text" Value="📍"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Button>
+                                                <!-- More Options -->
+                                                <Button Style="{StaticResource IconButton}" Width="28" Height="28"
+                                                        ToolTip="More"
+                                                        Command="{Binding DataContext.ShowMessageOptionsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}">
+                                                    <TextBlock Text="⋯" FontSize="16"/>
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>

@@ -520,6 +520,14 @@ public partial class MarketplaceView : UserControl
         CreateListingButton_Click(sender, e);
     }
 
+    // Rules Panel Toggle
+    private void ToggleRulesPanel_Click(object sender, RoutedEventArgs e)
+    {
+        RulesPanel.Visibility = RulesPanel.Visibility == Visibility.Visible
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+    }
+
     private static T? FindChild<T>(DependencyObject parent) where T : DependencyObject
     {
         if (parent == null) return null;

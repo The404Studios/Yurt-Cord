@@ -231,6 +231,24 @@
 
                 <Rectangle Height="1" Fill="{StaticResource QuaternaryDarkBrush}" Margin="12,16"/>
 
+                <TextBlock Text="QOL FEATURES" FontSize="11" FontWeight="Bold"
+                           Foreground="{StaticResource AccentGreenBrush}" Margin="12,0,0,12"/>
+
+                <Button x:Name="TemplatesNavButton" Content="📝  Message Templates"
+                        Style="{StaticResource SidebarNavButton}" Click="NavButton_Click" Tag="Templates"/>
+                <Button x:Name="ScheduledNavButton" Content="⏰  Scheduled Messages"
+                        Style="{StaticResource SidebarNavButton}" Click="NavButton_Click" Tag="Scheduled"/>
+                <Button x:Name="StatusSchedulerNavButton" Content="🔄  Status Scheduler"
+                        Style="{StaticResource SidebarNavButton}" Click="NavButton_Click" Tag="StatusScheduler"/>
+                <Button x:Name="SmartDndNavButton" Content="🌙  Smart DND"
+                        Style="{StaticResource SidebarNavButton}" Click="NavButton_Click" Tag="SmartDND"/>
+                <Button x:Name="QuickActionsNavButton" Content="⚡  Quick Actions"
+                        Style="{StaticResource SidebarNavButton}" Click="NavButton_Click" Tag="QuickActions"/>
+                <Button x:Name="InsightsNavButton" Content="📊  Activity Insights"
+                        Style="{StaticResource SidebarNavButton}" Click="NavButton_Click" Tag="Insights"/>
+
+                <Rectangle Height="1" Fill="{StaticResource QuaternaryDarkBrush}" Margin="12,16"/>
+
                 <TextBlock x:Name="AdminSectionHeader" Text="ADMIN" FontSize="11" FontWeight="Bold"
                            Foreground="{StaticResource TextMutedBrush}" Margin="12,0,0,12"
                            Visibility="Collapsed"/>
@@ -768,6 +786,602 @@
                         Command="{Binding RefreshDevicesCommand}" HorizontalAlignment="Left"
                         Margin="0,8,0,0"/>
 
+                    </StackPanel>
+
+                    <!-- Message Templates Panel (QoL Feature) -->
+                    <StackPanel x:Name="TemplatesPanel" Visibility="Collapsed" Margin="24" MaxWidth="800">
+                        <Grid Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="MESSAGE TEMPLATES" FontSize="12" FontWeight="Bold"
+                                           Foreground="{StaticResource AccentGreenBrush}"/>
+                                <TextBlock Text="Quick responses Discord doesn't have - save time with reusable messages"
+                                           FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                            <Button Content="+ New Template" Style="{StaticResource PrimaryButton}"
+                                    HorizontalAlignment="Right" VerticalAlignment="Center"
+                                    Click="NewTemplate_Click"/>
+                        </Grid>
+
+                        <!-- Default Templates -->
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Your Templates" FontSize="14" FontWeight="Medium"
+                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+
+                                <ItemsControl x:Name="TemplatesListControl">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{StaticResource QuaternaryDarkBrush}"
+                                                    CornerRadius="4" Padding="12" Margin="0,0,0,8">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Grid.Column="0" Background="{StaticResource AccentBrush}"
+                                                            CornerRadius="4" Padding="8,4" Margin="0,0,12,0"
+                                                            VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Shortcut}" FontSize="11" FontWeight="Bold"
+                                                                   Foreground="White"/>
+                                                    </Border>
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                        <TextBlock Text="{Binding Content}" FontSize="12"
+                                                                   Foreground="{StaticResource TextMutedBrush}"
+                                                                   TextTrimming="CharacterEllipsis" MaxWidth="400"/>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                                        <Button Content="✏️" Style="{StaticResource IconButton}"
+                                                                Width="32" Height="32" ToolTip="Edit"/>
+                                                        <Button Content="🗑️" Style="{StaticResource IconButton}"
+                                                                Width="32" Height="32" ToolTip="Delete"
+                                                                Foreground="{StaticResource AccentRedBrush}"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="16">
+                            <StackPanel>
+                                <TextBlock Text="How to Use" FontSize="14" FontWeight="Medium"
+                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                                <TextBlock Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" TextWrapping="Wrap">
+                                    Type the shortcut (e.g., /afk) in any chat and press Tab or Enter to insert the template.
+                                    Templates are saved locally and sync across sessions.
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Scheduled Messages Panel (QoL Feature) -->
+                    <StackPanel x:Name="ScheduledPanel" Visibility="Collapsed" Margin="24" MaxWidth="800">
+                        <Grid Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="SCHEDULED MESSAGES" FontSize="12" FontWeight="Bold"
+                                           Foreground="{StaticResource AccentGreenBrush}"/>
+                                <TextBlock Text="Send messages at specific times - a feature Discord doesn't offer"
+                                           FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                            <Button Content="+ Schedule Message" Style="{StaticResource PrimaryButton}"
+                                    HorizontalAlignment="Right" VerticalAlignment="Center"
+                                    Click="ScheduleMessage_Click"/>
+                        </Grid>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Upcoming Messages" FontSize="14" FontWeight="Medium"
+                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+
+                                <ItemsControl x:Name="ScheduledMessagesControl">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{StaticResource QuaternaryDarkBrush}"
+                                                    CornerRadius="4" Padding="12" Margin="0,0,0,8">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                                                        <TextBlock Text="{Binding ScheduledTime, StringFormat='{}{0:MMM dd}'}"
+                                                                   FontSize="14" FontWeight="Bold"
+                                                                   Foreground="{StaticResource AccentBrush}"/>
+                                                        <TextBlock Text="{Binding ScheduledTime, StringFormat='{}{0:hh:mm tt}'}"
+                                                                   FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Content}" FontSize="13"
+                                                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                                                   TextTrimming="CharacterEllipsis"/>
+                                                        <TextBlock FontSize="11" Foreground="{StaticResource TextMutedBrush}">
+                                                            <Run Text="→"/>
+                                                            <Run Text="{Binding TargetChannelId}"/>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                    <Button Grid.Column="2" Content="✕" Style="{StaticResource IconButton}"
+                                                            Width="32" Height="32" ToolTip="Cancel"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <!-- Empty State -->
+                                <Border x:Name="NoScheduledMessages" Background="{StaticResource QuaternaryDarkBrush}"
+                                        CornerRadius="4" Padding="24">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="⏰" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                        <TextBlock Text="No scheduled messages" FontSize="14"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Schedule a message to have it sent automatically"
+                                                   FontSize="12" Foreground="{StaticResource TextMutedBrush}"
+                                                   HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="16">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Recurring Messages" FontSize="14" FontWeight="Medium"
+                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="Send daily, weekly, or monthly automated messages"
+                                               FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                                </StackPanel>
+                                <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Status Scheduler Panel (QoL Feature) -->
+                    <StackPanel x:Name="StatusSchedulerPanel" Visibility="Collapsed" Margin="24" MaxWidth="800">
+                        <TextBlock Text="STATUS SCHEDULER" FontSize="12" FontWeight="Bold"
+                                   Foreground="{StaticResource AccentGreenBrush}" Margin="0,0,0,4"/>
+                        <TextBlock Text="Automatically change your status at specific times"
+                                   FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,16"/>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Work Hours" FontSize="14" FontWeight="Medium"
+                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Set to 'Do Not Disturb' during work" FontSize="13"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"/>
+                                        <TextBlock Text="Mon-Fri, 9:00 AM - 5:00 PM" FontSize="11"
+                                                   Foreground="{StaticResource TextMutedBrush}"/>
+                                    </StackPanel>
+                                    <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                        <TextBlock Text="Start Time" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
+                                        <ComboBox Style="{StaticResource DarkComboBox}">
+                                            <ComboBoxItem Content="9:00 AM" IsSelected="True"/>
+                                            <ComboBoxItem Content="8:00 AM"/>
+                                            <ComboBoxItem Content="10:00 AM"/>
+                                        </ComboBox>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                        <TextBlock Text="End Time" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
+                                        <ComboBox Style="{StaticResource DarkComboBox}">
+                                            <ComboBoxItem Content="5:00 PM" IsSelected="True"/>
+                                            <ComboBoxItem Content="6:00 PM"/>
+                                            <ComboBoxItem Content="7:00 PM"/>
+                                        </ComboBox>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Sleep Schedule" FontSize="14" FontWeight="Medium"
+                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Set to 'Invisible' during sleep hours" FontSize="13"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"/>
+                                        <TextBlock Text="Every day, 11:00 PM - 7:00 AM" FontSize="11"
+                                                   Foreground="{StaticResource TextMutedBrush}"/>
+                                    </StackPanel>
+                                    <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="16">
+                            <StackPanel>
+                                <TextBlock Text="Custom Status Message" FontSize="14" FontWeight="Medium"
+                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                                <TextBox x:Name="CustomStatusBox" Style="{StaticResource ModernTextBox}"
+                                         Text="At work, will respond later" Margin="0,0,0,8"/>
+                                <TextBlock Text="This status will show during scheduled DND periods"
+                                           FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Smart DND Panel (QoL Feature) -->
+                    <StackPanel x:Name="SmartDNDPanel" Visibility="Collapsed" Margin="24" MaxWidth="800">
+                        <TextBlock Text="SMART DO NOT DISTURB" FontSize="12" FontWeight="Bold"
+                                   Foreground="{StaticResource AccentGreenBrush}" Margin="0,0,0,4"/>
+                        <TextBlock Text="Advanced DND with whitelist and auto-reply - more than Discord's basic DND"
+                                   FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,16"/>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Enable Smart DND" FontSize="14" FontWeight="Medium"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Intelligent notification filtering"
+                                                   FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                                    </StackPanel>
+                                    <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" IsChecked="True" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <Grid Margin="0,0,0,16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Allow @urgent Mentions" FontSize="13"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"/>
+                                        <TextBlock Text="Messages with @urgent will still notify you"
+                                                   FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                                    </StackPanel>
+                                    <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" IsChecked="True" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Auto-Reply" FontSize="13"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"/>
+                                        <TextBlock Text="Automatically respond to DMs during DND"
+                                                   FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                                    </StackPanel>
+                                    <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Auto-Reply Message" FontSize="14" FontWeight="Medium"
+                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                                <TextBox Style="{StaticResource ModernTextBox}" AcceptsReturn="True" Height="60"
+                                         Text="I'm currently unavailable. I'll get back to you as soon as I can!"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="16">
+                            <StackPanel>
+                                <TextBlock Text="Whitelist (Always Notify)" FontSize="14" FontWeight="Medium"
+                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                                <TextBlock Text="These users can always reach you, even during DND:"
+                                           FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,12"/>
+
+                                <WrapPanel>
+                                    <Border Background="{StaticResource QuaternaryDarkBrush}" CornerRadius="12"
+                                            Padding="8,4" Margin="0,0,8,8">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="Mom" Foreground="{StaticResource TextPrimaryBrush}"
+                                                       FontSize="12" Margin="0,0,8,0"/>
+                                            <TextBlock Text="✕" Foreground="{StaticResource TextMutedBrush}"
+                                                       FontSize="10" Cursor="Hand"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Background="{StaticResource QuaternaryDarkBrush}" CornerRadius="12"
+                                            Padding="8,4" Margin="0,0,8,8">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="Boss" Foreground="{StaticResource TextPrimaryBrush}"
+                                                       FontSize="12" Margin="0,0,8,0"/>
+                                            <TextBlock Text="✕" Foreground="{StaticResource TextMutedBrush}"
+                                                       FontSize="10" Cursor="Hand"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Background="Transparent" CornerRadius="12" BorderThickness="1"
+                                            BorderBrush="{StaticResource AccentBrush}" Padding="8,4" Cursor="Hand">
+                                        <TextBlock Text="+ Add User" Foreground="{StaticResource AccentBrush}" FontSize="12"/>
+                                    </Border>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Quick Actions Panel (QoL Feature) -->
+                    <StackPanel x:Name="QuickActionsPanel" Visibility="Collapsed" Margin="24" MaxWidth="800">
+                        <TextBlock Text="QUICK ACTIONS" FontSize="12" FontWeight="Bold"
+                                   Foreground="{StaticResource AccentGreenBrush}" Margin="0,0,0,4"/>
+                        <TextBlock Text="Custom keyboard shortcuts for common actions"
+                                   FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,16"/>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Status Quick Actions" FontSize="14" FontWeight="Medium"
+                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="120"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Go Online" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Content="Ctrl + 1" Style="{StaticResource SecondaryButton}"/>
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="120"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Go Away" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Content="Ctrl + 2" Style="{StaticResource SecondaryButton}"/>
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="120"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Do Not Disturb" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Content="Ctrl + 3" Style="{StaticResource SecondaryButton}"/>
+                                </Grid>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="120"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Go Invisible" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Content="Ctrl + 4" Style="{StaticResource SecondaryButton}"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="16">
+                            <StackPanel>
+                                <TextBlock Text="Navigation Quick Actions" FontSize="14" FontWeight="Medium"
+                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="120"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Open Marketplace" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Content="Ctrl + M" Style="{StaticResource SecondaryButton}"/>
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="120"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Open Friends" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Content="Ctrl + F" Style="{StaticResource SecondaryButton}"/>
+                                </Grid>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="120"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Quick Search" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Content="Ctrl + K" Style="{StaticResource SecondaryButton}"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Activity Insights Panel (QoL Feature) -->
+                    <StackPanel x:Name="InsightsPanel" Visibility="Collapsed" Margin="24" MaxWidth="800">
+                        <TextBlock Text="ACTIVITY INSIGHTS" FontSize="12" FontWeight="Bold"
+                                   Foreground="{StaticResource AccentGreenBrush}" Margin="0,0,0,4"/>
+                        <TextBlock Text="Track your usage patterns and social activity"
+                                   FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,16"/>
+
+                        <!-- Today's Stats -->
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="Today's Activity" FontSize="14" FontWeight="Medium"
+                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,16"/>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border Grid.Column="0" Background="{StaticResource QuaternaryDarkBrush}"
+                                            CornerRadius="8" Padding="16" Margin="0,0,8,0">
+                                        <StackPanel HorizontalAlignment="Center">
+                                            <TextBlock Text="💬" FontSize="24" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="TodayMessagesCount" Text="47" FontSize="24" FontWeight="Bold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                                       HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                                            <TextBlock Text="Messages" FontSize="11"
+                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                       HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Grid.Column="1" Background="{StaticResource QuaternaryDarkBrush}"
+                                            CornerRadius="8" Padding="16" Margin="4,0">
+                                        <StackPanel HorizontalAlignment="Center">
+                                            <TextBlock Text="🎤" FontSize="24" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="TodayVoiceMinutes" Text="32" FontSize="24" FontWeight="Bold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                                       HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                                            <TextBlock Text="Voice Mins" FontSize="11"
+                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                       HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Grid.Column="2" Background="{StaticResource QuaternaryDarkBrush}"
+                                            CornerRadius="8" Padding="16" Margin="4,0">
+                                        <StackPanel HorizontalAlignment="Center">
+                                            <TextBlock Text="👥" FontSize="24" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="TodayFriendsCount" Text="8" FontSize="24" FontWeight="Bold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                                       HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                                            <TextBlock Text="Friends" FontSize="11"
+                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                       HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Grid.Column="3" Background="{StaticResource QuaternaryDarkBrush}"
+                                            CornerRadius="8" Padding="16" Margin="8,0,0,0">
+                                        <StackPanel HorizontalAlignment="Center">
+                                            <TextBlock Text="🛒" FontSize="24" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="TodayMarketplaceViews" Text="12" FontSize="24" FontWeight="Bold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                                       HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                                            <TextBlock Text="Listings" FontSize="11"
+                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                       HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Weekly Summary -->
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="This Week" FontSize="14" FontWeight="Medium"
+                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,16"/>
+
+                                <!-- Simple bar chart representation -->
+                                <Grid Height="100">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Bottom" HorizontalAlignment="Center">
+                                        <Border Background="{StaticResource AccentBrush}" Width="24" Height="40" CornerRadius="4,4,0,0"/>
+                                        <TextBlock Text="M" FontSize="10" Foreground="{StaticResource TextMutedBrush}"
+                                                   HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Bottom" HorizontalAlignment="Center">
+                                        <Border Background="{StaticResource AccentBrush}" Width="24" Height="60" CornerRadius="4,4,0,0"/>
+                                        <TextBlock Text="T" FontSize="10" Foreground="{StaticResource TextMutedBrush}"
+                                                   HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" VerticalAlignment="Bottom" HorizontalAlignment="Center">
+                                        <Border Background="{StaticResource AccentBrush}" Width="24" Height="35" CornerRadius="4,4,0,0"/>
+                                        <TextBlock Text="W" FontSize="10" Foreground="{StaticResource TextMutedBrush}"
+                                                   HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="3" VerticalAlignment="Bottom" HorizontalAlignment="Center">
+                                        <Border Background="{StaticResource AccentBrush}" Width="24" Height="80" CornerRadius="4,4,0,0"/>
+                                        <TextBlock Text="T" FontSize="10" Foreground="{StaticResource TextMutedBrush}"
+                                                   HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="4" VerticalAlignment="Bottom" HorizontalAlignment="Center">
+                                        <Border Background="{StaticResource AccentBrush}" Width="24" Height="55" CornerRadius="4,4,0,0"/>
+                                        <TextBlock Text="F" FontSize="10" Foreground="{StaticResource TextMutedBrush}"
+                                                   HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="5" VerticalAlignment="Bottom" HorizontalAlignment="Center">
+                                        <Border Background="{StaticResource AccentGreenBrush}" Width="24" Height="90" CornerRadius="4,4,0,0"/>
+                                        <TextBlock Text="S" FontSize="10" Foreground="{StaticResource TextMutedBrush}"
+                                                   HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="6" VerticalAlignment="Bottom" HorizontalAlignment="Center">
+                                        <Border Background="{StaticResource AccentGreenBrush}" Width="24" Height="70" CornerRadius="4,4,0,0"/>
+                                        <TextBlock Text="S" FontSize="10" Foreground="{StaticResource TextMutedBrush}"
+                                                   HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <TextBlock Text="Total: 324 messages, 187 voice minutes this week"
+                                           FontSize="12" Foreground="{StaticResource TextMutedBrush}"
+                                           HorizontalAlignment="Center" Margin="0,16,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Most Active Channels -->
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="16">
+                            <StackPanel>
+                                <TextBlock Text="Most Active Channels" FontSize="14" FontWeight="Medium"
+                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="# " Foreground="{StaticResource TextMutedBrush}" Grid.Column="0"/>
+                                    <TextBlock Text="general" Foreground="{StaticResource TextSecondaryBrush}" Grid.Column="1"/>
+                                    <TextBlock Text="142 messages" Foreground="{StaticResource TextMutedBrush}" Grid.Column="2" FontSize="12"/>
+                                </Grid>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="# " Foreground="{StaticResource TextMutedBrush}" Grid.Column="0"/>
+                                    <TextBlock Text="marketplace" Foreground="{StaticResource TextSecondaryBrush}" Grid.Column="1"/>
+                                    <TextBlock Text="89 messages" Foreground="{StaticResource TextMutedBrush}" Grid.Column="2" FontSize="12"/>
+                                </Grid>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="🔊 " Foreground="{StaticResource TextMutedBrush}" Grid.Column="0"/>
+                                    <TextBlock Text="Voice Lounge" Foreground="{StaticResource TextSecondaryBrush}" Grid.Column="1"/>
+                                    <TextBlock Text="93 minutes" Foreground="{StaticResource TextMutedBrush}" Grid.Column="2" FontSize="12"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </Grid>
             </ScrollViewer>
