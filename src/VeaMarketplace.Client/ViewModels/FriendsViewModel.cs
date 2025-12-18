@@ -281,7 +281,7 @@ public partial class FriendsViewModel : BaseViewModel
         _friendService.OnNewFriendRequest += request =>
         {
             var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
-            toastService?.Show($"Friend Request from {request.Username}", "Click to view pending requests", NotificationType.FriendRequest);
+            toastService?.ShowFriendRequest(request.RequesterUsername);
         };
 
         _friendService.OnDirectMessageReceived += message =>
@@ -290,7 +290,8 @@ public partial class FriendsViewModel : BaseViewModel
             if (SelectedFriend?.UserId != message.SenderId)
             {
                 var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
-                toastService?.Show($"New message from {message.SenderUsername}", message.Content.Length > 50 ? message.Content[..47] + "..." : message.Content, NotificationType.Message);
+                var preview = message.Content.Length > 50 ? message.Content[..47] + "..." : message.Content;
+                toastService?.ShowMessage(message.SenderUsername, preview);
             }
         };
 
@@ -536,7 +537,7 @@ public partial class FriendsViewModel : BaseViewModel
         {
             await _friendService.RespondToFriendRequestAsync(request.Id, true);
             var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
-            toastService?.ShowSuccess("Friend Added", $"You are now friends with {request.Username}!");
+            toastService?.ShowSuccess("Friend Added", $"You are now friends with {request.RequesterUsername}!");
         }
         catch (Exception ex)
         {
@@ -552,7 +553,7 @@ public partial class FriendsViewModel : BaseViewModel
         {
             await _friendService.RespondToFriendRequestAsync(request.Id, false);
             var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
-            toastService?.ShowInfo("Request Declined", $"Friend request from {request.Username} declined");
+            toastService?.ShowInfo("Request Declined", $"Friend request from {request.RequesterUsername} declined");
         }
         catch (Exception ex)
         {

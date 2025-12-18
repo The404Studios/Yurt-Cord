@@ -11,8 +11,8 @@ namespace VeaMarketplace.Client.Views;
 public partial class SettingsView : UserControl
 {
     private SettingsViewModel? _viewModel;
-    private readonly INavigationService _navigationService;
-    private readonly IApiService _apiService;
+    private readonly INavigationService? _navigationService;
+    private readonly IApiService? _apiService;
     private string _currentSection = "Voice";
     private readonly Dictionary<string, Button> _navButtons = new();
     private readonly Dictionary<string, StackPanel> _panels = new();
