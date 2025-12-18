@@ -67,9 +67,9 @@
                     <!-- Category Title -->
                     <TextBlock FontSize="18" FontWeight="Bold" Margin="0,0,0,16"
                                Foreground="{StaticResource TextPrimaryBrush}">
-                        <Run Text="{Binding CurrentCategoryIcon}"/>
+                        <Run Text="{Binding CurrentCategoryIcon, Mode=OneWay}"/>
                         <Run Text=" "/>
-                        <Run Text="{Binding CurrentCategoryName}"/>
+                        <Run Text="{Binding CurrentCategoryName, Mode=OneWay}"/>
                     </TextBlock>
 
                     <!-- Leaderboard Entries -->
