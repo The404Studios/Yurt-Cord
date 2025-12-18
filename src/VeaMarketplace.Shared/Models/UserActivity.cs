@@ -61,7 +61,7 @@ public class ProfileTheme
     public string Id { get; set; } = Guid.NewGuid().ToString();
     public string UserId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
-    public string PrimaryColor { get; set; } = "#5865F2";
+    public string PrimaryColor { get; set; } = "#FF6B00"; // Plugin orange
     public string SecondaryColor { get; set; } = "#202225";
     public string AccentColor { get; set; } = "#EB459E";
     public string BackgroundUrl { get; set; } = string.Empty;

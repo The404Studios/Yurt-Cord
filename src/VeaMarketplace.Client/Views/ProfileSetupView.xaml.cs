@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using VeaMarketplace.Client.Services;
+using VeaMarketplace.Shared.DTOs;
 
 namespace VeaMarketplace.Client.Views;
 
@@ -14,8 +15,8 @@ public partial class ProfileSetupView : UserControl
     // Profile data
     private string _selectedAvatarUrl = "";
     private string _selectedEmoji = "?";
-    private Color _primaryColor = (Color)ColorConverter.ConvertFromString("#5865F2")!;
-    private Color _secondaryColor = (Color)ColorConverter.ConvertFromString("#EB459E")!;
+    private Color _primaryColor = (Color)ColorConverter.ConvertFromString("#FF6B00")!; // Plugin orange
+    private Color _secondaryColor = (Color)ColorConverter.ConvertFromString("#FF8533")!; // Plugin orange light
     private LinearGradientBrush? _selectedAvatarGradient;
 
     public event Action? OnSetupComplete;
@@ -205,25 +206,74 @@ public partial class ProfileSetupView : UserControl
     {
         try
         {
-            var apiService = (IApiService)App.ServiceProvider.GetService(typeof(IApiService))!;
-            var profileService = (IProfileService)App.ServiceProvider.GetService(typeof(IProfileService))!;
+            var apiService = (IApiService?)App.ServiceProvider.GetService(typeof(IApiService));
+            var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
 
-            // Prepare profile update data
-            // Note: This would need the actual API implementation
-            // For now, we just complete the setup
+            if (apiService == null)
+            {
+                toastService?.ShowError("Error", "Could not connect to profile service");
+                return;
+            }
+
+            // Build the accent color from primary banner color
+            var accentColorHex = $"#{_primaryColor.R:X2}{_primaryColor.G:X2}{_primaryColor.B:X2}";
+
+            // Build banner gradient as a special format string that can be parsed by the UI
+            // Format: "gradient:#RRGGBB,#RRGGBB" for gradient banners
+            var secondaryHex = $"#{_secondaryColor.R:X2}{_secondaryColor.G:X2}{_secondaryColor.B:X2}";
+            var bannerValue = $"gradient:{accentColorHex},{secondaryHex}";
+
+            // Build avatar value - either custom URL or gradient emoji format
+            string? avatarValue = null;
+            if (!string.IsNullOrWhiteSpace(_selectedAvatarUrl))
+            {
+                avatarValue = _selectedAvatarUrl;
+            }
+            else if (_selectedAvatarGradient != null && _selectedEmoji != "?")
+            {
+                // Store as emoji gradient format: "emoji:😊,#RRGGBB,#RRGGBB"
+                var stop1 = _selectedAvatarGradient.GradientStops.FirstOrDefault();
+                var stop2 = _selectedAvatarGradient.GradientStops.Skip(1).FirstOrDefault();
+                if (stop1 != null && stop2 != null)
+                {
+                    var c1 = $"#{stop1.Color.R:X2}{stop1.Color.G:X2}{stop1.Color.B:X2}";
+                    var c2 = $"#{stop2.Color.R:X2}{stop2.Color.G:X2}{stop2.Color.B:X2}";
+                    avatarValue = $"emoji:{_selectedEmoji},{c1},{c2}";
+                }
+            }
+
+            var request = new UpdateProfileRequest
+            {
+                DisplayName = string.IsNullOrWhiteSpace(DisplayNameBox.Text) ? null : DisplayNameBox.Text.Trim(),
+                Bio = string.IsNullOrWhiteSpace(BioBox.Text) ? null : BioBox.Text.Trim(),
+                AvatarUrl = avatarValue,
+                BannerUrl = bannerValue,
+                AccentColor = accentColorHex
+            };
+
+            var result = await apiService.UpdateProfileAsync(request);
+            if (result != null)
+            {
+                toastService?.ShowSuccess("Profile Updated", "Your profile has been set up successfully!");
+            }
+            else
+            {
+                toastService?.ShowWarning("Partial Save", "Profile saved, but some settings may not have applied.");
+            }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Handle error - still complete setup
+            var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+            toastService?.ShowError("Save Failed", $"Could not save profile: {ex.Message}");
         }
     }
 
     private void UpdateStepUI()
     {
-        // Update progress dots
-        Step1Dot.Fill = new SolidColorBrush(_currentStep >= 1 ? (Color)ColorConverter.ConvertFromString("#5865F2")! : (Color)ColorConverter.ConvertFromString("#40444B")!);
-        Step2Dot.Fill = new SolidColorBrush(_currentStep >= 2 ? (Color)ColorConverter.ConvertFromString("#5865F2")! : (Color)ColorConverter.ConvertFromString("#40444B")!);
-        Step3Dot.Fill = new SolidColorBrush(_currentStep >= 3 ? (Color)ColorConverter.ConvertFromString("#5865F2")! : (Color)ColorConverter.ConvertFromString("#40444B")!);
+        // Update progress dots - Plugin orange theme
+        Step1Dot.Fill = new SolidColorBrush(_currentStep >= 1 ? (Color)ColorConverter.ConvertFromString("#FF6B00")! : (Color)ColorConverter.ConvertFromString("#40444B")!);
+        Step2Dot.Fill = new SolidColorBrush(_currentStep >= 2 ? (Color)ColorConverter.ConvertFromString("#FF6B00")! : (Color)ColorConverter.ConvertFromString("#40444B")!);
+        Step3Dot.Fill = new SolidColorBrush(_currentStep >= 3 ? (Color)ColorConverter.ConvertFromString("#FF6B00")! : (Color)ColorConverter.ConvertFromString("#40444B")!);
 
         // Update button visibility
         BackButton.Visibility = _currentStep > 1 ? Visibility.Visible : Visibility.Collapsed;

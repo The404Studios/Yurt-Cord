@@ -1,5 +1,6 @@
 using System.Media;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using VeaMarketplace.Client.Services;
@@ -30,14 +31,17 @@ public partial class GroupCallInviteNotification : Window
         CallNameText.Text = invite.CallName;
         ParticipantText.Text = $"{invite.ParticipantCount} participant{(invite.ParticipantCount != 1 ? "s" : "")} in call";
 
-        // Set avatar
+        // Set avatar with fallback to initial
         if (!string.IsNullOrEmpty(invite.HostAvatarUrl))
         {
             try
             {
                 HostAvatarBrush.ImageSource = new BitmapImage(new Uri(invite.HostAvatarUrl));
             }
-            catch { }
+            catch
+            {
+                // Avatar load failed - use default gradient background
+            }
         }
 
         // Position in bottom-right corner
@@ -113,7 +117,11 @@ public partial class GroupCallInviteNotification : Window
             await _voiceService.JoinGroupCallAsync(_invite.CallId);
             OnAccepted?.Invoke(_invite.CallId);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+            toastService?.ShowError("Join Failed", $"Could not join call: {ex.Message}");
+        }
         Close();
     }
 
@@ -124,7 +132,10 @@ public partial class GroupCallInviteNotification : Window
             await _voiceService.DeclineGroupCallAsync(_invite.CallId);
             OnDeclined?.Invoke(_invite.CallId);
         }
-        catch { }
+        catch
+        {
+            // Decline failed silently - just close the notification
+        }
         Close();
     }
 

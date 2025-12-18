@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VeaMarketplace.Client.Controls;
 using VeaMarketplace.Client.Models;
 using VeaMarketplace.Client.Services;
 using VeaMarketplace.Shared.DTOs;
@@ -279,12 +280,19 @@ public partial class FriendsViewModel : BaseViewModel
         // Subscribe to events
         _friendService.OnNewFriendRequest += request =>
         {
-            // Could show notification
+            var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+            toastService?.ShowFriendRequest(request.RequesterUsername);
         };
 
         _friendService.OnDirectMessageReceived += message =>
         {
-            // Notification for new DM
+            // Only notify if not currently viewing this conversation
+            if (SelectedFriend?.UserId != message.SenderId)
+            {
+                var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+                var preview = message.Content.Length > 50 ? message.Content[..47] + "..." : message.Content;
+                toastService?.ShowMessage(message.SenderUsername, preview);
+            }
         };
 
         _friendService.OnError += error =>
@@ -525,19 +533,49 @@ public partial class FriendsViewModel : BaseViewModel
     [RelayCommand]
     private async Task AcceptFriendRequestAsync(FriendRequestDto request)
     {
-        await _friendService.RespondToFriendRequestAsync(request.Id, true);
+        try
+        {
+            await _friendService.RespondToFriendRequestAsync(request.Id, true);
+            var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+            toastService?.ShowSuccess("Friend Added", $"You are now friends with {request.RequesterUsername}!");
+        }
+        catch (Exception ex)
+        {
+            var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+            toastService?.ShowError("Request Failed", $"Could not accept request: {ex.Message}");
+        }
     }
 
     [RelayCommand]
     private async Task DeclineFriendRequestAsync(FriendRequestDto request)
     {
-        await _friendService.RespondToFriendRequestAsync(request.Id, false);
+        try
+        {
+            await _friendService.RespondToFriendRequestAsync(request.Id, false);
+            var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+            toastService?.ShowInfo("Request Declined", $"Friend request from {request.RequesterUsername} declined");
+        }
+        catch (Exception ex)
+        {
+            var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+            toastService?.ShowError("Request Failed", $"Could not decline request: {ex.Message}");
+        }
     }
 
     [RelayCommand]
     private async Task RemoveFriendAsync(FriendDto friend)
     {
-        await _friendService.RemoveFriendAsync(friend.UserId);
+        try
+        {
+            await _friendService.RemoveFriendAsync(friend.UserId);
+            var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+            toastService?.ShowInfo("Friend Removed", $"Removed {friend.GetDisplayName()} from friends");
+        }
+        catch (Exception ex)
+        {
+            var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+            toastService?.ShowError("Remove Failed", $"Could not remove friend: {ex.Message}");
+        }
     }
 
     [RelayCommand]
@@ -1602,8 +1640,17 @@ public partial class FriendsViewModel : BaseViewModel
     {
         if (message == null) return;
 
-        // Could show a context menu with more options
-        // For now, this is a placeholder for future expansion
+        // Copy message content to clipboard
+        try
+        {
+            System.Windows.Clipboard.SetText(message.Content);
+            var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+            toastService?.ShowInfo("Copied", "Message copied to clipboard");
+        }
+        catch
+        {
+            // Clipboard operation failed silently
+        }
     }
 
     #endregion

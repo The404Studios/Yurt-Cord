@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Downloads and installs FFmpeg dependencies for YurtCord hardware encoding.
+    Downloads and installs FFmpeg dependencies for Plugin hardware encoding.
 
 .DESCRIPTION
     This script downloads the latest FFmpeg shared libraries from BtbN's builds
@@ -43,7 +43,7 @@ $RequiredDlls = @(
 function Write-Header {
     Write-Host ""
     Write-Host "============================================" -ForegroundColor Cyan
-    Write-Host " FFmpeg Dependency Downloader for YurtCord" -ForegroundColor Cyan
+    Write-Host " FFmpeg Dependency Downloader for Plugin" -ForegroundColor Cyan
     Write-Host "============================================" -ForegroundColor Cyan
     Write-Host ""
 }
@@ -151,7 +151,7 @@ try {
     Write-Host "  - h264_qsv   (Intel integrated/discrete)" -ForegroundColor Gray
     Write-Host "  - libx264    (Software fallback)" -ForegroundColor Gray
     Write-Host ""
-    Write-Host "YurtCord will automatically detect and use the best available encoder." -ForegroundColor White
+    Write-Host "Plugin will automatically detect and use the best available encoder." -ForegroundColor White
     Write-Host ""
 
 } catch {

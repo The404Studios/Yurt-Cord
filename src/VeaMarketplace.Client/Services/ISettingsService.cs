@@ -216,7 +216,7 @@ public class AppSettings
 
     // Appearance Settings
     public string Theme { get; set; } = "Dark";
-    public string AccentColor { get; set; } = "#5865F2";
+    public string AccentColor { get; set; } = "#FF6B00"; // Plugin orange
     public double FontScale { get; set; } = 1.0;
     public bool CompactMode { get; set; } = false;
     public bool AnimationsEnabled { get; set; } = true;
@@ -255,7 +255,7 @@ public class SettingsService : ISettingsService
     public SettingsService()
     {
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        var appFolder = Path.Combine(appData, "YurtCord");
+        var appFolder = Path.Combine(appData, "Plugin");
         Directory.CreateDirectory(appFolder);
         _settingsPath = Path.Combine(appFolder, "settings.json");
 

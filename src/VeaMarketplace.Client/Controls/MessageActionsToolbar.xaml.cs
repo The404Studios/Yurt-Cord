@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using VeaMarketplace.Client.Services;
 
 namespace VeaMarketplace.Client.Controls;
 
@@ -102,16 +103,23 @@ public partial class MessageActionsToolbar : UserControl
         copyIdItem.Click += (s, args) =>
         {
             if (_messageId != null)
+            {
                 Clipboard.SetText(_messageId);
+                var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+                toastService?.ShowInfo("Copied", "Message ID copied to clipboard");
+            }
         };
         contextMenu.Items.Add(copyIdItem);
 
         var copyLinkItem = new MenuItem { Header = "Copy Message Link" };
         copyLinkItem.Click += (s, args) =>
         {
-            // Construct a message link (placeholder)
             if (_messageId != null)
-                Clipboard.SetText($"yurtcord://message/{_messageId}");
+            {
+                Clipboard.SetText($"{AppConstants.UrlScheme}message/{_messageId}");
+                var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+                toastService?.ShowInfo("Copied", "Message link copied to clipboard");
+            }
         };
         contextMenu.Items.Add(copyLinkItem);
 

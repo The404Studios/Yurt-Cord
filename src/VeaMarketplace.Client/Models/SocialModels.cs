@@ -68,7 +68,7 @@ public class FriendGroup
     public string Id { get; set; } = Guid.NewGuid().ToString();
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public string Color { get; set; } = "#5865F2"; // Discord blurple default
+    public string Color { get; set; } = "#FF6B00"; // Plugin orange
     public string? Emoji { get; set; }
     public int SortOrder { get; set; }
     public bool IsCollapsed { get; set; }

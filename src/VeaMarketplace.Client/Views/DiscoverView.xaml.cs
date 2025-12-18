@@ -84,28 +84,26 @@ public partial class DiscoverView : UserControl
             }
             else
             {
-                // Fallback to placeholder data if API returns empty
-                TopSellers.ItemsSource = GetPlaceholderSellers();
+                // Show empty state when no sellers found
+                TopSellers.ItemsSource = GetEmptyStateMessage();
             }
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"[DiscoverView] Error loading discover data: {ex.Message}");
 
-            // Use fallback data on error
-            TopSellers.ItemsSource = GetPlaceholderSellers();
+            var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+            toastService?.ShowWarning("Connection Issue", "Could not load marketplace data. Please check your connection.");
+
+            // Show empty state instead of fake data
+            TopSellers.ItemsSource = GetEmptyStateMessage();
         }
     }
 
-    private static object[] GetPlaceholderSellers()
+    private static object[] GetEmptyStateMessage()
     {
-        return new object[]
-        {
-            new { Username = "TopSeller", AvatarUrl = "", Rating = 4.9, ReviewCount = 128, ProductCount = 45 },
-            new { Username = "DigitalArts", AvatarUrl = "", Rating = 4.8, ReviewCount = 89, ProductCount = 32 },
-            new { Username = "CodeMaster", AvatarUrl = "", Rating = 4.7, ReviewCount = 156, ProductCount = 67 },
-            new { Username = "ProDesigns", AvatarUrl = "", Rating = 4.9, ReviewCount = 203, ProductCount = 89 }
-        };
+        // Return empty to show "no sellers found" UI state
+        return Array.Empty<object>();
     }
 
     private void SearchButton_Click(object sender, RoutedEventArgs e)
