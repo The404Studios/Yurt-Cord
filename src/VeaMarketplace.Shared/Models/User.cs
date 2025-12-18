@@ -14,7 +14,7 @@ public class User
     public string Bio { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string StatusMessage { get; set; } = string.Empty;
-    public string AccentColor { get; set; } = "#5865F2"; // Discord blurple default
+    public string AccentColor { get; set; } = "#FF6B00"; // Plugin orange
     public ProfileVisibility ProfileVisibility { get; set; } = ProfileVisibility.Public;
     public UserRole Role { get; set; } = UserRole.Member;
     public UserRank Rank { get; set; } = UserRank.Newcomer;

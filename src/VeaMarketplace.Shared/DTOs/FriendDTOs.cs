@@ -12,7 +12,7 @@ public class FriendDto
     public string AvatarUrl { get; set; } = string.Empty;
     public string Bio { get; set; } = string.Empty;
     public string StatusMessage { get; set; } = string.Empty;
-    public string AccentColor { get; set; } = "#5865F2";
+    public string AccentColor { get; set; } = "#FF6B00"; // Plugin orange
     public UserRole Role { get; set; }
     public UserRank Rank { get; set; }
     public bool IsOnline { get; set; }

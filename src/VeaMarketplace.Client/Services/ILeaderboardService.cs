@@ -192,7 +192,7 @@ public class UserStats
     {
         "Legendary" => "#FFD700",
         "Excellent" => "#43B581",
-        "Great" => "#5865F2",
+        "Great" => "#FF6B00", // Plugin orange
         "Good" => "#7289DA",
         "Average" => "#96989D",
         _ => "#FFFFFF"
@@ -250,7 +250,7 @@ public class Achievement
     {
         AchievementRarity.Common => "#96989D",
         AchievementRarity.Uncommon => "#43B581",
-        AchievementRarity.Rare => "#5865F2",
+        AchievementRarity.Rare => "#FF6B00", // Plugin orange
         AchievementRarity.Epic => "#9B59B6",
         AchievementRarity.Legendary => "#FFD700",
         _ => "#FFFFFF"
