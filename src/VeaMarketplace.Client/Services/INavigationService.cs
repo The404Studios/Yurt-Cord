@@ -25,6 +25,8 @@ public interface INavigationService
     void NavigateToWishlist();
     void NavigateToCart();
     void NavigateToModeration();
+    void NavigateToLeaderboard();
+    void NavigateToActivityFeed();
 }
 
 public class NavigationService : INavigationService
@@ -101,4 +103,8 @@ public class NavigationService : INavigationService
     public void NavigateToCart() => NavigateTo("Cart");
 
     public void NavigateToModeration() => NavigateTo("Moderation");
+
+    public void NavigateToLeaderboard() => NavigateTo("Leaderboard");
+
+    public void NavigateToActivityFeed() => NavigateTo("ActivityFeed");
 }

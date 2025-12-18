@@ -89,6 +89,24 @@ public partial class MainViewModel : BaseViewModel
     }
 
     [RelayCommand]
+    private void NavigateToLeaderboard()
+    {
+        _navigationService.NavigateToLeaderboard();
+    }
+
+    [RelayCommand]
+    private void NavigateToActivityFeed()
+    {
+        _navigationService.NavigateToActivityFeed();
+    }
+
+    [RelayCommand]
+    private void NavigateToFriends()
+    {
+        _navigationService.NavigateToFriends();
+    }
+
+    [RelayCommand]
     private async Task Logout()
     {
         await _chatService.DisconnectAsync();
