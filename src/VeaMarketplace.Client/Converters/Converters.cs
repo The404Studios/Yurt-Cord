@@ -136,6 +136,28 @@ public class NullToVisibilityConverter : IValueConverter
 }
 
 /// <summary>
+/// Converts null/empty string to Visibility inversely (null/empty = Visible, has value = Collapsed)
+/// </summary>
+public class NullToVisibilityInverseConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value == null)
+            return Visibility.Visible;
+
+        if (value is string str && string.IsNullOrWhiteSpace(str))
+            return Visibility.Visible;
+
+        return Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return System.Windows.Data.Binding.DoNothing;
+    }
+}
+
+/// <summary>
 /// Converts string to Visibility
 /// When parameter is null: checks if value is null/empty (null/empty = Collapsed, has value = Visible)
 /// When parameter is provided: compares value to parameter (match = Visible, no match = Collapsed)

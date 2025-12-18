@@ -20,6 +20,7 @@
             <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
             <converters:TimeAgoConverter x:Key="TimeAgoConverter"/>
             <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+            <converters:NullToVisibilityInverseConverter x:Key="NullToVisibilityInverseConverter"/>
             <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
             <converters:EqualityToVisibilityConverter x:Key="EqualityToVisibilityConverter"/>
             <converters:BanTypeConverter x:Key="BanTypeConverter"/>
