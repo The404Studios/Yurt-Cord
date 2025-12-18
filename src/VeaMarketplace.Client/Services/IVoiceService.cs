@@ -355,6 +355,12 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     private const int OpusBitrate = 24000; // 24kbps - good for voice
     private const int OpusFrameSize = 960; // 20ms at 48kHz (48000 * 0.020 = 960 samples)
 
+    // Audio timing constants
+    private const int AudioBufferMs = 20; // Audio buffer size in milliseconds
+    private const int PlaybackLatencyMs = 50; // Desired playback latency
+    private const int MaxAudioQueueSize = 50; // Max audio packets in send queue (~1 second)
+    private const int ThreadJoinTimeoutMs = 500; // Timeout for thread joins
+
     // Mic boost - amplify input audio before sending
     private const float MicGain = 2.5f; // 2.5x boost for quiet mics
 
@@ -975,7 +981,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             {
                 DeviceNumber = _inputDeviceNumber,
                 WaveFormat = new WaveFormat(SampleRate, BitsPerSample, Channels),
-                BufferMilliseconds = 20, // 20ms buffers for low latency
+                BufferMilliseconds = AudioBufferMs, // Low latency buffers
                 NumberOfBuffers = 3
             };
 
@@ -993,7 +999,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             _waveOut = new WaveOutEvent
             {
                 DeviceNumber = _outputDeviceNumber,
-                DesiredLatency = 50, // Low latency playback
+                DesiredLatency = PlaybackLatencyMs, // Low latency playback
                 NumberOfBuffers = 3
             };
             _waveOut.Init(_bufferedWaveProvider);
@@ -1120,7 +1126,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         {
             if (_audioSendThread != null)
             {
-                _audioSendThread.Join(500);
+                _audioSendThread.Join(ThreadJoinTimeoutMs);
             }
         }
         catch { }
@@ -1260,7 +1266,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
             // Add to send queue - background thread will send it
             // Limit queue size to prevent memory buildup if network is slow
-            if (_audioSendQueue.Count < 50) // ~1 second of audio max
+            if (_audioSendQueue.Count < MaxAudioQueueSize) // ~1 second of audio max
             {
                 _audioSendQueue.Enqueue(audioData);
             }
@@ -1547,7 +1553,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         _videoCts?.Cancel();
         try
         {
-            _videoCaptureThread?.Join(500);
+            _videoCaptureThread?.Join(ThreadJoinTimeoutMs);
         }
         catch { }
         _videoCts?.Dispose();
@@ -1577,7 +1583,8 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     {
         // Video capture implementation using GDI+ for webcam
         // In a production app, this would use DirectShow, MediaFoundation, or OpenCV
-        var frameInterval = 1000 / _videoCaptureSettings.FrameRate;
+        var frameRate = Math.Max(1, _videoCaptureSettings.FrameRate); // Ensure at least 1 FPS to prevent division by zero
+        var frameInterval = 1000 / frameRate;
         var lastFrameTime = DateTime.UtcNow;
 
         while (!cancellationToken.IsCancellationRequested && _isVideoEnabled)
