@@ -64,6 +64,58 @@ public interface IQoLService
     bool IsAutoAway { get; }
     event Action? OnAutoAwayTriggered;
     event Action? OnAutoAwayReset;
+
+    // Friend Anniversaries & Special Dates
+    List<FriendAnniversary> GetUpcomingAnniversaries(int days = 7);
+    void AddFriendshipAnniversary(string friendId, string friendUsername, DateTime friendshipDate);
+    event Action<FriendAnniversary>? OnAnniversaryReminder;
+
+    // Online Notifications (per-friend)
+    ObservableCollection<OnlineNotificationPreference> OnlineNotifications { get; }
+    void SetOnlineNotification(string friendId, bool enabled, bool soundEnabled = true);
+    bool ShouldNotifyOnline(string friendId);
+    void RemoveOnlineNotification(string friendId);
+    event Action<string, string>? OnFriendOnlineNotification; // friendId, friendUsername
+}
+
+/// <summary>
+/// Friend anniversary/special date info
+/// </summary>
+public class FriendAnniversary
+{
+    public string FriendId { get; set; } = string.Empty;
+    public string FriendUsername { get; set; } = string.Empty;
+    public string? FriendAvatarUrl { get; set; }
+    public DateTime Date { get; set; }
+    public AnniversaryType Type { get; set; }
+    public int Years { get; set; }
+    public string Description => Type switch
+    {
+        AnniversaryType.Friendship => $"🎉 {Years} year{(Years != 1 ? "s" : "")} of friendship!",
+        AnniversaryType.Birthday => "🎂 Birthday!",
+        AnniversaryType.Custom => "📅 Special day",
+        _ => "📌 Reminder"
+    };
+}
+
+public enum AnniversaryType
+{
+    Friendship,
+    Birthday,
+    Custom
+}
+
+/// <summary>
+/// Online notification preference for a specific friend
+/// </summary>
+public class OnlineNotificationPreference
+{
+    public string FriendId { get; set; } = string.Empty;
+    public string FriendUsername { get; set; } = string.Empty;
+    public string? FriendAvatarUrl { get; set; }
+    public bool Enabled { get; set; } = true;
+    public bool SoundEnabled { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
 public class QoLService : IQoLService, IDisposable
@@ -81,6 +133,9 @@ public class QoLService : IQoLService, IDisposable
     public ObservableCollection<FriendNote> FriendNotes { get; } = [];
     public ObservableCollection<SmartDndSchedule> DndSchedules { get; } = [];
     public ObservableCollection<QuickAction> QuickActions { get; } = [];
+    public ObservableCollection<OnlineNotificationPreference> OnlineNotifications { get; } = [];
+
+    private readonly Dictionary<string, DateTime> _friendshipDates = new();
 
     public bool IsAutoAway => _isAutoAway;
 
@@ -88,6 +143,8 @@ public class QoLService : IQoLService, IDisposable
     public event Action<ScheduledStatus>? OnStatusChangeRequired;
     public event Action? OnAutoAwayTriggered;
     public event Action? OnAutoAwayReset;
+    public event Action<FriendAnniversary>? OnAnniversaryReminder;
+    public event Action<string, string>? OnFriendOnlineNotification;
 
     public QoLService(ISettingsService settingsService)
     {
@@ -147,6 +204,12 @@ public class QoLService : IQoLService, IDisposable
         {
             AddDefaultQuickActions();
         }
+
+        // Load friendship dates
+        LoadFriendshipDates();
+
+        // Load online notifications
+        LoadOnlineNotifications();
     }
 
     private void AddDefaultTemplates()
@@ -636,6 +699,180 @@ public class QoLService : IQoLService, IDisposable
         {
             _isAutoAway = false;
             OnAutoAwayReset?.Invoke();
+        }
+    }
+
+    #endregion
+
+    #region Friend Anniversaries
+
+    public List<FriendAnniversary> GetUpcomingAnniversaries(int days = 7)
+    {
+        var today = DateTime.Today;
+        var anniversaries = new List<FriendAnniversary>();
+
+        // Check friendship anniversaries
+        foreach (var kvp in _friendshipDates)
+        {
+            var friendshipDate = kvp.Value;
+            var years = today.Year - friendshipDate.Year;
+            var thisYearAnniversary = new DateTime(today.Year, friendshipDate.Month, friendshipDate.Day);
+
+            if (thisYearAnniversary < today)
+            {
+                thisYearAnniversary = thisYearAnniversary.AddYears(1);
+                years++;
+            }
+
+            if ((thisYearAnniversary - today).TotalDays <= days)
+            {
+                // Try to get friend info from notes
+                var note = FriendNotes.FirstOrDefault(n => n.UserId == kvp.Key);
+                anniversaries.Add(new FriendAnniversary
+                {
+                    FriendId = kvp.Key,
+                    FriendUsername = note?.Username ?? "Friend",
+                    FriendAvatarUrl = note?.AvatarUrl,
+                    Date = thisYearAnniversary,
+                    Type = AnniversaryType.Friendship,
+                    Years = years
+                });
+            }
+        }
+
+        // Check birthdays from friend notes
+        foreach (var note in FriendNotes.Where(n => n.Birthday.HasValue))
+        {
+            var birthday = note.Birthday!.Value;
+            var thisYearBirthday = new DateTime(today.Year, birthday.Month, birthday.Day);
+
+            if (thisYearBirthday < today)
+                thisYearBirthday = thisYearBirthday.AddYears(1);
+
+            if ((thisYearBirthday - today).TotalDays <= days)
+            {
+                // Don't duplicate if already added as friendship anniversary
+                if (!anniversaries.Any(a => a.FriendId == note.UserId && a.Type == AnniversaryType.Birthday))
+                {
+                    anniversaries.Add(new FriendAnniversary
+                    {
+                        FriendId = note.UserId,
+                        FriendUsername = note.Username ?? "Friend",
+                        FriendAvatarUrl = note.AvatarUrl,
+                        Date = thisYearBirthday,
+                        Type = AnniversaryType.Birthday,
+                        Years = 0
+                    });
+                }
+            }
+        }
+
+        return anniversaries.OrderBy(a => a.Date).ToList();
+    }
+
+    public void AddFriendshipAnniversary(string friendId, string friendUsername, DateTime friendshipDate)
+    {
+        _friendshipDates[friendId] = friendshipDate;
+
+        // Also update friend note if exists
+        var note = FriendNotes.FirstOrDefault(n => n.UserId == friendId);
+        if (note != null)
+        {
+            note.FriendshipDate = friendshipDate;
+            SaveFriendNotes();
+        }
+
+        SaveFriendshipDates();
+    }
+
+    private void SaveFriendshipDates()
+    {
+        _settingsService.Settings.FriendshipDates = _friendshipDates.ToDictionary(k => k.Key, v => v.Value);
+        _settingsService.SaveSettings();
+    }
+
+    private void LoadFriendshipDates()
+    {
+        _friendshipDates.Clear();
+        if (_settingsService.Settings.FriendshipDates != null)
+        {
+            foreach (var kvp in _settingsService.Settings.FriendshipDates)
+            {
+                _friendshipDates[kvp.Key] = kvp.Value;
+            }
+        }
+    }
+
+    #endregion
+
+    #region Online Notifications
+
+    public void SetOnlineNotification(string friendId, bool enabled, bool soundEnabled = true)
+    {
+        var existing = OnlineNotifications.FirstOrDefault(n => n.FriendId == friendId);
+        if (existing != null)
+        {
+            existing.Enabled = enabled;
+            existing.SoundEnabled = soundEnabled;
+        }
+        else
+        {
+            // Try to get friend info from notes
+            var note = FriendNotes.FirstOrDefault(n => n.UserId == friendId);
+            OnlineNotifications.Add(new OnlineNotificationPreference
+            {
+                FriendId = friendId,
+                FriendUsername = note?.Username ?? "Friend",
+                FriendAvatarUrl = note?.AvatarUrl,
+                Enabled = enabled,
+                SoundEnabled = soundEnabled
+            });
+        }
+        SaveOnlineNotifications();
+    }
+
+    public bool ShouldNotifyOnline(string friendId)
+    {
+        var pref = OnlineNotifications.FirstOrDefault(n => n.FriendId == friendId);
+        return pref?.Enabled ?? false;
+    }
+
+    public void RemoveOnlineNotification(string friendId)
+    {
+        var pref = OnlineNotifications.FirstOrDefault(n => n.FriendId == friendId);
+        if (pref != null)
+        {
+            OnlineNotifications.Remove(pref);
+            SaveOnlineNotifications();
+        }
+    }
+
+    /// <summary>
+    /// Called when a friend comes online to trigger notification if enabled
+    /// </summary>
+    public void NotifyFriendOnline(string friendId, string friendUsername)
+    {
+        if (ShouldNotifyOnline(friendId))
+        {
+            OnFriendOnlineNotification?.Invoke(friendId, friendUsername);
+        }
+    }
+
+    private void SaveOnlineNotifications()
+    {
+        _settingsService.Settings.OnlineNotifications = OnlineNotifications.ToList();
+        _settingsService.SaveSettings();
+    }
+
+    private void LoadOnlineNotifications()
+    {
+        OnlineNotifications.Clear();
+        if (_settingsService.Settings.OnlineNotifications != null)
+        {
+            foreach (var pref in _settingsService.Settings.OnlineNotifications)
+            {
+                OnlineNotifications.Add(pref);
+            }
         }
     }
 

@@ -278,13 +278,66 @@
 
                         <!-- Friends List View -->
                         <StackPanel Visibility="{Binding CurrentView, Converter={StaticResource StringToVisConverter}, ConverterParameter=Friends}">
+                            <!-- Search and Filter Bar -->
+                            <Border Background="{StaticResource PrimaryDarkBrush}" Margin="8,4" Padding="8" CornerRadius="4">
+                                <StackPanel>
+                                    <!-- Search Box -->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Grid.Column="0"
+                                                 Style="{StaticResource ModernTextBox}"
+                                                 Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
+                                                 Tag="Search friends, tags, or nicknames..."/>
+                                        <Button Grid.Column="1" Content="✕"
+                                                Style="{StaticResource IconButton}"
+                                                Width="28" Height="28" Margin="4,0,0,0"
+                                                Command="{Binding ClearSearchCommand}"
+                                                Visibility="{Binding SearchQuery, Converter={StaticResource NullToVisibilityConverter}}"/>
+                                    </Grid>
+
+                                    <!-- Filter and Sort Row -->
+                                    <Grid Margin="0,8,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Filter Dropdown -->
+                                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                            <TextBlock Text="Filter:" FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                            <ComboBox ItemsSource="{Binding FilterOptions}"
+                                                      SelectedItem="{Binding FriendFilter}"
+                                                      Width="100" Padding="6,4"/>
+                                        </StackPanel>
+
+                                        <!-- Sort Options -->
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                            <TextBlock Text="Sort:" FontSize="11" Foreground="{StaticResource TextMutedBrush}"
+                                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                            <ComboBox ItemsSource="{Binding SortOptions}"
+                                                      SelectedItem="{Binding FriendSort}"
+                                                      Width="90" Padding="6,4" Margin="0,0,4,0"/>
+                                            <Button Content="{Binding SortAscending, Converter={StaticResource BoolToText}, ConverterParameter='↑|↓'}"
+                                                    Style="{StaticResource SecondaryButton}"
+                                                    Width="24" Height="24" Padding="0"
+                                                    Command="{Binding ToggleSortDirectionCommand}"
+                                                    ToolTip="{Binding SortAscending, Converter={StaticResource BoolToText}, ConverterParameter='Ascending|Descending'}"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
                             <TextBlock FontSize="11" FontWeight="SemiBold"
                                        Foreground="{StaticResource TextMutedBrush}"
                                        Margin="16,8">
                                 <Run Text="ALL FRIENDS — "/>
                                 <Run Text="{Binding TotalFriendsCount, Mode=OneWay}"/>
                             </TextBlock>
-                            <ItemsControl ItemsSource="{Binding Friends}">
+                            <ItemsControl ItemsSource="{Binding FilteredFriends}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Button Style="{StaticResource ChannelButton}"

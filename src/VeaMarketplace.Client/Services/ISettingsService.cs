@@ -76,11 +76,14 @@ public class ScheduledStatus
 public class FriendNote
 {
     public string UserId { get; set; } = string.Empty;
+    public string? Username { get; set; }
+    public string? AvatarUrl { get; set; }
     public string Note { get; set; } = string.Empty;
     public string? Nickname { get; set; } // Custom nickname
     public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
     public List<string> Tags { get; set; } = []; // Custom tags like "work", "gaming"
     public DateTime? Birthday { get; set; }
+    public DateTime? FriendshipDate { get; set; } // When you became friends
     public string? Timezone { get; set; }
 }
 
@@ -169,6 +172,12 @@ public class AppSettings
 
     // Quick Actions - custom shortcuts
     public List<QuickAction> QuickActions { get; set; } = [];
+
+    // Friendship Dates - track when friendships started
+    public Dictionary<string, DateTime> FriendshipDates { get; set; } = new();
+
+    // Online Notifications - per-friend notification settings
+    public List<OnlineNotificationPreference> OnlineNotifications { get; set; } = [];
 
     // Read Receipts (optional) - know when messages are read
     public bool EnableReadReceipts { get; set; } = true;
