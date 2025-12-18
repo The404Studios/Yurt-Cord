@@ -73,6 +73,7 @@
     <SolidColorBrush x:Key="AccentPinkBrush" Color="{StaticResource AccentPinkColor}"/>
     <SolidColorBrush x:Key="AccentOrangeBrush" Color="{StaticResource AccentOrangeColor}"/>
     <SolidColorBrush x:Key="AccentCyanBrush" Color="{StaticResource AccentCyanColor}"/>
+    <SolidColorBrush x:Key="AccentBlueBrush" Color="{StaticResource AccentCyanColor}"/>
 
     <!-- Text Brushes (simple names) -->
     <SolidColorBrush x:Key="TextPrimary" Color="{StaticResource TextPrimaryColor}"/>

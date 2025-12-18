@@ -31,12 +31,14 @@
             <converters:DefaultAvatarConverter x:Key="DefaultAvatarConverter"/>
             <converters:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverter"/>
             <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
+            <converters:CountToVisibilityInverseConverter x:Key="CountToVisibilityInverseConverter"/>
             <converters:PositiveToVisibilityConverter x:Key="PositiveToVisibilityConverter"/>
             <converters:PositiveToBoolConverter x:Key="PositiveToBoolConverter"/>
             <converters:BoolToTextConverter x:Key="BoolToTextConverter"/>
             <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
             <converters:PercentageToWidthConverter x:Key="PercentageToWidthConverter"/>
             <converters:EqualityConverter x:Key="EqualityConverter"/>
+            <converters:EqualityMultiConverter x:Key="EqualityMultiConverter"/>
             <converters:GreaterThanOneToVisibilityConverter x:Key="GreaterThanOneToVisibilityConverter"/>
 
             <!-- Converter Aliases for backward compatibility -->
