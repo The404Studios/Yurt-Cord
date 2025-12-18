@@ -65,8 +65,9 @@ public partial class CreateOutletRoomDialog : Window
             }
             catch
             {
-                MessageBox.Show("Failed to load image. Please select a valid image file.",
-                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                _selectedIconPath = null; // Clear invalid path
+                var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+                toastService?.ShowError("Invalid Image", "Failed to load image. Please select a valid image file.");
             }
         }
     }
@@ -87,8 +88,8 @@ public partial class CreateOutletRoomDialog : Window
         OutletOption.BorderBrush = new SolidColorBrush(Colors.Transparent);
         PrivateOption.BorderBrush = new SolidColorBrush(Colors.Transparent);
 
-        // Highlight selected
-        var accentBrush = new SolidColorBrush(Color.FromRgb(88, 101, 242));
+        // Highlight selected - Plugin orange
+        var accentBrush = new SolidColorBrush(Color.FromRgb(255, 107, 0));
         switch (_selectedRoomType)
         {
             case "Community":
@@ -136,6 +137,11 @@ public partial class CreateOutletRoomDialog : Window
                 if (uploadResult.Success)
                 {
                     iconUrl = uploadResult.FileUrl;
+                }
+                else
+                {
+                    var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+                    toastService?.ShowWarning("Icon Upload Failed", "Room will be created without a custom icon.");
                 }
             }
 
