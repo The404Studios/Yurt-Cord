@@ -123,6 +123,15 @@ public class ApiService : IApiService
         Converters = { new JsonStringEnumConverter() }
     };
 
+    // Simple in-memory cache with expiration for reducing API calls
+    private readonly Dictionary<string, (object Data, DateTime Expiry)> _cache = new();
+    private readonly object _cacheLock = new();
+
+    // Cache durations for different data types
+    private static readonly TimeSpan ShortCacheDuration = TimeSpan.FromSeconds(30); // Volatile data (cart, wishlist)
+    private static readonly TimeSpan MediumCacheDuration = TimeSpan.FromMinutes(2); // Semi-static (products)
+    private static readonly TimeSpan LongCacheDuration = TimeSpan.FromMinutes(10); // Static data (user profiles)
+
     public string? AuthToken { get; private set; }
     public UserDto? CurrentUser { get; private set; }
     public bool IsAuthenticated => !string.IsNullOrEmpty(AuthToken) && CurrentUser != null;
@@ -131,6 +140,52 @@ public class ApiService : IApiService
     {
         _httpClient = new HttpClient { BaseAddress = new Uri(BaseUrl) };
     }
+
+    #region Cache Helpers
+
+    private T? GetCached<T>(string key) where T : class
+    {
+        lock (_cacheLock)
+        {
+            if (_cache.TryGetValue(key, out var entry) && entry.Expiry > DateTime.UtcNow)
+            {
+                return entry.Data as T;
+            }
+            // Remove expired entry
+            _cache.Remove(key);
+            return null;
+        }
+    }
+
+    private void SetCache<T>(string key, T data, TimeSpan duration) where T : class
+    {
+        lock (_cacheLock)
+        {
+            _cache[key] = (data, DateTime.UtcNow + duration);
+        }
+    }
+
+    private void InvalidateCache(string keyPrefix)
+    {
+        lock (_cacheLock)
+        {
+            var keysToRemove = _cache.Keys.Where(k => k.StartsWith(keyPrefix)).ToList();
+            foreach (var key in keysToRemove)
+            {
+                _cache.Remove(key);
+            }
+        }
+    }
+
+    private void ClearAllCache()
+    {
+        lock (_cacheLock)
+        {
+            _cache.Clear();
+        }
+    }
+
+    #endregion
 
     public async Task<AuthResponse> LoginAsync(string username, string password)
     {
@@ -236,6 +291,7 @@ public class ApiService : IApiService
         AuthToken = null;
         CurrentUser = null;
         _httpClient.DefaultRequestHeaders.Authorization = null;
+        ClearAllCache(); // Clear all cached data on logout
     }
 
     public async Task<ProductListResponse> GetProductsAsync(int page = 1, ProductCategory? category = null, string? search = null)
@@ -250,9 +306,19 @@ public class ApiService : IApiService
 
     public async Task<ProductDto?> GetProductAsync(string productId)
     {
+        var cacheKey = $"product:{productId}";
+        var cached = GetCached<ProductDto>(cacheKey);
+        if (cached != null) return cached;
+
         var response = await _httpClient.GetAsync($"/api/products/{productId}").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return null;
-        return await response.Content.ReadFromJsonAsync<ProductDto>(JsonOptions).ConfigureAwait(false);
+
+        var product = await response.Content.ReadFromJsonAsync<ProductDto>(JsonOptions).ConfigureAwait(false);
+        if (product != null)
+        {
+            SetCache(cacheKey, product, MediumCacheDuration);
+        }
+        return product;
     }
 
     public async Task<ProductDto> CreateProductAsync(CreateProductRequest request)
@@ -289,9 +355,19 @@ public class ApiService : IApiService
 
     public async Task<UserDto?> GetUserProfileAsync(string userId)
     {
+        var cacheKey = $"profile:{userId}";
+        var cached = GetCached<UserDto>(cacheKey);
+        if (cached != null) return cached;
+
         var response = await _httpClient.GetAsync($"/api/users/{userId}/profile").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return null;
-        return await response.Content.ReadFromJsonAsync<UserDto>(JsonOptions).ConfigureAwait(false);
+
+        var profile = await response.Content.ReadFromJsonAsync<UserDto>(JsonOptions).ConfigureAwait(false);
+        if (profile != null)
+        {
+            SetCache(cacheKey, profile, LongCacheDuration);
+        }
+        return profile;
     }
 
     public async Task<List<UserSearchResultDto>> SearchUsersAsync(string query)
@@ -361,20 +437,35 @@ public class ApiService : IApiService
     // Wishlist
     public async Task<List<WishlistItemDto>> GetWishlistAsync()
     {
+        var cacheKey = "wishlist";
+        var cached = GetCached<List<WishlistItemDto>>(cacheKey);
+        if (cached != null) return cached;
+
         var response = await _httpClient.GetAsync("/api/wishlist").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return [];
-        return await response.Content.ReadFromJsonAsync<List<WishlistItemDto>>(JsonOptions).ConfigureAwait(false) ?? [];
+
+        var wishlist = await response.Content.ReadFromJsonAsync<List<WishlistItemDto>>(JsonOptions).ConfigureAwait(false) ?? [];
+        SetCache(cacheKey, wishlist, ShortCacheDuration);
+        return wishlist;
     }
 
     public async Task<bool> AddToWishlistAsync(string productId)
     {
         var response = await _httpClient.PostAsync($"/api/wishlist/{productId}", null).ConfigureAwait(false);
+        if (response.IsSuccessStatusCode)
+        {
+            InvalidateCache("wishlist"); // Invalidate wishlist cache on modification
+        }
         return response.IsSuccessStatusCode;
     }
 
     public async Task<bool> RemoveFromWishlistAsync(string productId)
     {
         var response = await _httpClient.DeleteAsync($"/api/wishlist/{productId}").ConfigureAwait(false);
+        if (response.IsSuccessStatusCode)
+        {
+            InvalidateCache("wishlist"); // Invalidate wishlist cache on modification
+        }
         return response.IsSuccessStatusCode;
     }
 
@@ -536,37 +627,58 @@ public class ApiService : IApiService
         };
     }
 
-    // Cart
+    // Cart - with caching and auto-invalidation
     public async Task<CartDto> GetCartAsync()
     {
+        var cacheKey = "cart";
+        var cached = GetCached<CartDto>(cacheKey);
+        if (cached != null) return cached;
+
         var response = await _httpClient.GetAsync("/api/cart").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return new CartDto();
-        return await response.Content.ReadFromJsonAsync<CartDto>(JsonOptions).ConfigureAwait(false) ?? new CartDto();
+
+        var cart = await response.Content.ReadFromJsonAsync<CartDto>(JsonOptions).ConfigureAwait(false) ?? new CartDto();
+        SetCache(cacheKey, cart, ShortCacheDuration);
+        return cart;
     }
 
     public async Task<CartDto> AddToCartAsync(AddToCartRequest request)
     {
         var response = await _httpClient.PostAsJsonAsync("/api/cart/items", request, JsonOptions).ConfigureAwait(false);
+        InvalidateCache("cart"); // Invalidate cart cache on modification
         if (!response.IsSuccessStatusCode) return new CartDto();
-        return await response.Content.ReadFromJsonAsync<CartDto>(JsonOptions).ConfigureAwait(false) ?? new CartDto();
+        var cart = await response.Content.ReadFromJsonAsync<CartDto>(JsonOptions).ConfigureAwait(false) ?? new CartDto();
+        SetCache("cart", cart, ShortCacheDuration); // Cache the updated cart
+        return cart;
     }
 
     public async Task<CartDto> UpdateCartItemAsync(UpdateCartItemRequest request)
     {
         var response = await _httpClient.PutAsJsonAsync($"/api/cart/items/{request.ItemId}", request, JsonOptions).ConfigureAwait(false);
+        InvalidateCache("cart"); // Invalidate cart cache on modification
         if (!response.IsSuccessStatusCode) return new CartDto();
-        return await response.Content.ReadFromJsonAsync<CartDto>(JsonOptions).ConfigureAwait(false) ?? new CartDto();
+        var cart = await response.Content.ReadFromJsonAsync<CartDto>(JsonOptions).ConfigureAwait(false) ?? new CartDto();
+        SetCache("cart", cart, ShortCacheDuration); // Cache the updated cart
+        return cart;
     }
 
     public async Task<bool> RemoveFromCartAsync(string itemId)
     {
         var response = await _httpClient.DeleteAsync($"/api/cart/items/{itemId}").ConfigureAwait(false);
+        if (response.IsSuccessStatusCode)
+        {
+            InvalidateCache("cart"); // Invalidate cart cache on modification
+        }
         return response.IsSuccessStatusCode;
     }
 
     public async Task<bool> ClearCartAsync()
     {
         var response = await _httpClient.DeleteAsync("/api/cart").ConfigureAwait(false);
+        if (response.IsSuccessStatusCode)
+        {
+            InvalidateCache("cart"); // Invalidate cart cache on modification
+        }
         return response.IsSuccessStatusCode;
     }
 

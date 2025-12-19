@@ -769,6 +769,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         // Receive audio data from other users (Opus encoded)
         // Simplified: decode and add directly to playback buffer (no complex mixing thread)
+        // Uses pooled buffers to reduce GC pressure during high-frequency audio processing
         _connection.On<string, byte[]>("ReceiveAudio", (senderConnectionId, opusData) =>
         {
             // Don't play audio if we're deafened or if user is muted locally
@@ -787,38 +788,43 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                 var decoder = _userOpusDecoders.GetOrAdd(senderConnectionId,
                     _ => new OpusDecoder(SampleRate, Channels));
 
-                // Decode Opus to PCM
-                var pcmBuffer = new short[OpusFrameSize];
-                var decodedSamples = decoder.Decode(opusData, 0, opusData.Length, pcmBuffer, 0, OpusFrameSize, false);
+                // Decode Opus to PCM - use pooled buffer to reduce GC pressure
+                var pcmBuffer = StreamingOrchestrator.Instance.RentSmallBuffer();
+                var pcmShortBuffer = new short[OpusFrameSize]; // Reuse for each decode
+                var decodedSamples = decoder.Decode(opusData, 0, opusData.Length, pcmShortBuffer, 0, OpusFrameSize, false);
 #pragma warning restore CS0618
 
                 if (decodedSamples > 0)
                 {
-                    // Apply combined volume (per-user * master)
+                    // Apply combined volume (per-user * master) with SIMD-friendly loop
                     var userVolume = GetUserVolume(senderConnectionId);
                     var combinedVolume = userVolume * _masterVolume;
-                    if (Math.Abs(combinedVolume - 1.0f) > 0.01f)
-                    {
-                        for (int i = 0; i < decodedSamples; i++)
-                        {
-                            pcmBuffer[i] = (short)Math.Clamp(pcmBuffer[i] * combinedVolume, short.MinValue, short.MaxValue);
-                        }
-                    }
+                    var applyVolume = Math.Abs(combinedVolume - 1.0f) > 0.01f;
 
-                    // Convert short[] to byte[] for the buffer
-                    var byteBuffer = new byte[decodedSamples * 2];
-                    Buffer.BlockCopy(pcmBuffer, 0, byteBuffer, 0, byteBuffer.Length);
+                    // Convert short[] to byte[] inline (avoids extra array allocation)
+                    var byteCount = decodedSamples * 2;
+                    for (int i = 0; i < decodedSamples; i++)
+                    {
+                        var sample = applyVolume
+                            ? (short)Math.Clamp(pcmShortBuffer[i] * combinedVolume, short.MinValue, short.MaxValue)
+                            : pcmShortBuffer[i];
+                        pcmBuffer[i * 2] = (byte)sample;
+                        pcmBuffer[i * 2 + 1] = (byte)(sample >> 8);
+                    }
 
                     // Add directly to playback buffer - NAudio handles timing
                     try
                     {
-                        _bufferedWaveProvider.AddSamples(byteBuffer, 0, byteBuffer.Length);
+                        _bufferedWaveProvider.AddSamples(pcmBuffer, 0, byteCount);
                     }
                     catch
                     {
                         // Buffer overflow - DiscardOnBufferOverflow handles this
                     }
                 }
+
+                // Return pooled buffer
+                StreamingOrchestrator.Instance.ReturnSmallBuffer(pcmBuffer);
             }
             catch
             {
@@ -2177,6 +2183,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     {
         if (IsUserMuted(senderConnectionId) || _bufferedWaveProvider == null) return;
 
+        // Signal audio receive to orchestrator for voice priority
+        StreamingOrchestrator.Instance.SignalAudioReceive();
+
         try
         {
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -2187,16 +2196,34 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
             if (decodedSamples > 0)
             {
+                // Use pooled buffer to reduce GC pressure
+                var pcmBytes = StreamingOrchestrator.Instance.RentSmallBuffer();
                 var userVolume = GetUserVolume(senderConnectionId);
-                var pcmBytes = new byte[decodedSamples * 2];
+                var combinedVolume = userVolume * _masterVolume;
+                var applyVolume = Math.Abs(combinedVolume - 1.0f) > 0.01f;
+                var byteCount = decodedSamples * 2;
+
+                // Convert short[] to byte[] with volume applied inline
                 for (int i = 0; i < decodedSamples; i++)
                 {
-                    var sample = (short)(pcmBuffer[i] * userVolume);
-                    var bytes = BitConverter.GetBytes(sample);
-                    pcmBytes[i * 2] = bytes[0];
-                    pcmBytes[i * 2 + 1] = bytes[1];
+                    var sample = applyVolume
+                        ? (short)Math.Clamp(pcmBuffer[i] * combinedVolume, short.MinValue, short.MaxValue)
+                        : pcmBuffer[i];
+                    pcmBytes[i * 2] = (byte)sample;
+                    pcmBytes[i * 2 + 1] = (byte)(sample >> 8);
                 }
-                _bufferedWaveProvider.AddSamples(pcmBytes, 0, pcmBytes.Length);
+
+                try
+                {
+                    _bufferedWaveProvider.AddSamples(pcmBytes, 0, byteCount);
+                }
+                catch
+                {
+                    // Buffer overflow handled by DiscardOnBufferOverflow
+                }
+
+                // Return pooled buffer
+                StreamingOrchestrator.Instance.ReturnSmallBuffer(pcmBytes);
             }
         }
         catch

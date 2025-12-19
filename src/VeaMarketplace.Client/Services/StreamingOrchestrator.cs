@@ -56,9 +56,17 @@ public class StreamingOrchestrator : IDisposable
     // Buffer pool for reducing allocations
     private readonly ConcurrentBag<byte[]> _smallBufferPool = new();  // For audio (~4KB)
     private readonly ConcurrentBag<byte[]> _largeBufferPool = new();  // For video (~1MB)
+    private readonly ConcurrentBag<byte[]> _mediumBufferPool = new(); // For encoded frames (~256KB)
     private const int SmallBufferSize = 4096;
+    private const int MediumBufferSize = 256 * 1024;  // 256KB for encoded frames
     private const int LargeBufferSize = 1024 * 1024;
     private const int MaxPooledBuffers = 20;
+    private const int MaxPooledLargeBuffers = 5;      // Fewer large buffers
+    private const int MaxPooledMediumBuffers = 10;
+
+    // Memory pressure tracking for adaptive pool sizing
+    private volatile int _memoryPressureLevel; // 0=low, 1=medium, 2=high
+    private long _lastBufferTrimTimeTicks;
 
     // Configuration
     private const int VoiceActivityTimeoutMs = 300;
@@ -107,16 +115,21 @@ public class StreamingOrchestrator : IDisposable
         };
         _networkThread.Start();
 
-        // Pre-allocate some buffers
-        for (int i = 0; i < 5; i++)
+        // Pre-allocate some buffers based on expected usage
+        for (int i = 0; i < 8; i++)
         {
             _smallBufferPool.Add(new byte[SmallBufferSize]);
         }
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 4; i++)
+        {
+            _mediumBufferPool.Add(new byte[MediumBufferSize]);
+        }
+        for (int i = 0; i < 2; i++)
         {
             _largeBufferPool.Add(new byte[LargeBufferSize]);
         }
 
+        _lastBufferTrimTimeTicks = DateTime.UtcNow.Ticks;
         Debug.WriteLine("[Orchestrator] Started with memory and network management threads");
     }
 
@@ -241,10 +254,38 @@ public class StreamingOrchestrator : IDisposable
     /// </summary>
     public void ReturnSmallBuffer(byte[] buffer)
     {
-        if (buffer.Length == SmallBufferSize && _smallBufferPool.Count < MaxPooledBuffers)
+        if (buffer.Length != SmallBufferSize) return;
+
+        // Reduce pool size under memory pressure
+        var maxPooled = _memoryPressureLevel > 0 ? MaxPooledBuffers / 2 : MaxPooledBuffers;
+        if (_smallBufferPool.Count < maxPooled)
         {
             Array.Clear(buffer, 0, buffer.Length);
             _smallBufferPool.Add(buffer);
+        }
+    }
+
+    /// <summary>
+    /// Get a medium buffer from the pool (for encoded frames ~256KB)
+    /// </summary>
+    public byte[] RentMediumBuffer()
+    {
+        if (_mediumBufferPool.TryTake(out var buffer))
+            return buffer;
+        return new byte[MediumBufferSize];
+    }
+
+    /// <summary>
+    /// Return a medium buffer to the pool
+    /// </summary>
+    public void ReturnMediumBuffer(byte[] buffer)
+    {
+        if (buffer.Length != MediumBufferSize) return;
+
+        var maxPooled = _memoryPressureLevel > 0 ? MaxPooledMediumBuffers / 2 : MaxPooledMediumBuffers;
+        if (_mediumBufferPool.Count < maxPooled)
+        {
+            _mediumBufferPool.Add(buffer);
         }
     }
 
@@ -263,9 +304,12 @@ public class StreamingOrchestrator : IDisposable
     /// </summary>
     public void ReturnLargeBuffer(byte[] buffer)
     {
-        if (buffer.Length == LargeBufferSize && _largeBufferPool.Count < MaxPooledBuffers)
+        if (buffer.Length != LargeBufferSize) return;
+
+        // Stricter limits for large buffers due to memory impact
+        var maxPooled = _memoryPressureLevel > 1 ? 2 : MaxPooledLargeBuffers;
+        if (_largeBufferPool.Count < maxPooled)
         {
-            // Don't clear large buffers - too expensive
             _largeBufferPool.Add(buffer);
         }
     }
@@ -310,17 +354,30 @@ public class StreamingOrchestrator : IDisposable
                     Debug.WriteLine($"[Orchestrator] Memory warning: {currentMb}MB");
                 }
 
+                // Update memory pressure level for adaptive pooling
+                if (currentMb > MemoryWarningThresholdMb)
+                    _memoryPressureLevel = 2; // High
+                else if (currentMb > MemoryCleanupThresholdMb)
+                    _memoryPressureLevel = 1; // Medium
+                else
+                    _memoryPressureLevel = 0; // Low
+
                 // Proactive cleanup at threshold
                 if (currentMb > MemoryCleanupThresholdMb)
                 {
                     // Request GC to clean up Gen0/Gen1 without blocking
                     GC.Collect(1, GCCollectionMode.Optimized, false);
 
-                    // Clear excess pooled buffers
-                    while (_smallBufferPool.Count > 5)
-                        _smallBufferPool.TryTake(out _);
-                    while (_largeBufferPool.Count > 2)
-                        _largeBufferPool.TryTake(out _);
+                    // Clear excess pooled buffers based on pressure level
+                    TrimBufferPools();
+                }
+
+                // Periodic buffer pool trimming (every 30 seconds)
+                var lastTrimTime = new DateTime(Interlocked.Read(ref _lastBufferTrimTimeTicks));
+                if ((DateTime.UtcNow - lastTrimTime).TotalSeconds > 30)
+                {
+                    TrimBufferPools();
+                    Interlocked.Exchange(ref _lastBufferTrimTimeTicks, DateTime.UtcNow.Ticks);
                 }
 
                 // Compact LOH periodically if memory is high
@@ -334,6 +391,31 @@ public class StreamingOrchestrator : IDisposable
                 Debug.WriteLine($"[Orchestrator] Memory thread error: {ex.Message}");
             }
         }
+    }
+
+    /// <summary>
+    /// Trim buffer pools to release memory
+    /// </summary>
+    private void TrimBufferPools()
+    {
+        // Determine target sizes based on memory pressure
+        var targetSmall = _memoryPressureLevel > 1 ? 3 : (_memoryPressureLevel > 0 ? 5 : 8);
+        var targetMedium = _memoryPressureLevel > 1 ? 2 : (_memoryPressureLevel > 0 ? 3 : 4);
+        var targetLarge = _memoryPressureLevel > 1 ? 1 : 2;
+
+        // Trim small buffers
+        while (_smallBufferPool.Count > targetSmall)
+            _smallBufferPool.TryTake(out _);
+
+        // Trim medium buffers
+        while (_mediumBufferPool.Count > targetMedium)
+            _mediumBufferPool.TryTake(out _);
+
+        // Trim large buffers
+        while (_largeBufferPool.Count > targetLarge)
+            _largeBufferPool.TryTake(out _);
+
+        Debug.WriteLine($"[Orchestrator] Buffer pools trimmed: small={_smallBufferPool.Count}, medium={_mediumBufferPool.Count}, large={_largeBufferPool.Count}");
     }
 
     #endregion
@@ -488,6 +570,7 @@ public class StreamingOrchestrator : IDisposable
 
         // Clear pools
         _smallBufferPool.Clear();
+        _mediumBufferPool.Clear();
         _largeBufferPool.Clear();
 
         Debug.WriteLine("[Orchestrator] Disposed");

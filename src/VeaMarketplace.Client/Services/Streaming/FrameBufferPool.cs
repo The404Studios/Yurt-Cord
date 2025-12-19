@@ -13,6 +13,8 @@ namespace VeaMarketplace.Client.Services.Streaming;
 /// - Bitmap pool for capture operations
 /// - Thread-safe concurrent access
 /// - Automatic cleanup of unused buffers
+/// - Short array pool for audio packets
+/// - Tiered buffer sizes for optimal memory usage
 ///
 /// This dramatically reduces GC pauses during streaming.
 /// </summary>
@@ -26,11 +28,32 @@ public class FrameBufferPool : IDisposable
     private readonly ConcurrentBag<byte[]> _byteBuffers = new();
     private readonly int _maxBufferSize;
 
+    // Small buffer pool (for audio frames, encoded data)
+    private readonly ConcurrentBag<byte[]> _smallBuffers = new();
+    private const int SmallBufferSize = 8192; // 8KB for audio/small data
+
+    // Medium buffer pool (for encoded frames)
+    private readonly ConcurrentBag<byte[]> _mediumBuffers = new();
+    private const int MediumBufferSize = 262144; // 256KB for encoded frames
+
+    // Short array pool for PCM audio samples
+    private readonly ConcurrentBag<short[]> _shortBuffers = new();
+    private const int ShortBufferSize = 960; // Opus frame size
+
     // Bitmap pool (for capture operations)
     private readonly ConcurrentBag<PooledBitmap> _bitmapPool = new();
 
     // Encoded frame buffer pool
     private readonly ConcurrentBag<MemoryStream> _streamPool = new();
+
+    // Statistics for monitoring
+    private long _totalRented;
+    private long _totalReturned;
+    private long _allocationsAvoided;
+
+    public long TotalRented => Interlocked.Read(ref _totalRented);
+    public long TotalReturned => Interlocked.Read(ref _totalReturned);
+    public long AllocationsAvoided => Interlocked.Read(ref _allocationsAvoided);
 
     private volatile bool _disposed;
 
@@ -41,24 +64,61 @@ public class FrameBufferPool : IDisposable
         _poolSize = poolSize;
         _maxBufferSize = maxWidth * maxHeight * 4; // RGBA
 
-        // Pre-allocate buffers
+        // Pre-allocate buffers for different sizes
         for (int i = 0; i < poolSize; i++)
         {
             _byteBuffers.Add(new byte[_maxBufferSize]);
             _streamPool.Add(new MemoryStream(_maxBufferSize / 4)); // Encoded is smaller
         }
+
+        // Pre-allocate small buffers for audio
+        for (int i = 0; i < poolSize * 2; i++)
+        {
+            _smallBuffers.Add(new byte[SmallBufferSize]);
+            _shortBuffers.Add(new short[ShortBufferSize]);
+        }
+
+        // Pre-allocate medium buffers for encoded frames
+        for (int i = 0; i < poolSize; i++)
+        {
+            _mediumBuffers.Add(new byte[MediumBufferSize]);
+        }
     }
 
     /// <summary>
-    /// Rent a byte buffer for frame data.
+    /// Rent a byte buffer for frame data. Uses tiered pools for efficiency.
     /// </summary>
     public byte[] RentBuffer(int minSize)
     {
         if (_disposed) return new byte[minSize];
 
-        // Try to get from pool
+        Interlocked.Increment(ref _totalRented);
+
+        // Use appropriate pool based on size
+        if (minSize <= SmallBufferSize)
+        {
+            if (_smallBuffers.TryTake(out var smallBuf))
+            {
+                Interlocked.Increment(ref _allocationsAvoided);
+                return smallBuf;
+            }
+            return new byte[SmallBufferSize];
+        }
+
+        if (minSize <= MediumBufferSize)
+        {
+            if (_mediumBuffers.TryTake(out var medBuf))
+            {
+                Interlocked.Increment(ref _allocationsAvoided);
+                return medBuf;
+            }
+            return new byte[MediumBufferSize];
+        }
+
+        // Try to get from large buffer pool
         if (_byteBuffers.TryTake(out var buffer) && buffer.Length >= minSize)
         {
+            Interlocked.Increment(ref _allocationsAvoided);
             return buffer;
         }
 
@@ -78,10 +138,64 @@ public class FrameBufferPool : IDisposable
     {
         if (_disposed || buffer == null) return;
 
+        Interlocked.Increment(ref _totalReturned);
+
+        // Route to appropriate pool based on size
+        if (buffer.Length == SmallBufferSize && _smallBuffers.Count < _poolSize * 4)
+        {
+            _smallBuffers.Add(buffer);
+            return;
+        }
+
+        if (buffer.Length == MediumBufferSize && _mediumBuffers.Count < _poolSize * 2)
+        {
+            _mediumBuffers.Add(buffer);
+            return;
+        }
+
         // Only pool buffers of expected size
         if (buffer.Length == _maxBufferSize && _byteBuffers.Count < _poolSize * 2)
         {
             _byteBuffers.Add(buffer);
+        }
+    }
+
+    /// <summary>
+    /// Rent a short array for PCM audio samples.
+    /// </summary>
+    public short[] RentShortBuffer(int minSize = ShortBufferSize)
+    {
+        if (_disposed) return new short[minSize];
+
+        Interlocked.Increment(ref _totalRented);
+
+        if (_shortBuffers.TryTake(out var buffer) && buffer.Length >= minSize)
+        {
+            Interlocked.Increment(ref _allocationsAvoided);
+            return buffer;
+        }
+
+        if (buffer != null)
+        {
+            _shortBuffers.Add(buffer);
+        }
+
+        return new short[Math.Max(minSize, ShortBufferSize)];
+    }
+
+    /// <summary>
+    /// Return a short buffer to the pool.
+    /// </summary>
+    public void ReturnShortBuffer(short[] buffer)
+    {
+        if (_disposed || buffer == null) return;
+
+        Interlocked.Increment(ref _totalReturned);
+
+        if (buffer.Length == ShortBufferSize && _shortBuffers.Count < _poolSize * 4)
+        {
+            Array.Clear(buffer, 0, buffer.Length);
+            _shortBuffers.Add(buffer);
         }
     }
 
@@ -183,6 +297,9 @@ public class FrameBufferPool : IDisposable
 
         // Clear byte buffers (they'll be GC'd)
         _byteBuffers.Clear();
+        _smallBuffers.Clear();
+        _mediumBuffers.Clear();
+        _shortBuffers.Clear();
 
         // Dispose bitmaps
         while (_bitmapPool.TryTake(out var pooled))
@@ -197,6 +314,15 @@ public class FrameBufferPool : IDisposable
         }
 
         GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Get pool statistics for monitoring.
+    /// </summary>
+    public (int Small, int Medium, int Large, int Bitmaps, int Streams, int Shorts) GetPoolCounts()
+    {
+        return (_smallBuffers.Count, _mediumBuffers.Count, _byteBuffers.Count,
+                _bitmapPool.Count, _streamPool.Count, _shortBuffers.Count);
     }
 }
 
