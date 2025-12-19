@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.IdentityModel.Tokens;
 using VeaMarketplace.Server.Data;
+using VeaMarketplace.Server.Helpers;
 using VeaMarketplace.Server.Hubs;
 using VeaMarketplace.Server.Services;
 
@@ -252,20 +253,17 @@ app.MapHub<RoomHub>("/hubs/rooms");
 app.MapHub<ContentHub>("/hubs/content");
 app.MapHub<NotificationHub>("/hubs/notifications");
 
-// Ensure data directory exists
-Directory.CreateDirectory("Data");
-
-// Ensure upload directories exist
-Directory.CreateDirectory("uploads");
-Directory.CreateDirectory("uploads/avatars");
-Directory.CreateDirectory("uploads/banners");
-Directory.CreateDirectory("uploads/attachments");
-Directory.CreateDirectory("uploads/thumbnails");
+// Initialize server directories with proper error handling
+var startupLogger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+if (!ServerPaths.InitializeDirectories(startupLogger))
+{
+    startupLogger.LogWarning("Some directories could not be created - server may not function correctly");
+}
 
 // Load role configuration from JSON file on startup
 var roleConfigService = app.Services.GetRequiredService<RoleConfigurationService>();
 roleConfigService.LoadRolesFromConfig();
-Console.WriteLine("[INFO] Role configuration loaded from Data/roles-config.json");
+startupLogger.LogInformation("Role configuration loaded from {Path}", ServerPaths.RolesConfigPath);
 
 Console.WriteLine(@"
 ╔═══════════════════════════════════════════════════════════════╗

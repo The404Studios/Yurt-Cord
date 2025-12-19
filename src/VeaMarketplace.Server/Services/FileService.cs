@@ -1,5 +1,6 @@
 using LiteDB;
 using VeaMarketplace.Server.Data;
+using VeaMarketplace.Server.Helpers;
 using VeaMarketplace.Shared.DTOs;
 using VeaMarketplace.Shared.Models;
 using System.Security.Cryptography;
@@ -56,18 +57,26 @@ public class FileService
         _db = db;
         _files = _db.StoredFiles;
 
-        // Get configuration for file storage
-        var configuredPath = configuration.GetValue<string>("FileStorage:UploadPath") ?? "uploads";
+        // Get configuration for file storage, using ServerPaths as default
+        var configuredPath = configuration.GetValue<string>("FileStorage:UploadPath");
 
-        // Ensure the upload path is absolute to avoid issues when serving files
-        if (Path.IsPathRooted(configuredPath))
+        if (!string.IsNullOrEmpty(configuredPath))
         {
-            _uploadPath = configuredPath;
+            // Ensure the upload path is absolute to avoid issues when serving files
+            if (Path.IsPathRooted(configuredPath))
+            {
+                _uploadPath = configuredPath;
+            }
+            else
+            {
+                // Convert relative path to absolute based on current directory
+                _uploadPath = Path.GetFullPath(configuredPath);
+            }
         }
         else
         {
-            // Convert relative path to absolute based on current directory
-            _uploadPath = Path.GetFullPath(configuredPath);
+            // Use ServerPaths default upload directory
+            _uploadPath = ServerPaths.UploadDirectory;
         }
 
         _baseUrl = configuration.GetValue<string>("FileStorage:BaseUrl") ?? "http://162.248.94.23:5000/api/files";

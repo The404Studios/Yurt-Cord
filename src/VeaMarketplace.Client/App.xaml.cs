@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Markup;
 using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
+using VeaMarketplace.Client.Helpers;
 using VeaMarketplace.Client.Services;
 using VeaMarketplace.Client.ViewModels;
 using VeaMarketplace.Client.Views;
@@ -24,6 +25,9 @@ public partial class App : Application
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+
+        // Initialize XDG-compliant directories early
+        XdgDirectories.InitializeDirectories();
 
         // Configure ThreadPool for high-performance streaming
         // Add extra threads for video encoding, decoding, and network I/O
@@ -222,12 +226,9 @@ public partial class App : Application
     {
         try
         {
-            var logPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "VeaMarketplace",
-                "crash.log");
+            var logPath = XdgDirectories.CrashLogPath;
 
-            Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
+            XdgDirectories.EnsureDirectoryExists(XdgDirectories.LogDirectory);
 
             var logEntry = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}]\n{errorMessage}\n\n";
             File.AppendAllText(logPath, logEntry);
@@ -246,7 +247,7 @@ public partial class App : Application
             {rootException.GetType().Name}: {rootException.Message}
 
             This error has been logged to:
-            %LocalAppData%\VeaMarketplace\crash.log
+            {XdgDirectories.CrashLogPath}
 
             Click OK to exit the application.
             """;

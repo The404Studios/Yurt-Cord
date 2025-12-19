@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -146,9 +147,10 @@ public partial class MainWindow : Window
                 contentService.DisconnectAsync()
             );
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore disconnect errors
+            Debug.WriteLine($"Error during logout disconnect: {ex.Message}");
+            // Continue with logout even if disconnect fails
         }
 
         // Clear auth token

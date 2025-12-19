@@ -171,31 +171,22 @@ public partial class ChatView : UserControl
 
     private void UpdateTypingIndicator()
     {
-        if (_typingUsers.Count == 0)
+        // Take a snapshot of the typing users to avoid race conditions
+        var usernames = _typingUsers.Keys.ToList();
+
+        if (usernames.Count == 0)
         {
             TypingIndicator.Visibility = Visibility.Collapsed;
             return;
         }
 
-        var usernames = _typingUsers.Keys.ToList();
-        string typingText;
-
-        switch (usernames.Count)
+        string typingText = usernames.Count switch
         {
-            case 1:
-                typingText = $"{usernames[0]} is typing...";
-                break;
-            case 2:
-                typingText = $"{usernames[0]} and {usernames[1]} are typing...";
-                break;
-            case 3:
-                typingText = $"{usernames[0]}, {usernames[1]}, and {usernames[2]} are typing...";
-                break;
-            default:
-                var othersCount = usernames.Count - 2;
-                typingText = $"{usernames[0]}, {usernames[1]}, and {othersCount} others are typing...";
-                break;
-        }
+            1 => $"{usernames[0]} is typing...",
+            2 => $"{usernames[0]} and {usernames[1]} are typing...",
+            3 => $"{usernames[0]}, {usernames[1]}, and {usernames[2]} are typing...",
+            _ => $"{usernames[0]}, {usernames[1]}, and {usernames.Count - 2} others are typing..."
+        };
 
         TypingUserText.Text = typingText;
         TypingIndicator.Visibility = Visibility.Visible;

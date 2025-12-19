@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using VeaMarketplace.Client.Helpers;
 
 namespace VeaMarketplace.Client.Services;
 
@@ -254,9 +256,12 @@ public class SettingsService : ISettingsService
 
     public SettingsService()
     {
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        var appFolder = Path.Combine(appData, "Plugin");
-        Directory.CreateDirectory(appFolder);
+        // Use XDG-compliant config directory for settings
+        var appFolder = XdgDirectories.ConfigHome;
+        if (!XdgDirectories.EnsureDirectoryExists(appFolder))
+        {
+            Debug.WriteLine($"Warning: Could not create settings directory: {appFolder}");
+        }
         _settingsPath = Path.Combine(appFolder, "settings.json");
 
         LoadSettings();
@@ -277,8 +282,19 @@ public class SettingsService : ISettingsService
                 var json = File.ReadAllText(_settingsPath);
                 Settings = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
             }
-            catch
+            catch (JsonException ex)
             {
+                Debug.WriteLine($"Failed to parse settings file: {ex.Message}");
+                Settings = new AppSettings();
+            }
+            catch (IOException ex)
+            {
+                Debug.WriteLine($"Failed to read settings file: {ex.Message}");
+                Settings = new AppSettings();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Debug.WriteLine($"Permission denied reading settings file: {ex.Message}");
                 Settings = new AppSettings();
             }
         }

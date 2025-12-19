@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
+using VeaMarketplace.Client.Helpers;
 using VeaMarketplace.Client.Models;
 
 namespace VeaMarketplace.Client.Services;
@@ -377,9 +379,8 @@ public class LeaderboardService : ILeaderboardService
     {
         _apiService = apiService;
         _friendService = friendService;
-        _dataPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "VeaMarketplace", "leaderboard_data.json");
+        // Use XDG-compliant data directory for leaderboard data
+        _dataPath = XdgDirectories.GetDataPath("leaderboard_data.json");
     }
 
     #region Leaderboard Operations
@@ -775,15 +776,25 @@ public class LeaderboardService : ILeaderboardService
         try
         {
             var directory = Path.GetDirectoryName(_dataPath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-                Directory.CreateDirectory(directory);
+            if (!string.IsNullOrEmpty(directory))
+            {
+                if (!XdgDirectories.EnsureDirectoryExists(directory))
+                {
+                    Debug.WriteLine($"Warning: Could not create leaderboard data directory: {directory}");
+                    return;
+                }
+            }
 
             var json = JsonSerializer.Serialize(_data, new JsonSerializerOptions { WriteIndented = true });
             await File.WriteAllTextAsync(_dataPath, json);
         }
-        catch
+        catch (IOException ex)
         {
-            // Silently fail
+            Debug.WriteLine($"Failed to save leaderboard data: {ex.Message}");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            Debug.WriteLine($"Permission denied saving leaderboard data: {ex.Message}");
         }
     }
 
