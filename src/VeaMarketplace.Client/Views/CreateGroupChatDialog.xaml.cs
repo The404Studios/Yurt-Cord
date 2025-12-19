@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -55,9 +56,9 @@ public partial class CreateGroupChatDialog : Window
                 });
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Handle error
+            Debug.WriteLine($"Failed to load friends list: {ex.Message}");
         }
     }
 
@@ -79,8 +80,9 @@ public partial class CreateGroupChatDialog : Window
                 GroupIconImage.Visibility = Visibility.Visible;
                 GroupIconInitials.Visibility = Visibility.Collapsed;
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.WriteLine($"Failed to load group icon image: {ex.Message}");
                 // Keep default icon
             }
         }
