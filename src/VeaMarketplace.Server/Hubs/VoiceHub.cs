@@ -372,29 +372,40 @@ public class VoiceHub : Hub
             .SendAsync("ReceiveScreenFrame", Context.ConnectionId, frameData, width, height);
     }
 
-    // Bandwidth check helper
+    // Bandwidth check helper - thread-safe with atomic updates
     private bool CheckBandwidthLimit(string connectionId, long bytes)
     {
         var now = DateTime.UtcNow;
 
-        if (_bandwidthUsage.TryGetValue(connectionId, out var usage))
-        {
-            // Reset counter every second
-            if ((now - usage.lastReset).TotalSeconds >= 1)
+        // Use AddOrUpdate for thread-safe atomic operation
+        var result = _bandwidthUsage.AddOrUpdate(
+            connectionId,
+            // Add: first request from this connection
+            _ => (bytes, now),
+            // Update: check limits and update counter
+            (_, existing) =>
             {
-                _bandwidthUsage[connectionId] = (bytes, now);
-                return true;
-            }
+                // Reset counter every second
+                if ((now - existing.lastReset).TotalSeconds >= 1)
+                {
+                    return (bytes, now);
+                }
 
-            // Check if over limit
-            if (usage.bytesUsed + bytes > MaxUploadBytesPerSecond)
-                return false;
+                // Check if over limit - return special marker value
+                if (existing.bytesUsed + bytes > MaxUploadBytesPerSecond)
+                {
+                    return (-1, existing.lastReset); // -1 signals over limit
+                }
 
-            _bandwidthUsage[connectionId] = (usage.bytesUsed + bytes, usage.lastReset);
-        }
-        else
+                return (existing.bytesUsed + bytes, existing.lastReset);
+            });
+
+        // Check if we exceeded bandwidth (marked with -1)
+        if (result.bytesUsed == -1)
         {
-            _bandwidthUsage[connectionId] = (bytes, now);
+            // Restore the previous value without the increment
+            _bandwidthUsage.TryGetValue(connectionId, out var prev);
+            return false;
         }
 
         return true;
@@ -1116,7 +1127,8 @@ public class VoiceHub : Hub
                 var otherUserId = activeCall.CallerId == userId ? activeCall.RecipientId : activeCall.CallerId;
                 if (_userConnections.TryGetValue(otherUserId, out var otherConnId))
                 {
-                    await Clients.Client(otherConnId).SendAsync("ReceiveCallAudio", audioData);
+                    // Include sender connection ID for per-user volume control
+                    await Clients.Client(otherConnId).SendAsync("ReceiveCallAudio", Context.ConnectionId, audioData);
                 }
             }
         }

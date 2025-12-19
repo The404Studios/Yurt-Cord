@@ -219,6 +219,8 @@ public partial class VoiceCallDashboard : UserControl
                         StreamInfoPanel.Visibility = Visibility.Visible;
                         NoStreamPanel.Visibility = Visibility.Collapsed;
                         ScreenShareImage.Visibility = Visibility.Visible;
+                        // Show stream controls when viewing a stream
+                        StreamControlsPanel.Visibility = Visibility.Visible;
                     }
 
                     // Display frame directly
@@ -232,6 +234,17 @@ public partial class VoiceCallDashboard : UserControl
                     bitmap.Freeze();
 
                     ScreenShareImage.Source = bitmap;
+
+                    // Update PiP window if open
+                    if (_pipWindow?.Content is System.Windows.Controls.Image pipImage)
+                    {
+                        pipImage.Source = bitmap;
+                    }
+                    // Update fullscreen window if open
+                    if (_fullscreenWindow?.Content is System.Windows.Controls.Image fsImage)
+                    {
+                        fsImage.Source = bitmap;
+                    }
                 }
                 catch
                 {
@@ -445,7 +458,26 @@ public partial class VoiceCallDashboard : UserControl
         ScreenShareImage.Source = null;
         ScreenShareImage.Visibility = Visibility.Collapsed;
         StreamInfoPanel.Visibility = Visibility.Collapsed;
+        StreamControlsPanel.Visibility = Visibility.Collapsed;
         NoStreamPanel.Visibility = Visibility.Visible;
+
+        // Close any open viewing windows
+        CloseViewingWindows();
+    }
+
+    private void CloseViewingWindows()
+    {
+        if (_pipWindow != null)
+        {
+            try { _pipWindow.Close(); } catch { }
+            _pipWindow = null;
+        }
+        if (_fullscreenWindow != null)
+        {
+            try { _fullscreenWindow.Close(); } catch { }
+            _fullscreenWindow = null;
+            _isFullscreen = false;
+        }
     }
 
     private VoiceParticipant? GetParticipantFromSender(object sender)
