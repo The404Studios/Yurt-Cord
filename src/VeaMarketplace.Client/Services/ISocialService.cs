@@ -310,11 +310,26 @@ public class SocialService : ISocialService
                 if (type == InteractionType.VoiceCallEnded && int.TryParse(details, out var minutes))
                     history.TotalVoiceMinutes += minutes;
                 break;
+            case InteractionType.VoiceChannelJoined:
+            case InteractionType.VoiceChannelLeft:
+                history.LastVoiceChannel = DateTime.UtcNow;
+                break;
             case InteractionType.GameSessionStarted:
             case InteractionType.GameSessionEnded:
                 history.LastGameTogether = DateTime.UtcNow;
                 if (type == InteractionType.GameSessionEnded)
                     history.TotalGameSessions++;
+                break;
+            case InteractionType.ScreenShareStarted:
+            case InteractionType.ScreenShareEnded:
+                history.LastScreenShare = DateTime.UtcNow;
+                if (type == InteractionType.ScreenShareEnded)
+                    history.TotalScreenShares++;
+                break;
+            case InteractionType.ScreenShareWatched:
+                history.LastScreenShare = DateTime.UtcNow;
+                if (int.TryParse(details, out var watchMinutes))
+                    history.TotalScreenShareMinutesWatched += watchMinutes;
                 break;
         }
 
