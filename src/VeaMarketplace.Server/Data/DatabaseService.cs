@@ -1,4 +1,5 @@
 using LiteDB;
+using VeaMarketplace.Server.Helpers;
 using VeaMarketplace.Shared.Models;
 using VeaMarketplace.Server.Services;
 
@@ -54,7 +55,9 @@ public class DatabaseService : IDisposable
 
     public DatabaseService(IConfiguration configuration)
     {
-        var configuredPath = configuration.GetConnectionString("LiteDb") ?? "Data/marketplace.db";
+        // Use ServerPaths for default database location
+        var configuredPath = configuration.GetConnectionString("LiteDb")
+            ?? ServerPaths.GetDatabasePath("marketplace.db");
 
         // Build connection string with shared mode for concurrent access
         // This prevents "use EnterTransaction() before EnterLock(name)" errors

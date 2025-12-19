@@ -1,5 +1,6 @@
 using System.Text.Json;
 using VeaMarketplace.Server.Data;
+using VeaMarketplace.Server.Helpers;
 using VeaMarketplace.Shared.Enums;
 using VeaMarketplace.Shared.Models;
 
@@ -9,26 +10,27 @@ public class RoleConfigurationService
 {
     private readonly DatabaseService _db;
     private readonly ILogger<RoleConfigurationService> _logger;
-    private const string ConfigFilePath = "Data/roles-config.json";
+    private readonly string _configFilePath;
 
     public RoleConfigurationService(DatabaseService db, ILogger<RoleConfigurationService> logger)
     {
         _db = db;
         _logger = logger;
+        _configFilePath = ServerPaths.RolesConfigPath;
     }
 
     public void LoadRolesFromConfig()
     {
         try
         {
-            if (!File.Exists(ConfigFilePath))
+            if (!File.Exists(_configFilePath))
             {
-                _logger.LogWarning("Role configuration file not found at {Path}. Creating default config.", ConfigFilePath);
+                _logger.LogWarning("Role configuration file not found at {Path}. Creating default config.", _configFilePath);
                 CreateDefaultConfig();
                 return;
             }
 
-            var json = File.ReadAllText(ConfigFilePath);
+            var json = File.ReadAllText(_configFilePath);
             var config = JsonSerializer.Deserialize<RoleConfigRoot>(json, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
@@ -40,7 +42,7 @@ public class RoleConfigurationService
                 return;
             }
 
-            _logger.LogInformation("Loading role configuration from {Path}", ConfigFilePath);
+            _logger.LogInformation("Loading role configuration from {Path}", _configFilePath);
 
             // Apply system roles (Owner, Admin, Moderator, VIP, Verified)
             ApplySystemRoles(config.Roles);
@@ -179,9 +181,13 @@ public class RoleConfigurationService
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         });
 
-        Directory.CreateDirectory(Path.GetDirectoryName(ConfigFilePath)!);
-        File.WriteAllText(ConfigFilePath, json);
-        _logger.LogInformation("Created default role configuration at {Path}", ConfigFilePath);
+        var directory = Path.GetDirectoryName(_configFilePath);
+        if (!string.IsNullOrEmpty(directory))
+        {
+            ServerPaths.EnsureDirectoryExists(directory, _logger);
+        }
+        File.WriteAllText(_configFilePath, json);
+        _logger.LogInformation("Created default role configuration at {Path}", _configFilePath);
     }
 
     // Configuration classes

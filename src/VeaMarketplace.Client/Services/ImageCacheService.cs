@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Windows.Media.Imaging;
+using VeaMarketplace.Client.Helpers;
 
 namespace VeaMarketplace.Client.Services;
 
@@ -36,13 +38,12 @@ public class ImageCacheService : IImageCacheService
             Timeout = TimeSpan.FromSeconds(30)
         };
 
-        // Set up cache directory
-        var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        _cacheDirectory = Path.Combine(appDataPath, "Plugin", "ImageCache");
+        // Use XDG-compliant cache directory for image cache
+        _cacheDirectory = XdgDirectories.ImageCacheDirectory;
 
-        if (!Directory.Exists(_cacheDirectory))
+        if (!XdgDirectories.EnsureDirectoryExists(_cacheDirectory))
         {
-            Directory.CreateDirectory(_cacheDirectory);
+            Debug.WriteLine($"Warning: Could not create image cache directory: {_cacheDirectory}");
         }
     }
 

@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Text.Json;
+using VeaMarketplace.Client.Helpers;
 using VeaMarketplace.Client.Models;
 using VeaMarketplace.Shared.DTOs;
 
@@ -111,9 +113,8 @@ public class SocialService : ISocialService
     {
         _settingsService = settingsService;
         _friendService = friendService;
-        _dataPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "VeaMarketplace", "social_data.json");
+        // Use XDG-compliant data directory for social data
+        _dataPath = XdgDirectories.GetDataPath("social_data.json");
 
         // Subscribe to friend events for automatic interaction tracking
         _friendService.OnDirectMessageReceived += OnDirectMessageReceived;
@@ -720,16 +721,26 @@ public class SocialService : ISocialService
         try
         {
             var directory = Path.GetDirectoryName(_dataPath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-                Directory.CreateDirectory(directory);
+            if (!string.IsNullOrEmpty(directory))
+            {
+                if (!XdgDirectories.EnsureDirectoryExists(directory))
+                {
+                    Debug.WriteLine($"Warning: Could not create social data directory: {directory}");
+                    return;
+                }
+            }
 
             _data.CurrentActivity = CurrentActivity;
             var json = JsonSerializer.Serialize(_data, new JsonSerializerOptions { WriteIndented = true });
             await File.WriteAllTextAsync(_dataPath, json);
         }
-        catch
+        catch (IOException ex)
         {
-            // Silently fail saves - not critical
+            Debug.WriteLine($"Failed to save social data: {ex.Message}");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            Debug.WriteLine($"Permission denied saving social data: {ex.Message}");
         }
     }
 
