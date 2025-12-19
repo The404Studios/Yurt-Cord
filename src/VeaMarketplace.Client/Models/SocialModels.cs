@@ -117,10 +117,14 @@ public class FriendInteractionHistory
     public DateTime LastMessageReceived { get; set; }
     public DateTime LastVoiceCall { get; set; }
     public DateTime LastGameTogether { get; set; }
+    public DateTime LastScreenShare { get; set; }
+    public DateTime LastVoiceChannel { get; set; }
     public int TotalMessagesSent { get; set; }
     public int TotalMessagesReceived { get; set; }
     public int TotalVoiceMinutes { get; set; }
     public int TotalGameSessions { get; set; }
+    public int TotalScreenShares { get; set; }
+    public int TotalScreenShareMinutesWatched { get; set; }
     public List<InteractionEvent> RecentInteractions { get; set; } = new();
     public double InteractionScore => CalculateInteractionScore();
 
@@ -136,10 +140,14 @@ public class FriendInteractionHistory
 
         if ((now - LastVoiceCall).TotalDays < 7) score += 40;
         if ((now - LastGameTogether).TotalDays < 7) score += 30;
+        if ((now - LastScreenShare).TotalDays < 7) score += 25;
+        if ((now - LastVoiceChannel).TotalDays < 7) score += 20;
 
         // Volume-based scoring
         score += Math.Min(TotalMessagesSent * 0.1, 20);
         score += Math.Min(TotalVoiceMinutes * 0.5, 30);
+        score += Math.Min(TotalScreenShares * 2, 15);
+        score += Math.Min(TotalScreenShareMinutesWatched * 0.3, 10);
 
         return score;
     }
@@ -162,12 +170,17 @@ public class InteractionEvent
         InteractionType.MessageReceived => "Received a message",
         InteractionType.VoiceCallStarted => "Started a voice call",
         InteractionType.VoiceCallEnded => $"Voice call ended ({Details})",
+        InteractionType.VoiceChannelJoined => $"Joined voice channel {Details}",
+        InteractionType.VoiceChannelLeft => $"Left voice channel {Details}",
         InteractionType.GameSessionStarted => $"Started playing {Details}",
         InteractionType.GameSessionEnded => $"Finished playing {Details}",
         InteractionType.GiftSent => $"Sent a gift: {Details}",
         InteractionType.GiftReceived => $"Received a gift: {Details}",
         InteractionType.ReactionAdded => $"Reacted with {Details}",
         InteractionType.ProfileViewed => "Viewed their profile",
+        InteractionType.ScreenShareStarted => "Started sharing their screen",
+        InteractionType.ScreenShareEnded => "Stopped sharing their screen",
+        InteractionType.ScreenShareWatched => $"Watched screen share for {Details}",
         _ => "Interacted"
     };
 
@@ -177,12 +190,17 @@ public class InteractionEvent
         InteractionType.MessageReceived => "📨",
         InteractionType.VoiceCallStarted => "📞",
         InteractionType.VoiceCallEnded => "📴",
+        InteractionType.VoiceChannelJoined => "🔊",
+        InteractionType.VoiceChannelLeft => "🔇",
         InteractionType.GameSessionStarted => "🎮",
         InteractionType.GameSessionEnded => "🏁",
         InteractionType.GiftSent => "🎁",
         InteractionType.GiftReceived => "🎀",
         InteractionType.ReactionAdded => "👍",
         InteractionType.ProfileViewed => "👀",
+        InteractionType.ScreenShareStarted => "🖥️",
+        InteractionType.ScreenShareEnded => "📺",
+        InteractionType.ScreenShareWatched => "👁️",
         _ => "📌"
     };
 }
@@ -196,12 +214,17 @@ public enum InteractionType
     MessageReceived,
     VoiceCallStarted,
     VoiceCallEnded,
+    VoiceChannelJoined,
+    VoiceChannelLeft,
     GameSessionStarted,
     GameSessionEnded,
     GiftSent,
     GiftReceived,
     ReactionAdded,
-    ProfileViewed
+    ProfileViewed,
+    ScreenShareStarted,
+    ScreenShareEnded,
+    ScreenShareWatched
 }
 
 #endregion

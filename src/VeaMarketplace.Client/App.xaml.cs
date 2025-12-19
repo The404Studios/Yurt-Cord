@@ -83,6 +83,9 @@ public partial class App : Application
         var leaderboardService = ServiceProvider.GetRequiredService<ILeaderboardService>();
         _ = leaderboardService.LoadAsync(); // Fire and forget - load in background
 
+        // Wire up cross-service event handlers for social activity tracking
+        WireUpSocialActivityTracking();
+
         // Wait for splash to complete
         await Task.Delay(2500);
         await splash.CompleteAndClose();
@@ -260,6 +263,140 @@ public partial class App : Application
         {
             // If MessageBox fails, write to console as last resort
             Console.Error.WriteLine(fullDetails);
+        }
+    }
+
+    // Cache of voice channel users for social activity tracking
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, VoiceUserState> _cachedVoiceUsers = new();
+
+    /// <summary>
+    /// Wire up cross-service event handlers for social activity tracking.
+    /// Connects voice/screen share events to social service for friend activity feeds.
+    /// </summary>
+    private static void WireUpSocialActivityTracking()
+    {
+        try
+        {
+            var voiceService = ServiceProvider.GetRequiredService<IVoiceService>();
+            var socialService = ServiceProvider.GetRequiredService<ISocialService>();
+            var friendService = ServiceProvider.GetRequiredService<IFriendService>();
+
+            // Cache voice channel users for lookup
+            voiceService.OnVoiceChannelUsers += (users) =>
+            {
+                _cachedVoiceUsers.Clear();
+                foreach (var user in users)
+                {
+                    _cachedVoiceUsers[user.ConnectionId] = user;
+                }
+            };
+
+            voiceService.OnUserJoinedVoice += (user) =>
+            {
+                if (user != null)
+                {
+                    _cachedVoiceUsers[user.ConnectionId] = user;
+
+                    // Track voice channel join for friends
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            if (!string.IsNullOrEmpty(user.UserId))
+                            {
+                                var friends = friendService.Friends;
+                                var isFriend = friends.Any(f => f.UserId == user.UserId);
+
+                                if (isFriend)
+                                {
+                                    await socialService.RecordInteractionAsync(
+                                        user.UserId,
+                                        Models.InteractionType.VoiceChannelJoined,
+                                        user.Username);
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"Failed to track voice join activity: {ex.Message}");
+                        }
+                    });
+                }
+            };
+
+            voiceService.OnUserLeftVoice += (user) =>
+            {
+                if (user != null)
+                {
+                    _cachedVoiceUsers.TryRemove(user.ConnectionId, out _);
+
+                    // Track voice channel leave for friends
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            if (!string.IsNullOrEmpty(user.UserId))
+                            {
+                                var friends = friendService.Friends;
+                                var isFriend = friends.Any(f => f.UserId == user.UserId);
+
+                                if (isFriend)
+                                {
+                                    await socialService.RecordInteractionAsync(
+                                        user.UserId,
+                                        Models.InteractionType.VoiceChannelLeft,
+                                        user.Username);
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"Failed to track voice leave activity: {ex.Message}");
+                        }
+                    });
+                }
+            };
+
+            // Track screen share activity for friends in the same voice channel
+            voiceService.OnUserScreenShareChanged += (connectionId, isSharing) =>
+            {
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        // Get user from cached voice users
+                        if (_cachedVoiceUsers.TryGetValue(connectionId, out var user) &&
+                            !string.IsNullOrEmpty(user.UserId))
+                        {
+                            // Check if this user is a friend
+                            var friends = friendService.Friends;
+                            var isFriend = friends.Any(f => f.UserId == user.UserId);
+
+                            if (isFriend)
+                            {
+                                var interactionType = isSharing
+                                    ? Models.InteractionType.ScreenShareStarted
+                                    : Models.InteractionType.ScreenShareEnded;
+
+                                await socialService.RecordInteractionAsync(
+                                    user.UserId,
+                                    interactionType,
+                                    user.Username);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Failed to track screen share activity: {ex.Message}");
+                    }
+                });
+            };
+
+            Debug.WriteLine("Social activity tracking wired up successfully");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to wire up social activity tracking: {ex.Message}");
         }
     }
 
