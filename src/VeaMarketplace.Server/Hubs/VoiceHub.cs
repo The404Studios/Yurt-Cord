@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using VeaMarketplace.Server.Services;
 using VeaMarketplace.Shared.DTOs;
@@ -11,11 +12,13 @@ public class VoiceHub : Hub
 {
     private readonly VoiceCallService? _callService;
     private readonly AuthService? _authService;
+    private readonly ILogger<VoiceHub>? _logger;
     private static readonly ConcurrentDictionary<string, VoiceChannelState> _voiceChannels = new();
     private static readonly ConcurrentDictionary<string, VoiceUserState> _voiceUsers = new();
     private static readonly ConcurrentDictionary<string, string> _userConnections = new(); // userId -> connectionId
     private static readonly ConcurrentDictionary<string, string> _connectionUsers = new(); // connectionId -> userId
     private static readonly ConcurrentDictionary<string, string> _activeCalls = new(); // callId -> (caller|recipient connectionId pair)
+    private static readonly ConcurrentDictionary<string, DateTime> _connectionTimestamps = new();
 
     // Voice Room system
     private static readonly ConcurrentDictionary<string, VoiceRoom> _voiceRooms = new();
@@ -31,10 +34,28 @@ public class VoiceHub : Hub
     private const long MaxDownloadBytesPerSecond = 50L * 1024 * 1024; // 50 MB/s download per user
     private const int MaxConcurrentStreamsPerChannel = 10;
 
-    public VoiceHub(VoiceCallService? callService = null, AuthService? authService = null)
+    public VoiceHub(VoiceCallService? callService = null, AuthService? authService = null, ILogger<VoiceHub>? logger = null)
     {
         _callService = callService;
         _authService = authService;
+        _logger = logger;
+    }
+
+    public override async Task OnConnectedAsync()
+    {
+        var connectionId = Context.ConnectionId;
+        _connectionTimestamps[connectionId] = DateTime.UtcNow;
+
+        _logger?.LogDebug("VoiceHub connection established: {ConnectionId}", connectionId);
+
+        await Clients.Caller.SendAsync("ConnectionHandshake", new
+        {
+            ConnectionId = connectionId,
+            ServerTime = DateTime.UtcNow,
+            Hub = "VoiceHub"
+        });
+
+        await base.OnConnectedAsync();
     }
 
     public async Task JoinVoiceChannel(string channelId, string userId, string username, string avatarUrl)
@@ -825,9 +846,21 @@ public class VoiceHub : Hub
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
+        var connectionId = Context.ConnectionId;
+        _connectionTimestamps.TryRemove(connectionId, out _);
+
+        if (exception != null)
+        {
+            _logger?.LogWarning(exception, "VoiceHub connection {ConnectionId} disconnected with error", connectionId);
+        }
+        else
+        {
+            _logger?.LogDebug("VoiceHub connection disconnected: {ConnectionId}", connectionId);
+        }
+
         // Clean up screen share FIRST (before leaving voice channel)
         // This prevents async streaming issues when the connection is terminated
-        if (_screenSharers.TryRemove(Context.ConnectionId, out var shareState))
+        if (_screenSharers.TryRemove(connectionId, out var shareState))
         {
             _screenShareViewers.TryRemove(Context.ConnectionId, out _);
 
