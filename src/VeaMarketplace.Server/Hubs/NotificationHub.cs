@@ -24,6 +24,18 @@ public class NotificationHub : Hub
         _notificationService = notificationService;
     }
 
+    public override async Task OnConnectedAsync()
+    {
+        await Clients.Caller.SendAsync("ConnectionHandshake", new
+        {
+            ConnectionId = Context.ConnectionId,
+            ServerTime = DateTime.UtcNow,
+            Hub = "NotificationHub"
+        });
+
+        await base.OnConnectedAsync();
+    }
+
     /// <summary>
     /// Authenticate and initialize the notification hub connection
     /// </summary>
@@ -323,5 +335,17 @@ public class NotificationHub : Hub
         }
 
         await base.OnDisconnectedAsync(exception);
+    }
+
+    /// <summary>
+    /// Heartbeat ping from client
+    /// </summary>
+    public async Task Ping()
+    {
+        await Clients.Caller.SendAsync("Pong", new
+        {
+            ServerTime = DateTime.UtcNow,
+            ConnectionId = Context.ConnectionId
+        });
     }
 }

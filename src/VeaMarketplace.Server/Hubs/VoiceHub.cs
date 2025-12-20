@@ -1409,6 +1409,22 @@ public class VoiceHub : Hub
     }
 
     #endregion
+
+    #region Heartbeat
+
+    /// <summary>
+    /// Heartbeat ping from client
+    /// </summary>
+    public async Task Ping()
+    {
+        await Clients.Caller.SendAsync("Pong", new
+        {
+            ServerTime = DateTime.UtcNow,
+            ConnectionId = Context.ConnectionId
+        });
+    }
+
+    #endregion
 }
 
 public class VoiceChannelState

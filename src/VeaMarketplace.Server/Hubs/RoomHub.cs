@@ -36,6 +36,18 @@ public class RoomHub : Hub
         _authService = authService;
     }
 
+    public override async Task OnConnectedAsync()
+    {
+        await Clients.Caller.SendAsync("ConnectionHandshake", new
+        {
+            ConnectionId = Context.ConnectionId,
+            ServerTime = DateTime.UtcNow,
+            Hub = "RoomHub"
+        });
+
+        await base.OnConnectedAsync();
+    }
+
     public async Task Authenticate(string token)
     {
         var user = _authService.ValidateToken(token);
@@ -467,5 +479,17 @@ public class RoomHub : Hub
         }
 
         await base.OnDisconnectedAsync(exception);
+    }
+
+    /// <summary>
+    /// Heartbeat ping from client
+    /// </summary>
+    public async Task Ping()
+    {
+        await Clients.Caller.SendAsync("Pong", new
+        {
+            ServerTime = DateTime.UtcNow,
+            ConnectionId = Context.ConnectionId
+        });
     }
 }

@@ -20,6 +20,18 @@ public class ProfileHub : Hub
         _friendService = friendService;
     }
 
+    public override async Task OnConnectedAsync()
+    {
+        await Clients.Caller.SendAsync("ConnectionHandshake", new
+        {
+            ConnectionId = Context.ConnectionId,
+            ServerTime = DateTime.UtcNow,
+            Hub = "ProfileHub"
+        });
+
+        await base.OnConnectedAsync();
+    }
+
     public async Task Authenticate(string token)
     {
         var user = _authService.ValidateToken(token);
@@ -197,5 +209,17 @@ public class ProfileHub : Hub
             hubContext.Clients.Client(connId).SendAsync("ProfileUpdated", updatedUser);
         }
         hubContext.Clients.Group("online_users").SendAsync("UserProfileUpdated", updatedUser);
+    }
+
+    /// <summary>
+    /// Heartbeat ping from client
+    /// </summary>
+    public async Task Ping()
+    {
+        await Clients.Caller.SendAsync("Pong", new
+        {
+            ServerTime = DateTime.UtcNow,
+            ConnectionId = Context.ConnectionId
+        });
     }
 }

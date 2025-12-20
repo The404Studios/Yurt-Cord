@@ -29,6 +29,18 @@ public class ContentHub : Hub
         _productService = productService;
     }
 
+    public override async Task OnConnectedAsync()
+    {
+        await Clients.Caller.SendAsync("ConnectionHandshake", new
+        {
+            ConnectionId = Context.ConnectionId,
+            ServerTime = DateTime.UtcNow,
+            Hub = "ContentHub"
+        });
+
+        await base.OnConnectedAsync();
+    }
+
     /// <summary>
     /// Authenticate and initialize the content hub connection
     /// </summary>
@@ -412,4 +424,16 @@ public class ContentHub : Hub
     }
 
     #endregion
+
+    /// <summary>
+    /// Heartbeat ping from client
+    /// </summary>
+    public async Task Ping()
+    {
+        await Clients.Caller.SendAsync("Pong", new
+        {
+            ServerTime = DateTime.UtcNow,
+            ConnectionId = Context.ConnectionId
+        });
+    }
 }
