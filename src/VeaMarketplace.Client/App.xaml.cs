@@ -40,6 +40,7 @@ public partial class App : Application
         var services = new ServiceCollection();
 
         // Services
+        services.AddSingleton<HwidService>();
         services.AddSingleton<IApiService, ApiService>();
         services.AddSingleton<IChatService, ChatService>();
         services.AddSingleton<IVoiceService, VoiceService>();

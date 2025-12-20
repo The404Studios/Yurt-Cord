@@ -7,6 +7,7 @@ public class LoginRequest
 {
     public string Username { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
+    public string? Hwid { get; set; }  // Hardware ID for device binding
 }
 
 public class RegisterRequest
@@ -15,6 +16,7 @@ public class RegisterRequest
     public string Email { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
     public string? ActivationKey { get; set; }
+    public string? Hwid { get; set; }  // Hardware ID to bind account to device
 }
 
 public class AuthResponse
@@ -24,6 +26,8 @@ public class AuthResponse
     public string? Token { get; set; }
     public UserDto? User { get; set; }
     public string? ClientSalt { get; set; }  // Unique salt for client-side encryption
+    public bool HwidMismatch { get; set; }   // True if login attempted from different device
+    public string? BoundHwidPrefix { get; set; }  // First 8 chars of bound HWID (for display)
 }
 
 public class UserDto

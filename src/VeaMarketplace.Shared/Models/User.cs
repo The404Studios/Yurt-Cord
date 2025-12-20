@@ -35,6 +35,12 @@ public class User
     public int MessagesCount { get; set; } = 0;
     public int VoiceMinutes { get; set; } = 0;
 
+    // Hardware binding
+    public string? Hwid { get; set; }  // Hardware ID bound to this account
+    public DateTime? HwidBoundAt { get; set; }  // When the HWID was bound
+    public string? ActivationKey { get; set; }  // The activation key used
+    public string? ClientSalt { get; set; }  // Client-specific salt for encryption
+
     // Social Links
     public string? DiscordUsername { get; set; }
     public string? TwitterHandle { get; set; }

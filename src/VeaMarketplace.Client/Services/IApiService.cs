@@ -13,8 +13,8 @@ public interface IApiService
     UserDto? CurrentUser { get; }
     bool IsAuthenticated { get; }
 
-    Task<AuthResponse> LoginAsync(string username, string password);
-    Task<AuthResponse> RegisterAsync(string username, string email, string password, string? activationKey = null);
+    Task<AuthResponse> LoginAsync(string username, string password, string? hwid = null);
+    Task<AuthResponse> RegisterAsync(string username, string email, string password, string? activationKey = null, string? hwid = null);
     Task<KeyValidationResult> ValidateKeyAsync(string key);
     Task<bool> ValidateTokenAsync();
     void Logout();
@@ -188,9 +188,9 @@ public class ApiService : IApiService
 
     #endregion
 
-    public async Task<AuthResponse> LoginAsync(string username, string password)
+    public async Task<AuthResponse> LoginAsync(string username, string password, string? hwid = null)
     {
-        var request = new LoginRequest { Username = username, Password = password };
+        var request = new LoginRequest { Username = username, Password = password, Hwid = hwid };
         var response = await _httpClient.PostAsJsonAsync("/api/auth/login", request, JsonOptions).ConfigureAwait(false);
 
         // Read response body as string first to handle empty/invalid responses
@@ -227,9 +227,9 @@ public class ApiService : IApiService
         return result;
     }
 
-    public async Task<AuthResponse> RegisterAsync(string username, string email, string password, string? activationKey = null)
+    public async Task<AuthResponse> RegisterAsync(string username, string email, string password, string? activationKey = null, string? hwid = null)
     {
-        var request = new RegisterRequest { Username = username, Email = email, Password = password, ActivationKey = activationKey };
+        var request = new RegisterRequest { Username = username, Email = email, Password = password, ActivationKey = activationKey, Hwid = hwid };
         var response = await _httpClient.PostAsJsonAsync("/api/auth/register", request, JsonOptions).ConfigureAwait(false);
 
         // Read response body as string first to handle empty/invalid responses

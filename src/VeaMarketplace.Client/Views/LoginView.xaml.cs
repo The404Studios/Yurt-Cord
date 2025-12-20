@@ -117,8 +117,12 @@ public partial class LoginView : UserControl
                 UpdateLoadingText("Creating account...", "Registering your profile...");
                 await Task.Delay(300); // Brief delay for visual feedback
 
+                // Get hardware ID for device binding
+                var hwidService = (HwidService)App.ServiceProvider.GetService(typeof(HwidService))!;
+                var hwid = hwidService.GetHwid();
+
                 var result = await ((IApiService)App.ServiceProvider.GetService(typeof(IApiService))!)
-                    .RegisterAsync(username, email, password, _validatedKey!);
+                    .RegisterAsync(username, email, password, _validatedKey!, hwid);
 
                 if (result.Success)
                 {
@@ -137,7 +141,11 @@ public partial class LoginView : UserControl
                 }
                 else
                 {
-                    ShowError(result.Message);
+                    // Show specific error for HWID already bound
+                    var errorMessage = result.HwidMismatch
+                        ? "This device is already registered to another account"
+                        : result.Message;
+                    ShowError(errorMessage);
                     ShakeCard();
                 }
             }

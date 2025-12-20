@@ -12,6 +12,7 @@ public partial class LoginViewModel : BaseViewModel
     private readonly IProfileService _profileService;
     private readonly IContentService _contentService;
     private readonly ISettingsService _settingsService;
+    private readonly HwidService _hwidService;
 
     [ObservableProperty]
     private string _username = string.Empty;
@@ -34,7 +35,7 @@ public partial class LoginViewModel : BaseViewModel
     public event Action? OnLoginSuccess;
     public event Action<string>? OnLoginFailed;
 
-    public LoginViewModel(IApiService apiService, IChatService chatService, IFriendService friendService, IProfileService profileService, IContentService contentService, ISettingsService settingsService)
+    public LoginViewModel(IApiService apiService, IChatService chatService, IFriendService friendService, IProfileService profileService, IContentService contentService, ISettingsService settingsService, HwidService hwidService)
     {
         _apiService = apiService;
         _chatService = chatService;
@@ -42,6 +43,7 @@ public partial class LoginViewModel : BaseViewModel
         _profileService = profileService;
         _contentService = contentService;
         _settingsService = settingsService;
+        _hwidService = hwidService;
 
         // Load saved credentials
         if (_settingsService.Settings.RememberMe)
@@ -65,7 +67,9 @@ public partial class LoginViewModel : BaseViewModel
 
         try
         {
-            var result = await _apiService.LoginAsync(Username, Password);
+            // Get hardware ID for device binding verification
+            var hwid = _hwidService.GetHwid();
+            var result = await _apiService.LoginAsync(Username, Password, hwid);
 
             if (result.Success)
             {
@@ -91,8 +95,12 @@ public partial class LoginViewModel : BaseViewModel
             }
             else
             {
-                SetError(result.Message);
-                OnLoginFailed?.Invoke(result.Message);
+                // Provide more specific error for HWID mismatch
+                var errorMessage = result.HwidMismatch
+                    ? $"This account is bound to a different device (ID: {result.BoundHwidPrefix}...)"
+                    : result.Message;
+                SetError(errorMessage);
+                OnLoginFailed?.Invoke(errorMessage);
             }
         }
         catch (Exception ex)
@@ -133,7 +141,9 @@ public partial class LoginViewModel : BaseViewModel
 
         try
         {
-            var result = await _apiService.RegisterAsync(Username, Email, Password);
+            // Get hardware ID for device binding
+            var hwid = _hwidService.GetHwid();
+            var result = await _apiService.RegisterAsync(Username, Email, Password, null, hwid);
 
             if (result.Success)
             {
@@ -150,8 +160,12 @@ public partial class LoginViewModel : BaseViewModel
             }
             else
             {
-                SetError(result.Message);
-                OnLoginFailed?.Invoke(result.Message);
+                // Provide more specific error for HWID already bound
+                var errorMessage = result.HwidMismatch
+                    ? "This device is already registered to another account"
+                    : result.Message;
+                SetError(errorMessage);
+                OnLoginFailed?.Invoke(errorMessage);
             }
         }
         catch (Exception ex)
