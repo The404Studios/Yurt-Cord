@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -432,7 +433,10 @@ public partial class VoiceCallDashboard : UserControl
                 {
                     SelfAvatarBrush.ImageSource = new BitmapImage(new Uri(user.AvatarUrl));
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Failed to load avatar: {ex.Message}");
+                }
             }
         }
     }
@@ -469,12 +473,12 @@ public partial class VoiceCallDashboard : UserControl
     {
         if (_pipWindow != null)
         {
-            try { _pipWindow.Close(); } catch { }
+            try { _pipWindow.Close(); } catch (Exception ex) { Debug.WriteLine($"Failed to close PiP window: {ex.Message}"); }
             _pipWindow = null;
         }
         if (_fullscreenWindow != null)
         {
-            try { _fullscreenWindow.Close(); } catch { }
+            try { _fullscreenWindow.Close(); } catch (Exception ex) { Debug.WriteLine($"Failed to close fullscreen window: {ex.Message}"); }
             _fullscreenWindow = null;
             _isFullscreen = false;
         }

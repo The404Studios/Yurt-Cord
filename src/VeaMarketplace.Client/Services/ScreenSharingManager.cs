@@ -139,7 +139,7 @@ public class ScreenSharingManager : IScreenSharingManager
             _isSharing = false;
 
             // Cancel and cleanup synchronously
-            try { _captureCts?.Cancel(); } catch { }
+            try { _captureCts?.Cancel(); } catch (Exception ex) { Debug.WriteLine($"Cleanup: CaptureCts cancel failed: {ex.Message}"); }
 
             // Signal encode thread to wake up
             _captureSignal.Set();
@@ -153,7 +153,7 @@ public class ScreenSharingManager : IScreenSharingManager
             // Don't wait for send task - just let it cancel
             _sendTask = null;
 
-            try { _captureCts?.Dispose(); } catch { }
+            try { _captureCts?.Dispose(); } catch (Exception ex) { Debug.WriteLine($"Cleanup: CaptureCts dispose failed: {ex.Message}"); }
             _captureCts = null;
 
             // Clear both queues
@@ -293,7 +293,10 @@ public class ScreenSharingManager : IScreenSharingManager
         {
             _captureCts?.Cancel();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Capture cancel failed: {ex.Message}");
+        }
 
         // Signal encode thread to wake up and exit
         _captureSignal.Set();
@@ -343,7 +346,10 @@ public class ScreenSharingManager : IScreenSharingManager
         {
             _captureCts?.Dispose();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"CaptureCts dispose failed: {ex.Message}");
+        }
         _captureCts = null;
 
         // Clear both queues
@@ -1249,7 +1255,10 @@ public class ScreenSharingManager : IScreenSharingManager
                 await Task.WhenAny(stopTask, timeoutTask).ConfigureAwait(false);
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Dispose: Stop sharing failed: {ex.Message}");
+        }
 
         // Disconnect synchronously
         Disconnect();
@@ -1257,8 +1266,8 @@ public class ScreenSharingManager : IScreenSharingManager
         // Final cleanup
         CleanupCaptureResources();
 
-        try { _captureSignal?.Dispose(); } catch { }
-        try { _decoderLock?.Dispose(); } catch { }
+        try { _captureSignal?.Dispose(); } catch (Exception ex) { Debug.WriteLine($"Dispose: CaptureSignal dispose failed: {ex.Message}"); }
+        try { _decoderLock?.Dispose(); } catch (Exception ex) { Debug.WriteLine($"Dispose: DecoderLock dispose failed: {ex.Message}"); }
 
         // Clear any remaining queues
         while (_captureQueue.TryDequeue(out var bitmap)) { bitmap?.Dispose(); }

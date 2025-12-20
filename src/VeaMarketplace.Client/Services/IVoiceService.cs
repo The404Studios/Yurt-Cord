@@ -1027,19 +1027,19 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             System.Diagnostics.Debug.WriteLine($"Audio device error: {ex.Message}");
 
             // Clean up any partially initialized resources
-            try { _waveIn?.StopRecording(); } catch { }
-            try { _waveIn?.Dispose(); } catch { }
+            try { _waveIn?.StopRecording(); } catch (Exception cleanupEx) { Debug.WriteLine($"Cleanup: WaveIn stop failed: {cleanupEx.Message}"); }
+            try { _waveIn?.Dispose(); } catch (Exception cleanupEx) { Debug.WriteLine($"Cleanup: WaveIn dispose failed: {cleanupEx.Message}"); }
             _waveIn = null;
 
-            try { _waveOut?.Stop(); } catch { }
-            try { _waveOut?.Dispose(); } catch { }
+            try { _waveOut?.Stop(); } catch (Exception cleanupEx) { Debug.WriteLine($"Cleanup: WaveOut stop failed: {cleanupEx.Message}"); }
+            try { _waveOut?.Dispose(); } catch (Exception cleanupEx) { Debug.WriteLine($"Cleanup: WaveOut dispose failed: {cleanupEx.Message}"); }
             _waveOut = null;
 
             _bufferedWaveProvider = null;
             _opusEncoder = null;
 
-            try { _audioSendCts?.Cancel(); } catch { }
-            try { _audioSendCts?.Dispose(); } catch { }
+            try { _audioSendCts?.Cancel(); } catch (Exception cleanupEx) { Debug.WriteLine($"Cleanup: AudioSendCts cancel failed: {cleanupEx.Message}"); }
+            try { _audioSendCts?.Dispose(); } catch (Exception cleanupEx) { Debug.WriteLine($"Cleanup: AudioSendCts dispose failed: {cleanupEx.Message}"); }
             _audioSendCts = null;
         }
     }
@@ -1135,7 +1135,10 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                 _audioSendThread.Join(ThreadJoinTimeoutMs);
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Audio thread join failed: {ex.Message}");
+        }
 
         _audioSendCts?.Dispose();
         _audioSendCts = null;
@@ -1225,7 +1228,10 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                         await _connection.SendAsync("UpdateSpeakingState", speakingState, level).ConfigureAwait(false);
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Failed to send speaking state: {ex.Message}");
+                }
             });
         }
         // Send periodic level updates only while actively speaking (every 500ms)
@@ -1243,7 +1249,10 @@ public class VoiceService : IVoiceService, IAsyncDisposable
                         await _connection.SendAsync("UpdateSpeakingState", true, level).ConfigureAwait(false);
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Failed to send periodic speaking state: {ex.Message}");
+                }
             });
         }
 
@@ -1561,7 +1570,10 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         {
             _videoCaptureThread?.Join(ThreadJoinTimeoutMs);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Video thread join failed: {ex.Message}");
+        }
         _videoCts?.Dispose();
         _videoCts = null;
         _videoCaptureThread = null;
