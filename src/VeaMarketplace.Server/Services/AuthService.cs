@@ -14,16 +14,24 @@ public class AuthService
     private readonly DatabaseService _db;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AuthService> _logger;
+    private readonly KeyGeneratorService? _keyService;
     private readonly byte[] _jwtKey;
 
     // Minimum password requirements
     private const int MinPasswordLength = 8;
 
-    public AuthService(DatabaseService db, IConfiguration configuration, ILogger<AuthService> logger)
+    // Configuration flag for requiring activation keys
+    private readonly bool _requireActivationKey;
+
+    public AuthService(DatabaseService db, IConfiguration configuration, ILogger<AuthService> logger, KeyGeneratorService? keyService = null)
     {
         _db = db;
         _configuration = configuration;
         _logger = logger;
+        _keyService = keyService;
+
+        // Check if activation keys are required (default: true if key service is available)
+        _requireActivationKey = configuration.GetValue<bool>("Registration:RequireActivationKey", true);
 
         // Get JWT secret from environment or configuration - require it to be set
         var jwtSecret = Environment.GetEnvironmentVariable("VEA_JWT_SECRET")
@@ -57,6 +65,22 @@ public class AuthService
             return new AuthResponse { Success = false, Message = "Email already exists" };
         }
 
+        // Validate activation key if required
+        string? clientSalt = null;
+        if (_requireActivationKey && _keyService != null)
+        {
+            if (string.IsNullOrWhiteSpace(request.ActivationKey))
+            {
+                return new AuthResponse { Success = false, Message = "Activation key is required" };
+            }
+
+            // We'll validate and use the key after creating the user
+            if (!_keyService.IsValidKey(request.ActivationKey))
+            {
+                return new AuthResponse { Success = false, Message = "Invalid or already used activation key" };
+            }
+        }
+
         _logger.LogInformation("Registering new user: {Username}", request.Username);
 
         var user = new User
@@ -71,6 +95,17 @@ public class AuthService
 
         _db.Users.Insert(user);
 
+        // Use the activation key after successful registration
+        if (_requireActivationKey && _keyService != null && !string.IsNullOrWhiteSpace(request.ActivationKey))
+        {
+            var (success, salt, message) = _keyService.UseKey(request.ActivationKey, user.Id, user.Username);
+            if (success)
+            {
+                clientSalt = salt;
+                _logger.LogInformation("Activation key used for user {Username}", request.Username);
+            }
+        }
+
         var token = GenerateToken(user);
 
         return new AuthResponse
@@ -78,6 +113,7 @@ public class AuthService
             Success = true,
             Message = "Registration successful",
             Token = token,
+            ClientSalt = clientSalt,
             User = MapToDto(user)
         };
     }

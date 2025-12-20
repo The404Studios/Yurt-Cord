@@ -14,6 +14,7 @@ public class RegisterRequest
     public string Username { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
+    public string? ActivationKey { get; set; }
 }
 
 public class AuthResponse
@@ -22,6 +23,7 @@ public class AuthResponse
     public string Message { get; set; } = string.Empty;
     public string? Token { get; set; }
     public UserDto? User { get; set; }
+    public string? ClientSalt { get; set; }  // Unique salt for client-side encryption
 }
 
 public class UserDto

@@ -14,6 +14,8 @@ public partial class LoginView : UserControl
     private readonly LoginViewModel? _viewModel;
     private bool _isRegistering;
     private Storyboard? _spinnerStoryboard;
+    private bool _isKeyValidated;
+    private string? _validatedKey;
 
     public event Action? OnLoginSuccess;
     public event Action<string>? OnRegistrationSuccess; // Passes username for profile setup
@@ -96,6 +98,14 @@ public partial class LoginView : UserControl
                 ShakeCard();
                 return;
             }
+
+            // Validate activation key
+            if (!_isKeyValidated || string.IsNullOrEmpty(_validatedKey))
+            {
+                ShowError("Please enter and validate your activation key");
+                ShakeCard();
+                return;
+            }
         }
 
         ShowLoading(true, _isRegistering ? "Creating account..." : "Logging in...", "Connecting to server...");
@@ -108,7 +118,7 @@ public partial class LoginView : UserControl
                 await Task.Delay(300); // Brief delay for visual feedback
 
                 var result = await ((IApiService)App.ServiceProvider.GetService(typeof(IApiService))!)
-                    .RegisterAsync(username, email, password);
+                    .RegisterAsync(username, email, password, _validatedKey!);
 
                 if (result.Success)
                 {
@@ -201,7 +211,13 @@ public partial class LoginView : UserControl
             ToggleLinkText.Text = "Login";
             EmailPanel.Visibility = Visibility.Visible;
             ConfirmPasswordPanel.Visibility = Visibility.Visible;
+            ActivationKeyPanel.Visibility = Visibility.Visible;
             RememberMeCheck.Visibility = Visibility.Collapsed;
+
+            // Reset key validation state when switching to register
+            _isKeyValidated = false;
+            _validatedKey = null;
+            UpdateKeyValidationUI();
         }
         else
         {
@@ -211,6 +227,7 @@ public partial class LoginView : UserControl
             ToggleLinkText.Text = "Register";
             EmailPanel.Visibility = Visibility.Collapsed;
             ConfirmPasswordPanel.Visibility = Visibility.Collapsed;
+            ActivationKeyPanel.Visibility = Visibility.Collapsed;
             RememberMeCheck.Visibility = Visibility.Visible;
         }
 
@@ -284,6 +301,8 @@ public partial class LoginView : UserControl
         PasswordBox.IsEnabled = !show;
         EmailBox.IsEnabled = !show;
         ConfirmPasswordBox.IsEnabled = !show;
+        ActivationKeyBox.IsEnabled = !show;
+        ValidateKeyButton.IsEnabled = !show && ActivationKeyBox.Text.Length == 7 && !_isKeyValidated;
     }
 
     private void UpdateLoadingText(string text, string subtext)
@@ -326,7 +345,12 @@ public partial class LoginView : UserControl
         PasswordBox.Password = string.Empty;
         EmailBox.Text = string.Empty;
         ConfirmPasswordBox.Password = string.Empty;
+        ActivationKeyBox.Text = string.Empty;
         RememberMeCheck.IsChecked = false;
+
+        // Reset key validation state
+        _isKeyValidated = false;
+        _validatedKey = null;
 
         // Reset to login mode if in registration mode
         if (_isRegistering)
@@ -343,5 +367,105 @@ public partial class LoginView : UserControl
 
         // Focus username field
         Dispatcher.BeginInvoke(new Action(() => UsernameBox.Focus()), System.Windows.Threading.DispatcherPriority.Input);
+    }
+
+    private void ActivationKeyBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        var textBox = (TextBox)sender;
+        var text = textBox.Text.ToUpper().Replace("-", "");
+        var cursorPosition = textBox.SelectionStart;
+
+        // Remove non-alphanumeric characters
+        text = new string(text.Where(c => char.IsLetterOrDigit(c)).ToArray());
+
+        // Limit to 6 characters (XXX-XXX format = 6 chars without dash)
+        if (text.Length > 6)
+            text = text.Substring(0, 6);
+
+        // Insert dash after first 3 characters
+        if (text.Length > 3)
+            text = text.Insert(3, "-");
+
+        // Update text if changed
+        if (textBox.Text != text)
+        {
+            textBox.Text = text;
+            // Adjust cursor position for dash insertion
+            textBox.SelectionStart = Math.Min(cursorPosition + (text.Contains('-') && cursorPosition >= 3 ? 1 : 0), text.Length);
+        }
+
+        // Reset validation state when key changes
+        if (_isKeyValidated)
+        {
+            _isKeyValidated = false;
+            _validatedKey = null;
+            UpdateKeyValidationUI();
+        }
+
+        // Enable validate button only when key is complete (XXX-XXX = 7 chars)
+        ValidateKeyButton.IsEnabled = text.Length == 7;
+    }
+
+    private async void ValidateKey_Click(object sender, RoutedEventArgs e)
+    {
+        var key = ActivationKeyBox.Text.Trim();
+        if (string.IsNullOrEmpty(key) || key.Length != 7)
+        {
+            ShowError("Please enter a valid activation key (XXX-XXX)");
+            ShakeCard();
+            return;
+        }
+
+        ClearError();
+        ValidateKeyButton.IsEnabled = false;
+        ValidateKeyButton.Content = "Validating...";
+
+        try
+        {
+            var apiService = (IApiService)App.ServiceProvider.GetService(typeof(IApiService))!;
+            var result = await apiService.ValidateKeyAsync(key);
+
+            if (result.Success)
+            {
+                _isKeyValidated = true;
+                _validatedKey = key;
+                UpdateKeyValidationUI();
+            }
+            else
+            {
+                ShowError(result.Message ?? "Invalid or already used activation key");
+                ShakeCard();
+            }
+        }
+        catch (Exception)
+        {
+            ShowError("Failed to validate key. Is the server running?");
+            ShakeCard();
+        }
+        finally
+        {
+            ValidateKeyButton.Content = "Validate";
+            ValidateKeyButton.IsEnabled = true;
+        }
+    }
+
+    private void UpdateKeyValidationUI()
+    {
+        if (_isKeyValidated)
+        {
+            KeyStatusIcon.Visibility = Visibility.Visible;
+            ActivationKeyBox.BorderBrush = new System.Windows.Media.SolidColorBrush(
+                System.Windows.Media.Color.FromRgb(0x43, 0xB5, 0x81)); // Green
+            ValidateKeyButton.Content = "Valid ✓";
+            ValidateKeyButton.IsEnabled = false;
+        }
+        else
+        {
+            KeyStatusIcon.Visibility = Visibility.Collapsed;
+            ActivationKeyBox.BorderBrush = new System.Windows.Media.SolidColorBrush(
+                System.Windows.Media.Color.FromRgb(0x4A, 0x4A, 0x5A)); // Default gray
+            ValidateKeyButton.Content = "Validate";
+            ValidateKeyButton.IsEnabled = ActivationKeyBox.Text.Length == 7;
+        }
     }
 }
