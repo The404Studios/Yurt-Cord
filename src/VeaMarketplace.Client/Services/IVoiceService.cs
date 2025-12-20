@@ -719,6 +719,21 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     {
         if (_connection == null) return;
 
+        // Connection handshake from server
+        _connection.On<JsonElement>("ConnectionHandshake", handshake =>
+        {
+            if (handshake.TryGetProperty("ConnectionId", out var connId))
+            {
+                Debug.WriteLine($"VoiceService: Handshake received. ConnectionId: {connId.GetString()}");
+            }
+        });
+
+        // Heartbeat response
+        _connection.On<JsonElement>("Pong", pong =>
+        {
+            Debug.WriteLine("VoiceService: Pong received");
+        });
+
         _connection.On<VoiceUserState>("UserJoinedVoice", user =>
         {
             _voiceUsers[user.ConnectionId] = user;
