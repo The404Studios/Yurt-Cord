@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Timers;
 using VeaMarketplace.Client.Models;
 using VeaMarketplace.Shared.DTOs;
 
@@ -11,6 +13,7 @@ namespace VeaMarketplace.Client.Services;
 public interface IFriendService
 {
     bool IsConnected { get; }
+    string? ConnectionId { get; }
     ObservableCollection<FriendDto> Friends { get; }
     ObservableCollection<FriendRequestDto> PendingRequests { get; }
     ObservableCollection<FriendRequestDto> OutgoingRequests { get; }
@@ -73,9 +76,12 @@ public class FriendService : IFriendService, IAsyncDisposable
     private HubConnection? _connection;
     private const string HubUrl = "http://localhost:5000/hubs/friends";
     private System.Timers.Timer? _typingTimer;
+    private System.Timers.Timer? _heartbeatTimer;
     private string? _authToken;
+    private bool _handshakeReceived;
 
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
+    public string? ConnectionId { get; private set; }
     public ObservableCollection<FriendDto> Friends { get; } = new();
     public ObservableCollection<FriendRequestDto> PendingRequests { get; } = new();
     public ObservableCollection<FriendRequestDto> OutgoingRequests { get; } = new();
@@ -110,8 +116,11 @@ public class FriendService : IFriendService, IAsyncDisposable
     public async Task ConnectAsync(string token)
     {
         _authToken = token;
+        _handshakeReceived = false;
+        ConnectionId = null;
 
-        // Dispose existing connection if any
+        // Dispose existing connection and timer if any
+        StopHeartbeat();
         if (_connection != null)
         {
             await _connection.DisposeAsync().ConfigureAwait(false);
@@ -131,20 +140,113 @@ public class FriendService : IFriendService, IAsyncDisposable
         // Handle reconnection - re-authenticate when reconnected
         _connection.Reconnected += async (connectionId) =>
         {
+            Debug.WriteLine($"FriendService: Reconnected with connectionId {connectionId}");
+            _handshakeReceived = false;
             if (_authToken != null)
             {
+                await Task.Delay(100).ConfigureAwait(false);
                 await _connection.InvokeAsync("Authenticate", _authToken).ConfigureAwait(false);
             }
         };
 
+        _connection.Closed += (exception) =>
+        {
+            Debug.WriteLine($"FriendService: Connection closed. Exception: {exception?.Message}");
+            StopHeartbeat();
+            return Task.CompletedTask;
+        };
+
         RegisterHandlers();
         await _connection.StartAsync().ConfigureAwait(false);
+
+        // Wait for handshake before authenticating (with timeout)
+        var handshakeTimeout = DateTime.UtcNow.AddSeconds(5);
+        while (!_handshakeReceived && DateTime.UtcNow < handshakeTimeout)
+        {
+            await Task.Delay(50).ConfigureAwait(false);
+        }
+
         await _connection.InvokeAsync("Authenticate", token).ConfigureAwait(false);
+        StartHeartbeat();
+    }
+
+    private void StartHeartbeat()
+    {
+        StopHeartbeat();
+        _heartbeatTimer = new System.Timers.Timer(30000); // 30 seconds
+        _heartbeatTimer.Elapsed += async (s, e) => await SendHeartbeatAsync();
+        _heartbeatTimer.AutoReset = true;
+        _heartbeatTimer.Start();
+    }
+
+    private void StopHeartbeat()
+    {
+        if (_heartbeatTimer != null)
+        {
+            _heartbeatTimer.Stop();
+            _heartbeatTimer.Dispose();
+            _heartbeatTimer = null;
+        }
+    }
+
+    private async Task SendHeartbeatAsync()
+    {
+        if (_connection != null && IsConnected)
+        {
+            try
+            {
+                await _connection.InvokeAsync("Ping").ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"FriendService: Heartbeat failed: {ex.Message}");
+            }
+        }
     }
 
     private void RegisterHandlers()
     {
         if (_connection == null) return;
+
+        // Connection handshake from server
+        _connection.On<JsonElement>("ConnectionHandshake", handshake =>
+        {
+            if (handshake.TryGetProperty("ConnectionId", out var connId))
+            {
+                ConnectionId = connId.GetString();
+            }
+            _handshakeReceived = true;
+            Debug.WriteLine($"FriendService: Handshake received. ConnectionId: {ConnectionId}");
+        });
+
+        // Heartbeat response
+        _connection.On<JsonElement>("Pong", pong =>
+        {
+            Debug.WriteLine("FriendService: Pong received");
+        });
+
+        // Handle new authentication failed format
+        _connection.On<JsonElement>("AuthenticationFailed", response =>
+        {
+            string errorMessage;
+            try
+            {
+                if (response.TryGetProperty("Message", out var message))
+                {
+                    errorMessage = message.GetString() ?? "Authentication failed";
+                }
+                else
+                {
+                    errorMessage = response.GetString() ?? "Authentication failed";
+                }
+            }
+            catch
+            {
+                errorMessage = response.ToString();
+            }
+            Debug.WriteLine($"FriendService: Authentication failed: {errorMessage}");
+            OnError?.Invoke(errorMessage);
+        });
 
         _connection.On<List<FriendDto>>("FriendsList", friends =>
         {
@@ -586,6 +688,9 @@ public class FriendService : IFriendService, IAsyncDisposable
 
     public async Task DisconnectAsync()
     {
+        StopHeartbeat();
+        ConnectionId = null;
+
         if (_connection != null)
         {
             await _connection.StopAsync().ConfigureAwait(false);

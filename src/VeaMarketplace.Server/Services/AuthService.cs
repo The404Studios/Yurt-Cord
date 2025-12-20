@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using VeaMarketplace.Server.Data;
 using VeaMarketplace.Shared.DTOs;
@@ -12,15 +13,40 @@ public class AuthService
 {
     private readonly DatabaseService _db;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<AuthService> _logger;
+    private readonly byte[] _jwtKey;
 
-    public AuthService(DatabaseService db, IConfiguration configuration)
+    // Minimum password requirements
+    private const int MinPasswordLength = 8;
+
+    public AuthService(DatabaseService db, IConfiguration configuration, ILogger<AuthService> logger)
     {
         _db = db;
         _configuration = configuration;
+        _logger = logger;
+
+        // Get JWT secret from environment or configuration - require it to be set
+        var jwtSecret = Environment.GetEnvironmentVariable("VEA_JWT_SECRET")
+            ?? configuration["Jwt:Secret"];
+
+        if (string.IsNullOrEmpty(jwtSecret) || jwtSecret.Length < 32)
+        {
+            _logger.LogWarning("JWT secret not configured or too short. Generating secure random key for this session.");
+            // Generate a secure random key for this session (not recommended for production)
+            jwtSecret = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(64));
+        }
+
+        _jwtKey = Encoding.UTF8.GetBytes(jwtSecret);
     }
 
     public AuthResponse Register(RegisterRequest request)
     {
+        // Validate password strength
+        if (string.IsNullOrEmpty(request.Password) || request.Password.Length < MinPasswordLength)
+        {
+            return new AuthResponse { Success = false, Message = $"Password must be at least {MinPasswordLength} characters long" };
+        }
+
         if (_db.Users.Exists(u => u.Username.ToLower() == request.Username.ToLower()))
         {
             return new AuthResponse { Success = false, Message = "Username already exists" };
@@ -30,6 +56,8 @@ public class AuthService
         {
             return new AuthResponse { Success = false, Message = "Email already exists" };
         }
+
+        _logger.LogInformation("Registering new user: {Username}", request.Username);
 
         var user = new User
         {
@@ -127,15 +155,20 @@ public class AuthService
 
     public User? ValidateToken(string token)
     {
+        if (string.IsNullOrEmpty(token))
+        {
+            _logger.LogDebug("Token validation failed: empty token");
+            return null;
+        }
+
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"] ?? "YourSuperSecretKeyHere12345678901234567890");
 
             tokenHandler.ValidateToken(token, new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(key),
+                IssuerSigningKey = new SymmetricSecurityKey(_jwtKey),
                 ValidateIssuer = false,
                 ValidateAudience = false,
                 ClockSkew = TimeSpan.Zero
@@ -146,8 +179,19 @@ public class AuthService
 
             return GetUserById(userId);
         }
-        catch
+        catch (SecurityTokenExpiredException ex)
         {
+            _logger.LogDebug("Token validation failed: token expired at {Expiry}", ex.Expires);
+            return null;
+        }
+        catch (SecurityTokenException ex)
+        {
+            _logger.LogDebug("Token validation failed: {Message}", ex.Message);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Unexpected error during token validation");
             return null;
         }
     }
@@ -155,7 +199,6 @@ public class AuthService
     private string GenerateToken(User user)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"] ?? "YourSuperSecretKeyHere12345678901234567890");
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
@@ -168,11 +211,12 @@ public class AuthService
             }),
             Expires = DateTime.UtcNow.AddDays(7),
             SigningCredentials = new SigningCredentials(
-                new SymmetricSecurityKey(key),
+                new SymmetricSecurityKey(_jwtKey),
                 SecurityAlgorithms.HmacSha256Signature)
         };
 
         var token = tokenHandler.CreateToken(tokenDescriptor);
+        _logger.LogDebug("Generated token for user {UserId}", user.Id);
         return tokenHandler.WriteToken(token);
     }
 

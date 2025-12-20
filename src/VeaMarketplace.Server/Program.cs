@@ -175,8 +175,18 @@ builder.Services.AddScoped<DiscoveryService>();
 builder.Services.AddScoped<ActivityService>();
 builder.Services.AddSingleton<RoleConfigurationService>();
 
-// JWT Authentication
-var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "PluginSuperSecretKey1234567890123456789012";
+// JWT Authentication - get secret from environment or configuration
+var jwtSecret = Environment.GetEnvironmentVariable("VEA_JWT_SECRET")
+    ?? builder.Configuration["Jwt:Secret"];
+
+if (string.IsNullOrEmpty(jwtSecret) || jwtSecret.Length < 32)
+{
+    // Generate a secure random key for this session
+    Console.WriteLine("WARNING: VEA_JWT_SECRET not set or too short. Generating secure random key for this session.");
+    Console.WriteLine("Set VEA_JWT_SECRET environment variable for production use.");
+    jwtSecret = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(64));
+}
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -185,7 +195,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
             ValidateIssuer = false,
-            ValidateAudience = false
+            ValidateAudience = false,
+            ClockSkew = TimeSpan.Zero // Strict token expiry validation
         };
 
         options.Events = new JwtBearerEvents
@@ -198,6 +209,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 {
                     context.Token = accessToken;
                 }
+                return Task.CompletedTask;
+            },
+            OnAuthenticationFailed = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogDebug("Authentication failed: {Message}", context.Exception.Message);
                 return Task.CompletedTask;
             }
         };

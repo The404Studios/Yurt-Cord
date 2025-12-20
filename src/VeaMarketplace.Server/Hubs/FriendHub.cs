@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using VeaMarketplace.Server.Services;
 using VeaMarketplace.Shared.DTOs;
@@ -11,24 +12,53 @@ public class FriendHub : Hub
     private readonly FriendService _friendService;
     private readonly DirectMessageService _dmService;
     private readonly AuthService _authService;
+    private readonly ILogger<FriendHub> _logger;
     private static readonly ConcurrentDictionary<string, string> _userConnections = new(); // userId -> connectionId
     private static readonly ConcurrentDictionary<string, string> _connectionUsers = new(); // connectionId -> userId
+    private static readonly ConcurrentDictionary<string, DateTime> _connectionTimestamps = new();
 
-    public FriendHub(FriendService friendService, DirectMessageService dmService, AuthService authService)
+    public FriendHub(FriendService friendService, DirectMessageService dmService, AuthService authService, ILogger<FriendHub> logger)
     {
         _friendService = friendService;
         _dmService = dmService;
         _authService = authService;
+        _logger = logger;
+    }
+
+    public override async Task OnConnectedAsync()
+    {
+        var connectionId = Context.ConnectionId;
+        _connectionTimestamps[connectionId] = DateTime.UtcNow;
+
+        _logger.LogDebug("FriendHub connection established: {ConnectionId}", connectionId);
+
+        await Clients.Caller.SendAsync("ConnectionHandshake", new
+        {
+            ConnectionId = connectionId,
+            ServerTime = DateTime.UtcNow,
+            Hub = "FriendHub"
+        });
+
+        await base.OnConnectedAsync();
     }
 
     public async Task Authenticate(string token)
     {
+        var connectionId = Context.ConnectionId;
+
         var user = _authService.ValidateToken(token);
         if (user == null)
         {
-            await Clients.Caller.SendAsync("AuthenticationFailed", "Invalid token");
+            _logger.LogDebug("FriendHub authentication failed: {ConnectionId}", connectionId);
+            await Clients.Caller.SendAsync("AuthenticationFailed", new
+            {
+                Error = "InvalidToken",
+                Message = "Invalid or expired token"
+            });
             return;
         }
+
+        _logger.LogInformation("FriendHub user authenticated: {Username}", user.Username);
 
         // Track connection
         _userConnections[user.Id] = Context.ConnectionId;
@@ -403,9 +433,13 @@ public class FriendHub : Hub
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        if (_connectionUsers.TryRemove(Context.ConnectionId, out var userId))
+        var connectionId = Context.ConnectionId;
+        _connectionTimestamps.TryRemove(connectionId, out _);
+
+        if (_connectionUsers.TryRemove(connectionId, out var userId))
         {
             _userConnections.TryRemove(userId, out _);
+            _logger.LogInformation("FriendHub user disconnected: {UserId}", userId);
 
             // Notify friends that user went offline
             var friends = _friendService.GetFriends(userId);
@@ -417,7 +451,25 @@ public class FriendHub : Hub
                 }
             }
         }
+        else
+        {
+            _logger.LogDebug("Unauthenticated FriendHub connection disconnected: {ConnectionId}", connectionId);
+        }
+
+        if (exception != null)
+        {
+            _logger.LogWarning(exception, "FriendHub connection {ConnectionId} disconnected with error", connectionId);
+        }
 
         await base.OnDisconnectedAsync(exception);
+    }
+
+    /// <summary>
+    /// Heartbeat to keep connection alive
+    /// </summary>
+    public async Task Ping()
+    {
+        _connectionTimestamps[Context.ConnectionId] = DateTime.UtcNow;
+        await Clients.Caller.SendAsync("Pong", new { ServerTime = DateTime.UtcNow });
     }
 }

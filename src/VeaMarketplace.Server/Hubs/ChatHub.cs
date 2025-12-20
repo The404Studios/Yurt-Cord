@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 using VeaMarketplace.Server.Services;
 using VeaMarketplace.Shared.DTOs;
 using VeaMarketplace.Shared.Enums;
@@ -11,14 +12,38 @@ public class ChatHub : Hub
 {
     private readonly ChatService _chatService;
     private readonly AuthService _authService;
+    private readonly ILogger<ChatHub> _logger;
     private static readonly ConcurrentDictionary<string, OnlineUserDto> _onlineUsers = new();
     private static readonly ConcurrentDictionary<string, string> _connectionUserMap = new();
     private static readonly ConcurrentDictionary<string, List<string>> _userConnectionsMap = new(); // userId -> list of connectionIds
+    private static readonly ConcurrentDictionary<string, DateTime> _connectionTimestamps = new(); // For connection handshake tracking
 
-    public ChatHub(ChatService chatService, AuthService authService)
+    public ChatHub(ChatService chatService, AuthService authService, ILogger<ChatHub> logger)
     {
         _chatService = chatService;
         _authService = authService;
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Called when a new connection is established. Sends handshake confirmation.
+    /// </summary>
+    public override async Task OnConnectedAsync()
+    {
+        var connectionId = Context.ConnectionId;
+        _connectionTimestamps[connectionId] = DateTime.UtcNow;
+
+        _logger.LogDebug("New connection established: {ConnectionId}", connectionId);
+
+        // Send handshake confirmation with connection ID and server timestamp
+        await Clients.Caller.SendAsync("ConnectionHandshake", new
+        {
+            ConnectionId = connectionId,
+            ServerTime = DateTime.UtcNow,
+            Message = "Connection established. Please authenticate."
+        });
+
+        await base.OnConnectedAsync();
     }
 
     /// <summary>
@@ -97,12 +122,45 @@ public class ChatHub : Hub
 
     public async Task Authenticate(string token)
     {
+        var connectionId = Context.ConnectionId;
+
+        // Validate connection handshake was received
+        if (!_connectionTimestamps.TryGetValue(connectionId, out var connectionTime))
+        {
+            _logger.LogWarning("Authentication attempt without handshake: {ConnectionId}", connectionId);
+            await Clients.Caller.SendAsync("AuthenticationFailed", new
+            {
+                Error = "InvalidHandshake",
+                Message = "Connection handshake not completed"
+            });
+            return;
+        }
+
+        // Check for stale connections (> 5 minutes without auth)
+        if ((DateTime.UtcNow - connectionTime).TotalMinutes > 5)
+        {
+            _logger.LogWarning("Stale connection authentication attempt: {ConnectionId}", connectionId);
+            await Clients.Caller.SendAsync("AuthenticationFailed", new
+            {
+                Error = "ConnectionExpired",
+                Message = "Connection expired. Please reconnect."
+            });
+            return;
+        }
+
         var user = _authService.ValidateToken(token);
         if (user == null)
         {
-            await Clients.Caller.SendAsync("AuthenticationFailed", "Invalid token");
+            _logger.LogDebug("Authentication failed for connection: {ConnectionId}", connectionId);
+            await Clients.Caller.SendAsync("AuthenticationFailed", new
+            {
+                Error = "InvalidToken",
+                Message = "Invalid or expired token"
+            });
             return;
         }
+
+        _logger.LogInformation("User authenticated: {Username} ({UserId})", user.Username, user.Id);
 
         var onlineUser = new OnlineUserDto
         {
@@ -120,9 +178,16 @@ public class ChatHub : Hub
         };
 
         _onlineUsers[user.Id] = onlineUser;
-        _connectionUserMap[Context.ConnectionId] = user.Id;
+        _connectionUserMap[connectionId] = user.Id;
 
-        await Groups.AddToGroupAsync(Context.ConnectionId, "general");
+        // Track multiple connections per user
+        _userConnectionsMap.AddOrUpdate(
+            user.Id,
+            _ => new List<string> { connectionId },
+            (_, list) => { lock (list) { if (!list.Contains(connectionId)) list.Add(connectionId); } return list; }
+        );
+
+        await Groups.AddToGroupAsync(connectionId, "general");
 
         // Send channel list based on user role
         var channels = _chatService.GetChannels(user.Role);
@@ -140,7 +205,14 @@ public class ChatHub : Hub
         var joinMessage = _chatService.CreateSystemMessage("general", $"{user.Username} joined the chat", MessageType.Join);
         await Clients.Group("general").SendAsync("ReceiveMessage", joinMessage);
 
-        await Clients.Caller.SendAsync("AuthenticationSuccess", _authService.MapToDto(user));
+        // Send authentication success with confirmation details
+        await Clients.Caller.SendAsync("AuthenticationSuccess", new
+        {
+            User = _authService.MapToDto(user),
+            ConnectionId = connectionId,
+            AuthenticatedAt = DateTime.UtcNow,
+            SessionId = Guid.NewGuid().ToString() // Unique session identifier
+        });
     }
 
     public async Task JoinChannel(string channelName)
@@ -232,15 +304,48 @@ public class ChatHub : Hub
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        if (_connectionUserMap.TryRemove(Context.ConnectionId, out var userId))
+        var connectionId = Context.ConnectionId;
+
+        // Clean up connection timestamp
+        _connectionTimestamps.TryRemove(connectionId, out _);
+
+        if (_connectionUserMap.TryRemove(connectionId, out var userId))
         {
+            // Remove this connection from user's connection list
+            if (_userConnectionsMap.TryGetValue(userId, out var connections))
+            {
+                lock (connections)
+                {
+                    connections.Remove(connectionId);
+                    // Only remove user from online if no more connections
+                    if (connections.Count > 0)
+                    {
+                        _logger.LogDebug("User {UserId} disconnected from {ConnectionId}, {Count} connections remaining",
+                            userId, connectionId, connections.Count);
+                        return;
+                    }
+                }
+                _userConnectionsMap.TryRemove(userId, out _);
+            }
+
             if (_onlineUsers.TryRemove(userId, out var user))
             {
+                _logger.LogInformation("User disconnected: {Username} ({UserId})", user.Username, userId);
+
                 await Clients.All.SendAsync("UserLeft", user);
 
                 var leaveMessage = _chatService.CreateSystemMessage("general", $"{user.Username} left the chat", MessageType.Leave);
                 await Clients.Group("general").SendAsync("ReceiveMessage", leaveMessage);
             }
+        }
+        else
+        {
+            _logger.LogDebug("Unauthenticated connection disconnected: {ConnectionId}", connectionId);
+        }
+
+        if (exception != null)
+        {
+            _logger.LogWarning(exception, "Connection {ConnectionId} disconnected with error", connectionId);
         }
 
         await base.OnDisconnectedAsync(exception);
@@ -249,5 +354,41 @@ public class ChatHub : Hub
     public Task<List<OnlineUserDto>> GetOnlineUsers()
     {
         return Task.FromResult(_onlineUsers.Values.ToList());
+    }
+
+    /// <summary>
+    /// Heartbeat/ping method for connection health checking.
+    /// Client should call this periodically to confirm connection is alive.
+    /// </summary>
+    public async Task Ping()
+    {
+        var connectionId = Context.ConnectionId;
+
+        // Update timestamp to keep connection fresh
+        _connectionTimestamps[connectionId] = DateTime.UtcNow;
+
+        await Clients.Caller.SendAsync("Pong", new
+        {
+            ServerTime = DateTime.UtcNow,
+            ConnectionId = connectionId
+        });
+    }
+
+    /// <summary>
+    /// Confirms receipt of a message. Used for reliable message delivery.
+    /// </summary>
+    public async Task AcknowledgeMessage(string messageId)
+    {
+        if (!_connectionUserMap.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        _logger.LogDebug("Message {MessageId} acknowledged by user {UserId}", messageId, userId);
+
+        // Notify sender that message was received
+        await Clients.Caller.SendAsync("MessageAcknowledged", new
+        {
+            MessageId = messageId,
+            AcknowledgedAt = DateTime.UtcNow
+        });
     }
 }

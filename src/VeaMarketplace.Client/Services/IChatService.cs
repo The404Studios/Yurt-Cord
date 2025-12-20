@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Timers;
 using VeaMarketplace.Shared.DTOs;
 
 namespace VeaMarketplace.Client.Services;
@@ -9,6 +11,8 @@ namespace VeaMarketplace.Client.Services;
 public interface IChatService
 {
     bool IsConnected { get; }
+    string? ConnectionId { get; }
+    string? SessionId { get; }
     event Action<ChatMessageDto>? OnMessageReceived;
     event Action<OnlineUserDto>? OnUserJoined;
     event Action<OnlineUserDto>? OnUserLeft;
@@ -20,6 +24,7 @@ public interface IChatService
     event Action<UserDto>? OnAuthenticated;
     event Action<string>? OnAuthenticationFailed;
     event Action<OnlineUserDto>? OnUserProfileUpdated;
+    event Action? OnConnectionHandshake;
 
     Task ConnectAsync(string token);
     Task DisconnectAsync();
@@ -33,6 +38,7 @@ public interface IChatService
     Task<string?> CreateGroupChatAsync(string name, List<string> memberIds, string? iconPath = null);
     Task AddReactionAsync(string messageId, string emoji);
     Task RemoveReactionAsync(string messageId, string emoji);
+    Task AcknowledgeMessageAsync(string messageId);
 }
 
 public class ChatService : IChatService, IAsyncDisposable
@@ -41,8 +47,12 @@ public class ChatService : IChatService, IAsyncDisposable
     private readonly INotificationService _notificationService;
     private const string HubUrl = "http://localhost:5000/hubs/chat";
     private string? _authToken;
+    private System.Timers.Timer? _heartbeatTimer;
+    private bool _handshakeReceived;
 
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
+    public string? ConnectionId { get; private set; }
+    public string? SessionId { get; private set; }
 
     public ChatService(INotificationService notificationService)
     {
@@ -60,12 +70,17 @@ public class ChatService : IChatService, IAsyncDisposable
     public event Action<UserDto>? OnAuthenticated;
     public event Action<string>? OnAuthenticationFailed;
     public event Action<OnlineUserDto>? OnUserProfileUpdated;
+    public event Action? OnConnectionHandshake;
 
     public async Task ConnectAsync(string token)
     {
         _authToken = token;
+        _handshakeReceived = false;
+        ConnectionId = null;
+        SessionId = null;
 
-        // Dispose existing connection if any
+        // Dispose existing connection and timer if any
+        StopHeartbeat();
         if (_connection != null)
         {
             await _connection.DisposeAsync().ConfigureAwait(false);
@@ -85,21 +100,108 @@ public class ChatService : IChatService, IAsyncDisposable
         // Handle reconnection - re-authenticate when reconnected
         _connection.Reconnected += async (connectionId) =>
         {
+            Debug.WriteLine($"ChatService: Reconnected with connectionId {connectionId}");
+            _handshakeReceived = false;
             if (_authToken != null)
             {
+                // Wait for handshake before authenticating
+                await Task.Delay(100).ConfigureAwait(false);
                 await _connection.InvokeAsync("Authenticate", _authToken).ConfigureAwait(false);
             }
+        };
+
+        _connection.Closed += (exception) =>
+        {
+            Debug.WriteLine($"ChatService: Connection closed. Exception: {exception?.Message}");
+            StopHeartbeat();
+            return Task.CompletedTask;
         };
 
         RegisterHandlers();
 
         await _connection.StartAsync().ConfigureAwait(false);
+
+        // Wait for handshake before authenticating (with timeout)
+        var handshakeTimeout = DateTime.UtcNow.AddSeconds(5);
+        while (!_handshakeReceived && DateTime.UtcNow < handshakeTimeout)
+        {
+            await Task.Delay(50).ConfigureAwait(false);
+        }
+
+        if (!_handshakeReceived)
+        {
+            Debug.WriteLine("ChatService: Handshake timeout, proceeding with authentication anyway");
+        }
+
         await _connection.InvokeAsync("Authenticate", token).ConfigureAwait(false);
+    }
+
+    private void StartHeartbeat()
+    {
+        StopHeartbeat();
+        _heartbeatTimer = new System.Timers.Timer(30000); // 30 seconds
+        _heartbeatTimer.Elapsed += async (s, e) => await SendHeartbeatAsync();
+        _heartbeatTimer.AutoReset = true;
+        _heartbeatTimer.Start();
+        Debug.WriteLine("ChatService: Heartbeat started");
+    }
+
+    private void StopHeartbeat()
+    {
+        if (_heartbeatTimer != null)
+        {
+            _heartbeatTimer.Stop();
+            _heartbeatTimer.Dispose();
+            _heartbeatTimer = null;
+            Debug.WriteLine("ChatService: Heartbeat stopped");
+        }
+    }
+
+    private async Task SendHeartbeatAsync()
+    {
+        if (_connection != null && IsConnected)
+        {
+            try
+            {
+                await _connection.InvokeAsync("Ping").ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"ChatService: Heartbeat failed: {ex.Message}");
+            }
+        }
     }
 
     private void RegisterHandlers()
     {
         if (_connection == null) return;
+
+        // Connection handshake from server
+        _connection.On<JsonElement>("ConnectionHandshake", handshake =>
+        {
+            if (handshake.TryGetProperty("ConnectionId", out var connId))
+            {
+                ConnectionId = connId.GetString();
+            }
+            _handshakeReceived = true;
+            Debug.WriteLine($"ChatService: Handshake received. ConnectionId: {ConnectionId}");
+            OnConnectionHandshake?.Invoke();
+        });
+
+        // Heartbeat response
+        _connection.On<JsonElement>("Pong", pong =>
+        {
+            Debug.WriteLine("ChatService: Pong received");
+        });
+
+        // Message acknowledgment
+        _connection.On<JsonElement>("MessageAcknowledged", ack =>
+        {
+            if (ack.TryGetProperty("MessageId", out var msgId))
+            {
+                Debug.WriteLine($"ChatService: Message {msgId.GetString()} acknowledged");
+            }
+        });
 
         _connection.On<ChatMessageDto>("ReceiveMessage", message =>
             OnMessageReceived?.Invoke(message));
@@ -131,11 +233,81 @@ public class ChatService : IChatService, IAsyncDisposable
         _connection.On<string>("MessageDeleted", messageId =>
             OnMessageDeleted?.Invoke(messageId));
 
-        _connection.On<UserDto>("AuthenticationSuccess", user =>
-            OnAuthenticated?.Invoke(user));
+        // Handle new authentication success format with session info
+        _connection.On<JsonElement>("AuthenticationSuccess", response =>
+        {
+            try
+            {
+                // New format: { User, ConnectionId, AuthenticatedAt, SessionId }
+                if (response.TryGetProperty("User", out var userElement))
+                {
+                    var user = JsonSerializer.Deserialize<UserDto>(userElement.GetRawText(), new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true,
+                        Converters = { new JsonStringEnumConverter() }
+                    });
 
-        _connection.On<string>("AuthenticationFailed", error =>
-            OnAuthenticationFailed?.Invoke(error));
+                    if (response.TryGetProperty("SessionId", out var sessionId))
+                    {
+                        SessionId = sessionId.GetString();
+                    }
+
+                    Debug.WriteLine($"ChatService: Authenticated. SessionId: {SessionId}");
+                    StartHeartbeat();
+
+                    if (user != null)
+                    {
+                        OnAuthenticated?.Invoke(user);
+                    }
+                }
+                else
+                {
+                    // Fallback: Old format where response is directly a UserDto
+                    var user = JsonSerializer.Deserialize<UserDto>(response.GetRawText(), new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true,
+                        Converters = { new JsonStringEnumConverter() }
+                    });
+
+                    StartHeartbeat();
+
+                    if (user != null)
+                    {
+                        OnAuthenticated?.Invoke(user);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"ChatService: Error parsing AuthenticationSuccess: {ex.Message}");
+            }
+        });
+
+        // Handle new authentication failed format
+        _connection.On<JsonElement>("AuthenticationFailed", response =>
+        {
+            string errorMessage;
+            try
+            {
+                // New format: { Error, Message }
+                if (response.TryGetProperty("Message", out var message))
+                {
+                    errorMessage = message.GetString() ?? "Authentication failed";
+                }
+                else
+                {
+                    // Fallback: Old format where response is just a string
+                    errorMessage = response.GetString() ?? "Authentication failed";
+                }
+            }
+            catch
+            {
+                errorMessage = response.ToString();
+            }
+
+            Debug.WriteLine($"ChatService: Authentication failed: {errorMessage}");
+            OnAuthenticationFailed?.Invoke(errorMessage);
+        });
 
         _connection.On<OnlineUserDto>("UserProfileUpdated", user =>
             OnUserProfileUpdated?.Invoke(user));
@@ -143,6 +315,10 @@ public class ChatService : IChatService, IAsyncDisposable
 
     public async Task DisconnectAsync()
     {
+        StopHeartbeat();
+        ConnectionId = null;
+        SessionId = null;
+
         if (_connection != null)
         {
             await _connection.StopAsync().ConfigureAwait(false);
@@ -257,8 +433,24 @@ public class ChatService : IChatService, IAsyncDisposable
         }
     }
 
+    public async Task AcknowledgeMessageAsync(string messageId)
+    {
+        if (_connection != null && IsConnected)
+        {
+            try
+            {
+                await _connection.InvokeAsync("AcknowledgeMessage", messageId).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"ChatService: Failed to acknowledge message {messageId}: {ex.Message}");
+            }
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
+        StopHeartbeat();
         await DisconnectAsync().ConfigureAwait(false);
         GC.SuppressFinalize(this);
     }
