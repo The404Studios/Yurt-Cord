@@ -125,6 +125,8 @@
         <Grid.RowDefinitions>
             <!-- Server Header -->
             <RowDefinition Height="48"/>
+            <!-- Connection Status -->
+            <RowDefinition Height="Auto"/>
             <!-- Channels List -->
             <RowDefinition Height="*"/>
             <!-- Voice Connected Panel -->
@@ -146,8 +148,119 @@
             </Grid>
         </Border>
 
+        <!-- Connection Status Bar -->
+        <Border x:Name="ConnectionStatusBar" Grid.Row="1" Padding="12,8"
+                Visibility="Collapsed">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#2D7D46"/>
+                </Style>
+            </Border.Style>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Status Indicator -->
+                <Grid Grid.Column="0" Margin="0,0,10,0">
+                    <Ellipse x:Name="StatusDot" Width="10" Height="10" Fill="#57F287">
+                        <Ellipse.Triggers>
+                            <EventTrigger RoutedEvent="Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard RepeatBehavior="Forever">
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                         From="1" To="0.5" Duration="0:0:1"
+                                                         AutoReverse="True"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </Ellipse.Triggers>
+                    </Ellipse>
+                </Grid>
+
+                <!-- Status Text -->
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock x:Name="ConnectionStatusText" Text="Connected"
+                               FontSize="12" FontWeight="SemiBold"
+                               Foreground="White"/>
+                    <TextBlock x:Name="ConnectionDetailText" Text="Session active"
+                               FontSize="10" Foreground="#FFFFFFAA"/>
+                </StackPanel>
+
+                <!-- Latency/Action -->
+                <TextBlock x:Name="LatencyText" Grid.Column="2" Text="--ms"
+                           FontSize="11" Foreground="#FFFFFFCC"
+                           VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- Reconnecting Banner -->
+        <Border x:Name="ReconnectingBanner" Grid.Row="1" Background="#FAA81A"
+                Padding="12,8" Visibility="Collapsed">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Spinner -->
+                <Grid Grid.Column="0" Margin="0,0,10,0" Width="16" Height="16">
+                    <Ellipse Width="16" Height="16" Stroke="White" StrokeThickness="2"
+                             StrokeDashArray="3,2" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.RenderTransform>
+                            <RotateTransform x:Name="SpinnerRotation"/>
+                        </Ellipse.RenderTransform>
+                        <Ellipse.Triggers>
+                            <EventTrigger RoutedEvent="Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard RepeatBehavior="Forever">
+                                        <DoubleAnimation Storyboard.TargetName="SpinnerRotation"
+                                                         Storyboard.TargetProperty="Angle"
+                                                         From="0" To="360" Duration="0:0:1"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </Ellipse.Triggers>
+                    </Ellipse>
+                </Grid>
+
+                <TextBlock Grid.Column="1" Text="Reconnecting..."
+                           FontSize="12" FontWeight="SemiBold"
+                           Foreground="#1E1F22" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- Disconnected Banner -->
+        <Border x:Name="DisconnectedBanner" Grid.Row="1" Background="#ED4245"
+                Padding="12,8" Visibility="Collapsed" Cursor="Hand"
+                MouseLeftButtonDown="DisconnectedBanner_Click">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="⚠" FontSize="14" Foreground="White"
+                           Margin="0,0,10,0" VerticalAlignment="Center"/>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="Connection Lost"
+                               FontSize="12" FontWeight="SemiBold"
+                               Foreground="White"/>
+                    <TextBlock Text="Click to reconnect"
+                               FontSize="10" Foreground="#FFFFFFAA"/>
+                </StackPanel>
+
+                <TextBlock Grid.Column="2" Text="↻" FontSize="16" Foreground="White"
+                           VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
         <!-- Channels List -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto"
                       Style="{StaticResource ModernScrollViewer}">
             <StackPanel Margin="0,8">
                 <!-- Text Channels Section -->
@@ -390,7 +503,7 @@
         </ScrollViewer>
 
         <!-- Voice Connected Panel - Shows when in voice channel -->
-        <Border x:Name="VoiceConnectedPanel" Grid.Row="2" Background="#1A1B1E"
+        <Border x:Name="VoiceConnectedPanel" Grid.Row="3" Background="#1A1B1E"
                 BorderBrush="{StaticResource PrimaryDarkBrush}" BorderThickness="0,1,0,0"
                 Visibility="Collapsed">
             <Grid Margin="8">
@@ -450,7 +563,7 @@
         </Border>
 
         <!-- User Panel -->
-        <Border Grid.Row="3" Background="{StaticResource PrimaryDarkBrush}">
+        <Border Grid.Row="4" Background="{StaticResource PrimaryDarkBrush}">
             <Grid Margin="8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
