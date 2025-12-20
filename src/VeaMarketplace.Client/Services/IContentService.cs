@@ -82,6 +82,9 @@ public class ContentService : IContentService, IAsyncDisposable
     private readonly INotificationService _notificationService;
     private const string HubUrl = "http://localhost:5000/hubs/content";
     private string? _authToken;
+    private bool _handshakeReceived;
+    private System.Timers.Timer? _heartbeatTimer;
+    private string? _connectionId;
 
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
     public ContentSubscription? CurrentSubscription { get; private set; }
@@ -157,20 +160,81 @@ public class ContentService : IContentService, IAsyncDisposable
         // Handle reconnection
         _connection.Reconnected += async (connectionId) =>
         {
+            _handshakeReceived = false;
             if (_authToken != null)
             {
                 await _connection.InvokeAsync("Authenticate", _authToken).ConfigureAwait(false);
             }
+            StartHeartbeat();
         };
 
         RegisterHandlers();
         await _connection.StartAsync().ConfigureAwait(false);
+
+        // Wait for handshake before authenticating
+        var handshakeTimeout = DateTime.UtcNow.AddSeconds(5);
+        while (!_handshakeReceived && DateTime.UtcNow < handshakeTimeout)
+        {
+            await Task.Delay(50).ConfigureAwait(false);
+        }
+
         await _connection.InvokeAsync("Authenticate", token).ConfigureAwait(false);
+        StartHeartbeat();
+    }
+
+    private void StartHeartbeat()
+    {
+        StopHeartbeat();
+        _heartbeatTimer = new System.Timers.Timer(30000); // 30 seconds
+        _heartbeatTimer.Elapsed += async (s, e) => await SendHeartbeatAsync();
+        _heartbeatTimer.AutoReset = true;
+        _heartbeatTimer.Start();
+    }
+
+    private void StopHeartbeat()
+    {
+        if (_heartbeatTimer != null)
+        {
+            _heartbeatTimer.Stop();
+            _heartbeatTimer.Dispose();
+            _heartbeatTimer = null;
+        }
+    }
+
+    private async Task SendHeartbeatAsync()
+    {
+        if (_connection != null && IsConnected)
+        {
+            try
+            {
+                await _connection.InvokeAsync("Ping").ConfigureAwait(false);
+            }
+            catch
+            {
+                // Heartbeat failed
+            }
+        }
     }
 
     private void RegisterHandlers()
     {
         if (_connection == null) return;
+
+        // Connection handshake from server
+        _connection.On<JsonElement>("ConnectionHandshake", handshake =>
+        {
+            if (handshake.TryGetProperty("ConnectionId", out var connId))
+            {
+                _connectionId = connId.GetString();
+            }
+            _handshakeReceived = true;
+        });
+
+        // Heartbeat response
+        _connection.On<JsonElement>("Pong", pong =>
+        {
+            // Heartbeat acknowledged
+        });
 
         // Connection events
         _connection.On("ContentHubConnected", () =>
@@ -441,6 +505,8 @@ public class ContentService : IContentService, IAsyncDisposable
 
     public async Task DisconnectAsync()
     {
+        StopHeartbeat();
+        _handshakeReceived = false;
         if (_connection != null)
         {
             await _connection.StopAsync().ConfigureAwait(false);

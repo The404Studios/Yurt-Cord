@@ -381,6 +381,11 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     private Thread? _videoCaptureThread;
     private readonly ConcurrentQueue<byte[]> _videoSendQueue = new();
 
+    // Handshake and heartbeat
+    private bool _handshakeReceived;
+    private System.Timers.Timer? _heartbeatTimer;
+    private string? _connectionId;
+
     public VoiceService()
     {
         _screenSharingManager = new ScreenSharingManager();
@@ -684,6 +689,8 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         {
             Debug.WriteLine($"Voice connection reconnected: {connectionId}");
             OnConnectionStateChanged?.Invoke(true, "Reconnected");
+            _handshakeReceived = false;
+            StartHeartbeat();
 
             // Re-join voice channel if we were in one
             if (IsInVoiceChannel && !string.IsNullOrEmpty(CurrentChannelId) && !string.IsNullOrEmpty(_currentUserId))
@@ -713,6 +720,15 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         RegisterHandlers();
         await _connection.StartAsync();
+
+        // Wait for handshake before returning
+        var handshakeTimeout = DateTime.UtcNow.AddSeconds(5);
+        while (!_handshakeReceived && DateTime.UtcNow < handshakeTimeout)
+        {
+            await Task.Delay(50).ConfigureAwait(false);
+        }
+
+        StartHeartbeat();
     }
 
     private void RegisterHandlers()
@@ -724,8 +740,10 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         {
             if (handshake.TryGetProperty("ConnectionId", out var connId))
             {
-                Debug.WriteLine($"VoiceService: Handshake received. ConnectionId: {connId.GetString()}");
+                _connectionId = connId.GetString();
+                Debug.WriteLine($"VoiceService: Handshake received. ConnectionId: {_connectionId}");
             }
+            _handshakeReceived = true;
         });
 
         // Heartbeat response
@@ -1328,8 +1346,45 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         _screenSharingManager.SetVoiceActive(true);
     }
 
+    private void StartHeartbeat()
+    {
+        StopHeartbeat();
+        _heartbeatTimer = new System.Timers.Timer(30000); // 30 seconds
+        _heartbeatTimer.Elapsed += async (s, e) => await SendHeartbeatAsync();
+        _heartbeatTimer.AutoReset = true;
+        _heartbeatTimer.Start();
+    }
+
+    private void StopHeartbeat()
+    {
+        if (_heartbeatTimer != null)
+        {
+            _heartbeatTimer.Stop();
+            _heartbeatTimer.Dispose();
+            _heartbeatTimer = null;
+        }
+    }
+
+    private async Task SendHeartbeatAsync()
+    {
+        if (_connection != null && IsConnected)
+        {
+            try
+            {
+                await _connection.InvokeAsync("Ping").ConfigureAwait(false);
+            }
+            catch
+            {
+                // Heartbeat failed - connection may be lost
+            }
+        }
+    }
+
     public async Task DisconnectAsync()
     {
+        StopHeartbeat();
+        _handshakeReceived = false;
+
         // LeaveVoiceChannelAsync now stops screen share first
         await LeaveVoiceChannelAsync().ConfigureAwait(false);
 
