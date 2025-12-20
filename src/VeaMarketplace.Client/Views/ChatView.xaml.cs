@@ -443,4 +443,47 @@ public partial class ChatView : UserControl
     }
 
     #endregion
+
+    #region Connection Status
+
+    private async void ConnectionRetry_Click(object sender, RoutedEventArgs e)
+    {
+        if (_chatService == null || _apiService?.Token == null) return;
+
+        // Show reconnecting state
+        ConnectionBanner.Background = new System.Windows.Media.SolidColorBrush(
+            System.Windows.Media.Color.FromRgb(250, 168, 26)); // Orange
+        ConnectionBannerText.Text = "Reconnecting to chat...";
+        ConnectionSpinner.Visibility = Visibility.Visible;
+        ConnectionIcon.Visibility = Visibility.Collapsed;
+        ConnectionRetryButton.Visibility = Visibility.Collapsed;
+
+        try
+        {
+            await _chatService.ConnectAsync(_apiService.Token);
+            // Hide banner on success
+            ConnectionBanner.Visibility = Visibility.Collapsed;
+        }
+        catch (Exception)
+        {
+            // Show error state
+            ConnectionBanner.Background = new System.Windows.Media.SolidColorBrush(
+                System.Windows.Media.Color.FromRgb(237, 66, 69)); // Red
+            ConnectionBannerText.Text = "Unable to connect. Check your connection.";
+            ConnectionSpinner.Visibility = Visibility.Collapsed;
+            ConnectionIcon.Text = "⚠";
+            ConnectionIcon.Visibility = Visibility.Visible;
+            ConnectionRetryButton.Visibility = Visibility.Visible;
+        }
+    }
+
+    public void UpdateOnlineCount(int count)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            OnlineCountText.Text = $"{count} online";
+        });
+    }
+
+    #endregion
 }

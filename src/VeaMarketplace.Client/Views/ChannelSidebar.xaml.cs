@@ -1,6 +1,8 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using VeaMarketplace.Client.Services;
 using VeaMarketplace.Client.ViewModels;
@@ -12,11 +14,14 @@ public partial class ChannelSidebar : UserControl
 {
     private readonly ChatViewModel? _viewModel;
     private readonly IApiService? _apiService;
+    private readonly IChatService? _chatService;
     private readonly IVoiceService? _voiceService;
     private readonly INavigationService? _navigationService;
     private readonly IToastNotificationService? _toastService;
     private bool _isMuted;
     private bool _isDeafened;
+    private DateTime _lastPingTime;
+    private System.Timers.Timer? _latencyTimer;
 
     // Channel name mapping for display
     private static readonly Dictionary<string, string> ChannelDisplayNames = new()
@@ -35,9 +40,13 @@ public partial class ChannelSidebar : UserControl
 
         _viewModel = (ChatViewModel)App.ServiceProvider.GetService(typeof(ChatViewModel))!;
         _apiService = (IApiService)App.ServiceProvider.GetService(typeof(IApiService))!;
+        _chatService = (IChatService)App.ServiceProvider.GetService(typeof(IChatService))!;
         _voiceService = (IVoiceService)App.ServiceProvider.GetService(typeof(IVoiceService))!;
         _navigationService = (INavigationService)App.ServiceProvider.GetService(typeof(INavigationService))!;
         _toastService = (IToastNotificationService)App.ServiceProvider.GetService(typeof(IToastNotificationService))!;
+
+        // Setup connection status monitoring
+        SetupConnectionStatusMonitoring();
 
         ChannelsItemsControl.ItemsSource = _viewModel.Channels;
         VoiceUsersItemsControl.ItemsSource = _viewModel.VoiceUsers;
@@ -461,6 +470,123 @@ public partial class ChannelSidebar : UserControl
                 Clipboard.SetText(channelName);
                 _toastService?.ShowInfo("Copied", "Channel ID copied to clipboard");
             }
+        }
+    }
+
+    #endregion
+
+    #region Connection Status
+
+    private void SetupConnectionStatusMonitoring()
+    {
+        if (_chatService == null) return;
+
+        // Subscribe to connection handshake
+        _chatService.OnConnectionHandshake += () =>
+        {
+            Dispatcher.Invoke(() =>
+            {
+                Debug.WriteLine("ChannelSidebar: Connection handshake received");
+                UpdateConnectionStatus(ConnectionState.Connected);
+            });
+        };
+
+        // Subscribe to authentication events
+        _chatService.OnAuthenticated += user =>
+        {
+            Dispatcher.Invoke(() =>
+            {
+                Debug.WriteLine($"ChannelSidebar: Authenticated as {user?.Username}");
+                UpdateConnectionStatus(ConnectionState.Connected);
+                ConnectionDetailText.Text = $"Session: {_chatService.SessionId?[..8] ?? "active"}";
+            });
+        };
+
+        _chatService.OnAuthenticationFailed += error =>
+        {
+            Dispatcher.Invoke(() =>
+            {
+                Debug.WriteLine($"ChannelSidebar: Authentication failed: {error}");
+                UpdateConnectionStatus(ConnectionState.Disconnected);
+            });
+        };
+
+        // Start latency monitoring timer
+        _latencyTimer = new System.Timers.Timer(10000); // Check every 10 seconds
+        _latencyTimer.Elapsed += (s, e) => CheckLatency();
+        _latencyTimer.AutoReset = true;
+        _latencyTimer.Start();
+    }
+
+    private void CheckLatency()
+    {
+        if (_chatService == null) return;
+
+        Dispatcher.Invoke(() =>
+        {
+            if (_chatService.IsConnected)
+            {
+                UpdateConnectionStatus(ConnectionState.Connected);
+            }
+            else
+            {
+                UpdateConnectionStatus(ConnectionState.Reconnecting);
+            }
+        });
+    }
+
+    private enum ConnectionState
+    {
+        Connected,
+        Reconnecting,
+        Disconnected
+    }
+
+    private void UpdateConnectionStatus(ConnectionState state)
+    {
+        // Hide all banners first
+        ConnectionStatusBar.Visibility = Visibility.Collapsed;
+        ReconnectingBanner.Visibility = Visibility.Collapsed;
+        DisconnectedBanner.Visibility = Visibility.Collapsed;
+
+        switch (state)
+        {
+            case ConnectionState.Connected:
+                ConnectionStatusBar.Visibility = Visibility.Visible;
+                ConnectionStatusText.Text = "Connected";
+                StatusDot.Fill = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(87, 242, 135)); // Green
+                ConnectionStatusBar.Background = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(45, 125, 70));
+                break;
+
+            case ConnectionState.Reconnecting:
+                ReconnectingBanner.Visibility = Visibility.Visible;
+                break;
+
+            case ConnectionState.Disconnected:
+                DisconnectedBanner.Visibility = Visibility.Visible;
+                break;
+        }
+    }
+
+    private async void DisconnectedBanner_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (_chatService == null || _apiService?.Token == null) return;
+
+        UpdateConnectionStatus(ConnectionState.Reconnecting);
+
+        try
+        {
+            await _chatService.ConnectAsync(_apiService.Token);
+            UpdateConnectionStatus(ConnectionState.Connected);
+            _toastService?.ShowSuccess("Reconnected", "Connection restored");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Reconnection failed: {ex.Message}");
+            UpdateConnectionStatus(ConnectionState.Disconnected);
+            _toastService?.ShowError("Connection Failed", "Unable to reconnect. Please try again.");
         }
     }
 

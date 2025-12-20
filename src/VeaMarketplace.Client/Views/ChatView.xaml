@@ -8,6 +8,8 @@
 
     <Grid>
         <Grid.RowDefinitions>
+            <!-- Connection Banner -->
+            <RowDefinition Height="Auto"/>
             <!-- Header -->
             <RowDefinition Height="48"/>
             <!-- Messages -->
@@ -18,13 +20,71 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
+        <!-- Connection Status Banner (shown when reconnecting/disconnected) -->
+        <Border x:Name="ConnectionBanner" Grid.Row="0" Visibility="Collapsed"
+                Padding="12,8">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#FAA81A"/>
+                </Style>
+            </Border.Style>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Spinner/Icon -->
+                <Grid Grid.Column="0" Margin="0,0,12,0" Width="20" Height="20">
+                    <Ellipse x:Name="ConnectionSpinner" Width="20" Height="20"
+                             Stroke="White" StrokeThickness="2"
+                             StrokeDashArray="3,2" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.RenderTransform>
+                            <RotateTransform x:Name="BannerSpinnerRotation"/>
+                        </Ellipse.RenderTransform>
+                        <Ellipse.Triggers>
+                            <EventTrigger RoutedEvent="Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard RepeatBehavior="Forever">
+                                        <DoubleAnimation Storyboard.TargetName="BannerSpinnerRotation"
+                                                         Storyboard.TargetProperty="Angle"
+                                                         From="0" To="360" Duration="0:0:1"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </Ellipse.Triggers>
+                    </Ellipse>
+                    <TextBlock x:Name="ConnectionIcon" Text="" FontSize="14"
+                               Foreground="White" HorizontalAlignment="Center"
+                               VerticalAlignment="Center" Visibility="Collapsed"/>
+                </Grid>
+
+                <TextBlock x:Name="ConnectionBannerText" Grid.Column="1"
+                           Text="Reconnecting to chat..." FontSize="13"
+                           Foreground="White" FontWeight="SemiBold"
+                           VerticalAlignment="Center"/>
+
+                <Button x:Name="ConnectionRetryButton" Grid.Column="2"
+                        Content="Retry" Visibility="Collapsed"
+                        Style="{StaticResource IconButton}"
+                        Background="White" Foreground="#1E1F22"
+                        Padding="12,4" FontWeight="SemiBold"
+                        Click="ConnectionRetry_Click"/>
+            </Grid>
+        </Border>
+
         <!-- Channel Header -->
-        <Border Grid.Row="0" Background="{StaticResource TertiaryDarkBrush}"
+        <Border Grid.Row="1" Background="{StaticResource TertiaryDarkBrush}"
                 BorderBrush="{StaticResource PrimaryDarkBrush}" BorderThickness="0,0,0,1">
             <Grid Margin="16,0">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="#" FontSize="24" Foreground="{StaticResource TextMutedBrush}"
-                               Margin="0,0,8,0"/>
+                    <!-- Channel Icon with subtle glow effect -->
+                    <Border CornerRadius="4" Padding="6,2" Margin="0,0,8,0"
+                            Background="#2B2D31">
+                        <TextBlock Text="#" FontSize="18" FontWeight="Bold"
+                                   Foreground="{StaticResource AccentBrush}"/>
+                    </Border>
                     <TextBlock x:Name="ChannelNameText" Text="general"
                                FontSize="16" FontWeight="SemiBold"
                                Foreground="{StaticResource TextPrimaryBrush}"
@@ -33,24 +93,39 @@
                             Margin="16,0"/>
                     <TextBlock x:Name="ChannelDescText" Text="General chat for everyone"
                                FontSize="14" Foreground="{StaticResource TextMutedBrush}"
-                               VerticalAlignment="Center"/>
+                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                               MaxWidth="300"/>
                 </StackPanel>
 
                 <!-- Header Actions -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
                             VerticalAlignment="Center">
-                    <Button Style="{StaticResource IconButton}" ToolTip="Pinned Messages">
-                        <TextBlock Text="📌" FontSize="18"/>
+                    <!-- Online indicator -->
+                    <Border CornerRadius="10" Background="#2B2D31" Padding="8,4" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="8" Height="8" Fill="#57F287" Margin="0,0,6,0"/>
+                            <TextBlock x:Name="OnlineCountText" Text="0 online"
+                                       FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                        </StackPanel>
+                    </Border>
+                    <Button Style="{StaticResource IconButton}" ToolTip="Pinned Messages"
+                            Width="36" Height="36">
+                        <TextBlock Text="📌" FontSize="16"/>
                     </Button>
-                    <Button Style="{StaticResource IconButton}" ToolTip="Search">
-                        <TextBlock Text="🔍" FontSize="18"/>
+                    <Button Style="{StaticResource IconButton}" ToolTip="Search Messages"
+                            Width="36" Height="36">
+                        <TextBlock Text="🔍" FontSize="16"/>
+                    </Button>
+                    <Button Style="{StaticResource IconButton}" ToolTip="Notification Settings"
+                            Width="36" Height="36">
+                        <TextBlock Text="🔔" FontSize="16"/>
                     </Button>
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- Messages List -->
-        <ScrollViewer Grid.Row="1" x:Name="MessagesScrollViewer"
+        <ScrollViewer Grid.Row="2" x:Name="MessagesScrollViewer"
                       VerticalScrollBarVisibility="Auto"
                       Style="{StaticResource ModernScrollViewer}">
             <ItemsControl x:Name="MessagesItemsControl" Margin="16,8">
@@ -63,7 +138,7 @@
         </ScrollViewer>
 
         <!-- Typing Indicator -->
-        <Border Grid.Row="2" Margin="16,4" Visibility="Collapsed" x:Name="TypingIndicator">
+        <Border Grid.Row="3" Margin="16,4" Visibility="Collapsed" x:Name="TypingIndicator">
             <StackPanel Orientation="Horizontal">
                 <Canvas Width="40" Height="20">
                     <Ellipse Width="8" Height="8" Fill="{StaticResource TextMutedBrush}"
@@ -116,7 +191,7 @@
         </Border>
 
         <!-- Message Input Area -->
-        <Grid Grid.Row="3" Margin="16,8,16,16">
+        <Grid Grid.Row="4" Margin="16,8,16,16">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
