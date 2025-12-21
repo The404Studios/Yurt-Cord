@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using VeaMarketplace.Server.Services;
 using VeaMarketplace.Shared.DTOs;
+using VeaMarketplace.Shared.Enums;
 
 namespace VeaMarketplace.Server.Controllers;
 
@@ -17,17 +18,38 @@ public class AuthController : ControllerBase
         _authService = authService;
     }
 
+    /// <summary>
+    /// Gets the current authentication mode the server is running in.
+    /// </summary>
+    [HttpGet("mode")]
+    [EnableRateLimiting("api")]
+    public ActionResult<AuthModeResponse> GetAuthenticationMode()
+    {
+        return Ok(new AuthModeResponse
+        {
+            Mode = _authService.AuthenticationMode,
+            ModeName = _authService.AuthenticationMode.ToString(),
+            Description = _authService.AuthenticationMode switch
+            {
+                AuthenticationMode.Session => "Standard session-based authentication. Users can login from any device.",
+                AuthenticationMode.Hwid => "Hardware ID based authentication. Accounts are tied to specific devices.",
+                AuthenticationMode.Whitelist => "Whitelist-based authentication. Only pre-approved users can login.",
+                _ => "Unknown authentication mode."
+            }
+        });
+    }
+
     [HttpPost("register")]
     public ActionResult<AuthResponse> Register([FromBody] RegisterRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Username) || request.Username.Length < 3)
-            return BadRequest(new AuthResponse { Success = false, Message = "Username must be at least 3 characters" });
+            return BadRequest(new AuthResponse { Success = false, Message = "Username must be at least 3 characters", AuthMode = _authService.AuthenticationMode });
 
         if (string.IsNullOrWhiteSpace(request.Password) || request.Password.Length < 6)
-            return BadRequest(new AuthResponse { Success = false, Message = "Password must be at least 6 characters" });
+            return BadRequest(new AuthResponse { Success = false, Message = "Password must be at least 6 characters", AuthMode = _authService.AuthenticationMode });
 
         if (!request.Email.Contains('@'))
-            return BadRequest(new AuthResponse { Success = false, Message = "Invalid email address" });
+            return BadRequest(new AuthResponse { Success = false, Message = "Invalid email address", AuthMode = _authService.AuthenticationMode });
 
         var response = _authService.Register(request);
         return response.Success ? Ok(response) : BadRequest(response);
@@ -37,7 +59,7 @@ public class AuthController : ControllerBase
     public ActionResult<AuthResponse> Login([FromBody] LoginRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
-            return BadRequest(new AuthResponse { Success = false, Message = "Username and password are required" });
+            return BadRequest(new AuthResponse { Success = false, Message = "Username and password are required", AuthMode = _authService.AuthenticationMode });
 
         var response = _authService.Login(request);
         return response.Success ? Ok(response) : Unauthorized(response);
@@ -58,4 +80,14 @@ public class AuthController : ControllerBase
 
         return Ok(_authService.MapToDto(user));
     }
+}
+
+/// <summary>
+/// Response containing the current authentication mode.
+/// </summary>
+public class AuthModeResponse
+{
+    public AuthenticationMode Mode { get; set; }
+    public string ModeName { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
 }

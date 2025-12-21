@@ -280,7 +280,7 @@ public partial class FriendsViewModel : BaseViewModel
         // Subscribe to events
         _friendService.OnNewFriendRequest += request =>
         {
-            var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+            var toastService = (IToastNotificationService?)App.ServiceProvider?.GetService(typeof(IToastNotificationService));
             toastService?.ShowFriendRequest(request.RequesterUsername);
         };
 
@@ -289,8 +289,9 @@ public partial class FriendsViewModel : BaseViewModel
             // Only notify if not currently viewing this conversation
             if (SelectedFriend?.UserId != message.SenderId)
             {
-                var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
-                var preview = message.Content.Length > 50 ? message.Content[..47] + "..." : message.Content;
+                var toastService = (IToastNotificationService?)App.ServiceProvider?.GetService(typeof(IToastNotificationService));
+                var content = message.Content ?? string.Empty;
+                var preview = content.Length > 50 ? content[..47] + "..." : content;
                 toastService?.ShowMessage(message.SenderUsername, preview);
             }
         };

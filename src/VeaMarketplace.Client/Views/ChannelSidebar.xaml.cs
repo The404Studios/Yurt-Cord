@@ -20,7 +20,6 @@ public partial class ChannelSidebar : UserControl
     private readonly IToastNotificationService? _toastService;
     private bool _isMuted;
     private bool _isDeafened;
-    private DateTime _lastPingTime;
     private System.Timers.Timer? _latencyTimer;
 
     // Channel name mapping for display

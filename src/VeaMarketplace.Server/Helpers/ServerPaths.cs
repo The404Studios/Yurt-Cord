@@ -12,7 +12,6 @@ namespace VeaMarketplace.Server.Helpers;
 /// </summary>
 public static class ServerPaths
 {
-    private static readonly ILogger? s_logger;
     private static string? s_dataDirectory;
     private static string? s_uploadDirectory;
 

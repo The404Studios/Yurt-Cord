@@ -7,6 +7,11 @@ public class LoginRequest
 {
     public string Username { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
+    /// <summary>
+    /// Hardware ID for HWID authentication mode.
+    /// Optional unless server is configured for HWID mode.
+    /// </summary>
+    public string? HardwareId { get; set; }
 }
 
 public class RegisterRequest
@@ -15,6 +20,11 @@ public class RegisterRequest
     public string Email { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
     public string? ActivationKey { get; set; }
+    /// <summary>
+    /// Hardware ID for HWID authentication mode.
+    /// Optional unless server is configured for HWID mode.
+    /// </summary>
+    public string? HardwareId { get; set; }
 }
 
 public class AuthResponse
@@ -24,6 +34,10 @@ public class AuthResponse
     public string? Token { get; set; }
     public UserDto? User { get; set; }
     public string? ClientSalt { get; set; }  // Unique salt for client-side encryption
+    /// <summary>
+    /// The current authentication mode the server is running in.
+    /// </summary>
+    public AuthenticationMode? AuthMode { get; set; }
 }
 
 public class UserDto

@@ -35,6 +35,10 @@ public class User
     public int MessagesCount { get; set; } = 0;
     public int VoiceMinutes { get; set; } = 0;
 
+    // Hardware ID for HWID authentication mode
+    public string? HardwareId { get; set; }
+    public bool IsWhitelisted { get; set; } = false;
+
     // Social Links
     public string? DiscordUsername { get; set; }
     public string? TwitterHandle { get; set; }

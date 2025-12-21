@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using VeaMarketplace.Server.Data;
 using VeaMarketplace.Shared.DTOs;
+using VeaMarketplace.Shared.Enums;
 using VeaMarketplace.Shared.Models;
 
 namespace VeaMarketplace.Server.Services;
@@ -23,6 +24,14 @@ public class AuthService
     // Configuration flag for requiring activation keys
     private readonly bool _requireActivationKey;
 
+    // Authentication mode configuration
+    private readonly AuthenticationMode _authenticationMode;
+
+    /// <summary>
+    /// Gets the current authentication mode the server is running in.
+    /// </summary>
+    public AuthenticationMode AuthenticationMode => _authenticationMode;
+
     public AuthService(DatabaseService db, IConfiguration configuration, ILogger<AuthService> logger, KeyGeneratorService? keyService = null)
     {
         _db = db;
@@ -32,6 +41,19 @@ public class AuthService
 
         // Check if activation keys are required (default: true if key service is available)
         _requireActivationKey = configuration.GetValue<bool>("Registration:RequireActivationKey", true);
+
+        // Get authentication mode from configuration (default: Session)
+        var authModeString = Environment.GetEnvironmentVariable("VEA_AUTH_MODE")
+            ?? configuration["Authentication:Mode"]
+            ?? "Session";
+
+        if (!Enum.TryParse<AuthenticationMode>(authModeString, ignoreCase: true, out _authenticationMode))
+        {
+            _authenticationMode = AuthenticationMode.Session;
+            _logger.LogWarning("Invalid authentication mode '{Mode}', defaulting to Session", authModeString);
+        }
+
+        _logger.LogInformation("Authentication mode: {Mode}", _authenticationMode);
 
         // Get JWT secret from environment or configuration - require it to be set
         var jwtSecret = Environment.GetEnvironmentVariable("VEA_JWT_SECRET")
@@ -52,17 +74,40 @@ public class AuthService
         // Validate password strength
         if (string.IsNullOrEmpty(request.Password) || request.Password.Length < MinPasswordLength)
         {
-            return new AuthResponse { Success = false, Message = $"Password must be at least {MinPasswordLength} characters long" };
+            return new AuthResponse { Success = false, Message = $"Password must be at least {MinPasswordLength} characters long", AuthMode = _authenticationMode };
         }
 
         if (_db.Users.Exists(u => u.Username.ToLower() == request.Username.ToLower()))
         {
-            return new AuthResponse { Success = false, Message = "Username already exists" };
+            return new AuthResponse { Success = false, Message = "Username already exists", AuthMode = _authenticationMode };
         }
 
         if (_db.Users.Exists(u => u.Email.ToLower() == request.Email.ToLower()))
         {
-            return new AuthResponse { Success = false, Message = "Email already exists" };
+            return new AuthResponse { Success = false, Message = "Email already exists", AuthMode = _authenticationMode };
+        }
+
+        // HWID mode: require hardware ID for registration
+        if (_authenticationMode == AuthenticationMode.Hwid)
+        {
+            if (string.IsNullOrWhiteSpace(request.HardwareId))
+            {
+                return new AuthResponse { Success = false, Message = "Hardware ID is required for registration", AuthMode = _authenticationMode };
+            }
+
+            // Check if this hardware ID is already registered to another user
+            if (_db.Users.Exists(u => u.HardwareId == request.HardwareId))
+            {
+                return new AuthResponse { Success = false, Message = "This hardware is already registered to another account", AuthMode = _authenticationMode };
+            }
+        }
+
+        // Whitelist mode: only whitelisted users can register (requires admin to whitelist first)
+        if (_authenticationMode == AuthenticationMode.Whitelist)
+        {
+            // In whitelist mode, registration is generally disabled unless pre-approved
+            // Users must be added to the whitelist by an admin first
+            return new AuthResponse { Success = false, Message = "Registration is disabled. Contact an administrator to be added to the whitelist.", AuthMode = _authenticationMode };
         }
 
         // Validate activation key if required
@@ -71,17 +116,17 @@ public class AuthService
         {
             if (string.IsNullOrWhiteSpace(request.ActivationKey))
             {
-                return new AuthResponse { Success = false, Message = "Activation key is required" };
+                return new AuthResponse { Success = false, Message = "Activation key is required", AuthMode = _authenticationMode };
             }
 
             // We'll validate and use the key after creating the user
             if (!_keyService.IsValidKey(request.ActivationKey))
             {
-                return new AuthResponse { Success = false, Message = "Invalid or already used activation key" };
+                return new AuthResponse { Success = false, Message = "Invalid or already used activation key", AuthMode = _authenticationMode };
             }
         }
 
-        _logger.LogInformation("Registering new user: {Username}", request.Username);
+        _logger.LogInformation("Registering new user: {Username} (Mode: {AuthMode})", request.Username, _authenticationMode);
 
         var user = new User
         {
@@ -90,7 +135,8 @@ public class AuthService
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             AvatarUrl = $"https://api.dicebear.com/7.x/avataaars/svg?seed={request.Username}",
             CreatedAt = DateTime.UtcNow,
-            LastSeenAt = DateTime.UtcNow
+            LastSeenAt = DateTime.UtcNow,
+            HardwareId = _authenticationMode == AuthenticationMode.Hwid ? request.HardwareId : null
         };
 
         _db.Users.Insert(user);
@@ -114,7 +160,8 @@ public class AuthService
             Message = "Registration successful",
             Token = token,
             ClientSalt = clientSalt,
-            User = MapToDto(user)
+            User = MapToDto(user),
+            AuthMode = _authenticationMode
         };
     }
 
@@ -124,12 +171,47 @@ public class AuthService
 
         if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
         {
-            return new AuthResponse { Success = false, Message = "Invalid username or password" };
+            return new AuthResponse { Success = false, Message = "Invalid username or password", AuthMode = _authenticationMode };
         }
 
         if (user.IsBanned)
         {
-            return new AuthResponse { Success = false, Message = $"Account banned: {user.BanReason ?? "No reason provided"}" };
+            return new AuthResponse { Success = false, Message = $"Account banned: {user.BanReason ?? "No reason provided"}", AuthMode = _authenticationMode };
+        }
+
+        // HWID mode: verify hardware ID matches
+        if (_authenticationMode == AuthenticationMode.Hwid)
+        {
+            if (string.IsNullOrWhiteSpace(request.HardwareId))
+            {
+                return new AuthResponse { Success = false, Message = "Hardware ID is required for login", AuthMode = _authenticationMode };
+            }
+
+            // If user has a registered HWID, verify it matches
+            if (!string.IsNullOrEmpty(user.HardwareId))
+            {
+                if (user.HardwareId != request.HardwareId)
+                {
+                    _logger.LogWarning("HWID mismatch for user {Username}. Expected: {Expected}, Got: {Got}",
+                        user.Username, user.HardwareId, request.HardwareId);
+                    return new AuthResponse { Success = false, Message = "Hardware ID mismatch. This account is registered to a different device.", AuthMode = _authenticationMode };
+                }
+            }
+            else
+            {
+                // First login with HWID mode - bind the hardware ID to this account
+                user.HardwareId = request.HardwareId;
+                _logger.LogInformation("Bound HWID to user {Username}", user.Username);
+            }
+        }
+
+        // Whitelist mode: only whitelisted users can login
+        if (_authenticationMode == AuthenticationMode.Whitelist)
+        {
+            if (!user.IsWhitelisted)
+            {
+                return new AuthResponse { Success = false, Message = "Your account is not whitelisted. Contact an administrator.", AuthMode = _authenticationMode };
+            }
         }
 
         user.LastSeenAt = DateTime.UtcNow;
@@ -143,7 +225,8 @@ public class AuthService
             Success = true,
             Message = "Login successful",
             Token = token,
-            User = MapToDto(user)
+            User = MapToDto(user),
+            AuthMode = _authenticationMode
         };
     }
 

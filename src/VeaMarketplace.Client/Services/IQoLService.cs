@@ -143,7 +143,9 @@ public class QoLService : IQoLService, IDisposable
     public event Action<ScheduledStatus>? OnStatusChangeRequired;
     public event Action? OnAutoAwayTriggered;
     public event Action? OnAutoAwayReset;
+#pragma warning disable CS0067 // Event is never used - kept for future API compatibility
     public event Action<FriendAnniversary>? OnAnniversaryReminder;
+#pragma warning restore CS0067
     public event Action<string, string>? OnFriendOnlineNotification;
 
     public QoLService(ISettingsService settingsService)
