@@ -448,7 +448,7 @@ public partial class ChatView : UserControl
 
     private async void ConnectionRetry_Click(object sender, RoutedEventArgs e)
     {
-        if (_chatService == null || _apiService?.Token == null) return;
+        if (_chatService == null || _apiService?.AuthToken == null) return;
 
         // Show reconnecting state
         ConnectionBanner.Background = new System.Windows.Media.SolidColorBrush(
@@ -460,7 +460,7 @@ public partial class ChatView : UserControl
 
         try
         {
-            await _chatService.ConnectAsync(_apiService.Token);
+            await _chatService.ConnectAsync(_apiService.AuthToken);
             // Hide banner on success
             ConnectionBanner.Visibility = Visibility.Collapsed;
         }
