@@ -221,6 +221,151 @@ public class UsersController : ControllerBase
         return Ok(roles);
     }
 
+    #region Whitelist Management (Admin Only)
+
+    /// <summary>
+    /// Whitelist a user (Admin only). Used in Whitelist authentication mode.
+    /// </summary>
+    [HttpPost("{id}/whitelist")]
+    public ActionResult<WhitelistResponse> WhitelistUser(
+        string id,
+        [FromHeader(Name = "Authorization")] string? authorization)
+    {
+        var admin = GetUserFromToken(authorization);
+        if (admin == null)
+            return Unauthorized();
+
+        // Only admins and owners can manage whitelist
+        if (admin.Role != Shared.Enums.UserRole.Admin && admin.Role != Shared.Enums.UserRole.Owner)
+            return Forbid("Only admins can manage the whitelist");
+
+        var user = _db.Users.FindById(id);
+        if (user == null)
+            return NotFound(new WhitelistResponse { Success = false, Message = "User not found" });
+
+        user.IsWhitelisted = true;
+        _db.Users.Update(user);
+
+        return Ok(new WhitelistResponse { Success = true, Message = $"User {user.Username} has been whitelisted" });
+    }
+
+    /// <summary>
+    /// Remove a user from the whitelist (Admin only).
+    /// </summary>
+    [HttpDelete("{id}/whitelist")]
+    public ActionResult<WhitelistResponse> RemoveFromWhitelist(
+        string id,
+        [FromHeader(Name = "Authorization")] string? authorization)
+    {
+        var admin = GetUserFromToken(authorization);
+        if (admin == null)
+            return Unauthorized();
+
+        // Only admins and owners can manage whitelist
+        if (admin.Role != Shared.Enums.UserRole.Admin && admin.Role != Shared.Enums.UserRole.Owner)
+            return Forbid("Only admins can manage the whitelist");
+
+        var user = _db.Users.FindById(id);
+        if (user == null)
+            return NotFound(new WhitelistResponse { Success = false, Message = "User not found" });
+
+        user.IsWhitelisted = false;
+        _db.Users.Update(user);
+
+        return Ok(new WhitelistResponse { Success = true, Message = $"User {user.Username} has been removed from the whitelist" });
+    }
+
+    /// <summary>
+    /// Get all whitelisted users (Admin only).
+    /// </summary>
+    [HttpGet("whitelisted")]
+    public ActionResult<List<UserDto>> GetWhitelistedUsers(
+        [FromHeader(Name = "Authorization")] string? authorization)
+    {
+        var admin = GetUserFromToken(authorization);
+        if (admin == null)
+            return Unauthorized();
+
+        // Only admins and owners can view whitelist
+        if (admin.Role != Shared.Enums.UserRole.Admin && admin.Role != Shared.Enums.UserRole.Owner)
+            return Forbid("Only admins can view the whitelist");
+
+        var whitelistedUsers = _db.Users
+            .Find(u => u.IsWhitelisted)
+            .Select(u => _authService.MapToDto(u))
+            .ToList();
+
+        return Ok(whitelistedUsers);
+    }
+
+    #endregion
+
+    #region HWID Management (Admin Only)
+
+    /// <summary>
+    /// Reset a user's HWID binding (Admin only). Used in HWID authentication mode.
+    /// </summary>
+    [HttpDelete("{id}/hwid")]
+    public ActionResult<WhitelistResponse> ResetUserHwid(
+        string id,
+        [FromHeader(Name = "Authorization")] string? authorization)
+    {
+        var admin = GetUserFromToken(authorization);
+        if (admin == null)
+            return Unauthorized();
+
+        // Only admins and owners can reset HWID
+        if (admin.Role != Shared.Enums.UserRole.Admin && admin.Role != Shared.Enums.UserRole.Owner)
+            return Forbid("Only admins can reset HWID");
+
+        var user = _db.Users.FindById(id);
+        if (user == null)
+            return NotFound(new WhitelistResponse { Success = false, Message = "User not found" });
+
+        var hadHwid = !string.IsNullOrEmpty(user.HardwareId);
+        user.HardwareId = null;
+        _db.Users.Update(user);
+
+        return Ok(new WhitelistResponse
+        {
+            Success = true,
+            Message = hadHwid
+                ? $"HWID binding for user {user.Username} has been reset. They can now login from any device."
+                : $"User {user.Username} did not have an HWID binding."
+        });
+    }
+
+    /// <summary>
+    /// Get users with HWID bindings (Admin only).
+    /// </summary>
+    [HttpGet("hwid-bindings")]
+    public ActionResult<List<HwidBindingDto>> GetHwidBindings(
+        [FromHeader(Name = "Authorization")] string? authorization)
+    {
+        var admin = GetUserFromToken(authorization);
+        if (admin == null)
+            return Unauthorized();
+
+        // Only admins and owners can view HWID bindings
+        if (admin.Role != Shared.Enums.UserRole.Admin && admin.Role != Shared.Enums.UserRole.Owner)
+            return Forbid("Only admins can view HWID bindings");
+
+        var usersWithHwid = _db.Users
+            .Find(u => !string.IsNullOrEmpty(u.HardwareId))
+            .Select(u => new HwidBindingDto
+            {
+                UserId = u.Id,
+                Username = u.Username,
+                HardwareId = u.HardwareId ?? string.Empty,
+                BoundAt = u.LastSeenAt // Approximate binding time
+            })
+            .ToList();
+
+        return Ok(usersWithHwid);
+    }
+
+    #endregion
+
     private Shared.Models.User? GetUserFromToken(string? authorization)
     {
         if (string.IsNullOrEmpty(authorization) || !authorization.StartsWith("Bearer "))
@@ -229,4 +374,24 @@ public class UsersController : ControllerBase
         var token = authorization["Bearer ".Length..];
         return _authService.ValidateToken(token);
     }
+}
+
+/// <summary>
+/// Response for whitelist operations.
+/// </summary>
+public class WhitelistResponse
+{
+    public bool Success { get; set; }
+    public string Message { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// DTO for HWID binding information.
+/// </summary>
+public class HwidBindingDto
+{
+    public string UserId { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
+    public string HardwareId { get; set; } = string.Empty;
+    public DateTime BoundAt { get; set; }
 }

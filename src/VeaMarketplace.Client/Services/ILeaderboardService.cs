@@ -369,7 +369,9 @@ public class LeaderboardService : ILeaderboardService
 
     public UserStats? CurrentUserStats { get; private set; }
 
+#pragma warning disable CS0067 // Event is never used - kept for future API compatibility
     public event Action<LeaderboardEntry>? OnLeaderboardUpdated;
+#pragma warning restore CS0067
     public event Action<UserStats>? OnStatsUpdated;
     public event Action<ProfilePost>? OnNewProfilePost;
     public event Action<string>? OnProfilePostDeleted;

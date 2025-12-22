@@ -81,7 +81,7 @@ public partial class SettingsView : UserControl
     private void CheckAdminAccess()
     {
         // Check if current user has moderator, admin, or owner privileges
-        var currentUser = _apiService.CurrentUser;
+        var currentUser = _apiService?.CurrentUser;
         if (currentUser != null)
         {
             // Owner, Admin, and Moderator roles can access moderation panel
@@ -172,18 +172,18 @@ public partial class SettingsView : UserControl
         {
             // Request logout through navigation service
             // This will disconnect all services, clear auth, and return to login
-            _navigationService.RequestLogout();
+            _navigationService?.RequestLogout();
         }
     }
 
     private void Moderation_Click(object sender, RoutedEventArgs e)
     {
-        _navigationService.NavigateToModeration();
+        _navigationService?.NavigateToModeration();
     }
 
     private void BlockedUsers_Click(object sender, RoutedEventArgs e)
     {
-        _navigationService.NavigateTo("BlockedUsers");
+        _navigationService?.NavigateTo("BlockedUsers");
     }
 
     private void PttKeyButton_Click(object sender, RoutedEventArgs e)

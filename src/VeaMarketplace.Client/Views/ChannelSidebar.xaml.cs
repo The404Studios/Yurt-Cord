@@ -20,7 +20,6 @@ public partial class ChannelSidebar : UserControl
     private readonly IToastNotificationService? _toastService;
     private bool _isMuted;
     private bool _isDeafened;
-    private DateTime _lastPingTime;
     private System.Timers.Timer? _latencyTimer;
 
     // Channel name mapping for display
@@ -572,13 +571,13 @@ public partial class ChannelSidebar : UserControl
 
     private async void DisconnectedBanner_Click(object sender, MouseButtonEventArgs e)
     {
-        if (_chatService == null || _apiService?.Token == null) return;
+        if (_chatService == null || _apiService?.AuthToken == null) return;
 
         UpdateConnectionStatus(ConnectionState.Reconnecting);
 
         try
         {
-            await _chatService.ConnectAsync(_apiService.Token);
+            await _chatService.ConnectAsync(_apiService.AuthToken);
             UpdateConnectionStatus(ConnectionState.Connected);
             _toastService?.ShowSuccess("Reconnected", "Connection restored");
         }

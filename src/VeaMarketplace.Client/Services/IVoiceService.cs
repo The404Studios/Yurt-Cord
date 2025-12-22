@@ -453,7 +453,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
     // Video events
     public event Action<byte[], int, int>? OnLocalVideoFrameReady;
+#pragma warning disable CS0067 // Event is never used - kept for future API compatibility
     public event Action<string, byte[], int, int>? OnRemoteVideoFrameReceived;
+#pragma warning restore CS0067
     public event Action<string, bool>? OnUserVideoStateChanged;
 
     // Video properties
