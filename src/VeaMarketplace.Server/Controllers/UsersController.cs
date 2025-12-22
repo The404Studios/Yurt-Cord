@@ -15,13 +15,15 @@ public class UsersController : ControllerBase
     private readonly DatabaseService _db;
     private readonly AuthService _authService;
     private readonly FriendService _friendService;
+    private readonly KeyGeneratorService _keyService;
     private readonly IHubContext<ChatHub> _chatHubContext;
 
-    public UsersController(DatabaseService db, AuthService authService, FriendService friendService, IHubContext<ChatHub> chatHubContext)
+    public UsersController(DatabaseService db, AuthService authService, FriendService friendService, KeyGeneratorService keyService, IHubContext<ChatHub> chatHubContext)
     {
         _db = db;
         _authService = authService;
         _friendService = friendService;
+        _keyService = keyService;
         _chatHubContext = chatHubContext;
     }
 
@@ -298,6 +300,37 @@ public class UsersController : ControllerBase
         return Ok(whitelistedUsers);
     }
 
+    /// <summary>
+    /// Redeem a 6-digit whitelist code to whitelist yourself.
+    /// Users can use this endpoint to self-whitelist using a valid code.
+    /// </summary>
+    [HttpPost("whitelist/redeem")]
+    public ActionResult<WhitelistResponse> RedeemWhitelistCode(
+        [FromHeader(Name = "Authorization")] string? authorization,
+        [FromBody] RedeemCodeRequest request)
+    {
+        var user = GetUserFromToken(authorization);
+        if (user == null)
+            return Unauthorized(new WhitelistResponse { Success = false, Message = "You must be logged in to redeem a code" });
+
+        if (user.IsWhitelisted)
+            return Ok(new WhitelistResponse { Success = true, Message = "You are already whitelisted" });
+
+        if (string.IsNullOrWhiteSpace(request.Code))
+            return BadRequest(new WhitelistResponse { Success = false, Message = "Code is required" });
+
+        var (success, message) = _keyService.UseWhitelistCode(request.Code, user.Id, user.Username);
+
+        if (!success)
+            return BadRequest(new WhitelistResponse { Success = false, Message = message ?? "Invalid code" });
+
+        // Mark user as whitelisted
+        user.IsWhitelisted = true;
+        _db.Users.Update(user);
+
+        return Ok(new WhitelistResponse { Success = true, Message = "You have been whitelisted successfully!" });
+    }
+
     #endregion
 
     #region HWID Management (Admin Only)
@@ -394,4 +427,12 @@ public class HwidBindingDto
     public string Username { get; set; } = string.Empty;
     public string HardwareId { get; set; } = string.Empty;
     public DateTime BoundAt { get; set; }
+}
+
+/// <summary>
+/// Request to redeem a 6-digit whitelist code.
+/// </summary>
+public class RedeemCodeRequest
+{
+    public string Code { get; set; } = string.Empty;
 }

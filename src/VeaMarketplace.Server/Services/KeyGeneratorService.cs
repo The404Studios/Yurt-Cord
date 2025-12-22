@@ -16,9 +16,31 @@ public class ActivationKey
     public string? ClientSalt { get; set; }
 }
 
+/// <summary>
+/// 6-digit whitelist code for whitelist authentication mode.
+/// These codes allow users to self-whitelist by entering a valid code.
+/// </summary>
+public class WhitelistCode
+{
+    public string Code { get; set; } = string.Empty;
+    public DateTime GeneratedAt { get; set; }
+    public DateTime ExpiresAt { get; set; }
+    public DateTime? UsedAt { get; set; }
+    public string? UsedByUserId { get; set; }
+    public string? UsedByUsername { get; set; }
+    public bool IsUsed => UsedAt.HasValue;
+    public bool IsExpired => DateTime.UtcNow > ExpiresAt;
+    public bool IsValid => !IsUsed && !IsExpired;
+    /// <summary>
+    /// Optional note/description for admin reference
+    /// </summary>
+    public string? Note { get; set; }
+}
+
 public class KeyStore
 {
     public List<ActivationKey> Keys { get; set; } = new();
+    public List<WhitelistCode> WhitelistCodes { get; set; } = new();
     public DateTime LastGenerated { get; set; }
     public int TotalGenerated { get; set; }
 }
@@ -314,4 +336,225 @@ public class KeyGeneratorService
             return true;
         }
     }
+
+    #region Whitelist Code Methods (6-digit codes)
+
+    /// <summary>
+    /// Generates a unique 6-digit whitelist code
+    /// </summary>
+    private string GenerateUnique6DigitCode()
+    {
+        string code;
+        do
+        {
+            // Generate 6 random digits (0-9)
+            code = string.Concat(Enumerable.Range(0, 6).Select(_ => RandomNumberGenerator.GetInt32(10).ToString()));
+        } while (_keyStore.WhitelistCodes.Any(c => c.Code == code));
+
+        return code;
+    }
+
+    /// <summary>
+    /// Generates a new 6-digit whitelist code with optional expiration
+    /// </summary>
+    /// <param name="expirationHours">Hours until the code expires (default 24 hours)</param>
+    /// <param name="note">Optional admin note</param>
+    /// <returns>The generated 6-digit code</returns>
+    public string GenerateWhitelistCode(int expirationHours = 24, string? note = null)
+    {
+        lock (_lock)
+        {
+            var code = GenerateUnique6DigitCode();
+
+            _keyStore.WhitelistCodes.Add(new WhitelistCode
+            {
+                Code = code,
+                GeneratedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddHours(expirationHours),
+                Note = note
+            });
+
+            SaveKeyStore();
+            _logger.LogInformation("Generated whitelist code: {Code} (expires in {Hours}h)", code, expirationHours);
+
+            return code;
+        }
+    }
+
+    /// <summary>
+    /// Generates multiple 6-digit whitelist codes
+    /// </summary>
+    public List<string> GenerateWhitelistCodes(int count, int expirationHours = 24, string? note = null)
+    {
+        var codes = new List<string>();
+
+        lock (_lock)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                var code = GenerateUnique6DigitCode();
+
+                _keyStore.WhitelistCodes.Add(new WhitelistCode
+                {
+                    Code = code,
+                    GeneratedAt = DateTime.UtcNow,
+                    ExpiresAt = DateTime.UtcNow.AddHours(expirationHours),
+                    Note = note
+                });
+
+                codes.Add(code);
+            }
+
+            SaveKeyStore();
+            _logger.LogInformation("Generated {Count} whitelist codes (expires in {Hours}h)", count, expirationHours);
+        }
+
+        return codes;
+    }
+
+    /// <summary>
+    /// Validates a whitelist code without consuming it
+    /// </summary>
+    public bool IsValidWhitelistCode(string code)
+    {
+        if (string.IsNullOrWhiteSpace(code) || code.Length != 6)
+            return false;
+
+        code = code.Trim();
+
+        lock (_lock)
+        {
+            return _keyStore.WhitelistCodes.Any(c => c.Code == code && c.IsValid);
+        }
+    }
+
+    /// <summary>
+    /// Uses a whitelist code and returns success status
+    /// </summary>
+    public (bool success, string? message) UseWhitelistCode(string code, string userId, string username)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+            return (false, "Code cannot be empty");
+
+        code = code.Trim();
+
+        if (code.Length != 6 || !code.All(char.IsDigit))
+            return (false, "Invalid code format. Code must be 6 digits.");
+
+        lock (_lock)
+        {
+            var whitelistCode = _keyStore.WhitelistCodes.FirstOrDefault(c => c.Code == code);
+
+            if (whitelistCode == null)
+            {
+                _logger.LogWarning("Invalid whitelist code attempted: {Code}", code);
+                return (false, "Invalid whitelist code");
+            }
+
+            if (whitelistCode.IsExpired)
+            {
+                _logger.LogWarning("Expired whitelist code attempted: {Code} by {User}", code, username);
+                return (false, "This code has expired");
+            }
+
+            if (whitelistCode.IsUsed)
+            {
+                _logger.LogWarning("Already used whitelist code attempted: {Code} by {User}", code, username);
+                return (false, "This code has already been used");
+            }
+
+            // Mark code as used
+            whitelistCode.UsedAt = DateTime.UtcNow;
+            whitelistCode.UsedByUserId = userId;
+            whitelistCode.UsedByUsername = username;
+
+            SaveKeyStore();
+
+            _logger.LogInformation("Whitelist code {Code} used by {Username} ({UserId})", code, username, userId);
+
+            return (true, "Code activated successfully");
+        }
+    }
+
+    /// <summary>
+    /// Gets available (unused) whitelist codes
+    /// </summary>
+    public List<WhitelistCode> GetAvailableWhitelistCodes(int count = 10)
+    {
+        lock (_lock)
+        {
+            return _keyStore.WhitelistCodes
+                .Where(c => c.IsValid)
+                .OrderByDescending(c => c.GeneratedAt)
+                .Take(count)
+                .ToList();
+        }
+    }
+
+    /// <summary>
+    /// Gets whitelist code statistics
+    /// </summary>
+    public (int total, int available, int used, int expired) GetWhitelistCodeStats()
+    {
+        lock (_lock)
+        {
+            return (
+                _keyStore.WhitelistCodes.Count,
+                _keyStore.WhitelistCodes.Count(c => c.IsValid),
+                _keyStore.WhitelistCodes.Count(c => c.IsUsed),
+                _keyStore.WhitelistCodes.Count(c => c.IsExpired && !c.IsUsed)
+            );
+        }
+    }
+
+    /// <summary>
+    /// Revokes a whitelist code
+    /// </summary>
+    public bool RevokeWhitelistCode(string code)
+    {
+        code = code.Trim();
+
+        lock (_lock)
+        {
+            var whitelistCode = _keyStore.WhitelistCodes.FirstOrDefault(c => c.Code == code && c.IsValid);
+            if (whitelistCode == null)
+                return false;
+
+            whitelistCode.UsedAt = DateTime.UtcNow;
+            whitelistCode.UsedByUserId = "REVOKED";
+            whitelistCode.UsedByUsername = "REVOKED";
+
+            SaveKeyStore();
+            _logger.LogInformation("Whitelist code {Code} revoked by admin", code);
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// Cleans up expired whitelist codes (optional maintenance)
+    /// </summary>
+    public int CleanupExpiredCodes()
+    {
+        lock (_lock)
+        {
+            var expiredCodes = _keyStore.WhitelistCodes
+                .Where(c => c.IsExpired && !c.IsUsed)
+                .ToList();
+
+            foreach (var code in expiredCodes)
+            {
+                _keyStore.WhitelistCodes.Remove(code);
+            }
+
+            if (expiredCodes.Count > 0)
+            {
+                SaveKeyStore();
+                _logger.LogInformation("Cleaned up {Count} expired whitelist codes", expiredCodes.Count);
+            }
+
+            return expiredCodes.Count;
+        }
+    }
+
+    #endregion
 }
