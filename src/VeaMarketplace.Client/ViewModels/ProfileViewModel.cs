@@ -197,9 +197,9 @@ public partial class ProfileViewModel : BaseViewModel
                 ProfilePosts.Add(post);
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Silently fail
+            System.Diagnostics.Debug.WriteLine($"Failed to load profile posts: {ex.Message}");
         }
     }
 
@@ -211,9 +211,9 @@ public partial class ProfileViewModel : BaseViewModel
         {
             ProfileStats = await _leaderboardService.GetUserStatsAsync(userId);
         }
-        catch
+        catch (Exception ex)
         {
-            // Silently fail
+            System.Diagnostics.Debug.WriteLine($"Failed to load profile stats: {ex.Message}");
         }
     }
 

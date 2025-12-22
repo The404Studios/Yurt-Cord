@@ -82,9 +82,9 @@ public class ImageCacheService : IImageCacheService
                         return bitmap;
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Cache file corrupted, will re-download
+                    System.Diagnostics.Debug.WriteLine($"Cache file corrupted, will re-download: {ex.Message}");
                 }
             }
         }

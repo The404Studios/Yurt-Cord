@@ -61,10 +61,10 @@ public interface IApiService
     Task<List<UserBanDto>> GetBannedUsersAsync();
     Task<List<MessageReportDto>> GetPendingReportsAsync();
     Task<bool> BanUserAsync(BanUserRequest request);
-    Task<bool> UnbanUserAsync(string oderId, string reason);
+    Task<bool> UnbanUserAsync(string userId, string reason);
     Task<bool> WarnUserAsync(WarnUserRequest request);
     Task<bool> MuteUserAsync(MuteUserRequest request);
-    Task<bool> UnmuteUserAsync(string oderId, string reason);
+    Task<bool> UnmuteUserAsync(string userId, string reason);
     Task<bool> DismissReportAsync(string reportId);
     Task<bool> ResolveReportAsync(string reportId, string resolution);
     Task<bool> DeleteMessageAsync(string messageId, string reason);
@@ -115,7 +115,8 @@ public interface IApiService
 public class ApiService : IApiService
 {
     private readonly HttpClient _httpClient;
-    private const string BaseUrl = "http://localhost:5000";
+    private readonly ISettingsService _settingsService;
+    private string BaseUrl => _settingsService.Settings.ServerUrl;
 
     // Shared JSON options for consistent enum serialization with server
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -137,8 +138,9 @@ public class ApiService : IApiService
     public UserDto? CurrentUser { get; private set; }
     public bool IsAuthenticated => !string.IsNullOrEmpty(AuthToken) && CurrentUser != null;
 
-    public ApiService()
+    public ApiService(ISettingsService settingsService)
     {
+        _settingsService = settingsService;
         _httpClient = new HttpClient { BaseAddress = new Uri(BaseUrl) };
     }
 
@@ -566,9 +568,9 @@ public class ApiService : IApiService
         return response.IsSuccessStatusCode;
     }
 
-    public async Task<bool> UnbanUserAsync(string oderId, string reason)
+    public async Task<bool> UnbanUserAsync(string userId, string reason)
     {
-        var response = await _httpClient.PostAsJsonAsync($"/api/moderation/bans/{oderId}/unban", new { Reason = reason }, JsonOptions).ConfigureAwait(false);
+        var response = await _httpClient.PostAsJsonAsync($"/api/moderation/bans/{userId}/unban", new { Reason = reason }, JsonOptions).ConfigureAwait(false);
         return response.IsSuccessStatusCode;
     }
 
@@ -584,9 +586,9 @@ public class ApiService : IApiService
         return response.IsSuccessStatusCode;
     }
 
-    public async Task<bool> UnmuteUserAsync(string oderId, string reason)
+    public async Task<bool> UnmuteUserAsync(string userId, string reason)
     {
-        var response = await _httpClient.PostAsJsonAsync($"/api/moderation/mutes/{oderId}/unmute", new { Reason = reason }, JsonOptions).ConfigureAwait(false);
+        var response = await _httpClient.PostAsJsonAsync($"/api/moderation/mutes/{userId}/unmute", new { Reason = reason }, JsonOptions).ConfigureAwait(false);
         return response.IsSuccessStatusCode;
     }
 
