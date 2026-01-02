@@ -343,7 +343,10 @@ public class FriendHub : Hub
 
         if (_userConnections.TryGetValue(recipientId, out var recipientConnId))
         {
-            await Clients.Client(recipientConnId).SendAsync("UserTypingDM", userId);
+            // Get username for the typing indicator
+            var user = _authService.GetUserById(userId);
+            var username = user?.Username ?? "Unknown";
+            await Clients.Client(recipientConnId).SendAsync("UserTypingDM", userId, username);
         }
     }
 
