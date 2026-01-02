@@ -35,6 +35,10 @@ public partial class MainWindow : Window
         // Subscribe to nudge notifications
         _voiceService.OnNudgeReceived += OnNudgeReceived;
 
+        // Subscribe to group call invites
+        _voiceService.OnGroupCallInvite += OnGroupCallInvite;
+        _voiceService.OnGroupCallStarted += OnGroupCallStarted;
+
         // Subscribe to login success
         LoginView.OnLoginSuccess += OnLoginSuccess;
 
@@ -61,6 +65,8 @@ public partial class MainWindow : Window
         _friendService.OnNewFriendRequest -= OnNewFriendRequest;
         _friendService.OnDirectMessageReceived -= OnDirectMessageReceived;
         _voiceService.OnNudgeReceived -= OnNudgeReceived;
+        _voiceService.OnGroupCallInvite -= OnGroupCallInvite;
+        _voiceService.OnGroupCallStarted -= OnGroupCallStarted;
         LoginView.OnLoginSuccess -= OnLoginSuccess;
         LoginView.OnRegistrationSuccess -= OnRegistrationSuccess;
         ProfileSetupView.OnSetupComplete -= OnProfileSetupComplete;
@@ -85,6 +91,24 @@ public partial class MainWindow : Window
         Dispatcher.Invoke(() =>
         {
             NudgeNotification.Show(nudge);
+        });
+    }
+
+    private void OnGroupCallInvite(Shared.DTOs.GroupCallInviteDto invite)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            GroupCallInviteNotification.Show(invite, _voiceService);
+        });
+    }
+
+    private void OnGroupCallStarted(Shared.DTOs.GroupCallDto call)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            // Navigate to the group call view when a call starts
+            GroupCallViewControl.SetCallInfo(call);
+            _navigationService.NavigateToGroupCall();
         });
     }
 
@@ -249,6 +273,7 @@ public partial class MainWindow : Window
         SettingsViewControl.Visibility = baseView == "Settings" ? Visibility.Visible : Visibility.Collapsed;
         FriendsViewControl.Visibility = baseView == "Friends" ? Visibility.Visible : Visibility.Collapsed;
         VoiceCallDashboardControl.Visibility = baseView == "VoiceCall" ? Visibility.Visible : Visibility.Collapsed;
+        GroupCallViewControl.Visibility = baseView == "GroupCall" ? Visibility.Visible : Visibility.Collapsed;
         CartViewControl.Visibility = baseView == "Cart" ? Visibility.Visible : Visibility.Collapsed;
         WishlistViewControl.Visibility = baseView == "Wishlist" ? Visibility.Visible : Visibility.Collapsed;
         OrderHistoryViewControl.Visibility = baseView == "Orders" || baseView == "Order" ? Visibility.Visible : Visibility.Collapsed;
