@@ -32,7 +32,6 @@ public class AuthController : ControllerBase
             Description = _authService.AuthenticationMode switch
             {
                 AuthenticationMode.Session => "Standard session-based authentication. Users can login from any device.",
-                AuthenticationMode.Hwid => "Hardware ID based authentication. Accounts are tied to specific devices.",
                 AuthenticationMode.Whitelist => "Whitelist-based authentication. Only pre-approved users can login.",
                 _ => "Unknown authentication mode."
             }

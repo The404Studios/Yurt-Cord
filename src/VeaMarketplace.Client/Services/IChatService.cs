@@ -45,7 +45,7 @@ public class ChatService : IChatService, IAsyncDisposable
 {
     private HubConnection? _connection;
     private readonly INotificationService _notificationService;
-    private const string HubUrl = "http://localhost:5000/hubs/chat";
+    private const string HubUrl = "http://162.248.94.23:5000/hubs/chat";
     private string? _authToken;
     private System.Timers.Timer? _heartbeatTimer;
     private bool _handshakeReceived;

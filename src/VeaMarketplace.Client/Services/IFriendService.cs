@@ -74,7 +74,7 @@ public interface IFriendService
 public class FriendService : IFriendService, IAsyncDisposable
 {
     private HubConnection? _connection;
-    private const string HubUrl = "http://localhost:5000/hubs/friends";
+    private const string HubUrl = "http://162.248.94.23:5000/hubs/friends";
     private System.Timers.Timer? _typingTimer;
     private System.Timers.Timer? _heartbeatTimer;
     private string? _authToken;
