@@ -45,8 +45,9 @@ public class CartController : ControllerBase
         return Ok(cart);
     }
 
-    [HttpPut("items")]
+    [HttpPut("items/{itemId}")]
     public ActionResult<CartDto> UpdateCartItem(
+        string itemId,
         [FromHeader(Name = "Authorization")] string? authorization,
         [FromBody] UpdateCartItemRequest request)
     {

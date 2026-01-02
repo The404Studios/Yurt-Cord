@@ -37,6 +37,38 @@ public class User
 
     public bool IsWhitelisted { get; set; } = false;
 
+    // Seller response tracking
+    public int TotalMessagesReceived { get; set; } = 0;
+    public int TotalMessagesResponded { get; set; } = 0;
+    public long TotalResponseTimeMs { get; set; } = 0; // Cumulative response time in milliseconds
+    public DateTime? LastMessageReceivedAt { get; set; }
+    public DateTime? LastMessageRespondedAt { get; set; }
+
+    /// <summary>
+    /// Calculate response rate as a percentage (0-100)
+    /// </summary>
+    public int ResponseRate => TotalMessagesReceived > 0
+        ? Math.Min(100, (TotalMessagesResponded * 100) / TotalMessagesReceived)
+        : 100;
+
+    /// <summary>
+    /// Calculate average response time as a human-readable string
+    /// </summary>
+    public string ResponseTime
+    {
+        get
+        {
+            if (TotalMessagesResponded == 0) return "N/A";
+            var avgMs = TotalResponseTimeMs / TotalMessagesResponded;
+            var avgTime = TimeSpan.FromMilliseconds(avgMs);
+
+            if (avgTime.TotalMinutes < 1) return "< 1 minute";
+            if (avgTime.TotalMinutes < 60) return $"~{(int)avgTime.TotalMinutes} minutes";
+            if (avgTime.TotalHours < 24) return $"~{(int)avgTime.TotalHours} hours";
+            return $"~{(int)avgTime.TotalDays} days";
+        }
+    }
+
     // Social Links
     public string? DiscordUsername { get; set; }
     public string? TwitterHandle { get; set; }

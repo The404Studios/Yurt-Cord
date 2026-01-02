@@ -73,7 +73,7 @@ public class ModerationController : ControllerBase
         return Ok(reports);
     }
 
-    [HttpPost("ban")]
+    [HttpPost("bans")]
     public async Task<ActionResult<UserBanDto>> BanUser(
         [FromHeader(Name = "Authorization")] string? authorization,
         [FromBody] BanUserRequest request)
@@ -123,7 +123,7 @@ public class ModerationController : ControllerBase
         return NotFound();
     }
 
-    [HttpPost("mute")]
+    [HttpPost("mutes")]
     public async Task<ActionResult<UserMuteDto>> MuteUser(
         [FromHeader(Name = "Authorization")] string? authorization,
         [FromBody] MuteUserRequest request)
@@ -172,7 +172,7 @@ public class ModerationController : ControllerBase
         return NotFound();
     }
 
-    [HttpPost("warn")]
+    [HttpPost("warnings")]
     public ActionResult WarnUser(
         [FromHeader(Name = "Authorization")] string? authorization,
         [FromBody] WarnUserRequest request)

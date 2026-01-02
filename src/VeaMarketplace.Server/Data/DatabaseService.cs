@@ -21,6 +21,7 @@ public class DatabaseService : IDisposable
     public ILiteCollection<CustomRole> CustomRoles => _database.GetCollection<CustomRole>("custom_roles");
     public ILiteCollection<Room> Rooms => _database.GetCollection<Room>("rooms");
     public ILiteCollection<StoredFile> StoredFiles => _database.GetCollection<StoredFile>("stored_files");
+    public ILiteCollection<MessageReaction> MessageReactions => _database.GetCollection<MessageReaction>("message_reactions");
 
     // Reviews & Ratings
     public ILiteCollection<ProductReview> ProductReviews => _database.GetCollection<ProductReview>("product_reviews");

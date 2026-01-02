@@ -106,6 +106,15 @@ public class DirectMessageService
         };
 
         _db.DirectMessages.Insert(message);
+
+        // Track response metrics for seller response rate
+        TrackResponseMetrics(senderId, recipientId);
+
+        // Update recipient's message received tracking
+        recipient.TotalMessagesReceived++;
+        recipient.LastMessageReceivedAt = DateTime.UtcNow;
+        _db.Users.Update(recipient);
+
         return (true, "Message sent", MapToDto(message));
     }
 
@@ -133,6 +142,47 @@ public class DirectMessageService
         message.IsDeleted = true;
         _db.DirectMessages.Update(message);
         return true;
+    }
+
+    /// <summary>
+    /// Tracks response metrics when a user sends a message.
+    /// If this message is a response to a previous message, it updates the sender's response stats.
+    /// </summary>
+    private void TrackResponseMetrics(string senderId, string recipientId)
+    {
+        var sender = _db.Users.FindById(senderId);
+        if (sender == null) return;
+
+        // Check if there's a recent message from the recipient that this user is responding to
+        var lastReceivedMessage = _db.DirectMessages
+            .Query()
+            .Where(m => m.SenderId == recipientId && m.RecipientId == senderId && !m.IsDeleted)
+            .OrderByDescending(m => m.Timestamp)
+            .FirstOrDefault();
+
+        // Check if sender had any previous messages to recipient (indicating this is a response, not new conversation)
+        var lastSentMessage = _db.DirectMessages
+            .Query()
+            .Where(m => m.SenderId == senderId && m.RecipientId == recipientId && !m.IsDeleted)
+            .OrderByDescending(m => m.Timestamp)
+            .FirstOrDefault();
+
+        // If there's a received message that is more recent than our last sent message, this is a response
+        if (lastReceivedMessage != null &&
+            (lastSentMessage == null || lastReceivedMessage.Timestamp > lastSentMessage.Timestamp))
+        {
+            // Calculate response time
+            var responseTime = DateTime.UtcNow - lastReceivedMessage.Timestamp;
+
+            // Only count responses within 7 days as valid (to exclude very old messages)
+            if (responseTime.TotalDays <= 7)
+            {
+                sender.TotalMessagesResponded++;
+                sender.TotalResponseTimeMs += (long)responseTime.TotalMilliseconds;
+                sender.LastMessageRespondedAt = DateTime.UtcNow;
+                _db.Users.Update(sender);
+            }
+        }
     }
 
     private static DirectMessageDto MapToDto(DirectMessage message)
