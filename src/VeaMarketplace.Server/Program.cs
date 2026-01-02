@@ -175,6 +175,10 @@ builder.Services.AddScoped<DiscoveryService>();
 builder.Services.AddScoped<ActivityService>();
 builder.Services.AddSingleton<RoleConfigurationService>();
 
+// Background Services for multi-threaded operations
+builder.Services.AddHostedService<CleanupBackgroundService>();
+builder.Services.AddHostedService<ServerConsoleService>();
+
 // JWT Authentication - get secret from environment or configuration
 var jwtSecret = Environment.GetEnvironmentVariable("VEA_JWT_SECRET")
     ?? builder.Configuration["Jwt:Secret"];
@@ -295,6 +299,8 @@ Console.WriteLine(@"
 ║            YURT CORD - Your Community, Your Way              ║
 ║                  Marketplace & Chat Server                    ║
 ║                   Server: 162.248.94.23:5000                  ║
+║                                                               ║
+║         Type 'help' for admin console commands                ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
 ");
