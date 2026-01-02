@@ -49,6 +49,8 @@ public partial class App : Application
         services.AddSingleton<IFriendService, FriendService>();
         services.AddSingleton<IProfileService, ProfileService>();
         services.AddSingleton<INotificationService, NotificationService>();
+        services.AddSingleton<INotificationHubService, NotificationHubService>();
+        services.AddSingleton<IRoomHubService, RoomHubService>();
         services.AddSingleton<IToastNotificationService, ToastNotificationService>();
         services.AddSingleton<IFileUploadService, FileUploadService>();
         services.AddSingleton<IImageCacheService, ImageCacheService>();
