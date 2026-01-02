@@ -14,7 +14,7 @@ public class User
     public string Bio { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string StatusMessage { get; set; } = string.Empty;
-    public string AccentColor { get; set; } = "#FF6B00"; // Plugin orange
+    public string AccentColor { get; set; } = "#00B4D8"; // Yurt Cord teal
     public ProfileVisibility ProfileVisibility { get; set; } = ProfileVisibility.Public;
     public UserRole Role { get; set; } = UserRole.Member;
     public UserRank Rank { get; set; } = UserRank.Newcomer;
@@ -35,8 +35,6 @@ public class User
     public int MessagesCount { get; set; } = 0;
     public int VoiceMinutes { get; set; } = 0;
 
-    // Hardware ID for HWID authentication mode
-    public string? HardwareId { get; set; }
     public bool IsWhitelisted { get; set; } = false;
 
     // Social Links

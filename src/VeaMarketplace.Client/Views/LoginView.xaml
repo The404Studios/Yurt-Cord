@@ -79,15 +79,15 @@
             </DoubleAnimation>
         </Storyboard>
 
-        <!-- Gradient Animation - Plugin Orange Theme -->
+        <!-- Gradient Animation - Yurt Cord Teal Theme -->
         <Storyboard x:Key="GradientShift" RepeatBehavior="Forever">
             <ColorAnimation Storyboard.TargetName="BgGradient1"
                             Storyboard.TargetProperty="Color"
-                            From="#0A0A0B" To="#111113" Duration="0:0:4"
+                            From="#0A0B10" To="#0F1118" Duration="0:0:4"
                             AutoReverse="True"/>
             <ColorAnimation Storyboard.TargetName="BgGradient2"
                             Storyboard.TargetProperty="Color"
-                            From="#18181B" To="#0A0A0B" Duration="0:0:5"
+                            From="#151820" To="#0A0B10" Duration="0:0:5"
                             AutoReverse="True"/>
         </Storyboard>
 
@@ -173,13 +173,13 @@
     </UserControl.Triggers>
 
     <Grid>
-        <!-- Animated Background Gradient - Plugin Dark Theme -->
+        <!-- Animated Background Gradient - Yurt Cord Dark Theme -->
         <Border>
             <Border.Background>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop x:Name="BgGradient1" Color="#0A0A0B" Offset="0"/>
-                    <GradientStop Color="#111113" Offset="0.5"/>
-                    <GradientStop x:Name="BgGradient2" Color="#18181B" Offset="1"/>
+                    <GradientStop x:Name="BgGradient1" Color="#0A0B10" Offset="0"/>
+                    <GradientStop Color="#0F1118" Offset="0.5"/>
+                    <GradientStop x:Name="BgGradient2" Color="#151820" Offset="1"/>
                 </LinearGradientBrush>
             </Border.Background>
         </Border>
@@ -204,73 +204,73 @@
             </Ellipse>
         </Canvas>
 
-        <!-- Floating Particles Effect - Plugin Orange Theme -->
+        <!-- Floating Particles Effect - Yurt Cord Teal Theme -->
         <Canvas x:Name="ParticleCanvas" IsHitTestVisible="False">
-            <!-- Particle 1 - Orange -->
+            <!-- Particle 1 - Teal -->
             <Ellipse Width="120" Height="120" Opacity="0.08" Canvas.Left="50" Canvas.Top="80">
                 <Ellipse.RenderTransform>
                     <TranslateTransform x:Name="P1Translate"/>
                 </Ellipse.RenderTransform>
                 <Ellipse.Fill>
                     <RadialGradientBrush>
-                        <GradientStop Color="#FF6B00" Offset="0"/>
+                        <GradientStop Color="#00B4D8" Offset="0"/>
                         <GradientStop Color="Transparent" Offset="1"/>
                     </RadialGradientBrush>
                 </Ellipse.Fill>
             </Ellipse>
-            <!-- Particle 2 - Gold -->
+            <!-- Particle 2 - Light Cyan -->
             <Ellipse Width="200" Height="200" Opacity="0.06" Canvas.Right="80" Canvas.Top="30">
                 <Ellipse.RenderTransform>
                     <TranslateTransform x:Name="P2Translate"/>
                 </Ellipse.RenderTransform>
                 <Ellipse.Fill>
                     <RadialGradientBrush>
-                        <GradientStop Color="#FFB347" Offset="0"/>
+                        <GradientStop Color="#90E0EF" Offset="0"/>
                         <GradientStop Color="Transparent" Offset="1"/>
                     </RadialGradientBrush>
                 </Ellipse.Fill>
             </Ellipse>
-            <!-- Particle 3 - Orange Light -->
+            <!-- Particle 3 - Cyan Light -->
             <Ellipse Width="160" Height="160" Opacity="0.05" Canvas.Left="180" Canvas.Bottom="80">
                 <Ellipse.RenderTransform>
                     <TranslateTransform x:Name="P3Translate"/>
                 </Ellipse.RenderTransform>
                 <Ellipse.Fill>
                     <RadialGradientBrush>
-                        <GradientStop Color="#FF8533" Offset="0"/>
+                        <GradientStop Color="#48CAE4" Offset="0"/>
                         <GradientStop Color="Transparent" Offset="1"/>
                     </RadialGradientBrush>
                 </Ellipse.Fill>
             </Ellipse>
-            <!-- Particle 4 - Amber -->
+            <!-- Particle 4 - Pale Cyan -->
             <Ellipse Width="100" Height="100" Opacity="0.05" Canvas.Right="200" Canvas.Bottom="150">
                 <Ellipse.RenderTransform>
                     <TranslateTransform x:Name="P4Translate"/>
                 </Ellipse.RenderTransform>
                 <Ellipse.Fill>
                     <RadialGradientBrush>
-                        <GradientStop Color="#F5A623" Offset="0"/>
+                        <GradientStop Color="#CAF0F8" Offset="0"/>
                         <GradientStop Color="Transparent" Offset="1"/>
                     </RadialGradientBrush>
                 </Ellipse.Fill>
             </Ellipse>
-            <!-- Particle 5 - Deep Orange -->
+            <!-- Particle 5 - Deep Blue -->
             <Ellipse Width="80" Height="80" Opacity="0.06" Canvas.Left="400" Canvas.Top="200">
                 <Ellipse.RenderTransform>
                     <TranslateTransform x:Name="P5Translate"/>
                 </Ellipse.RenderTransform>
                 <Ellipse.Fill>
                     <RadialGradientBrush>
-                        <GradientStop Color="#CC5500" Offset="0"/>
+                        <GradientStop Color="#0077B6" Offset="0"/>
                         <GradientStop Color="Transparent" Offset="1"/>
                     </RadialGradientBrush>
                 </Ellipse.Fill>
             </Ellipse>
             <!-- Small static particles -->
-            <Ellipse Width="6" Height="6" Fill="#20FF6B00" Canvas.Left="150" Canvas.Top="300"/>
-            <Ellipse Width="4" Height="4" Fill="#20FFB347" Canvas.Right="250" Canvas.Top="180"/>
-            <Ellipse Width="5" Height="5" Fill="#20FF8533" Canvas.Left="350" Canvas.Bottom="250"/>
-            <Ellipse Width="3" Height="3" Fill="#20F5A623" Canvas.Right="180" Canvas.Bottom="350"/>
+            <Ellipse Width="6" Height="6" Fill="#2000B4D8" Canvas.Left="150" Canvas.Top="300"/>
+            <Ellipse Width="4" Height="4" Fill="#2090E0EF" Canvas.Right="250" Canvas.Top="180"/>
+            <Ellipse Width="5" Height="5" Fill="#2048CAE4" Canvas.Left="350" Canvas.Bottom="250"/>
+            <Ellipse Width="3" Height="3" Fill="#20CAF0F8" Canvas.Right="180" Canvas.Bottom="350"/>
         </Canvas>
 
         <!-- Login Card -->
@@ -298,7 +298,7 @@
             <Grid>
                 <!-- Login Form -->
                 <StackPanel x:Name="LoginPanel">
-                    <!-- Logo and Title - Plugin Brand -->
+                    <!-- Logo and Title - Yurt Cord Brand -->
                     <StackPanel HorizontalAlignment="Center" Margin="0,0,0,24">
                         <!-- Logo with Glow -->
                         <Grid HorizontalAlignment="Center" Margin="0,0,0,20"
@@ -307,11 +307,11 @@
                                 <ScaleTransform x:Name="LogoScale"/>
                             </Grid.RenderTransform>
 
-                            <!-- Glow Effect - Orange -->
+                            <!-- Glow Effect - Teal -->
                             <Ellipse x:Name="LogoGlow" Width="110" Height="110" Opacity="0.5">
                                 <Ellipse.Fill>
                                     <RadialGradientBrush>
-                                        <GradientStop Color="#FF6B00" Offset="0"/>
+                                        <GradientStop Color="#00B4D8" Offset="0"/>
                                         <GradientStop Color="Transparent" Offset="1"/>
                                     </RadialGradientBrush>
                                 </Ellipse.Fill>
@@ -319,41 +319,41 @@
 
                             <!-- Logo Ring -->
                             <Ellipse Width="88" Height="88" StrokeThickness="2"
-                                     Stroke="#30FF6B00"/>
+                                     Stroke="#3000B4D8"/>
 
-                            <!-- Logo Circle - Fire Gradient -->
+                            <!-- Logo Circle - Ocean Gradient -->
                             <Border Width="80" Height="80" CornerRadius="40">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Color="#FF6B00" Offset="0"/>
-                                        <GradientStop Color="#FF8533" Offset="0.5"/>
-                                        <GradientStop Color="#FFB347" Offset="1"/>
+                                        <GradientStop Color="#0077B6" Offset="0"/>
+                                        <GradientStop Color="#00B4D8" Offset="0.5"/>
+                                        <GradientStop Color="#48CAE4" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="20" ShadowDepth="0"
-                                                      Color="#FF6B00" Opacity="0.6"/>
+                                                      Color="#00B4D8" Opacity="0.6"/>
                                 </Border.Effect>
-                                <TextBlock Text="P" FontSize="38" FontWeight="Bold"
+                                <TextBlock Text="Y" FontSize="38" FontWeight="Bold"
                                            Foreground="White"
                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                         </Grid>
 
-                        <!-- Title with fire gradient -->
+                        <!-- Title with ocean gradient -->
                         <TextBlock FontSize="26" FontWeight="Bold" HorizontalAlignment="Center">
                             <TextBlock.Foreground>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                    <GradientStop Color="#FAFAFA" Offset="0"/>
-                                    <GradientStop Color="#FF8533" Offset="1"/>
+                                    <GradientStop Color="#F0F4F8" Offset="0"/>
+                                    <GradientStop Color="#48CAE4" Offset="1"/>
                                 </LinearGradientBrush>
                             </TextBlock.Foreground>
-                            Welcome to Plugin
+                            Welcome to Yurt Cord
                         </TextBlock>
 
                         <TextBlock x:Name="SubtitleText"
-                                   Text="Connect. Trade. Create."
-                                   FontSize="13" Foreground="#71717A"
+                                   Text="Your Community, Your Way."
+                                   FontSize="13" Foreground="#64748B"
                                    HorizontalAlignment="Center"
                                    Margin="0,6,0,0"/>
                     </StackPanel>
@@ -410,42 +410,6 @@
                         <PasswordBox x:Name="ConfirmPasswordBox"
                                      Style="{StaticResource ModernPasswordBox}"
                                      Margin="0,0,0,16"/>
-                    </StackPanel>
-
-                    <!-- Activation Key (Register only) -->
-                    <StackPanel x:Name="ActivationKeyPanel" Visibility="Collapsed">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                            <TextBlock Text="ACTIVATION KEY" FontSize="11" FontWeight="Bold"
-                                       Foreground="{StaticResource TextSecondaryBrush}"/>
-                            <TextBlock Text="(Required)" FontSize="10"
-                                       Foreground="#71717A" Margin="8,0,0,0"
-                                       VerticalAlignment="Center"/>
-                            <!-- Valid indicator (shown when validated) -->
-                            <TextBlock x:Name="KeyStatusIcon" Text="✓" FontSize="12"
-                                       Foreground="#43B581" FontWeight="Bold"
-                                       Margin="8,0,0,0" VerticalAlignment="Center"
-                                       Visibility="Collapsed"/>
-                        </StackPanel>
-                        <Grid Margin="0,0,0,16">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBox x:Name="ActivationKeyBox"
-                                     Style="{StaticResource ModernTextBox}"
-                                     MaxLength="7" CharacterCasing="Upper"
-                                     FontFamily="Consolas" FontSize="16" FontWeight="Bold"
-                                     TextChanged="ActivationKeyBox_TextChanged"
-                                     ToolTip="Format: XXX-XXX (e.g., ABC-123)"/>
-                            <Button Grid.Column="1" x:Name="ValidateKeyButton"
-                                    Content="Validate" Margin="8,0,0,0"
-                                    Style="{StaticResource SecondaryButton}"
-                                    Height="38" Padding="16,0"
-                                    IsEnabled="False"
-                                    Click="ValidateKey_Click"/>
-                        </Grid>
-                        <TextBlock Text="Enter the 6-character key in XXX-XXX format (e.g., ABC-123)"
-                                   FontSize="10" Foreground="#52525B"/>
                     </StackPanel>
 
                     <!-- Remember Me (Login only) -->
@@ -511,7 +475,7 @@
                     </StackPanel>
                 </StackPanel>
 
-                <!-- Loading Overlay - Plugin Orange -->
+                <!-- Loading Overlay - Yurt Cord Teal -->
                 <Border x:Name="LoadingOverlay" Visibility="Collapsed"
                         Background="#E0000000" CornerRadius="12">
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -526,8 +490,8 @@
                                      StrokeDashArray="2,4">
                                 <Ellipse.Stroke>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Color="#FF6B00" Offset="0"/>
-                                        <GradientStop Color="#FFB347" Offset="1"/>
+                                        <GradientStop Color="#00B4D8" Offset="0"/>
+                                        <GradientStop Color="#90E0EF" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Ellipse.Stroke>
                             </Ellipse>

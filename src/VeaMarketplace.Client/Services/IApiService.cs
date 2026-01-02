@@ -14,8 +14,7 @@ public interface IApiService
     bool IsAuthenticated { get; }
 
     Task<AuthResponse> LoginAsync(string username, string password);
-    Task<AuthResponse> RegisterAsync(string username, string email, string password, string? activationKey = null);
-    Task<KeyValidationResult> ValidateKeyAsync(string key);
+    Task<AuthResponse> RegisterAsync(string username, string email, string password);
     Task<bool> ValidateTokenAsync();
     void Logout();
 
@@ -115,7 +114,7 @@ public interface IApiService
 public class ApiService : IApiService
 {
     private readonly HttpClient _httpClient;
-    private const string BaseUrl = "http://localhost:5000";
+    private const string BaseUrl = "http://162.248.94.23:5000";
 
     // Shared JSON options for consistent enum serialization with server
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -227,9 +226,9 @@ public class ApiService : IApiService
         return result;
     }
 
-    public async Task<AuthResponse> RegisterAsync(string username, string email, string password, string? activationKey = null)
+    public async Task<AuthResponse> RegisterAsync(string username, string email, string password)
     {
-        var request = new RegisterRequest { Username = username, Email = email, Password = password, ActivationKey = activationKey };
+        var request = new RegisterRequest { Username = username, Email = email, Password = password };
         var response = await _httpClient.PostAsJsonAsync("/api/auth/register", request, JsonOptions).ConfigureAwait(false);
 
         // Read response body as string first to handle empty/invalid responses
@@ -285,27 +284,6 @@ public class ApiService : IApiService
         }
 
         return false;
-    }
-
-    public async Task<KeyValidationResult> ValidateKeyAsync(string key)
-    {
-        try
-        {
-            var response = await _httpClient.PostAsJsonAsync("/api/key/validate", new { Key = key }, JsonOptions).ConfigureAwait(false);
-            var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-            if (string.IsNullOrWhiteSpace(content))
-            {
-                return new KeyValidationResult { Success = false, Message = "Server returned empty response" };
-            }
-
-            return JsonSerializer.Deserialize<KeyValidationResult>(content, JsonOptions)
-                ?? new KeyValidationResult { Success = false, Message = "Invalid response from server" };
-        }
-        catch (Exception)
-        {
-            return new KeyValidationResult { Success = false, Message = "Failed to validate key" };
-        }
     }
 
     public void Logout()
@@ -861,10 +839,4 @@ public class MediaUploadResponse
     public string Url { get; set; } = string.Empty;
     public string FileName { get; set; } = string.Empty;
     public long Size { get; set; }
-}
-
-public class KeyValidationResult
-{
-    public bool Success { get; set; }
-    public string? Message { get; set; }
 }

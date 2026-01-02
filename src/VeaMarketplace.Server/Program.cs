@@ -174,7 +174,6 @@ builder.Services.AddScoped<ModerationService>();
 builder.Services.AddScoped<DiscoveryService>();
 builder.Services.AddScoped<ActivityService>();
 builder.Services.AddSingleton<RoleConfigurationService>();
-builder.Services.AddSingleton<KeyGeneratorService>();
 
 // JWT Authentication - get secret from environment or configuration
 var jwtSecret = Environment.GetEnvironmentVariable("VEA_JWT_SECRET")
@@ -233,7 +232,7 @@ builder.Services.AddCors(options =>
 
     options.AddPolicy("SignalR", policy =>
     {
-        policy.WithOrigins("http://162.248.94.23:5000", "https://162.248.94.23:5000")
+        policy.WithOrigins("http://162.248.94.23:5000", "https://162.248.94.23:5000", "http://localhost:5000")
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -286,14 +285,16 @@ startupLogger.LogInformation("Role configuration loaded from {Path}", ServerPath
 Console.WriteLine(@"
 ╔═══════════════════════════════════════════════════════════════╗
 ║                                                               ║
-║   ██╗   ██╗██╗   ██╗██████╗ ████████╗     ██████╗ ██████╗     ║
-║   ╚██╗ ██╔╝██║   ██║██╔══██╗╚══██╔══╝    ██╔════╝██╔═══██╗    ║
-║    ╚████╔╝ ██║   ██║██████╔╝   ██║       ██║     ██║   ██║    ║
-║     ╚██╔╝  ██║   ██║██╔══██╗   ██║       ██║     ██║   ██║    ║
-║      ██║   ╚██████╔╝██║  ██║   ██║       ╚██████╗╚██████╔╝    ║
-║      ╚═╝    ╚═════╝ ╚═╝  ╚═╝   ╚═╝        ╚═════╝ ╚═════╝     ║
+║   ██╗   ██╗██╗   ██╗██████╗ ████████╗     ██████╗██████╗      ║
+║   ╚██╗ ██╔╝██║   ██║██╔══██╗╚══██╔══╝    ██╔════╝██╔══██╗     ║
+║    ╚████╔╝ ██║   ██║██████╔╝   ██║       ██║     ██║  ██║     ║
+║     ╚██╔╝  ██║   ██║██╔══██╗   ██║       ██║     ██║  ██║     ║
+║      ██║   ╚██████╔╝██║  ██║   ██║       ╚██████╗██████╔╝     ║
+║      ╚═╝    ╚═════╝ ╚═╝  ╚═╝   ╚═╝        ╚═════╝╚═════╝      ║
 ║                                                               ║
-║             Marketplace & Chat Server                         ║
+║            YURT CORD - Your Community, Your Way              ║
+║                  Marketplace & Chat Server                    ║
+║                   Server: 162.248.94.23:5000                  ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
 ");

@@ -36,7 +36,7 @@ public class ProfileThemeDto
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
-    public string PrimaryColor { get; set; } = "#FF6B00"; // Plugin orange
+    public string PrimaryColor { get; set; } = "#00B4D8"; // Yurt Cord teal
     public string SecondaryColor { get; set; } = "#202225";
     public string AccentColor { get; set; } = "#EB459E";
     public string BackgroundUrl { get; set; } = string.Empty;
