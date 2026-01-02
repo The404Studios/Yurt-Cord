@@ -351,4 +351,49 @@ public class FriendService
             _db.FriendNicknames.Insert(nickname);
         }
     }
+
+    /// <summary>
+    /// Gets mutual friends between two users.
+    /// </summary>
+    public List<UserDto> GetMutualFriends(string userId, string otherUserId)
+    {
+        // Get both users' friend lists
+        var myFriendIds = GetFriendIds(userId);
+        var theirFriendIds = GetFriendIds(otherUserId);
+
+        // Find intersection
+        var mutualIds = myFriendIds.Intersect(theirFriendIds).ToHashSet();
+
+        if (mutualIds.Count == 0)
+            return [];
+
+        // Get user details for mutual friends
+        return _db.Users
+            .Find(u => mutualIds.Contains(u.Id))
+            .Select(u => new UserDto
+            {
+                Id = u.Id,
+                Username = u.Username,
+                DisplayName = u.DisplayName,
+                AvatarUrl = u.AvatarUrl,
+                Bio = u.Bio,
+                StatusMessage = u.StatusMessage,
+                Role = u.Role,
+                Rank = u.Rank,
+                IsOnline = u.IsOnline
+            })
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets the IDs of all friends for a user.
+    /// </summary>
+    private HashSet<string> GetFriendIds(string userId)
+    {
+        return _db.Friendships
+            .Find(f => (f.RequesterId == userId || f.AddresseeId == userId)
+                       && f.Status == FriendshipStatus.Accepted)
+            .Select(f => f.RequesterId == userId ? f.AddresseeId : f.RequesterId)
+            .ToHashSet();
+    }
 }

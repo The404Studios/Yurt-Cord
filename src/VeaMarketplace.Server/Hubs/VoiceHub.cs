@@ -161,7 +161,7 @@ public class VoiceHub : Hub
             await Clients.OthersInGroup($"voice_{userState.ChannelId}")
                 .SendAsync("UserVideoStarted", Context.ConnectionId, userId, userState.Username);
 
-            _logger.LogDebug("User {Username} started video in channel {ChannelId}", userState.Username, userState.ChannelId);
+            _logger?.LogDebug("User {Username} started video in channel {ChannelId}", userState.Username, userState.ChannelId);
         }
     }
 
@@ -181,7 +181,7 @@ public class VoiceHub : Hub
             await Clients.OthersInGroup($"voice_{userState.ChannelId}")
                 .SendAsync("UserVideoStopped", Context.ConnectionId, userId);
 
-            _logger.LogDebug("User {Username} stopped video in channel {ChannelId}", userState.Username, userState.ChannelId);
+            _logger?.LogDebug("User {Username} stopped video in channel {ChannelId}", userState.Username, userState.ChannelId);
         }
     }
 

@@ -356,7 +356,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private async void LoadActivityPanelData()
+    private void LoadActivityPanelData()
     {
         // Load online friends
         var onlineFriends = new List<Controls.SocialActivityPanel.OnlineFriend>();

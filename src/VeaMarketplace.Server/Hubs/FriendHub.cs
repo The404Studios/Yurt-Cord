@@ -525,4 +525,13 @@ public class FriendHub : Hub
         _friendService.SetUserNote(userId, targetUserId, note);
         await Clients.Caller.SendAsync("UserNoteUpdated", targetUserId);
     }
+
+    public Task<List<UserDto>> GetMutualFriends(string targetUserId)
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return Task.FromResult(new List<UserDto>());
+
+        var mutualFriends = _friendService.GetMutualFriends(userId, targetUserId);
+        return Task.FromResult(mutualFriends);
+    }
 }

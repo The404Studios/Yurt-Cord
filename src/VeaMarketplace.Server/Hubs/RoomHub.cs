@@ -157,7 +157,12 @@ public class RoomHub : Hub
         _connectionRooms[Context.ConnectionId] = roomId;
 
         // Refresh room data
-        room = _roomService.GetRoom(roomId)!;
+        room = _roomService.GetRoom(roomId);
+        if (room == null)
+        {
+            await Clients.Caller.SendAsync("RoomError", "Room not found after joining");
+            return;
+        }
 
         // Update online member count
         var member = room.Members.FirstOrDefault(m => m.UserId == userId);
