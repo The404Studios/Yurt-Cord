@@ -79,6 +79,7 @@ public partial class App : Application
         services.AddTransient<ProductReviewsViewModel>();
         services.AddTransient<ActivityFeedViewModel>();
         services.AddTransient<LeaderboardViewModel>();
+        services.AddTransient<ServerAdminViewModel>();
 
         ServiceProvider = services.BuildServiceProvider();
 
