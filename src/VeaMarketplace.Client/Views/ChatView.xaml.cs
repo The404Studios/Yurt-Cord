@@ -59,12 +59,8 @@ public partial class ChatView : UserControl
         };
         _typingCleanupTimer.Tick += TypingCleanupTimer_Tick;
 
-        // Ensure timer is stopped when control is unloaded
-        Unloaded += (s, e) =>
-        {
-            _typingCleanupTimer.Stop();
-            _typingCleanupTimer.Tick -= TypingCleanupTimer_Tick;
-        };
+        // Ensure timer is stopped and events unsubscribed when control is unloaded
+        Unloaded += OnUnloaded;
 
         if (DesignerProperties.GetIsInDesignMode(this))
             return;
@@ -103,31 +99,49 @@ public partial class ChatView : UserControl
         };
 
         // Subscribe to typing indicator - now handles multiple users
-        _chatService.OnUserTyping += (username, channel) =>
-        {
-            if (channel == _viewModel.CurrentChannel)
-            {
-                Dispatcher.Invoke(() =>
-                {
-                    AddTypingUser(username);
-                });
-            }
-        };
+        _chatService.OnUserTyping += OnUserTyping;
 
         // Update channel name when changed
-        _viewModel.PropertyChanged += (s, e) =>
+        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        // Stop timer and cleanup event subscriptions
+        _typingCleanupTimer.Stop();
+        _typingCleanupTimer.Tick -= TypingCleanupTimer_Tick;
+
+        if (_chatService != null)
         {
-            if (e.PropertyName == nameof(ChatViewModel.CurrentChannel))
+            _chatService.OnUserTyping -= OnUserTyping;
+        }
+
+        if (_viewModel != null)
+        {
+            _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        }
+    }
+
+    private void OnUserTyping(string username, string channel)
+    {
+        if (channel == _viewModel?.CurrentChannel)
+        {
+            Dispatcher.Invoke(() => AddTypingUser(username));
+        }
+    }
+
+    private void OnViewModelPropertyChanged(object? s, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ChatViewModel.CurrentChannel))
+        {
+            Dispatcher.Invoke(() =>
             {
-                Dispatcher.Invoke(() =>
-                {
-                    ChannelNameText.Text = _viewModel.CurrentChannel;
-                    // Clear typing users when switching channels
-                    _typingUsers.Clear();
-                    UpdateTypingIndicator();
-                });
-            }
-        };
+                ChannelNameText.Text = _viewModel?.CurrentChannel ?? string.Empty;
+                // Clear typing users when switching channels
+                _typingUsers.Clear();
+                UpdateTypingIndicator();
+            });
+        }
     }
 
     #region Multi-User Typing Indicator

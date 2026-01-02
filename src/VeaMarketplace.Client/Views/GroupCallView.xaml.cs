@@ -44,71 +44,92 @@ public partial class GroupCallView : UserControl
         ParticipantsGrid.ItemsSource = _participants;
         FriendsListControl.ItemsSource = _friends;
 
+        Unloaded += OnUnloaded;
+
         SetupEventHandlers();
         InitializeSelfView();
     }
 
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        // Stop and cleanup timer
+        _durationTimer.Stop();
+        _durationTimer.Tick -= DurationTimer_Tick;
+
+        // Unsubscribe from events to prevent memory leaks
+        _voiceService.OnGroupCallUpdated -= OnGroupCallUpdated;
+        _voiceService.OnGroupCallParticipantJoined -= OnGroupCallParticipantJoined;
+        _voiceService.OnGroupCallParticipantLeft -= OnGroupCallParticipantLeft;
+        _voiceService.OnGroupCallEnded -= OnGroupCallEnded;
+        _voiceService.OnLocalAudioLevel -= OnLocalAudioLevel;
+        _voiceService.OnSpeakingChanged -= OnSpeakingChanged;
+    }
+
     private void SetupEventHandlers()
     {
-        _voiceService.OnGroupCallUpdated += call =>
-        {
-            Dispatcher.Invoke(() =>
-            {
-                UpdateCallInfo(call);
-            });
-        };
+        _voiceService.OnGroupCallUpdated += OnGroupCallUpdated;
+        _voiceService.OnGroupCallParticipantJoined += OnGroupCallParticipantJoined;
+        _voiceService.OnGroupCallParticipantLeft += OnGroupCallParticipantLeft;
+        _voiceService.OnGroupCallEnded += OnGroupCallEnded;
+        _voiceService.OnLocalAudioLevel += OnLocalAudioLevel;
+        _voiceService.OnSpeakingChanged += OnSpeakingChanged;
+    }
 
-        _voiceService.OnGroupCallParticipantJoined += (callId, participant) =>
-        {
-            Dispatcher.Invoke(() =>
-            {
-                if (!_participants.Any(p => p.UserId == participant.UserId))
-                {
-                    _participants.Add(participant);
-                    UpdateParticipantCount();
-                }
-            });
-        };
+    private void OnGroupCallUpdated(GroupCallDto call)
+    {
+        Dispatcher.Invoke(() => UpdateCallInfo(call));
+    }
 
-        _voiceService.OnGroupCallParticipantLeft += (callId, userId) =>
+    private void OnGroupCallParticipantJoined(string callId, GroupCallParticipantDto participant)
+    {
+        Dispatcher.Invoke(() =>
         {
-            Dispatcher.Invoke(() =>
+            if (!_participants.Any(p => p.UserId == participant.UserId))
             {
-                var participant = _participants.FirstOrDefault(p => p.UserId == userId);
-                if (participant != null)
-                {
-                    _participants.Remove(participant);
-                    UpdateParticipantCount();
-                }
-            });
-        };
+                _participants.Add(participant);
+                UpdateParticipantCount();
+            }
+        });
+    }
 
-        _voiceService.OnGroupCallEnded += (callId, reason) =>
+    private void OnGroupCallParticipantLeft(string callId, string oderId)
+    {
+        Dispatcher.Invoke(() =>
         {
-            Dispatcher.Invoke(() =>
+            var participant = _participants.FirstOrDefault(p => p.UserId == oderId);
+            if (participant != null)
             {
-                _durationTimer.Stop();
-                OnCallLeft?.Invoke();
-            });
-        };
+                _participants.Remove(participant);
+                UpdateParticipantCount();
+            }
+        });
+    }
 
-        _voiceService.OnLocalAudioLevel += level =>
+    private void OnGroupCallEnded(string callId, string reason)
+    {
+        Dispatcher.Invoke(() =>
         {
-            Dispatcher.InvokeAsync(() =>
-            {
-                MicLevelBar.Width = level * (MicLevelBar.Parent as Border)!.ActualWidth;
-            });
-        };
+            _durationTimer.Stop();
+            OnCallLeft?.Invoke();
+        });
+    }
 
-        _voiceService.OnSpeakingChanged += speaking =>
+    private void OnLocalAudioLevel(float level)
+    {
+        Dispatcher.InvokeAsync(() =>
         {
-            Dispatcher.InvokeAsync(() =>
-            {
-                MicLevelIcon.Foreground = speaking
-                    ? (System.Windows.Media.Brush)FindResource("AccentBrush")
-                    : (System.Windows.Media.Brush)FindResource("TextMutedBrush");
-            });
-        };
+            MicLevelBar.Width = level * (MicLevelBar.Parent as Border)!.ActualWidth;
+        });
+    }
+
+    private void OnSpeakingChanged(bool speaking)
+    {
+        Dispatcher.InvokeAsync(() =>
+        {
+            MicLevelIcon.Foreground = speaking
+                ? (System.Windows.Media.Brush)FindResource("AccentBrush")
+                : (System.Windows.Media.Brush)FindResource("TextMutedBrush");
+        });
     }
 
     private void InitializeSelfView()

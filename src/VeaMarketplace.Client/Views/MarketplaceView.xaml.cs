@@ -481,17 +481,25 @@ public partial class MarketplaceView : UserControl
         ToastText.Text = message;
         ToastNotification.Visibility = Visibility.Visible;
 
-        _toastTimer?.Stop();
+        // Properly dispose old timer before creating new one to prevent memory leak
+        if (_toastTimer != null)
+        {
+            _toastTimer.Stop();
+            _toastTimer.Tick -= ToastTimer_Tick;
+        }
+
         _toastTimer = new System.Windows.Threading.DispatcherTimer
         {
             Interval = TimeSpan.FromSeconds(3)
         };
-        _toastTimer.Tick += (s, e) =>
-        {
-            _toastTimer.Stop();
-            ToastNotification.Visibility = Visibility.Collapsed;
-        };
+        _toastTimer.Tick += ToastTimer_Tick;
         _toastTimer.Start();
+    }
+
+    private void ToastTimer_Tick(object? sender, EventArgs e)
+    {
+        _toastTimer?.Stop();
+        ToastNotification.Visibility = Visibility.Collapsed;
     }
 
     // Quick Actions Toolbar handlers

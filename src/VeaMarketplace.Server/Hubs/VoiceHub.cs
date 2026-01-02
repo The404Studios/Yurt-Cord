@@ -10,9 +10,9 @@ namespace VeaMarketplace.Server.Hubs;
 
 public class VoiceHub : Hub
 {
-    private readonly VoiceCallService? _callService;
-    private readonly AuthService? _authService;
-    private readonly ILogger<VoiceHub>? _logger;
+    private readonly VoiceCallService _callService;
+    private readonly AuthService _authService;
+    private readonly ILogger<VoiceHub> _logger;
     private static readonly ConcurrentDictionary<string, VoiceChannelState> _voiceChannels = new();
     private static readonly ConcurrentDictionary<string, VoiceUserState> _voiceUsers = new();
     private static readonly ConcurrentDictionary<string, string> _userConnections = new(); // userId -> connectionId
@@ -34,7 +34,7 @@ public class VoiceHub : Hub
     private const long MaxDownloadBytesPerSecond = 50L * 1024 * 1024; // 50 MB/s download per user
     private const int MaxConcurrentStreamsPerChannel = 10;
 
-    public VoiceHub(VoiceCallService? callService = null, AuthService? authService = null, ILogger<VoiceHub>? logger = null)
+    public VoiceHub(VoiceCallService callService, AuthService authService, ILogger<VoiceHub> logger)
     {
         _callService = callService;
         _authService = authService;
@@ -1074,8 +1074,6 @@ public class VoiceHub : Hub
 
     public async Task AuthenticateForCalls(string token)
     {
-        if (_authService == null) return;
-
         var user = _authService.ValidateToken(token);
         if (user == null)
         {
@@ -1092,7 +1090,7 @@ public class VoiceHub : Hub
 
     public async Task StartCall(string recipientId)
     {
-        if (_callService == null || !_connectionUsers.TryGetValue(Context.ConnectionId, out var callerId))
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var callerId))
             return;
 
         var (success, message, call) = _callService.StartCall(callerId, recipientId);
@@ -1143,7 +1141,7 @@ public class VoiceHub : Hub
 
     public async Task AnswerCall(string callId, bool accept)
     {
-        if (_callService == null || !_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
             return;
 
         var (success, message, call) = _callService.AnswerCall(callId, userId, accept);
@@ -1191,7 +1189,7 @@ public class VoiceHub : Hub
 
     public async Task EndCall(string callId)
     {
-        if (_callService == null || !_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
             return;
 
         var (success, message, call) = _callService.EndCall(callId, userId);

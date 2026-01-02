@@ -80,6 +80,9 @@ public partial class App : Application
         services.AddTransient<ActivityFeedViewModel>();
         services.AddTransient<LeaderboardViewModel>();
         services.AddTransient<ServerAdminViewModel>();
+        services.AddTransient<DiscoverViewModel>();
+        services.AddTransient<SearchViewModel>();
+        services.AddTransient<CheckoutViewModel>();
 
         ServiceProvider = services.BuildServiceProvider();
 
