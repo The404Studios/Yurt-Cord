@@ -80,7 +80,7 @@ public class ContentService : IContentService, IAsyncDisposable
 {
     private HubConnection? _connection;
     private readonly INotificationService _notificationService;
-    private const string HubUrl = "http://162.248.94.23:5000/hubs/content";
+    private static readonly string HubUrl = AppConstants.Hubs.GetContentUrl();
     private string? _authToken;
 
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;

@@ -89,7 +89,10 @@ public partial class MemberSidebar : UserControl
             {
                 PopupAvatarBrush.ImageSource = new BitmapImage(new Uri(user.AvatarUrl));
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"MemberSidebar: Failed to load popup avatar: {ex.Message}");
+            }
         }
 
         // Set role badge

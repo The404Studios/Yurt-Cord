@@ -38,6 +38,24 @@ public static class AppConstants
         public const string Profile = "/hubs/profile";
         public const string Friends = "/hubs/friends";
         public const string Content = "/hubs/content";
+        public const string Notifications = "/hubs/notifications";
+        public const string Rooms = "/hubs/rooms";
+
+        // Helper methods to get full URLs
+        public static string GetChatUrl() => $"{DefaultServerUrl}{Chat}";
+        public static string GetVoiceUrl() => $"{DefaultServerUrl}{Voice}";
+        public static string GetProfileUrl() => $"{DefaultServerUrl}{Profile}";
+        public static string GetFriendsUrl() => $"{DefaultServerUrl}{Friends}";
+        public static string GetContentUrl() => $"{DefaultServerUrl}{Content}";
+        public static string GetNotificationsUrl() => $"{DefaultServerUrl}{Notifications}";
+        public static string GetRoomsUrl() => $"{DefaultServerUrl}{Rooms}";
+    }
+
+    /// <summary>API endpoint helpers.</summary>
+    public static class Api
+    {
+        public static string GetBaseUrl() => $"{DefaultServerUrl}{ApiBasePath}";
+        public static string GetFilesUrl() => $"{DefaultServerUrl}{ApiBasePath}/files";
     }
 
     #endregion
@@ -116,10 +134,13 @@ public static class AppConstants
     /// <summary>Primary accent color (Yurt Cord Teal).</summary>
     public const string AccentPrimaryHex = "#00B4D8";
 
-    /// <summary>Lighter accent color.</summary>
-    public const string AccentLightHex = "#FF8533";
+    /// <summary>Lighter accent color (Yurt Cord Teal Light).</summary>
+    public const string AccentLightHex = "#48CAE4";
 
-    /// <summary>Secondary accent color (Gold-Orange).</summary>
+    /// <summary>Darker accent color (Yurt Cord Teal Dark).</summary>
+    public const string AccentDarkHex = "#0096C7";
+
+    /// <summary>Secondary accent color (Gold).</summary>
     public const string AccentSecondaryHex = "#FFB347";
 
     /// <summary>Success color (Green).</summary>
@@ -130,6 +151,35 @@ public static class AppConstants
 
     /// <summary>Warning color (Gold).</summary>
     public const string WarningColorHex = "#FFB347";
+
+    #endregion
+
+    #region Default Assets
+
+    /// <summary>Default avatar path for users without custom avatars.</summary>
+    public const string DefaultAvatarPath = "pack://application:,,,/Assets/default-avatar.png";
+
+    /// <summary>Default banner path for users without custom banners.</summary>
+    public const string DefaultBannerPath = "pack://application:,,,/Assets/default-banner.png";
+
+    /// <summary>App logo path.</summary>
+    public const string AppLogoPath = "pack://application:,,,/Assets/logo.png";
+
+    #endregion
+
+    #region Audio Configuration
+
+    /// <summary>Audio sample rate in Hz.</summary>
+    public const int AudioSampleRate = 48000;
+
+    /// <summary>Opus frame size (20ms at 48kHz).</summary>
+    public const int OpusFrameSize = 960;
+
+    /// <summary>Maximum Opus frame buffer size.</summary>
+    public const int MaxOpusFrameSize = 4000;
+
+    /// <summary>Audio channels (mono).</summary>
+    public const int AudioChannels = 1;
 
     #endregion
 }

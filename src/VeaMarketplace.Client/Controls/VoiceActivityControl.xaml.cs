@@ -101,7 +101,10 @@ public partial class VoiceActivityControl : UserControl
             {
                 control.AvatarBrush.ImageSource = new BitmapImage(new Uri(url));
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"VoiceActivityControl: Failed to load avatar from {url}: {ex.Message}");
+            }
         }
     }
 

@@ -110,7 +110,10 @@ public partial class UserProfileCard : UserControl
                     (byte)Math.Max(0, color.G - 40),
                     (byte)Math.Max(0, color.B + 40));
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"UserProfileCard: Failed to parse accent color: {ex.Message}");
+            }
         }
 
         // Status message
