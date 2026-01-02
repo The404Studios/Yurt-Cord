@@ -36,15 +36,34 @@ public partial class ProfileView : UserControl
         _toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
 
         DataContext = _viewModel;
-        Loaded += (s, e) => UpdateUI();
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
 
-        _viewModel.PropertyChanged += (s, e) =>
+        if (_viewModel != null)
         {
-            if (e.PropertyName == nameof(ProfileViewModel.User))
-            {
-                Dispatcher.Invoke(UpdateUI);
-            }
-        };
+            _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        }
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        UpdateUI();
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel != null)
+        {
+            _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        }
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ProfileViewModel.User))
+        {
+            Dispatcher.Invoke(UpdateUI);
+        }
     }
 
     private void UpdateUI()

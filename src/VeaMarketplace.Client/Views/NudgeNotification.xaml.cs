@@ -64,11 +64,7 @@ public partial class NudgeNotification : Window
         {
             Interval = TimeSpan.FromSeconds(5)
         };
-        _autoCloseTimer.Tick += (s, e) =>
-        {
-            _autoCloseTimer.Stop();
-            FadeOutAndClose();
-        };
+        _autoCloseTimer.Tick += AutoCloseTimer_Tick;
         _autoCloseTimer.Start();
 
         // Shake animation
@@ -80,6 +76,30 @@ public partial class NudgeNotification : Window
 
         // Start shake animation
         StartShake();
+
+        // Clean up on close
+        Closed += OnWindowClosed;
+    }
+
+    private void AutoCloseTimer_Tick(object? sender, EventArgs e)
+    {
+        _autoCloseTimer.Stop();
+        FadeOutAndClose();
+    }
+
+    private void OnWindowClosed(object? sender, EventArgs e)
+    {
+        // Stop timers and unsubscribe handlers
+        _autoCloseTimer.Stop();
+        _autoCloseTimer.Tick -= AutoCloseTimer_Tick;
+        _shakeTimer.Stop();
+        _shakeTimer.Tick -= ShakeTimer_Tick;
+        if (_fadeTimer != null)
+        {
+            _fadeTimer.Stop();
+            _fadeTimer.Tick -= FadeTimer_Tick;
+            _fadeTimer = null;
+        }
     }
 
     private void StartShake()
@@ -104,23 +124,32 @@ public partial class NudgeNotification : Window
         Left = _originalLeft + offset;
     }
 
+    private DispatcherTimer? _fadeTimer;
+
     private void FadeOutAndClose()
     {
         // Simple fade out by reducing opacity
-        var fadeTimer = new DispatcherTimer
+        _fadeTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromMilliseconds(20)
         };
-        fadeTimer.Tick += (s, e) =>
+        _fadeTimer.Tick += FadeTimer_Tick;
+        _fadeTimer.Start();
+    }
+
+    private void FadeTimer_Tick(object? sender, EventArgs e)
+    {
+        Opacity -= 0.1;
+        if (Opacity <= 0)
         {
-            Opacity -= 0.1;
-            if (Opacity <= 0)
+            if (_fadeTimer != null)
             {
-                fadeTimer.Stop();
-                Close();
+                _fadeTimer.Stop();
+                _fadeTimer.Tick -= FadeTimer_Tick;
+                _fadeTimer = null;
             }
-        };
-        fadeTimer.Start();
+            Close();
+        }
     }
 
     private void Close_Click(object sender, RoutedEventArgs e)

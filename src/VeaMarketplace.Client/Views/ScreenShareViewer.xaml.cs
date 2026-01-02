@@ -62,7 +62,12 @@ public partial class ScreenShareViewer : Window
         _statsTimer.Start();
 
         // Focus window for keyboard input
-        Loaded += (s, e) => Focus();
+        Loaded += OnLoaded;
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        Focus();
     }
 
     private void OnScreenFrameReceived(string senderConnectionId, byte[] frameData, int width, int height)
@@ -224,6 +229,7 @@ public partial class ScreenShareViewer : Window
     private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
     {
         _statsTimer.Stop();
+        _statsTimer.Tick -= StatsTimer_Tick;
         _voiceService.OnScreenFrameReceived -= OnScreenFrameReceived;
         _voiceService.OnUserScreenShareChanged -= OnUserScreenShareChanged;
     }

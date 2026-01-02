@@ -29,96 +29,129 @@ public partial class MainWindow : Window
         _toastService.SetContainer(ToastContainer);
 
         // Subscribe to friend service events for notifications
-        _friendService.OnNewFriendRequest += request =>
-        {
-            _toastService.ShowFriendRequest(request.RequesterUsername);
-        };
-
-        _friendService.OnDirectMessageReceived += message =>
-        {
-            _toastService.ShowMessage(message.SenderUsername,
-                message.Content.Length > 50 ? message.Content[..50] + "..." : message.Content);
-        };
+        _friendService.OnNewFriendRequest += OnNewFriendRequest;
+        _friendService.OnDirectMessageReceived += OnDirectMessageReceived;
 
         // Subscribe to nudge notifications
-        _voiceService.OnNudgeReceived += nudge =>
-        {
-            Dispatcher.Invoke(() =>
-            {
-                NudgeNotification.Show(nudge);
-            });
-        };
+        _voiceService.OnNudgeReceived += OnNudgeReceived;
 
         // Subscribe to login success
-        LoginView.OnLoginSuccess += () =>
-        {
-            Dispatcher.Invoke(() =>
-            {
-                // Animate transition
-                var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(300));
-                fadeOut.Completed += (s, e) =>
-                {
-                    LoginView.Visibility = Visibility.Collapsed;
-                    MainAppGrid.Visibility = Visibility.Visible;
-
-                    var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300));
-                    MainAppGrid.BeginAnimation(OpacityProperty, fadeIn);
-
-                    // Show welcome toast
-                    _toastService.ShowSuccess("Welcome!", "You have successfully logged in.");
-                };
-                LoginView.BeginAnimation(OpacityProperty, fadeOut);
-            });
-        };
+        LoginView.OnLoginSuccess += OnLoginSuccess;
 
         // Subscribe to registration success - show profile setup
-        LoginView.OnRegistrationSuccess += (username) =>
-        {
-            Dispatcher.Invoke(() =>
-            {
-                // Animate transition to profile setup
-                var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(300));
-                fadeOut.Completed += (s, e) =>
-                {
-                    LoginView.Visibility = Visibility.Collapsed;
-                    ProfileSetupView.Visibility = Visibility.Visible;
-                    ProfileSetupView.SetUsername(username);
-
-                    var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300));
-                    ProfileSetupView.BeginAnimation(OpacityProperty, fadeIn);
-                };
-                LoginView.BeginAnimation(OpacityProperty, fadeOut);
-            });
-        };
+        LoginView.OnRegistrationSuccess += OnRegistrationSuccess;
 
         // Subscribe to profile setup completion
-        ProfileSetupView.OnSetupComplete += () =>
-        {
-            Dispatcher.Invoke(() =>
-            {
-                TransitionToMainApp("Profile setup complete!");
-            });
-        };
-
-        ProfileSetupView.OnSetupSkipped += () =>
-        {
-            Dispatcher.Invoke(() =>
-            {
-                TransitionToMainApp("Welcome! You can customize your profile later.");
-            });
-        };
+        ProfileSetupView.OnSetupComplete += OnProfileSetupComplete;
+        ProfileSetupView.OnSetupSkipped += OnProfileSetupSkipped;
 
         // Navigation changes
-        _navigationService.OnNavigate += view =>
-        {
-            Dispatcher.Invoke(() => SwitchView(view));
-        };
+        _navigationService.OnNavigate += OnNavigate;
 
         // Handle logout request
-        _navigationService.OnLogoutRequested += () =>
+        _navigationService.OnLogoutRequested += OnLogoutRequested;
+
+        // Unsubscribe on close
+        Closing += OnWindowClosing;
+    }
+
+    private void OnWindowClosing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        // Unsubscribe from all events to prevent memory leaks
+        _friendService.OnNewFriendRequest -= OnNewFriendRequest;
+        _friendService.OnDirectMessageReceived -= OnDirectMessageReceived;
+        _voiceService.OnNudgeReceived -= OnNudgeReceived;
+        LoginView.OnLoginSuccess -= OnLoginSuccess;
+        LoginView.OnRegistrationSuccess -= OnRegistrationSuccess;
+        ProfileSetupView.OnSetupComplete -= OnProfileSetupComplete;
+        ProfileSetupView.OnSetupSkipped -= OnProfileSetupSkipped;
+        _navigationService.OnNavigate -= OnNavigate;
+        _navigationService.OnLogoutRequested -= OnLogoutRequested;
+    }
+
+    private void OnNewFriendRequest(Shared.DTOs.FriendRequestDto request)
+    {
+        _toastService.ShowFriendRequest(request.RequesterUsername);
+    }
+
+    private void OnDirectMessageReceived(Shared.DTOs.DirectMessageDto message)
+    {
+        _toastService.ShowMessage(message.SenderUsername,
+            message.Content.Length > 50 ? message.Content[..50] + "..." : message.Content);
+    }
+
+    private void OnNudgeReceived(Shared.DTOs.NudgeDto nudge)
+    {
+        Dispatcher.Invoke(() =>
         {
-            Dispatcher.Invoke(async () => await HandleLogoutAsync());
-        };
+            NudgeNotification.Show(nudge);
+        });
+    }
+
+    private void OnLoginSuccess()
+    {
+        Dispatcher.Invoke(() =>
+        {
+            // Animate transition
+            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(300));
+            fadeOut.Completed += (s, e) =>
+            {
+                LoginView.Visibility = Visibility.Collapsed;
+                MainAppGrid.Visibility = Visibility.Visible;
+
+                var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300));
+                MainAppGrid.BeginAnimation(OpacityProperty, fadeIn);
+
+                // Show welcome toast
+                _toastService.ShowSuccess("Welcome!", "You have successfully logged in.");
+            };
+            LoginView.BeginAnimation(OpacityProperty, fadeOut);
+        });
+    }
+
+    private void OnRegistrationSuccess(string username)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            // Animate transition to profile setup
+            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(300));
+            fadeOut.Completed += (s, e) =>
+            {
+                LoginView.Visibility = Visibility.Collapsed;
+                ProfileSetupView.Visibility = Visibility.Visible;
+                ProfileSetupView.SetUsername(username);
+
+                var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300));
+                ProfileSetupView.BeginAnimation(OpacityProperty, fadeIn);
+            };
+            LoginView.BeginAnimation(OpacityProperty, fadeOut);
+        });
+    }
+
+    private void OnProfileSetupComplete()
+    {
+        Dispatcher.Invoke(() =>
+        {
+            TransitionToMainApp("Profile setup complete!");
+        });
+    }
+
+    private void OnProfileSetupSkipped()
+    {
+        Dispatcher.Invoke(() =>
+        {
+            TransitionToMainApp("Welcome! You can customize your profile later.");
+        });
+    }
+
+    private void OnNavigate(string view)
+    {
+        Dispatcher.Invoke(() => SwitchView(view));
+    }
+
+    private void OnLogoutRequested()
+    {
+        Dispatcher.Invoke(async () => await HandleLogoutAsync());
     }
 
     private async Task HandleLogoutAsync()
