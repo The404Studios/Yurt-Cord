@@ -304,7 +304,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     private WaveInEvent? _waveIn;
     private WaveOutEvent? _waveOut;
     private BufferedWaveProvider? _bufferedWaveProvider;
-    private const string HubUrl = "http://162.248.94.23:5000/hubs/voice";
+    private static readonly string HubUrl = AppConstants.Hubs.GetVoiceUrl();
     private volatile bool _isSpeaking;  // Volatile for thread-safe reads/writes
     private DateTime _lastSpeakingUpdate = DateTime.MinValue;
     private readonly ConcurrentDictionary<string, VoiceUserState> _voiceUsers = new();
@@ -453,9 +453,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
     // Video events
     public event Action<byte[], int, int>? OnLocalVideoFrameReady;
-#pragma warning disable CS0067 // Event is never used - kept for future API compatibility
     public event Action<string, byte[], int, int>? OnRemoteVideoFrameReceived;
-#pragma warning restore CS0067
     public event Action<string, bool>? OnUserVideoStateChanged;
 
     // Video properties
@@ -887,6 +885,32 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         _connection.On<string>("ScreenShareStopped", connectionId =>
         {
             _screenSharingManager.HandleScreenShareStopped(connectionId);
+        });
+
+        // Video streaming handlers
+        _connection.On<string, string, string>("UserVideoStarted", (connectionId, userId, username) =>
+        {
+            Debug.WriteLine($"User {username} started video");
+            if (_voiceUsers.TryGetValue(connectionId, out var user))
+            {
+                user.IsVideoEnabled = true;
+            }
+            OnUserVideoStateChanged?.Invoke(userId, true);
+        });
+
+        _connection.On<string, string>("UserVideoStopped", (connectionId, userId) =>
+        {
+            Debug.WriteLine($"User {userId} stopped video");
+            if (_voiceUsers.TryGetValue(connectionId, out var user))
+            {
+                user.IsVideoEnabled = false;
+            }
+            OnUserVideoStateChanged?.Invoke(userId, false);
+        });
+
+        _connection.On<string, byte[], int, int>("ReceiveVideoFrame", (connectionId, frameData, width, height) =>
+        {
+            OnRemoteVideoFrameReceived?.Invoke(connectionId, frameData, width, height);
         });
 
         _connection.On<int>("ViewerCountUpdated", count =>
@@ -1879,9 +1903,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             }
         });
 
-        _connection.On<string, bool, double>("CallSpeakingState", (connectionId, isSpeaking, audioLevel) =>
+        _connection.On<string, bool, double>("CallUserSpeaking", (userId, isSpeaking, audioLevel) =>
         {
-            OnCallUserSpeaking?.Invoke(connectionId, isSpeaking, audioLevel);
+            OnCallUserSpeaking?.Invoke(userId, isSpeaking, audioLevel);
         });
 
         // Nudge handlers
@@ -1977,11 +2001,11 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         });
 
         // Group call audio receiving
-        _connection.On<string, byte[]>("ReceiveGroupCallAudio", (senderConnectionId, audioData) =>
+        _connection.On<string, byte[]>("GroupCallAudioReceived", (userId, audioData) =>
         {
             if (IsInGroupCall && !IsDeafened && _bufferedWaveProvider != null)
             {
-                DecodeAndPlayAudio(senderConnectionId, audioData);
+                DecodeAndPlayAudio(userId, audioData);
             }
         });
 

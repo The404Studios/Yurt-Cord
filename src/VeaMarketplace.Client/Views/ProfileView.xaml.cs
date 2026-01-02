@@ -150,7 +150,10 @@ public partial class ProfileView : UserControl
             {
                 AvatarBrush.ImageSource = new BitmapImage(new Uri(user.AvatarUrl));
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ProfileView: Failed to load avatar: {ex.Message}");
+            }
         }
 
         // Banner
@@ -160,7 +163,10 @@ public partial class ProfileView : UserControl
             {
                 BannerBrush.ImageSource = new BitmapImage(new Uri(user.BannerUrl));
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ProfileView: Failed to load banner: {ex.Message}");
+            }
         }
 
         // Role Badge

@@ -25,6 +25,10 @@ public interface IChatService
     event Action<string>? OnAuthenticationFailed;
     event Action<OnlineUserDto>? OnUserProfileUpdated;
     event Action? OnConnectionHandshake;
+    event Action<string, string, string, int>? OnReactionAdded; // MessageId, UserId, Emoji, Count
+    event Action<string, string, string>? OnReactionRemoved; // MessageId, UserId, Emoji
+    event Action<GroupChatCreatedEvent>? OnGroupChatCreated;
+    event Action<string>? OnGroupChatError;
 
     Task ConnectAsync(string token);
     Task DisconnectAsync();
@@ -45,7 +49,7 @@ public class ChatService : IChatService, IAsyncDisposable
 {
     private HubConnection? _connection;
     private readonly INotificationService _notificationService;
-    private const string HubUrl = "http://162.248.94.23:5000/hubs/chat";
+    private static readonly string HubUrl = AppConstants.Hubs.GetChatUrl();
     private string? _authToken;
     private System.Timers.Timer? _heartbeatTimer;
     private bool _handshakeReceived;
@@ -71,6 +75,10 @@ public class ChatService : IChatService, IAsyncDisposable
     public event Action<string>? OnAuthenticationFailed;
     public event Action<OnlineUserDto>? OnUserProfileUpdated;
     public event Action? OnConnectionHandshake;
+    public event Action<string, string, string, int>? OnReactionAdded;
+    public event Action<string, string, string>? OnReactionRemoved;
+    public event Action<GroupChatCreatedEvent>? OnGroupChatCreated;
+    public event Action<string>? OnGroupChatError;
 
     public async Task ConnectAsync(string token)
     {
@@ -311,6 +319,61 @@ public class ChatService : IChatService, IAsyncDisposable
 
         _connection.On<OnlineUserDto>("UserProfileUpdated", user =>
             OnUserProfileUpdated?.Invoke(user));
+
+        // Reaction handlers
+        _connection.On<JsonElement>("ReactionAdded", data =>
+        {
+            if (data.TryGetProperty("MessageId", out var msgId) &&
+                data.TryGetProperty("Reaction", out var reaction))
+            {
+                var messageId = msgId.GetString() ?? "";
+                var userId = reaction.TryGetProperty("UserId", out var uid) ? uid.GetString() ?? "" : "";
+                var emoji = reaction.TryGetProperty("Emoji", out var em) ? em.GetString() ?? "" : "";
+                var count = reaction.TryGetProperty("Count", out var cnt) ? cnt.GetInt32() : 1;
+                OnReactionAdded?.Invoke(messageId, userId, emoji, count);
+            }
+        });
+
+        _connection.On<JsonElement>("ReactionRemoved", data =>
+        {
+            if (data.TryGetProperty("MessageId", out var msgId) &&
+                data.TryGetProperty("UserId", out var userId) &&
+                data.TryGetProperty("Emoji", out var emoji))
+            {
+                OnReactionRemoved?.Invoke(
+                    msgId.GetString() ?? "",
+                    userId.GetString() ?? "",
+                    emoji.GetString() ?? "");
+            }
+        });
+
+        // Group chat handlers
+        _connection.On<JsonElement>("GroupChatCreated", data =>
+        {
+            try
+            {
+                var evt = new GroupChatCreatedEvent
+                {
+                    GroupId = data.TryGetProperty("GroupId", out var gid) ? gid.GetString() ?? "" : "",
+                    Name = data.TryGetProperty("Name", out var name) ? name.GetString() ?? "" : "",
+                    CreatorId = data.TryGetProperty("CreatorId", out var cid) ? cid.GetString() ?? "" : "",
+                    IconPath = data.TryGetProperty("IconPath", out var icon) ? icon.GetString() : null,
+                    CreatedAt = data.TryGetProperty("CreatedAt", out var cat) ? cat.GetDateTime() : DateTime.UtcNow
+                };
+                if (data.TryGetProperty("MemberIds", out var members))
+                {
+                    evt.MemberIds = JsonSerializer.Deserialize<List<string>>(members.GetRawText()) ?? [];
+                }
+                OnGroupChatCreated?.Invoke(evt);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"ChatService: Error parsing GroupChatCreated: {ex.Message}");
+            }
+        });
+
+        _connection.On<string>("GroupChatError", error =>
+            OnGroupChatError?.Invoke(error));
     }
 
     public async Task DisconnectAsync()
@@ -454,4 +517,17 @@ public class ChatService : IChatService, IAsyncDisposable
         await DisconnectAsync().ConfigureAwait(false);
         GC.SuppressFinalize(this);
     }
+}
+
+/// <summary>
+/// Event data for when a group chat is created
+/// </summary>
+public class GroupChatCreatedEvent
+{
+    public string GroupId { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string CreatorId { get; set; } = string.Empty;
+    public List<string> MemberIds { get; set; } = [];
+    public string? IconPath { get; set; }
+    public DateTime CreatedAt { get; set; }
 }

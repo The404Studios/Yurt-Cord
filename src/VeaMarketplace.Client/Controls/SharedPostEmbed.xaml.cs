@@ -123,7 +123,10 @@ public partial class SharedPostEmbed : UserControl
                 {
                     SellerAvatar.Source = new BitmapImage(new Uri(_content.SellerAvatarUrl));
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"SharedPostEmbed: Failed to load seller avatar: {ex.Message}");
+                }
             }
 
             SellerBadge.Text = _content.SellerRole switch

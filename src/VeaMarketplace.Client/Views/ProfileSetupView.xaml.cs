@@ -31,6 +31,14 @@ public partial class ProfileSetupView : UserControl
     public ProfileSetupView()
     {
         InitializeComponent();
+        Loaded += OnLoaded;
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        // Play the card entry animation when the view is loaded
+        var entryAnimation = (Storyboard)FindResource("CardEntryAnimation");
+        entryAnimation.Begin(this);
     }
 
     public void SetUsername(string username)

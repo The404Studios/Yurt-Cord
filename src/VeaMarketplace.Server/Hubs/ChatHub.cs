@@ -391,4 +391,109 @@ public class ChatHub : Hub
             AcknowledgedAt = DateTime.UtcNow
         });
     }
+
+    /// <summary>
+    /// Adds a reaction (emoji) to a message
+    /// </summary>
+    public async Task AddReaction(string messageId, string emoji)
+    {
+        if (!_connectionUserMap.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        var (success, channel, reaction) = _chatService.AddReaction(userId, messageId, emoji);
+
+        if (success && reaction != null)
+        {
+            _logger.LogDebug("User {UserId} added reaction {Emoji} to message {MessageId}", userId, emoji, messageId);
+
+            // Broadcast to everyone in the channel
+            await Clients.Group(channel).SendAsync("ReactionAdded", new
+            {
+                MessageId = messageId,
+                Reaction = reaction
+            });
+        }
+    }
+
+    /// <summary>
+    /// Removes a reaction from a message
+    /// </summary>
+    public async Task RemoveReaction(string messageId, string emoji)
+    {
+        if (!_connectionUserMap.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        var (success, channel) = _chatService.RemoveReaction(userId, messageId, emoji);
+
+        if (success)
+        {
+            _logger.LogDebug("User {UserId} removed reaction {Emoji} from message {MessageId}", userId, emoji, messageId);
+
+            // Broadcast to everyone in the channel
+            await Clients.Group(channel).SendAsync("ReactionRemoved", new
+            {
+                MessageId = messageId,
+                UserId = userId,
+                Emoji = emoji
+            });
+        }
+    }
+
+    /// <summary>
+    /// Creates a new group chat with specified members
+    /// </summary>
+    public async Task<string?> CreateGroupChat(CreateGroupChatRequest request)
+    {
+        if (!_connectionUserMap.TryGetValue(Context.ConnectionId, out var userId))
+            return null;
+
+        if (string.IsNullOrWhiteSpace(request.Name) || request.MemberIds.Count == 0)
+        {
+            await Clients.Caller.SendAsync("GroupChatError", "Invalid group chat parameters");
+            return null;
+        }
+
+        // Create a unique group ID
+        var groupId = $"group_{Guid.NewGuid():N}";
+
+        _logger.LogInformation("User {UserId} created group chat {GroupId}: {Name} with {MemberCount} members",
+            userId, groupId, request.Name, request.MemberIds.Count);
+
+        // Add creator to the group
+        await Groups.AddToGroupAsync(Context.ConnectionId, groupId);
+
+        // Notify all members about the new group
+        foreach (var memberId in request.MemberIds)
+        {
+            if (_userConnectionsMap.TryGetValue(memberId, out var connections))
+            {
+                foreach (var connId in connections)
+                {
+                    await Groups.AddToGroupAsync(connId, groupId);
+                    await Clients.Client(connId).SendAsync("GroupChatCreated", new
+                    {
+                        GroupId = groupId,
+                        Name = request.Name,
+                        CreatorId = userId,
+                        MemberIds = request.MemberIds,
+                        IconPath = request.IconPath,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+            }
+        }
+
+        // Notify the creator
+        await Clients.Caller.SendAsync("GroupChatCreated", new
+        {
+            GroupId = groupId,
+            Name = request.Name,
+            CreatorId = userId,
+            MemberIds = request.MemberIds,
+            IconPath = request.IconPath,
+            CreatedAt = DateTime.UtcNow
+        });
+
+        return groupId;
+    }
 }

@@ -143,6 +143,66 @@ public class VoiceHub : Hub
         }
     }
 
+    #region Video Streaming
+
+    /// <summary>
+    /// Start video streaming in the current voice channel
+    /// </summary>
+    public async Task StartVideo()
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        if (_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
+        {
+            userState.IsVideoEnabled = true;
+
+            // Notify others in the channel that this user started video
+            await Clients.OthersInGroup($"voice_{userState.ChannelId}")
+                .SendAsync("UserVideoStarted", Context.ConnectionId, userId, userState.Username);
+
+            _logger.LogDebug("User {Username} started video in channel {ChannelId}", userState.Username, userState.ChannelId);
+        }
+    }
+
+    /// <summary>
+    /// Stop video streaming in the current voice channel
+    /// </summary>
+    public async Task StopVideo()
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        if (_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
+        {
+            userState.IsVideoEnabled = false;
+
+            // Notify others in the channel that this user stopped video
+            await Clients.OthersInGroup($"voice_{userState.ChannelId}")
+                .SendAsync("UserVideoStopped", Context.ConnectionId, userId);
+
+            _logger.LogDebug("User {Username} stopped video in channel {ChannelId}", userState.Username, userState.ChannelId);
+        }
+    }
+
+    /// <summary>
+    /// Send a video frame to all other users in the voice channel
+    /// </summary>
+    public async Task SendVideoFrame(byte[] frameData, int width, int height)
+    {
+        if (_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
+        {
+            // Don't send if video is not enabled
+            if (!userState.IsVideoEnabled) return;
+
+            // Broadcast video frame to all OTHER users in the channel (not the sender)
+            await Clients.OthersInGroup($"voice_{userState.ChannelId}")
+                .SendAsync("ReceiveVideoFrame", Context.ConnectionId, frameData, width, height);
+        }
+    }
+
+    #endregion
+
     // Admin: Disconnect a user from voice
     public async Task DisconnectUser(string targetConnectionId)
     {
@@ -1429,6 +1489,7 @@ public class VoiceUserState
     public bool IsSpeaking { get; set; }
     public double AudioLevel { get; set; }
     public bool IsScreenSharing { get; set; }
+    public bool IsVideoEnabled { get; set; }
 }
 
 public class ScreenShareState

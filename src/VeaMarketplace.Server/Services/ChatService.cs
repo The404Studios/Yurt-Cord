@@ -143,6 +143,101 @@ public class ChatService
         return true;
     }
 
+    /// <summary>
+    /// Adds a reaction to a message. Returns the updated reaction info or null if failed.
+    /// </summary>
+    public (bool Success, string Channel, MessageReactionDto? Reaction) AddReaction(string userId, string messageId, string emoji)
+    {
+        var message = _db.Messages.FindById(messageId);
+        if (message == null) return (false, "", null);
+
+        var user = _db.Users.FindById(userId);
+        if (user == null) return (false, "", null);
+
+        // Check if user already reacted with this emoji
+        var existingReaction = _db.MessageReactions
+            .FindOne(r => r.MessageId == messageId && r.UserId == userId && r.Emoji == emoji);
+
+        if (existingReaction != null)
+            return (false, message.Channel, null); // Already reacted
+
+        // Add the reaction
+        var reaction = new MessageReaction
+        {
+            MessageId = messageId,
+            UserId = userId,
+            Username = user.Username,
+            Emoji = emoji
+        };
+        _db.MessageReactions.Insert(reaction);
+
+        // Update reaction counts on the message
+        if (!message.ReactionCounts.ContainsKey(emoji))
+            message.ReactionCounts[emoji] = 0;
+        message.ReactionCounts[emoji]++;
+        _db.Messages.Update(message);
+
+        var dto = new MessageReactionDto
+        {
+            Id = reaction.Id,
+            MessageId = messageId,
+            UserId = userId,
+            Username = user.Username,
+            Emoji = emoji,
+            CreatedAt = reaction.CreatedAt
+        };
+
+        return (true, message.Channel, dto);
+    }
+
+    /// <summary>
+    /// Removes a reaction from a message. Returns success and channel name.
+    /// </summary>
+    public (bool Success, string Channel) RemoveReaction(string userId, string messageId, string emoji)
+    {
+        var message = _db.Messages.FindById(messageId);
+        if (message == null) return (false, "");
+
+        var reaction = _db.MessageReactions
+            .FindOne(r => r.MessageId == messageId && r.UserId == userId && r.Emoji == emoji);
+
+        if (reaction == null) return (false, message.Channel);
+
+        _db.MessageReactions.Delete(reaction.Id);
+
+        // Update reaction counts
+        if (message.ReactionCounts.ContainsKey(emoji))
+        {
+            message.ReactionCounts[emoji]--;
+            if (message.ReactionCounts[emoji] <= 0)
+                message.ReactionCounts.Remove(emoji);
+            _db.Messages.Update(message);
+        }
+
+        return (true, message.Channel);
+    }
+
+    /// <summary>
+    /// Gets all reactions for a message grouped by emoji
+    /// </summary>
+    public List<ReactionGroupDto> GetMessageReactions(string messageId)
+    {
+        var reactions = _db.MessageReactions
+            .Find(r => r.MessageId == messageId)
+            .ToList();
+
+        return reactions
+            .GroupBy(r => r.Emoji)
+            .Select(g => new ReactionGroupDto
+            {
+                Emoji = g.Key,
+                Count = g.Count(),
+                UserIds = g.Select(r => r.UserId).ToList(),
+                HasReacted = false // Set by caller based on current user
+            })
+            .ToList();
+    }
+
     private static ChatMessageDto MapToDto(ChatMessage message, User? sender)
     {
         return new ChatMessageDto

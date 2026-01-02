@@ -261,15 +261,13 @@ public class TimestampConverter : IValueConverter
 /// </summary>
 public class DefaultAvatarConverter : IValueConverter
 {
-    private const string DefaultAvatarUrl = "https://cdn.discordapp.com/embed/avatars/0.png";
-
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is string url && !string.IsNullOrWhiteSpace(url))
         {
             return url;
         }
-        return parameter as string ?? DefaultAvatarUrl;
+        return parameter as string ?? AppConstants.DefaultAvatarPath;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

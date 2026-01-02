@@ -14,6 +14,10 @@ public class DiscoveryService
     private static readonly TimeSpan DefaultCacheDuration = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan ShortCacheDuration = TimeSpan.FromMinutes(1);
 
+    // Track cache keys for proper invalidation
+    private static readonly HashSet<string> _cacheKeys = new();
+    private static readonly object _cacheKeyLock = new();
+
     public DiscoveryService(DatabaseService db, IMemoryCache cache)
     {
         _db = db;
@@ -273,9 +277,63 @@ public class DiscoveryService
 
     public void InvalidateCache(string? pattern = null)
     {
-        // In a production environment, you would use IMemoryCache.Remove()
-        // or implement a distributed cache with pattern-based invalidation
-        // For now, cache will expire naturally based on TTL
+        lock (_cacheKeyLock)
+        {
+            if (string.IsNullOrEmpty(pattern))
+            {
+                // Invalidate all cached items
+                foreach (var key in _cacheKeys.ToList())
+                {
+                    _cache.Remove(key);
+                }
+                _cacheKeys.Clear();
+            }
+            else
+            {
+                // Invalidate items matching the pattern
+                var keysToRemove = _cacheKeys
+                    .Where(k => k.Contains(pattern, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                foreach (var key in keysToRemove)
+                {
+                    _cache.Remove(key);
+                    _cacheKeys.Remove(key);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Invalidates product-related caches when products are modified
+    /// </summary>
+    public void InvalidateProductCaches()
+    {
+        InvalidateCache("products");
+        InvalidateCache("featured");
+        InvalidateCache("trending");
+        InvalidateCache("new_arrivals");
+        InvalidateCache("category");
+    }
+
+    /// <summary>
+    /// Invalidates seller-related caches when seller data changes
+    /// </summary>
+    public void InvalidateSellerCaches()
+    {
+        InvalidateCache("sellers");
+        InvalidateCache("top_sellers");
+    }
+
+    private T? GetOrCreateCached<T>(string cacheKey, Func<ICacheEntry, T> factory) where T : class
+    {
+        // Track the cache key
+        lock (_cacheKeyLock)
+        {
+            _cacheKeys.Add(cacheKey);
+        }
+
+        return _cache.GetOrCreate(cacheKey, factory);
     }
 
     private ProductDto MapProductToDto(Product product)
@@ -327,13 +385,13 @@ public class DiscoveryService
             Rank = user.Rank,
             IsVerified = user.Role >= UserRole.Verified,
             TotalSales = user.TotalSales,
-            TotalEarnings = user.Balance, // Simplified
+            TotalEarnings = user.Balance,
             AverageRating = reviews.Count > 0 ? reviews.Average(r => r.Rating) : 0,
             TotalReviews = reviews.Count,
             ActiveListings = activeListings,
             MemberSince = user.CreatedAt,
-            ResponseRate = 95, // Placeholder
-            ResponseTime = "< 1 hour" // Placeholder
+            ResponseRate = user.ResponseRate,
+            ResponseTime = user.ResponseTime
         };
     }
 }
