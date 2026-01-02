@@ -33,7 +33,7 @@ public interface IProfileService
 public class ProfileService : IProfileService, IAsyncDisposable
 {
     private HubConnection? _connection;
-    private const string HubUrl = "http://localhost:5000/hubs/profile";
+    private const string HubUrl = "http://162.248.94.23:5000/hubs/profile";
     private string? _authToken;
 
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
