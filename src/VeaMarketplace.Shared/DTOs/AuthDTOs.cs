@@ -7,11 +7,6 @@ public class LoginRequest
 {
     public string Username { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
-    /// <summary>
-    /// Hardware ID for HWID authentication mode.
-    /// Optional unless server is configured for HWID mode.
-    /// </summary>
-    public string? HardwareId { get; set; }
 }
 
 public class RegisterRequest
@@ -19,12 +14,6 @@ public class RegisterRequest
     public string Username { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
-    public string? ActivationKey { get; set; }
-    /// <summary>
-    /// Hardware ID for HWID authentication mode.
-    /// Optional unless server is configured for HWID mode.
-    /// </summary>
-    public string? HardwareId { get; set; }
 }
 
 public class AuthResponse
@@ -51,7 +40,7 @@ public class UserDto
     public string Bio { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string StatusMessage { get; set; } = string.Empty;
-    public string AccentColor { get; set; } = "#FF6B00"; // Plugin orange
+    public string AccentColor { get; set; } = "#00B4D8"; // Yurt Cord teal
     public ProfileVisibility ProfileVisibility { get; set; } = ProfileVisibility.Public;
     public UserRole Role { get; set; }
     public UserRank Rank { get; set; }

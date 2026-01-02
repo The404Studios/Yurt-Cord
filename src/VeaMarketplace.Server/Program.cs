@@ -174,7 +174,6 @@ builder.Services.AddScoped<ModerationService>();
 builder.Services.AddScoped<DiscoveryService>();
 builder.Services.AddScoped<ActivityService>();
 builder.Services.AddSingleton<RoleConfigurationService>();
-builder.Services.AddSingleton<KeyGeneratorService>();
 
 // JWT Authentication - get secret from environment or configuration
 var jwtSecret = Environment.GetEnvironmentVariable("VEA_JWT_SECRET")

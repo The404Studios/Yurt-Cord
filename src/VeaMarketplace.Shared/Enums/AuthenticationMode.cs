@@ -12,16 +12,9 @@ public enum AuthenticationMode
     Session = 0,
 
     /// <summary>
-    /// Hardware ID (HWID) based authentication.
-    /// Ties user accounts to specific hardware fingerprints.
-    /// Prevents account sharing across multiple machines.
-    /// </summary>
-    Hwid = 1,
-
-    /// <summary>
     /// Whitelist-based authentication.
     /// Only pre-approved users or IP addresses can register/login.
     /// Useful for private or invite-only servers.
     /// </summary>
-    Whitelist = 2
+    Whitelist = 1
 }

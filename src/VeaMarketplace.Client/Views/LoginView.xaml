@@ -412,42 +412,6 @@
                                      Margin="0,0,0,16"/>
                     </StackPanel>
 
-                    <!-- Activation Key (Register only) -->
-                    <StackPanel x:Name="ActivationKeyPanel" Visibility="Collapsed">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                            <TextBlock Text="ACTIVATION KEY" FontSize="11" FontWeight="Bold"
-                                       Foreground="{StaticResource TextSecondaryBrush}"/>
-                            <TextBlock Text="(Required)" FontSize="10"
-                                       Foreground="#71717A" Margin="8,0,0,0"
-                                       VerticalAlignment="Center"/>
-                            <!-- Valid indicator (shown when validated) -->
-                            <TextBlock x:Name="KeyStatusIcon" Text="✓" FontSize="12"
-                                       Foreground="#43B581" FontWeight="Bold"
-                                       Margin="8,0,0,0" VerticalAlignment="Center"
-                                       Visibility="Collapsed"/>
-                        </StackPanel>
-                        <Grid Margin="0,0,0,16">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBox x:Name="ActivationKeyBox"
-                                     Style="{StaticResource ModernTextBox}"
-                                     MaxLength="7" CharacterCasing="Upper"
-                                     FontFamily="Consolas" FontSize="16" FontWeight="Bold"
-                                     TextChanged="ActivationKeyBox_TextChanged"
-                                     ToolTip="Format: XXX-XXX (e.g., ABC-123)"/>
-                            <Button Grid.Column="1" x:Name="ValidateKeyButton"
-                                    Content="Validate" Margin="8,0,0,0"
-                                    Style="{StaticResource SecondaryButton}"
-                                    Height="38" Padding="16,0"
-                                    IsEnabled="False"
-                                    Click="ValidateKey_Click"/>
-                        </Grid>
-                        <TextBlock Text="Enter the 6-character key in XXX-XXX format (e.g., ABC-123)"
-                                   FontSize="10" Foreground="#52525B"/>
-                    </StackPanel>
-
                     <!-- Remember Me (Login only) -->
                     <CheckBox x:Name="RememberMeCheck" Content="Remember me"
                               Foreground="{StaticResource TextSecondaryBrush}"
@@ -511,7 +475,7 @@
                     </StackPanel>
                 </StackPanel>
 
-                <!-- Loading Overlay - Plugin Orange -->
+                <!-- Loading Overlay - Yurt Cord Teal -->
                 <Border x:Name="LoadingOverlay" Visibility="Collapsed"
                         Background="#E0000000" CornerRadius="12">
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -526,8 +490,8 @@
                                      StrokeDashArray="2,4">
                                 <Ellipse.Stroke>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Color="#FF6B00" Offset="0"/>
-                                        <GradientStop Color="#FFB347" Offset="1"/>
+                                        <GradientStop Color="#00B4D8" Offset="0"/>
+                                        <GradientStop Color="#90E0EF" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Ellipse.Stroke>
                             </Ellipse>
