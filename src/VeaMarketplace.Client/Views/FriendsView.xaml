@@ -17,6 +17,9 @@
             <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
             <converters:StringToVisibilityConverter x:Key="StringToVisConverter"/>
             <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+            <converters:NullToVisibilityInverseConverter x:Key="NullToVisibilityInverseConverter"/>
+            <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
+            <converters:TimeAgoConverter x:Key="TimeAgoConverter"/>
 
             <!-- Discord-style DM Item -->
             <Style x:Key="DMItemButton" TargetType="Button">
