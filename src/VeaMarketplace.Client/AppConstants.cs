@@ -9,23 +9,23 @@ public static class AppConstants
     #region Application Identity
 
     /// <summary>The application name displayed throughout the UI.</summary>
-    public const string AppName = "Plugin";
+    public const string AppName = "Yurt Cord";
 
     /// <summary>The application tagline.</summary>
-    public const string AppTagline = "Connect. Trade. Create.";
+    public const string AppTagline = "Your Community, Your Way.";
 
     /// <summary>Current application version.</summary>
     public const string AppVersion = "1.0.0";
 
     /// <summary>URL scheme for deep linking.</summary>
-    public const string UrlScheme = "plugin://";
+    public const string UrlScheme = "yurtcord://";
 
     #endregion
 
     #region Server Configuration
 
-    /// <summary>Default server URL for development.</summary>
-    public const string DefaultServerUrl = "http://localhost:5000";
+    /// <summary>Default server URL for production.</summary>
+    public const string DefaultServerUrl = "http://162.248.94.23:5000";
 
     /// <summary>API base path.</summary>
     public const string ApiBasePath = "/api";
@@ -113,8 +113,8 @@ public static class AppConstants
 
     #region Theme Colors (for code-behind usage)
 
-    /// <summary>Primary accent color (Plugin Orange).</summary>
-    public const string AccentPrimaryHex = "#FF6B00";
+    /// <summary>Primary accent color (Yurt Cord Teal).</summary>
+    public const string AccentPrimaryHex = "#00B4D8";
 
     /// <summary>Lighter accent color.</summary>
     public const string AccentLightHex = "#FF8533";

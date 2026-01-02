@@ -2,28 +2,28 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- ═══════════════════════════════════════════════════════════════════════
-         PLUGIN - Premium Dark Theme with Orange Accent
-         A sleek, modern interface with depth and warmth
+         YURT CORD - Premium Dark Theme with Teal/Cyan Accent
+         Your Community, Your Way - Modern, Inviting, Connected
     ═══════════════════════════════════════════════════════════════════════ -->
 
-    <!-- Base Dark Colors - Deep blacks with subtle warmth -->
-    <Color x:Key="PrimaryDarkColor">#0A0A0B</Color>
-    <Color x:Key="SecondaryDarkColor">#111113</Color>
-    <Color x:Key="TertiaryDarkColor">#18181B</Color>
-    <Color x:Key="QuaternaryDarkColor">#222226</Color>
-    <Color x:Key="SurfaceColor">#2A2A2F</Color>
-    <Color x:Key="SurfaceHighColor">#333338</Color>
+    <!-- Base Dark Colors - Deep space with cool undertones -->
+    <Color x:Key="PrimaryDarkColor">#0A0B10</Color>
+    <Color x:Key="SecondaryDarkColor">#0F1118</Color>
+    <Color x:Key="TertiaryDarkColor">#151820</Color>
+    <Color x:Key="QuaternaryDarkColor">#1C2028</Color>
+    <Color x:Key="SurfaceColor">#242830</Color>
+    <Color x:Key="SurfaceHighColor">#2D3340</Color>
 
-    <!-- Primary Accent - Vibrant Orange -->
-    <Color x:Key="AccentPrimaryColor">#FF6B00</Color>
-    <Color x:Key="AccentPrimaryLightColor">#FF8533</Color>
-    <Color x:Key="AccentPrimaryDarkColor">#CC5500</Color>
-    <Color x:Key="AccentPrimarySubtleColor">#FF6B0020</Color>
+    <!-- Primary Accent - Vibrant Teal/Cyan -->
+    <Color x:Key="AccentPrimaryColor">#00B4D8</Color>
+    <Color x:Key="AccentPrimaryLightColor">#48CAE4</Color>
+    <Color x:Key="AccentPrimaryDarkColor">#0096B8</Color>
+    <Color x:Key="AccentPrimarySubtleColor">#00B4D820</Color>
 
-    <!-- Secondary Accent - Warm Amber/Gold -->
-    <Color x:Key="AccentSecondaryColor">#FFB347</Color>
-    <Color x:Key="AccentGoldColor">#F5A623</Color>
-    <Color x:Key="AccentAmberColor">#FFBF00</Color>
+    <!-- Secondary Accent - Ocean Blue -->
+    <Color x:Key="AccentSecondaryColor">#90E0EF</Color>
+    <Color x:Key="AccentGoldColor">#CAF0F8</Color>
+    <Color x:Key="AccentAmberColor">#0077B6</Color>
 
     <!-- Status Colors -->
     <Color x:Key="AccentGreenColor">#22C55E</Color>
@@ -35,33 +35,33 @@
     <Color x:Key="AccentPinkColor">#EC4899</Color>
 
     <!-- Legacy Accent Aliases -->
-    <Color x:Key="AccentBlurpleColor">#FF6B00</Color>
-    <Color x:Key="AccentBlurple">#FF6B00</Color>
+    <Color x:Key="AccentBlurpleColor">#00B4D8</Color>
+    <Color x:Key="AccentBlurple">#00B4D8</Color>
     <Color x:Key="AccentPink">#EC4899</Color>
-    <Color x:Key="AccentOrangeColor">#FF6B00</Color>
+    <Color x:Key="AccentOrangeColor">#00B4D8</Color>
 
     <!-- Text Colors - High contrast for readability -->
-    <Color x:Key="TextPrimaryColor">#FAFAFA</Color>
-    <Color x:Key="TextSecondaryColor">#A1A1AA</Color>
-    <Color x:Key="TextMutedColor">#71717A</Color>
-    <Color x:Key="TextLinkColor">#FF8533</Color>
-    <Color x:Key="TextAccentColor">#FF6B00</Color>
+    <Color x:Key="TextPrimaryColor">#F0F4F8</Color>
+    <Color x:Key="TextSecondaryColor">#94A3B8</Color>
+    <Color x:Key="TextMutedColor">#64748B</Color>
+    <Color x:Key="TextLinkColor">#48CAE4</Color>
+    <Color x:Key="TextAccentColor">#00B4D8</Color>
 
-    <!-- Role Colors - Warm palette -->
+    <!-- Role Colors - Cool palette -->
     <Color x:Key="RoleOwner">#FFD700</Color>
-    <Color x:Key="RoleAdmin">#FF6B00</Color>
+    <Color x:Key="RoleAdmin">#00B4D8</Color>
     <Color x:Key="RoleModerator">#A855F7</Color>
     <Color x:Key="RoleVIP">#22C55E</Color>
-    <Color x:Key="RoleVerified">#3B82F6</Color>
-    <Color x:Key="RoleMember">#71717A</Color>
+    <Color x:Key="RoleVerified">#48CAE4</Color>
+    <Color x:Key="RoleMember">#64748B</Color>
 
-    <!-- Rank Colors - Fire gradient theme -->
+    <!-- Rank Colors - Ocean gradient theme -->
     <Color x:Key="RankLegend">#FFD700</Color>
-    <Color x:Key="RankElite">#FF6B00</Color>
-    <Color x:Key="RankDiamond">#06B6D4</Color>
-    <Color x:Key="RankPlatinum">#E4E4E7</Color>
+    <Color x:Key="RankElite">#00B4D8</Color>
+    <Color x:Key="RankDiamond">#90E0EF</Color>
+    <Color x:Key="RankPlatinum">#CAF0F8</Color>
     <Color x:Key="RankGold">#F5A623</Color>
-    <Color x:Key="RankSilver">#A1A1AA</Color>
+    <Color x:Key="RankSilver">#94A3B8</Color>
     <Color x:Key="RankBronze">#CD7F32</Color>
 
     <!-- ═══════════════════════════════════════════════════════════════════════
@@ -125,7 +125,7 @@
     <SolidColorBrush x:Key="MutedText" Color="{StaticResource TextMutedColor}"/>
 
     <!-- ═══════════════════════════════════════════════════════════════════════
-         GRADIENT BRUSHES - Premium feel with orange glow
+         GRADIENT BRUSHES - Premium feel with ocean teal glow
     ═══════════════════════════════════════════════════════════════════════ -->
 
     <!-- Primary Accent Gradient -->
@@ -134,17 +134,17 @@
         <GradientStop Color="{StaticResource AccentSecondaryColor}" Offset="1"/>
     </LinearGradientBrush>
 
-    <!-- Fire Gradient -->
+    <!-- Ocean Gradient (replaces Fire) -->
     <LinearGradientBrush x:Key="FireGradient" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="#FF6B00" Offset="0"/>
-        <GradientStop Color="#FFB347" Offset="0.5"/>
-        <GradientStop Color="#FFD700" Offset="1"/>
+        <GradientStop Color="#0077B6" Offset="0"/>
+        <GradientStop Color="#00B4D8" Offset="0.5"/>
+        <GradientStop Color="#90E0EF" Offset="1"/>
     </LinearGradientBrush>
 
-    <!-- Ember Gradient (subtle) -->
+    <!-- Wave Gradient (subtle) -->
     <LinearGradientBrush x:Key="EmberGradient" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Color="#FF6B0030" Offset="0"/>
-        <GradientStop Color="#FF6B0000" Offset="1"/>
+        <GradientStop Color="#00B4D830" Offset="0"/>
+        <GradientStop Color="#00B4D800" Offset="1"/>
     </LinearGradientBrush>
 
     <!-- Voice Active Gradient -->
@@ -155,21 +155,36 @@
 
     <!-- Surface Gradient (for cards with depth) -->
     <LinearGradientBrush x:Key="SurfaceGradient" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Color="#222226" Offset="0"/>
-        <GradientStop Color="#18181B" Offset="1"/>
+        <GradientStop Color="#1C2028" Offset="0"/>
+        <GradientStop Color="#151820" Offset="1"/>
     </LinearGradientBrush>
 
     <!-- Premium Card Gradient -->
     <LinearGradientBrush x:Key="PremiumGradient" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="#FF6B00" Offset="0"/>
-        <GradientStop Color="#CC5500" Offset="1"/>
+        <GradientStop Color="#00B4D8" Offset="0"/>
+        <GradientStop Color="#0077B6" Offset="1"/>
     </LinearGradientBrush>
 
     <!-- Sidebar Gradient -->
     <LinearGradientBrush x:Key="SidebarGradient" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Color="#0A0A0B" Offset="0"/>
-        <GradientStop Color="#111113" Offset="1"/>
+        <GradientStop Color="#0A0B10" Offset="0"/>
+        <GradientStop Color="#0F1118" Offset="1"/>
     </LinearGradientBrush>
+
+    <!-- Background Gradient - Beautiful aurora-like effect -->
+    <LinearGradientBrush x:Key="BackgroundGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#0A0B10" Offset="0"/>
+        <GradientStop Color="#0F1520" Offset="0.3"/>
+        <GradientStop Color="#0A1520" Offset="0.6"/>
+        <GradientStop Color="#0A0B10" Offset="1"/>
+    </LinearGradientBrush>
+
+    <!-- Aurora Glow Background -->
+    <RadialGradientBrush x:Key="AuroraGlow" Center="0.3,0.2" RadiusX="0.8" RadiusY="0.8">
+        <GradientStop Color="#00B4D815" Offset="0"/>
+        <GradientStop Color="#00B4D808" Offset="0.5"/>
+        <GradientStop Color="#00000000" Offset="1"/>
+    </RadialGradientBrush>
 
     <!-- ═══════════════════════════════════════════════════════════════════════
          EFFECTS - Shadows and Glows
@@ -183,17 +198,17 @@
     <DropShadowEffect x:Key="CardShadow" BlurRadius="15" ShadowDepth="4"
                       Color="Black" Opacity="0.4" Direction="270"/>
 
-    <!-- Orange Glow Effect -->
+    <!-- Teal Glow Effect -->
     <DropShadowEffect x:Key="GlowEffect" BlurRadius="20" ShadowDepth="0"
-                      Color="#FF6B00" Opacity="0.5"/>
+                      Color="#00B4D8" Opacity="0.5"/>
 
-    <!-- Subtle Orange Glow -->
+    <!-- Subtle Teal Glow -->
     <DropShadowEffect x:Key="SubtleGlow" BlurRadius="12" ShadowDepth="0"
-                      Color="#FF6B00" Opacity="0.3"/>
+                      Color="#00B4D8" Opacity="0.3"/>
 
     <!-- Hover Glow -->
     <DropShadowEffect x:Key="HoverGlow" BlurRadius="16" ShadowDepth="0"
-                      Color="#FF8533" Opacity="0.4"/>
+                      Color="#48CAE4" Opacity="0.4"/>
 
     <!-- Subtle Shadow -->
     <DropShadowEffect x:Key="SubtleShadow" BlurRadius="8" ShadowDepth="2"
@@ -214,5 +229,9 @@
     <!-- Danger Glow -->
     <DropShadowEffect x:Key="DangerGlow" BlurRadius="15" ShadowDepth="0"
                       Color="#EF4444" Opacity="0.4"/>
+
+    <!-- Accent Glow - Primary teal -->
+    <DropShadowEffect x:Key="AccentGlow" BlurRadius="18" ShadowDepth="0"
+                      Color="#00B4D8" Opacity="0.45"/>
 
 </ResourceDictionary>
