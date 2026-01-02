@@ -321,4 +321,34 @@ public class FriendService
              (f.RequesterId == targetUserId && f.AddresseeId == userId)) &&
             f.Status == FriendshipStatus.Blocked);
     }
+
+    public string? GetUserNote(string userId, string targetUserId)
+    {
+        var nickname = _db.FriendNicknames.FindOne(n =>
+            n.UserId == userId && n.FriendUserId == targetUserId);
+        return nickname?.Note;
+    }
+
+    public void SetUserNote(string userId, string targetUserId, string note)
+    {
+        var existing = _db.FriendNicknames.FindOne(n =>
+            n.UserId == userId && n.FriendUserId == targetUserId);
+
+        if (existing != null)
+        {
+            existing.Note = note;
+            existing.UpdatedAt = DateTime.UtcNow;
+            _db.FriendNicknames.Update(existing);
+        }
+        else
+        {
+            var nickname = new FriendNickname
+            {
+                UserId = userId,
+                FriendUserId = targetUserId,
+                Note = note
+            };
+            _db.FriendNicknames.Insert(nickname);
+        }
+    }
 }

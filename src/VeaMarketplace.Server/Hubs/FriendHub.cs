@@ -249,15 +249,46 @@ public class FriendHub : Hub
         if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
             return;
 
+        // Get friend info before removal for the FriendRemoved event
+        var friendUser = _authService.GetUserById(friendId);
+
         var (success, message) = _friendService.RemoveFriend(userId, friendId);
 
         if (success)
         {
+            // Send FriendRemoved event with friend DTO
+            if (friendUser != null)
+            {
+                var removedFriendDto = new FriendDto
+                {
+                    UserId = friendUser.Id,
+                    Username = friendUser.Username,
+                    DisplayName = friendUser.DisplayName,
+                    AvatarUrl = friendUser.AvatarUrl
+                };
+                await Clients.Caller.SendAsync("FriendRemoved", removedFriendDto);
+            }
+
+            // Also send updated friends list
             var myFriends = _friendService.GetFriends(userId);
             await Clients.Caller.SendAsync("FriendsList", myFriends);
 
             if (_userConnections.TryGetValue(friendId, out var friendConnId))
             {
+                // Notify the other user they were removed
+                var myUser = _authService.GetUserById(userId);
+                if (myUser != null)
+                {
+                    var meAsRemovedDto = new FriendDto
+                    {
+                        UserId = myUser.Id,
+                        Username = myUser.Username,
+                        DisplayName = myUser.DisplayName,
+                        AvatarUrl = myUser.AvatarUrl
+                    };
+                    await Clients.Client(friendConnId).SendAsync("FriendRemoved", meAsRemovedDto);
+                }
+
                 var theirFriends = _friendService.GetFriends(friendId);
                 await Clients.Client(friendConnId).SendAsync("FriendsList", theirFriends);
             }
@@ -394,6 +425,7 @@ public class FriendHub : Hub
             var friends = _friendService.GetFriends(userId);
             await Clients.Caller.SendAsync("FriendsList", friends);
             await Clients.Caller.SendAsync("UserBlocked", targetUserId);
+            await Clients.Caller.SendAsync("Success", "User blocked successfully");
 
             // Notify the blocked user they've been removed (don't tell them they're blocked)
             if (_userConnections.TryGetValue(targetUserId, out var targetConnId))
@@ -404,7 +436,7 @@ public class FriendHub : Hub
         }
         else
         {
-            await Clients.Caller.SendAsync("FriendError", message);
+            await Clients.Caller.SendAsync("BlockError", message);
         }
     }
 
@@ -418,10 +450,11 @@ public class FriendHub : Hub
         if (success)
         {
             await Clients.Caller.SendAsync("UserUnblocked", targetUserId);
+            await Clients.Caller.SendAsync("Success", "User unblocked successfully");
         }
         else
         {
-            await Clients.Caller.SendAsync("FriendError", message);
+            await Clients.Caller.SendAsync("BlockError", message);
         }
     }
 
@@ -474,5 +507,22 @@ public class FriendHub : Hub
     {
         _connectionTimestamps[Context.ConnectionId] = DateTime.UtcNow;
         await Clients.Caller.SendAsync("Pong", new { ServerTime = DateTime.UtcNow });
+    }
+
+    public Task<string?> GetUserNote(string targetUserId)
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return Task.FromResult<string?>(null);
+
+        return Task.FromResult(_friendService.GetUserNote(userId, targetUserId));
+    }
+
+    public async Task SetUserNote(string targetUserId, string note)
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        _friendService.SetUserNote(userId, targetUserId, note);
+        await Clients.Caller.SendAsync("UserNoteUpdated", targetUserId);
     }
 }
