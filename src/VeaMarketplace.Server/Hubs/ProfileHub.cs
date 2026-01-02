@@ -10,14 +10,36 @@ public class ProfileHub : Hub
 {
     private readonly AuthService _authService;
     private readonly FriendService _friendService;
-    private static readonly ConcurrentDictionary<string, string> _userConnections = new(); // userId -> connectionId
+    private static readonly ConcurrentDictionary<string, List<string>> _userConnections = new(); // userId -> connectionIds (multiple)
     private static readonly ConcurrentDictionary<string, string> _connectionUsers = new(); // connectionId -> userId
     private static readonly ConcurrentDictionary<string, UserDto> _onlineUsers = new(); // userId -> UserDto (cached)
+    private static readonly ConcurrentDictionary<string, DateTime> _connectionTimestamps = new();
 
     public ProfileHub(AuthService authService, FriendService friendService)
     {
         _authService = authService;
         _friendService = friendService;
+    }
+
+    public override async Task OnConnectedAsync()
+    {
+        var connectionId = Context.ConnectionId;
+        _connectionTimestamps[connectionId] = DateTime.UtcNow;
+
+        await Clients.Caller.SendAsync("ConnectionHandshake", new
+        {
+            ConnectionId = connectionId,
+            ServerTime = DateTime.UtcNow,
+            Hub = "ProfileHub"
+        });
+
+        await base.OnConnectedAsync();
+    }
+
+    public async Task Ping()
+    {
+        _connectionTimestamps[Context.ConnectionId] = DateTime.UtcNow;
+        await Clients.Caller.SendAsync("Pong", new { ServerTime = DateTime.UtcNow });
     }
 
     public async Task Authenticate(string token)
@@ -29,8 +51,12 @@ public class ProfileHub : Hub
             return;
         }
 
-        // Track connection
-        _userConnections[user.Id] = Context.ConnectionId;
+        // Track connection (support multiple connections per user)
+        _userConnections.AddOrUpdate(
+            user.Id,
+            _ => new List<string> { Context.ConnectionId },
+            (_, list) => { lock (list) { if (!list.Contains(Context.ConnectionId)) list.Add(Context.ConnectionId); } return list; }
+        );
         _connectionUsers[Context.ConnectionId] = user.Id;
 
         // Cache user profile
@@ -129,9 +155,12 @@ public class ProfileHub : Hub
         var friends = _friendService.GetFriends(userId);
         foreach (var friend in friends)
         {
-            if (_userConnections.TryGetValue(friend.UserId, out var friendConnId))
+            if (_userConnections.TryGetValue(friend.UserId, out var friendConnIds))
             {
-                await Clients.Client(friendConnId).SendAsync("FriendProfileUpdated", updatedUser);
+                foreach (var connId in friendConnIds.ToList())
+                {
+                    await Clients.Client(connId).SendAsync("FriendProfileUpdated", updatedUser);
+                }
             }
         }
     }
@@ -174,15 +203,42 @@ public class ProfileHub : Hub
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        if (_connectionUsers.TryRemove(Context.ConnectionId, out var userId))
-        {
-            _userConnections.TryRemove(userId, out _);
-            _onlineUsers.TryRemove(userId, out var userDto);
+        var connectionId = Context.ConnectionId;
+        _connectionTimestamps.TryRemove(connectionId, out _);
 
-            // Notify all users that this user went offline
-            if (userDto != null)
+        if (_connectionUsers.TryRemove(connectionId, out var userId))
+        {
+            // Remove this connection from user's connection list
+            if (_userConnections.TryGetValue(userId, out var connIds))
             {
-                await Clients.Group("online_users").SendAsync("UserOffline", userId, userDto.Username);
+                lock (connIds)
+                {
+                    connIds.Remove(connectionId);
+                    // Only mark user offline if no more connections
+                    if (connIds.Count == 0)
+                    {
+                        _userConnections.TryRemove(userId, out _);
+                        _onlineUsers.TryRemove(userId, out var userDto);
+
+                        // Notify all users that this user went offline
+                        if (userDto != null)
+                        {
+                            // Fire-and-forget with error handling
+                            _ = Task.Run(async () =>
+                            {
+                                try
+                                {
+                                    await Clients.Group("online_users").SendAsync("UserOffline", userId, userDto.Username);
+                                }
+                                catch (Exception ex)
+                                {
+                                    // Log error but don't propagate - user is already disconnecting
+                                    System.Diagnostics.Debug.WriteLine($"ProfileHub: Failed to notify UserOffline: {ex.Message}");
+                                }
+                            });
+                        }
+                    }
+                }
             }
         }
 
@@ -190,12 +246,15 @@ public class ProfileHub : Hub
     }
 
     // Static method to broadcast profile updates from other places (e.g., REST API)
-    public static void NotifyProfileUpdate(IHubContext<ProfileHub> hubContext, UserDto updatedUser)
+    public static async Task NotifyProfileUpdateAsync(IHubContext<ProfileHub> hubContext, UserDto updatedUser)
     {
-        if (_userConnections.TryGetValue(updatedUser.Id, out var connId))
+        if (_userConnections.TryGetValue(updatedUser.Id, out var connIds))
         {
-            hubContext.Clients.Client(connId).SendAsync("ProfileUpdated", updatedUser);
+            foreach (var connId in connIds.ToList())
+            {
+                await hubContext.Clients.Client(connId).SendAsync("ProfileUpdated", updatedUser);
+            }
         }
-        hubContext.Clients.Group("online_users").SendAsync("UserProfileUpdated", updatedUser);
+        await hubContext.Clients.Group("online_users").SendAsync("UserProfileUpdated", updatedUser);
     }
 }

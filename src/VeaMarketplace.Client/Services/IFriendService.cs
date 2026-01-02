@@ -46,6 +46,7 @@ public interface IFriendService
     event Action<BlockedUserDto>? OnUserBlocked;
     event Action<string>? OnUserUnblocked;
     event Action? OnConversationsUpdated;
+    event Action<string>? OnUserNoteUpdated;
 
     Task ConnectAsync(string token);
     Task DisconnectAsync();
@@ -116,6 +117,7 @@ public class FriendService : IFriendService, IAsyncDisposable
     public event Action<BlockedUserDto>? OnUserBlocked;
     public event Action<string>? OnUserUnblocked;
     public event Action? OnConversationsUpdated;
+    public event Action<string>? OnUserNoteUpdated;
 
     public async Task ConnectAsync(string token)
     {
@@ -508,6 +510,12 @@ public class FriendService : IFriendService, IAsyncDisposable
                 }
                 OnFriendProfileUpdated?.Invoke(friend);
             });
+        });
+
+        // User note updated handler
+        _connection.On<string>("UserNoteUpdated", userId =>
+        {
+            OnUserNoteUpdated?.Invoke(userId);
         });
     }
 

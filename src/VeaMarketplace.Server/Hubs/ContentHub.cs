@@ -23,10 +23,33 @@ public class ContentHub : Hub
     private static readonly ConcurrentDictionary<string, HashSet<string>> _auctionWatchers = new(); // auctionId -> userIds
     private static readonly ConcurrentDictionary<string, HashSet<string>> _userFollowers = new(); // userId -> follower userIds
 
+    private static readonly ConcurrentDictionary<string, DateTime> _connectionTimestamps = new();
+
     public ContentHub(AuthService authService, ProductService productService)
     {
         _authService = authService;
         _productService = productService;
+    }
+
+    public override async Task OnConnectedAsync()
+    {
+        var connectionId = Context.ConnectionId;
+        _connectionTimestamps[connectionId] = DateTime.UtcNow;
+
+        await Clients.Caller.SendAsync("ConnectionHandshake", new
+        {
+            ConnectionId = connectionId,
+            ServerTime = DateTime.UtcNow,
+            Hub = "ContentHub"
+        });
+
+        await base.OnConnectedAsync();
+    }
+
+    public async Task Ping()
+    {
+        _connectionTimestamps[Context.ConnectionId] = DateTime.UtcNow;
+        await Clients.Caller.SendAsync("Pong", new { ServerTime = DateTime.UtcNow });
     }
 
     /// <summary>
@@ -221,6 +244,8 @@ public class ContentHub : Hub
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
+        _connectionTimestamps.TryRemove(Context.ConnectionId, out _);
+
         if (_connectionUserMap.TryRemove(Context.ConnectionId, out var userId))
         {
             if (_userConnections.TryGetValue(userId, out var connections))

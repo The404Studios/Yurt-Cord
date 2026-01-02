@@ -496,4 +496,44 @@ public class ChatHub : Hub
 
         return groupId;
     }
+
+    #region Static Helpers for Console/Admin
+
+    /// <summary>
+    /// Get count of online users
+    /// </summary>
+    public static int GetOnlineUserCount()
+    {
+        return _onlineUsers.Count;
+    }
+
+    /// <summary>
+    /// Get list of online user IDs
+    /// </summary>
+    public static IEnumerable<string> GetOnlineUserIds()
+    {
+        return _onlineUsers.Keys.ToList();
+    }
+
+    /// <summary>
+    /// Check if a specific user is online
+    /// </summary>
+    public static bool IsUserOnline(string userId)
+    {
+        return _onlineUsers.ContainsKey(userId);
+    }
+
+    /// <summary>
+    /// Get connection IDs for a user
+    /// </summary>
+    public static IEnumerable<string> GetUserConnections(string userId)
+    {
+        if (_userConnectionsMap.TryGetValue(userId, out var connections))
+        {
+            return connections.ToList();
+        }
+        return Enumerable.Empty<string>();
+    }
+
+    #endregion
 }

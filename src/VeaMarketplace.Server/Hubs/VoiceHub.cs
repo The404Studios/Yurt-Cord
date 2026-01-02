@@ -60,12 +60,29 @@ public class VoiceHub : Hub
 
     public async Task JoinVoiceChannel(string channelId, string userId, string username, string avatarUrl)
     {
+        // Validate required parameters
+        if (string.IsNullOrWhiteSpace(channelId))
+        {
+            await Clients.Caller.SendAsync("VoiceError", "Channel ID is required");
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            await Clients.Caller.SendAsync("VoiceError", "User ID is required");
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            await Clients.Caller.SendAsync("VoiceError", "Username is required");
+            return;
+        }
+
         var userState = new VoiceUserState
         {
             ConnectionId = Context.ConnectionId,
             UserId = userId,
             Username = username,
-            AvatarUrl = avatarUrl,
+            AvatarUrl = avatarUrl ?? string.Empty,
             ChannelId = channelId,
             IsMuted = false,
             IsDeafened = false,
@@ -161,7 +178,7 @@ public class VoiceHub : Hub
             await Clients.OthersInGroup($"voice_{userState.ChannelId}")
                 .SendAsync("UserVideoStarted", Context.ConnectionId, userId, userState.Username);
 
-            _logger.LogDebug("User {Username} started video in channel {ChannelId}", userState.Username, userState.ChannelId);
+            _logger?.LogDebug("User {Username} started video in channel {ChannelId}", userState.Username, userState.ChannelId);
         }
     }
 
@@ -181,7 +198,7 @@ public class VoiceHub : Hub
             await Clients.OthersInGroup($"voice_{userState.ChannelId}")
                 .SendAsync("UserVideoStopped", Context.ConnectionId, userId);
 
-            _logger.LogDebug("User {Username} stopped video in channel {ChannelId}", userState.Username, userState.ChannelId);
+            _logger?.LogDebug("User {Username} stopped video in channel {ChannelId}", userState.Username, userState.ChannelId);
         }
     }
 
