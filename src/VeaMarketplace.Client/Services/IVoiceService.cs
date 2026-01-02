@@ -131,6 +131,21 @@ public interface IVoiceService
     event Action<string, bool>? OnUserScreenShareChanged;
     event Action<bool, string>? OnConnectionStateChanged;  // (isConnected, message)
 
+    // WebRTC signaling events
+    event Action<string, string>? OnReceiveOffer; // senderConnectionId, offer
+    event Action<string, string>? OnReceiveAnswer; // senderConnectionId, answer
+    event Action<string, string>? OnReceiveIceCandidate; // senderConnectionId, candidate
+
+    // Error events
+    event Action<string>? OnVoiceError;
+    event Action<string>? OnCallError;
+
+    // Screen sharing quality events
+    event Action<string, string>? OnQualityChangeRequested; // viewerConnectionId, qualityPreset
+    event Action<string, string>? OnJoinedScreenShare; // sharerConnectionId, sharerUsername
+    event Action<List<ActiveScreenShareDto>>? OnActiveScreenShares;
+    event Action<string, string>? OnQualityRequested; // viewerConnectionId, quality
+
     Task ConnectAsync();
     Task DisconnectAsync();
     Task JoinVoiceChannelAsync(string channelId, string userId, string username, string avatarUrl);
@@ -182,6 +197,8 @@ public interface IVoiceService
     event Action<string, string>? OnGroupCallParticipantLeft;
     event Action<string, string>? OnGroupCallEnded;
     event Action<string>? OnGroupCallError;
+    event Action<string, string, bool, double>? OnGroupCallUserSpeaking; // callId, userId, isSpeaking, audioLevel
+    event Action<string, string>? OnGroupCallInviteDeclined; // callId, userId
 
     Task StartGroupCallAsync(string name, List<string> invitedUserIds);
     Task JoinGroupCallAsync(string callId);
@@ -197,6 +214,12 @@ public interface IVoiceService
     event Action<VoiceRoomDto>? OnVoiceRoomAdded;
     event Action<string>? OnVoiceRoomRemoved;
     event Action<string>? OnVoiceRoomError;
+    event Action<VoiceRoomParticipantDto>? OnVoiceRoomParticipantJoined;
+    event Action<VoiceRoomParticipantDto>? OnVoiceRoomParticipantLeft;
+    event Action<VoiceRoomParticipantDto>? OnVoiceRoomHostChanged;
+    event Action<string, string>? OnVoiceRoomClosed; // roomId, reason
+    event Action<string, string>? OnVoiceRoomKicked; // roomId, reason
+    event Action<VoiceRoomParticipantDto>? OnVoiceRoomModeratorAdded;
 
     Task GetPublicVoiceRoomsAsync(VoiceRoomCategory? category = null, string? query = null, int page = 1, int pageSize = 20);
     Task CreateVoiceRoomAsync(CreateVoiceRoomDto dto);
@@ -217,6 +240,16 @@ public class VoiceUserState
     public double AudioLevel { get; set; }
     public bool IsScreenSharing { get; set; }
     public bool IsVideoEnabled { get; set; }
+}
+
+public class ActiveScreenShareDto
+{
+    public string SharerConnectionId { get; set; } = string.Empty;
+    public string SharerUsername { get; set; } = string.Empty;
+    public DateTime StartedAt { get; set; }
+    public int ViewerCount { get; set; }
+    public int LastWidth { get; set; }
+    public int LastHeight { get; set; }
 }
 
 /// <summary>
@@ -491,6 +524,8 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     public event Action<string, string>? OnGroupCallParticipantLeft;
     public event Action<string, string>? OnGroupCallEnded;
     public event Action<string>? OnGroupCallError;
+    public event Action<string, string, bool, double>? OnGroupCallUserSpeaking;
+    public event Action<string, string>? OnGroupCallInviteDeclined;
 
     // Voice room events
     public event Action<List<VoiceRoomDto>, int, int, int>? OnPublicVoiceRoomsReceived;
@@ -500,6 +535,27 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     public event Action<VoiceRoomDto>? OnVoiceRoomAdded;
     public event Action<string>? OnVoiceRoomRemoved;
     public event Action<string>? OnVoiceRoomError;
+    public event Action<VoiceRoomParticipantDto>? OnVoiceRoomParticipantJoined;
+    public event Action<VoiceRoomParticipantDto>? OnVoiceRoomParticipantLeft;
+    public event Action<VoiceRoomParticipantDto>? OnVoiceRoomHostChanged;
+    public event Action<string, string>? OnVoiceRoomClosed;
+    public event Action<string, string>? OnVoiceRoomKicked;
+    public event Action<VoiceRoomParticipantDto>? OnVoiceRoomModeratorAdded;
+
+    // WebRTC signaling events
+    public event Action<string, string>? OnReceiveOffer;
+    public event Action<string, string>? OnReceiveAnswer;
+    public event Action<string, string>? OnReceiveIceCandidate;
+
+    // Error events
+    public event Action<string>? OnVoiceError;
+    public event Action<string>? OnCallError;
+
+    // Screen sharing quality events
+    public event Action<string, string>? OnQualityChangeRequested;
+    public event Action<string, string>? OnJoinedScreenShare;
+    public event Action<List<ActiveScreenShareDto>>? OnActiveScreenShares;
+    public event Action<string, string>? OnQualityRequested;
 
     // Call state
     public bool IsInCall { get; private set; }
@@ -2009,6 +2065,18 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             }
         });
 
+        // Group call user speaking indicator
+        _connection.On<string, string, bool, double>("GroupCallUserSpeaking", (callId, userId, isSpeaking, audioLevel) =>
+        {
+            OnGroupCallUserSpeaking?.Invoke(callId, userId, isSpeaking, audioLevel);
+        });
+
+        // Group call invite declined notification (for host)
+        _connection.On<string, string>("GroupCallInviteDeclined", (callId, userId) =>
+        {
+            OnGroupCallInviteDeclined?.Invoke(callId, userId);
+        });
+
         // Voice room handlers
         _connection.On<List<VoiceRoomDto>, int, int, int>("PublicVoiceRooms", (rooms, totalCount, page, pageSize) =>
         {
@@ -2064,6 +2132,111 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             {
                 OnVoiceRoomError?.Invoke(error);
             });
+        });
+
+        _connection.On<VoiceRoomParticipantDto>("VoiceRoomParticipantJoined", participant =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnVoiceRoomParticipantJoined?.Invoke(participant);
+            });
+        });
+
+        _connection.On<VoiceRoomParticipantDto>("VoiceRoomParticipantLeft", participant =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnVoiceRoomParticipantLeft?.Invoke(participant);
+            });
+        });
+
+        _connection.On<VoiceRoomParticipantDto>("VoiceRoomHostChanged", participant =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnVoiceRoomHostChanged?.Invoke(participant);
+            });
+        });
+
+        _connection.On<string, string>("VoiceRoomClosed", (roomId, reason) =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnVoiceRoomClosed?.Invoke(roomId, reason);
+            });
+        });
+
+        _connection.On<string, string>("VoiceRoomKicked", (roomId, reason) =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnVoiceRoomKicked?.Invoke(roomId, reason);
+            });
+        });
+
+        _connection.On<VoiceRoomParticipantDto>("VoiceRoomModeratorAdded", participant =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnVoiceRoomModeratorAdded?.Invoke(participant);
+            });
+        });
+
+        // WebRTC signaling handlers
+        _connection.On<string, string>("ReceiveOffer", (senderConnectionId, offer) =>
+        {
+            OnReceiveOffer?.Invoke(senderConnectionId, offer);
+        });
+
+        _connection.On<string, string>("ReceiveAnswer", (senderConnectionId, answer) =>
+        {
+            OnReceiveAnswer?.Invoke(senderConnectionId, answer);
+        });
+
+        _connection.On<string, string>("ReceiveIceCandidate", (senderConnectionId, candidate) =>
+        {
+            OnReceiveIceCandidate?.Invoke(senderConnectionId, candidate);
+        });
+
+        // Error handlers
+        _connection.On<string>("VoiceError", error =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnVoiceError?.Invoke(error);
+            });
+        });
+
+        _connection.On<string>("CallError", error =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnCallError?.Invoke(error);
+            });
+        });
+
+        // Screen sharing quality handlers
+        _connection.On<string, string>("QualityChangeRequested", (viewerConnectionId, qualityPreset) =>
+        {
+            OnQualityChangeRequested?.Invoke(viewerConnectionId, qualityPreset);
+        });
+
+        _connection.On<string, string>("JoinedScreenShare", (sharerConnectionId, sharerUsername) =>
+        {
+            OnJoinedScreenShare?.Invoke(sharerConnectionId, sharerUsername);
+        });
+
+        _connection.On<List<ActiveScreenShareDto>>("ActiveScreenShares", activeShares =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnActiveScreenShares?.Invoke(activeShares);
+            });
+        });
+
+        _connection.On<string, string>("QualityRequested", (viewerConnectionId, quality) =>
+        {
+            OnQualityRequested?.Invoke(viewerConnectionId, quality);
         });
     }
 

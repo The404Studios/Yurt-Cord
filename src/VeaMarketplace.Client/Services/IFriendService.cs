@@ -37,6 +37,8 @@ public interface IFriendService
     event Action<string>? OnUserStoppedTypingDM;
     event Action<string>? OnError;
     event Action<string>? OnSuccess;
+    event Action? OnAuthenticationSuccess;
+    event Action<string>? OnFriendRequestResponded; // "accepted" or "declined"
     event Action<UserSearchResultDto?>? OnUserSearchResult;
     event Action<List<UserSearchResultDto>>? OnUserSearchResults;
     event Action<FriendDto>? OnFriendProfileUpdated;
@@ -105,6 +107,8 @@ public class FriendService : IFriendService, IAsyncDisposable
     public event Action<string>? OnUserStoppedTypingDM;
     public event Action<string>? OnError;
     public event Action<string>? OnSuccess;
+    public event Action? OnAuthenticationSuccess;
+    public event Action<string>? OnFriendRequestResponded;
     public event Action<UserSearchResultDto?>? OnUserSearchResult;
     public event Action<List<UserSearchResultDto>>? OnUserSearchResults;
     public event Action<FriendDto>? OnFriendProfileUpdated;
@@ -246,6 +250,20 @@ public class FriendService : IFriendService, IAsyncDisposable
             }
             Debug.WriteLine($"FriendService: Authentication failed: {errorMessage}");
             OnError?.Invoke(errorMessage);
+        });
+
+        // Authentication success
+        _connection.On("AuthenticationSuccess", () =>
+        {
+            Debug.WriteLine("FriendService: Authentication succeeded");
+            OnAuthenticationSuccess?.Invoke();
+        });
+
+        // Friend request response confirmation
+        _connection.On<string>("FriendRequestResponded", response =>
+        {
+            Debug.WriteLine($"FriendService: Friend request responded: {response}");
+            OnFriendRequestResponded?.Invoke(response);
         });
 
         _connection.On<List<FriendDto>>("FriendsList", friends =>
