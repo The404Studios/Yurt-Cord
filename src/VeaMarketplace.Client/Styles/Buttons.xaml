@@ -2,11 +2,11 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- ═══════════════════════════════════════════════════════════════════════
-         PLUGIN - Button Styles
-         Modern buttons with orange accent and glow effects
+         YURT CORD - Button Styles
+         Modern buttons with teal accent and glow effects
     ═══════════════════════════════════════════════════════════════════════ -->
 
-    <!-- Primary Button Style - Orange accent with glow -->
+    <!-- Primary Button Style - Teal accent with glow -->
     <Style x:Key="PrimaryButton" TargetType="Button">
         <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
         <Setter Property="Foreground" Value="#FFFFFF"/>
@@ -31,16 +31,16 @@
                         </Border.RenderTransform>
                         <Border.Effect>
                             <DropShadowEffect x:Name="shadow" BlurRadius="0" ShadowDepth="0"
-                                              Color="#FF6B00" Opacity="0"/>
+                                              Color="#00B4D8" Opacity="0"/>
                         </Border.Effect>
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#FF8533"/>
+                            <Setter TargetName="border" Property="Background" Value="#48CAE4"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#CC5500"/>
+                            <Setter TargetName="border" Property="Background" Value="#0096C7"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="border" Property="Background" Value="#2A2A2F"/>
@@ -163,7 +163,7 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="border" Property="Background" Value="#2A2A2F"/>
-                            <Setter TargetName="border" Property="BorderBrush" Value="#FF6B00"/>
+                            <Setter TargetName="border" Property="BorderBrush" Value="#00B4D8"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="border" Property="Background" Value="#333338"/>
@@ -489,7 +489,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#FF6B0020"/>
+                            <Setter TargetName="border" Property="Background" Value="#00B4D820"/>
                             <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
                             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
                         </Trigger>
@@ -759,7 +759,7 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="border" Property="Background" Value="#18181B"/>
-                            <Setter TargetName="border" Property="BorderBrush" Value="#FF6B00"/>
+                            <Setter TargetName="border" Property="BorderBrush" Value="#00B4D8"/>
                             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">

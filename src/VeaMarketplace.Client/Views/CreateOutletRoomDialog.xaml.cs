@@ -88,8 +88,8 @@ public partial class CreateOutletRoomDialog : Window
         OutletOption.BorderBrush = new SolidColorBrush(Colors.Transparent);
         PrivateOption.BorderBrush = new SolidColorBrush(Colors.Transparent);
 
-        // Highlight selected - Plugin orange
-        var accentBrush = new SolidColorBrush(Color.FromRgb(255, 107, 0));
+        // Highlight selected - Yurt Cord teal
+        var accentBrush = new SolidColorBrush(Color.FromRgb(0, 180, 216));
         switch (_selectedRoomType)
         {
             case "Community":

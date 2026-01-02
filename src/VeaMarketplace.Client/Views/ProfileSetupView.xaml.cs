@@ -15,8 +15,8 @@ public partial class ProfileSetupView : UserControl
     // Profile data
     private string _selectedAvatarUrl = "";
     private string _selectedEmoji = "?";
-    private Color _primaryColor = (Color)ColorConverter.ConvertFromString("#FF6B00")!; // Plugin orange
-    private Color _secondaryColor = (Color)ColorConverter.ConvertFromString("#FF8533")!; // Plugin orange light
+    private Color _primaryColor = (Color)ColorConverter.ConvertFromString("#00B4D8")!; // Yurt Cord teal
+    private Color _secondaryColor = (Color)ColorConverter.ConvertFromString("#48CAE4")!; // Yurt Cord teal light
     private LinearGradientBrush? _selectedAvatarGradient;
 
     public event Action? OnSetupComplete;
@@ -270,10 +270,10 @@ public partial class ProfileSetupView : UserControl
 
     private void UpdateStepUI()
     {
-        // Update progress dots - Plugin orange theme
-        Step1Dot.Fill = new SolidColorBrush(_currentStep >= 1 ? (Color)ColorConverter.ConvertFromString("#FF6B00")! : (Color)ColorConverter.ConvertFromString("#40444B")!);
-        Step2Dot.Fill = new SolidColorBrush(_currentStep >= 2 ? (Color)ColorConverter.ConvertFromString("#FF6B00")! : (Color)ColorConverter.ConvertFromString("#40444B")!);
-        Step3Dot.Fill = new SolidColorBrush(_currentStep >= 3 ? (Color)ColorConverter.ConvertFromString("#FF6B00")! : (Color)ColorConverter.ConvertFromString("#40444B")!);
+        // Update progress dots - Yurt Cord teal theme
+        Step1Dot.Fill = new SolidColorBrush(_currentStep >= 1 ? (Color)ColorConverter.ConvertFromString("#00B4D8")! : (Color)ColorConverter.ConvertFromString("#40444B")!);
+        Step2Dot.Fill = new SolidColorBrush(_currentStep >= 2 ? (Color)ColorConverter.ConvertFromString("#00B4D8")! : (Color)ColorConverter.ConvertFromString("#40444B")!);
+        Step3Dot.Fill = new SolidColorBrush(_currentStep >= 3 ? (Color)ColorConverter.ConvertFromString("#00B4D8")! : (Color)ColorConverter.ConvertFromString("#40444B")!);
 
         // Update button visibility
         BackButton.Visibility = _currentStep > 1 ? Visibility.Visible : Visibility.Collapsed;

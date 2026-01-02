@@ -132,7 +132,7 @@ public class SocialService : ISocialService
         if (FriendGroups.Count == 0)
         {
             FriendGroups.Add(new FriendGroup { Name = "Favorites", Emoji = "⭐", Color = "#FFD700", SortOrder = 0 });
-            FriendGroups.Add(new FriendGroup { Name = "Gaming", Emoji = "🎮", Color = "#FF6B00", SortOrder = 1 });
+            FriendGroups.Add(new FriendGroup { Name = "Gaming", Emoji = "🎮", Color = "#00B4D8", SortOrder = 1 });
             FriendGroups.Add(new FriendGroup { Name = "Work", Emoji = "💼", Color = "#43B581", SortOrder = 2 });
             FriendGroups.Add(new FriendGroup { Name = "Family", Emoji = "👨‍👩‍👧‍👦", Color = "#ED4245", SortOrder = 3 });
         }
@@ -157,7 +157,7 @@ public class SocialService : ISocialService
         {
             Name = name,
             Emoji = emoji,
-            Color = color ?? "#FF6B00", // Plugin orange
+            Color = color ?? "#00B4D8", // Yurt Cord teal
             SortOrder = FriendGroups.Count
         };
 
