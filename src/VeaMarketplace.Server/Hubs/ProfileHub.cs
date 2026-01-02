@@ -223,7 +223,19 @@ public class ProfileHub : Hub
                         // Notify all users that this user went offline
                         if (userDto != null)
                         {
-                            _ = Clients.Group("online_users").SendAsync("UserOffline", userId, userDto.Username);
+                            // Fire-and-forget with error handling
+                            _ = Task.Run(async () =>
+                            {
+                                try
+                                {
+                                    await Clients.Group("online_users").SendAsync("UserOffline", userId, userDto.Username);
+                                }
+                                catch (Exception ex)
+                                {
+                                    // Log error but don't propagate - user is already disconnecting
+                                    System.Diagnostics.Debug.WriteLine($"ProfileHub: Failed to notify UserOffline: {ex.Message}");
+                                }
+                            });
                         }
                     }
                 }

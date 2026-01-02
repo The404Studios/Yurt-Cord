@@ -13,7 +13,7 @@ public class FriendHub : Hub
     private readonly DirectMessageService _dmService;
     private readonly AuthService _authService;
     private readonly ILogger<FriendHub> _logger;
-    private static readonly ConcurrentDictionary<string, string> _userConnections = new(); // userId -> connectionId
+    private static readonly ConcurrentDictionary<string, List<string>> _userConnections = new(); // userId -> connectionIds
     private static readonly ConcurrentDictionary<string, string> _connectionUsers = new(); // connectionId -> userId
     private static readonly ConcurrentDictionary<string, DateTime> _connectionTimestamps = new();
 
@@ -60,8 +60,12 @@ public class FriendHub : Hub
 
         _logger.LogInformation("FriendHub user authenticated: {Username}", user.Username);
 
-        // Track connection
-        _userConnections[user.Id] = Context.ConnectionId;
+        // Track connection (support multiple connections per user)
+        _userConnections.AddOrUpdate(
+            user.Id,
+            _ => new List<string> { Context.ConnectionId },
+            (_, list) => { lock (list) { if (!list.Contains(Context.ConnectionId)) list.Add(Context.ConnectionId); } return list; }
+        );
         _connectionUsers[Context.ConnectionId] = user.Id;
 
         // Add to personal group for targeted messages
@@ -78,12 +82,17 @@ public class FriendHub : Hub
         await Clients.Caller.SendAsync("OutgoingRequests", outgoingRequests);
         await Clients.Caller.SendAsync("Conversations", conversations);
 
-        // Notify friends that user is online
+        // Notify friends that user is online (send to all their connections)
         foreach (var friend in friends)
         {
-            if (_userConnections.TryGetValue(friend.UserId, out var friendConnId))
+            if (_userConnections.TryGetValue(friend.UserId, out var friendConnIds))
             {
-                await Clients.Client(friendConnId).SendAsync("FriendOnline", user.Id, user.Username);
+                List<string> connIdsCopy;
+                lock (friendConnIds) { connIdsCopy = friendConnIds.ToList(); }
+                foreach (var connId in connIdsCopy)
+                {
+                    await Clients.Client(connId).SendAsync("FriendOnline", user.Id, user.Username);
+                }
             }
         }
 
@@ -121,12 +130,17 @@ public class FriendHub : Hub
             var outgoing = _friendService.GetOutgoingRequests(userId);
             await Clients.Caller.SendAsync("OutgoingRequests", outgoing);
 
-            // Notify the addressee if online
-            if (_userConnections.TryGetValue(friendship.AddresseeId, out var addresseeConnId))
+            // Notify the addressee if online (all their connections)
+            if (_userConnections.TryGetValue(friendship.AddresseeId, out var addresseeConnIds))
             {
                 var pending = _friendService.GetPendingRequests(friendship.AddresseeId);
-                await Clients.Client(addresseeConnId).SendAsync("PendingRequests", pending);
-                await Clients.Client(addresseeConnId).SendAsync("NewFriendRequest", pending.FirstOrDefault());
+                List<string> connIdsCopy;
+                lock (addresseeConnIds) { connIdsCopy = addresseeConnIds.ToList(); }
+                foreach (var connId in connIdsCopy)
+                {
+                    await Clients.Client(connId).SendAsync("PendingRequests", pending);
+                    await Clients.Client(connId).SendAsync("NewFriendRequest", pending.FirstOrDefault());
+                }
             }
         }
         else
@@ -218,21 +232,25 @@ public class FriendHub : Hub
             await Clients.Caller.SendAsync("FriendsList", myFriends);
             await Clients.Caller.SendAsync("PendingRequests", myPending);
 
-            if (_userConnections.TryGetValue(friendship.RequesterId, out var requesterConnId))
+            if (_userConnections.TryGetValue(friendship.RequesterId, out var requesterConnIds))
             {
                 var theirFriends = _friendService.GetFriends(friendship.RequesterId);
                 var theirOutgoing = _friendService.GetOutgoingRequests(friendship.RequesterId);
-                await Clients.Client(requesterConnId).SendAsync("FriendsList", theirFriends);
-                await Clients.Client(requesterConnId).SendAsync("OutgoingRequests", theirOutgoing);
+                List<string> connIdsCopy;
+                lock (requesterConnIds) { connIdsCopy = requesterConnIds.ToList(); }
+                foreach (var connId in connIdsCopy)
+                {
+                    await Clients.Client(connId).SendAsync("FriendsList", theirFriends);
+                    await Clients.Client(connId).SendAsync("OutgoingRequests", theirOutgoing);
 
-                if (accept)
-                {
-                    await Clients.Client(requesterConnId).SendAsync("FriendRequestAccepted", userId);
-                }
-                else
-                {
-                    // Notify requester that their request was declined
-                    await Clients.Client(requesterConnId).SendAsync("FriendRequestDeclined", userId);
+                    if (accept)
+                    {
+                        await Clients.Client(connId).SendAsync("FriendRequestAccepted", userId);
+                    }
+                    else
+                    {
+                        await Clients.Client(connId).SendAsync("FriendRequestDeclined", userId);
+                    }
                 }
             }
 
@@ -273,24 +291,28 @@ public class FriendHub : Hub
             var myFriends = _friendService.GetFriends(userId);
             await Clients.Caller.SendAsync("FriendsList", myFriends);
 
-            if (_userConnections.TryGetValue(friendId, out var friendConnId))
+            if (_userConnections.TryGetValue(friendId, out var friendConnIds))
             {
-                // Notify the other user they were removed
+                // Notify the other user they were removed (all connections)
                 var myUser = _authService.GetUserById(userId);
-                if (myUser != null)
-                {
-                    var meAsRemovedDto = new FriendDto
-                    {
-                        UserId = myUser.Id,
-                        Username = myUser.Username,
-                        DisplayName = myUser.DisplayName,
-                        AvatarUrl = myUser.AvatarUrl
-                    };
-                    await Clients.Client(friendConnId).SendAsync("FriendRemoved", meAsRemovedDto);
-                }
-
                 var theirFriends = _friendService.GetFriends(friendId);
-                await Clients.Client(friendConnId).SendAsync("FriendsList", theirFriends);
+                List<string> connIdsCopy;
+                lock (friendConnIds) { connIdsCopy = friendConnIds.ToList(); }
+                foreach (var connId in connIdsCopy)
+                {
+                    if (myUser != null)
+                    {
+                        var meAsRemovedDto = new FriendDto
+                        {
+                            UserId = myUser.Id,
+                            Username = myUser.Username,
+                            DisplayName = myUser.DisplayName,
+                            AvatarUrl = myUser.AvatarUrl
+                        };
+                        await Clients.Client(connId).SendAsync("FriendRemoved", meAsRemovedDto);
+                    }
+                    await Clients.Client(connId).SendAsync("FriendsList", theirFriends);
+                }
             }
         }
         else
@@ -336,14 +358,17 @@ public class FriendHub : Hub
             // Send to sender
             await Clients.Caller.SendAsync("DirectMessageReceived", dto);
 
-            // Send to recipient if online
-            if (_userConnections.TryGetValue(recipientId, out var recipientConnId))
+            // Send to recipient if online (all connections)
+            if (_userConnections.TryGetValue(recipientId, out var recipientConnIds))
             {
-                await Clients.Client(recipientConnId).SendAsync("DirectMessageReceived", dto);
-
-                // Update their conversations
                 var theirConversations = _dmService.GetConversations(recipientId);
-                await Clients.Client(recipientConnId).SendAsync("Conversations", theirConversations);
+                List<string> connIdsCopy;
+                lock (recipientConnIds) { connIdsCopy = recipientConnIds.ToList(); }
+                foreach (var connId in connIdsCopy)
+                {
+                    await Clients.Client(connId).SendAsync("DirectMessageReceived", dto);
+                    await Clients.Client(connId).SendAsync("Conversations", theirConversations);
+                }
             }
 
             // Update sender's conversations
@@ -372,12 +397,17 @@ public class FriendHub : Hub
         if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
             return;
 
-        if (_userConnections.TryGetValue(recipientId, out var recipientConnId))
+        if (_userConnections.TryGetValue(recipientId, out var recipientConnIds))
         {
             // Get username for the typing indicator
             var user = _authService.GetUserById(userId);
             var username = user?.Username ?? "Unknown";
-            await Clients.Client(recipientConnId).SendAsync("UserTypingDM", userId, username);
+            List<string> connIdsCopy;
+            lock (recipientConnIds) { connIdsCopy = recipientConnIds.ToList(); }
+            foreach (var connId in connIdsCopy)
+            {
+                await Clients.Client(connId).SendAsync("UserTypingDM", userId, username);
+            }
         }
     }
 
@@ -386,9 +416,14 @@ public class FriendHub : Hub
         if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
             return;
 
-        if (_userConnections.TryGetValue(recipientId, out var recipientConnId))
+        if (_userConnections.TryGetValue(recipientId, out var recipientConnIds))
         {
-            await Clients.Client(recipientConnId).SendAsync("UserStoppedTypingDM", userId);
+            List<string> connIdsCopy;
+            lock (recipientConnIds) { connIdsCopy = recipientConnIds.ToList(); }
+            foreach (var connId in connIdsCopy)
+            {
+                await Clients.Client(connId).SendAsync("UserStoppedTypingDM", userId);
+            }
         }
     }
 
@@ -428,10 +463,15 @@ public class FriendHub : Hub
             await Clients.Caller.SendAsync("Success", "User blocked successfully");
 
             // Notify the blocked user they've been removed (don't tell them they're blocked)
-            if (_userConnections.TryGetValue(targetUserId, out var targetConnId))
+            if (_userConnections.TryGetValue(targetUserId, out var targetConnIds))
             {
                 var targetFriends = _friendService.GetFriends(targetUserId);
-                await Clients.Client(targetConnId).SendAsync("FriendsList", targetFriends);
+                List<string> connIdsCopy;
+                lock (targetConnIds) { connIdsCopy = targetConnIds.ToList(); }
+                foreach (var connId in connIdsCopy)
+                {
+                    await Clients.Client(connId).SendAsync("FriendsList", targetFriends);
+                }
             }
         }
         else
@@ -474,16 +514,39 @@ public class FriendHub : Hub
 
         if (_connectionUsers.TryRemove(connectionId, out var userId))
         {
-            _userConnections.TryRemove(userId, out _);
-            _logger.LogInformation("FriendHub user disconnected: {UserId}", userId);
-
-            // Notify friends that user went offline
-            var friends = _friendService.GetFriends(userId);
-            foreach (var friend in friends)
+            // Remove this connection from user's connection list
+            bool userHasNoMoreConnections = false;
+            if (_userConnections.TryGetValue(userId, out var connIds))
             {
-                if (_userConnections.TryGetValue(friend.UserId, out var friendConnId))
+                lock (connIds)
                 {
-                    await Clients.Client(friendConnId).SendAsync("FriendOffline", userId);
+                    connIds.Remove(connectionId);
+                    if (connIds.Count == 0)
+                    {
+                        _userConnections.TryRemove(userId, out _);
+                        userHasNoMoreConnections = true;
+                    }
+                }
+            }
+
+            _logger.LogInformation("FriendHub connection disconnected for user: {UserId}, remaining connections: {HasMore}",
+                userId, !userHasNoMoreConnections);
+
+            // Only notify friends that user went offline if no more connections
+            if (userHasNoMoreConnections)
+            {
+                var friends = _friendService.GetFriends(userId);
+                foreach (var friend in friends)
+                {
+                    if (_userConnections.TryGetValue(friend.UserId, out var friendConnIds))
+                    {
+                        List<string> connIdsCopy;
+                        lock (friendConnIds) { connIdsCopy = friendConnIds.ToList(); }
+                        foreach (var connId in connIdsCopy)
+                        {
+                            await Clients.Client(connId).SendAsync("FriendOffline", userId);
+                        }
+                    }
                 }
             }
         }

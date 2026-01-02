@@ -14,6 +14,7 @@ public class RoomHub : Hub
 {
     private readonly RoomService _roomService;
     private readonly AuthService _authService;
+    private readonly ProductService _productService;
 
     // Connection tracking (support multiple connections per user)
     private static readonly ConcurrentDictionary<string, List<string>> _userConnections = new(); // userId -> connectionIds
@@ -31,10 +32,11 @@ public class RoomHub : Hub
     private const long MaxUploadBytesPerSecond = 30L * 1024 * 1024; // 30 MB/s upload
     private const long MaxDownloadBytesPerSecond = 50L * 1024 * 1024; // 50 MB/s download per user
 
-    public RoomHub(RoomService roomService, AuthService authService)
+    public RoomHub(RoomService roomService, AuthService authService, ProductService productService)
     {
         _roomService = roomService;
         _authService = authService;
+        _productService = productService;
     }
 
     public override async Task OnConnectedAsync()
@@ -434,8 +436,22 @@ public class RoomHub : Hub
             return;
         }
 
-        // Would integrate with ProductService here
-        await Clients.Group($"room_{roomId}").SendAsync("ProductListed", productId, userId);
+        // Validate product exists and belongs to user
+        var product = _productService.GetProduct(productId);
+        if (product == null)
+        {
+            await Clients.Caller.SendAsync("MarketplaceError", "Product not found");
+            return;
+        }
+
+        if (product.SellerId != userId)
+        {
+            await Clients.Caller.SendAsync("MarketplaceError", "You can only list your own products");
+            return;
+        }
+
+        // Notify room members about the product listing
+        await Clients.Group($"room_{roomId}").SendAsync("ProductListed", product, userId);
     }
 
     public async Task GetPublicRooms(int skip = 0, int take = 50)
