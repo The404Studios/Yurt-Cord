@@ -15,10 +15,11 @@ public class RoomHub : Hub
     private readonly RoomService _roomService;
     private readonly AuthService _authService;
 
-    // Connection tracking
-    private static readonly ConcurrentDictionary<string, string> _userConnections = new(); // userId -> connectionId
+    // Connection tracking (support multiple connections per user)
+    private static readonly ConcurrentDictionary<string, List<string>> _userConnections = new(); // userId -> connectionIds
     private static readonly ConcurrentDictionary<string, string> _connectionUsers = new(); // connectionId -> userId
     private static readonly ConcurrentDictionary<string, string> _connectionRooms = new(); // connectionId -> roomId
+    private static readonly ConcurrentDictionary<string, DateTime> _connectionTimestamps = new();
 
     // Active streams per room: roomId -> list of stream info
     private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, StreamInfoDto>> _activeStreams = new();
@@ -36,6 +37,27 @@ public class RoomHub : Hub
         _authService = authService;
     }
 
+    public override async Task OnConnectedAsync()
+    {
+        var connectionId = Context.ConnectionId;
+        _connectionTimestamps[connectionId] = DateTime.UtcNow;
+
+        await Clients.Caller.SendAsync("ConnectionHandshake", new
+        {
+            ConnectionId = connectionId,
+            ServerTime = DateTime.UtcNow,
+            Hub = "RoomHub"
+        });
+
+        await base.OnConnectedAsync();
+    }
+
+    public async Task Ping()
+    {
+        _connectionTimestamps[Context.ConnectionId] = DateTime.UtcNow;
+        await Clients.Caller.SendAsync("Pong", new { ServerTime = DateTime.UtcNow });
+    }
+
     public async Task Authenticate(string token)
     {
         var user = _authService.ValidateToken(token);
@@ -45,7 +67,12 @@ public class RoomHub : Hub
             return;
         }
 
-        _userConnections[user.Id] = Context.ConnectionId;
+        // Track connection (support multiple connections per user)
+        _userConnections.AddOrUpdate(
+            user.Id,
+            _ => new List<string> { Context.ConnectionId },
+            (_, list) => { lock (list) { if (!list.Contains(Context.ConnectionId)) list.Add(Context.ConnectionId); } return list; }
+        );
         _connectionUsers[Context.ConnectionId] = user.Id;
 
         // Add to personal group
@@ -446,23 +473,53 @@ public class RoomHub : Hub
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        if (_connectionUsers.TryRemove(Context.ConnectionId, out var userId))
-        {
-            _userConnections.TryRemove(userId, out _);
+        var connectionId = Context.ConnectionId;
+        _connectionTimestamps.TryRemove(connectionId, out _);
 
-            // Stop any active streams
-            foreach (var roomStreams in _activeStreams.Values)
+        if (_connectionUsers.TryRemove(connectionId, out var userId))
+        {
+            // Remove this connection from user's connection list
+            bool userHasNoMoreConnections = false;
+            if (_userConnections.TryGetValue(userId, out var connIds))
             {
-                if (roomStreams.TryRemove(userId, out _))
+                lock (connIds)
                 {
-                    // Notify room members
+                    connIds.Remove(connectionId);
+                    if (connIds.Count == 0)
+                    {
+                        _userConnections.TryRemove(userId, out _);
+                        userHasNoMoreConnections = true;
+                    }
                 }
             }
 
-            // Leave room
-            if (_connectionRooms.TryRemove(Context.ConnectionId, out var roomId))
+            // Only clean up streams and notify offline if no more connections
+            if (userHasNoMoreConnections)
             {
-                await Clients.OthersInGroup($"room_{roomId}").SendAsync("MemberOffline", userId);
+                // Stop any active streams and notify room members
+                foreach (var (roomId, roomStreams) in _activeStreams)
+                {
+                    if (roomStreams.TryRemove(userId, out var streamInfo))
+                    {
+                        // Notify room members that stream stopped
+                        await Clients.Group($"room_{roomId}").SendAsync("StreamStopped", new
+                        {
+                            UserId = userId,
+                            StreamType = streamInfo.StreamType,
+                            RoomId = roomId
+                        });
+                    }
+                }
+            }
+
+            // Leave room for this specific connection
+            if (_connectionRooms.TryRemove(connectionId, out var roomId))
+            {
+                // Only notify offline if no other connections in this room
+                if (userHasNoMoreConnections)
+                {
+                    await Clients.OthersInGroup($"room_{roomId}").SendAsync("MemberOffline", userId);
+                }
             }
         }
 
