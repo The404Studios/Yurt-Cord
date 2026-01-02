@@ -25,12 +25,23 @@ public partial class BlockedUsersView : UserControl
         BlockedUsersControl.ItemsSource = _blockedUsers;
 
         Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
 
         // Subscribe to blocked user changes
         if (_friendService != null)
         {
             _friendService.OnUserBlocked += OnUserBlocked;
             _friendService.OnUserUnblocked += OnUserUnblocked;
+        }
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        // Unsubscribe from events to prevent memory leaks
+        if (_friendService != null)
+        {
+            _friendService.OnUserBlocked -= OnUserBlocked;
+            _friendService.OnUserUnblocked -= OnUserUnblocked;
         }
     }
 

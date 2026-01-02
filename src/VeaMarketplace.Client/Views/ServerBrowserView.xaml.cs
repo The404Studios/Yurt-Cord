@@ -30,49 +30,71 @@ public partial class ServerBrowserView : UserControl
 
         RoomsItemsControl.ItemsSource = _rooms;
 
+        Unloaded += OnUnloaded;
+
         SetupEventHandlers();
         SetupVoiceServiceHandlers();
         LoadRooms();
     }
 
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        // Unsubscribe from events to prevent memory leaks
+        _voiceService.OnPublicVoiceRoomsReceived -= OnPublicVoiceRoomsReceived;
+        _voiceService.OnVoiceRoomAdded -= OnVoiceRoomAdded;
+        _voiceService.OnVoiceRoomUpdated -= OnVoiceRoomUpdated;
+        _voiceService.OnVoiceRoomRemoved -= OnVoiceRoomRemoved;
+        _voiceService.OnVoiceRoomJoined -= OnVoiceRoomJoined;
+        _voiceService.OnVoiceRoomCreated -= OnVoiceRoomCreated;
+        _voiceService.OnVoiceRoomError -= OnVoiceRoomError;
+    }
+
     private void SetupVoiceServiceHandlers()
     {
-        _voiceService.OnPublicVoiceRoomsReceived += (rooms, total, page, pageSize) =>
-        {
-            UpdateRooms(rooms);
-        };
+        _voiceService.OnPublicVoiceRoomsReceived += OnPublicVoiceRoomsReceived;
+        _voiceService.OnVoiceRoomAdded += OnVoiceRoomAdded;
+        _voiceService.OnVoiceRoomUpdated += OnVoiceRoomUpdated;
+        _voiceService.OnVoiceRoomRemoved += OnVoiceRoomRemoved;
+        _voiceService.OnVoiceRoomJoined += OnVoiceRoomJoined;
+        _voiceService.OnVoiceRoomCreated += OnVoiceRoomCreated;
+        _voiceService.OnVoiceRoomError += OnVoiceRoomError;
+    }
 
-        _voiceService.OnVoiceRoomAdded += room =>
-        {
-            AddRoom(room);
-        };
+    private void OnPublicVoiceRoomsReceived(List<VoiceRoomDto> rooms, int total, int page, int pageSize)
+    {
+        UpdateRooms(rooms);
+    }
 
-        _voiceService.OnVoiceRoomUpdated += room =>
-        {
-            UpdateRoom(room);
-        };
+    private void OnVoiceRoomAdded(VoiceRoomDto room)
+    {
+        AddRoom(room);
+    }
 
-        _voiceService.OnVoiceRoomRemoved += roomId =>
-        {
-            RemoveRoom(roomId);
-        };
+    private void OnVoiceRoomUpdated(VoiceRoomDto room)
+    {
+        UpdateRoom(room);
+    }
 
-        _voiceService.OnVoiceRoomJoined += room =>
-        {
-            _toastService.ShowSuccess("Joined", $"Joined room: {room.Name}");
-        };
+    private void OnVoiceRoomRemoved(string roomId)
+    {
+        RemoveRoom(roomId);
+    }
 
-        _voiceService.OnVoiceRoomCreated += room =>
-        {
-            _toastService.ShowSuccess("Room Created", $"Room '{room.Name}' created!");
-            CreateRoomModal.Visibility = Visibility.Collapsed;
-            AddRoom(room);
-        };
+    private void OnVoiceRoomJoined(VoiceRoomDto room)
+    {
+        _toastService.ShowSuccess("Joined", $"Joined room: {room.Name}");
+    }
 
-        _voiceService.OnVoiceRoomError += error =>
-        {
-            _toastService.ShowError("Error", error);
-        };
+    private void OnVoiceRoomCreated(VoiceRoomDto room)
+    {
+        _toastService.ShowSuccess("Room Created", $"Room '{room.Name}' created!");
+        CreateRoomModal.Visibility = Visibility.Collapsed;
+        AddRoom(room);
+    }
+
+    private void OnVoiceRoomError(string error)
+    {
+        _toastService.ShowError("Error", error);
     }
 
     private void SetupEventHandlers()
