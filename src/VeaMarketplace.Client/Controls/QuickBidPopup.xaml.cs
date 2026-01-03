@@ -195,11 +195,16 @@ public partial class QuickBidPopup : UserControl
         var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(150));
         var scaleDown = new DoubleAnimation(1, 0.95, TimeSpan.FromMilliseconds(150));
 
-        fadeOut.Completed += (s, e) => CloseRequested?.Invoke(this, EventArgs.Empty);
+        fadeOut.Completed += OnFadeOutCompleted;
 
         MainBorder.BeginAnimation(OpacityProperty, fadeOut);
         MainScale.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty, scaleDown);
         MainScale.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty, scaleDown);
+    }
+
+    private void OnFadeOutCompleted(object? sender, EventArgs e)
+    {
+        CloseRequested?.Invoke(this, EventArgs.Empty);
     }
 }
 

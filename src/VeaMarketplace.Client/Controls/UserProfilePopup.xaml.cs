@@ -31,6 +31,14 @@ public partial class UserProfilePopup : UserControl
 
         _navigationService = App.ServiceProvider.GetService(typeof(INavigationService)) as INavigationService;
         _friendService = App.ServiceProvider.GetService(typeof(IFriendService)) as IFriendService;
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        // Cleanup dynamic mutual friends avatars
+        MutualFriendsAvatars.Children.Clear();
+        Unloaded -= OnUnloaded;
     }
 
     public void SetUser(UserDisplayModel user)
