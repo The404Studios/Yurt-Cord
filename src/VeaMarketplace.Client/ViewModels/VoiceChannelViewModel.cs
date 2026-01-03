@@ -32,61 +32,80 @@ public partial class VoiceChannelViewModel : BaseViewModel
     {
         _voiceService = voiceService;
 
-        _voiceService.OnVoiceChannelUsers += users =>
-        {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                Users.Clear();
-                foreach (var user in users)
-                    Users.Add(user);
-            });
-        };
+        _voiceService.OnVoiceChannelUsers += OnVoiceChannelUsers;
+        _voiceService.OnUserJoinedVoice += OnUserJoinedVoice;
+        _voiceService.OnUserLeftVoice += OnUserLeftVoice;
+        _voiceService.OnUserScreenShareChanged += OnUserScreenShareChanged;
+        _voiceService.OnScreenShareStatsUpdated += OnScreenShareStatsUpdated;
+    }
 
-        _voiceService.OnUserJoinedVoice += user =>
-        {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                if (!Users.Any(u => u.ConnectionId == user.ConnectionId))
-                    Users.Add(user);
-            });
-        };
+    #region Event Handlers
 
-        _voiceService.OnUserLeftVoice += user =>
+    private void OnVoiceChannelUsers(List<VoiceUserState> users)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                var existing = Users.FirstOrDefault(u => u.ConnectionId == user.ConnectionId);
-                if (existing != null)
-                    Users.Remove(existing);
-            });
-        };
+            Users.Clear();
+            foreach (var user in users)
+                Users.Add(user);
+        });
+    }
 
-        _voiceService.OnUserScreenShareChanged += (connectionId, isSharing) =>
+    private void OnUserJoinedVoice(VoiceUserState user)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                var user = Users.FirstOrDefault(u => u.ConnectionId == connectionId);
-                if (user != null)
-                {
-                    user.IsScreenSharing = isSharing;
-                }
+            if (!Users.Any(u => u.ConnectionId == user.ConnectionId))
+                Users.Add(user);
+        });
+    }
 
-                if (!isSharing)
-                {
-                    var share = ActiveScreenShares.FirstOrDefault(s => s.ConnectionId == connectionId);
-                    if (share != null)
-                        ActiveScreenShares.Remove(share);
-                }
-            });
-        };
-
-        _voiceService.OnScreenShareStatsUpdated += stats =>
+    private void OnUserLeftVoice(VoiceUserState user)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            var existing = Users.FirstOrDefault(u => u.ConnectionId == user.ConnectionId);
+            if (existing != null)
+                Users.Remove(existing);
+        });
+    }
+
+    private void OnUserScreenShareChanged(string connectionId, bool isSharing)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            var user = Users.FirstOrDefault(u => u.ConnectionId == connectionId);
+            if (user != null)
             {
-                ScreenShareStats = stats;
-            });
-        };
+                user.IsScreenSharing = isSharing;
+            }
+
+            if (!isSharing)
+            {
+                var share = ActiveScreenShares.FirstOrDefault(s => s.ConnectionId == connectionId);
+                if (share != null)
+                    ActiveScreenShares.Remove(share);
+            }
+        });
+    }
+
+    private void OnScreenShareStatsUpdated(ScreenShareStats stats)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            ScreenShareStats = stats;
+        });
+    }
+
+    #endregion
+
+    public void Cleanup()
+    {
+        _voiceService.OnVoiceChannelUsers -= OnVoiceChannelUsers;
+        _voiceService.OnUserJoinedVoice -= OnUserJoinedVoice;
+        _voiceService.OnUserLeftVoice -= OnUserLeftVoice;
+        _voiceService.OnUserScreenShareChanged -= OnUserScreenShareChanged;
+        _voiceService.OnScreenShareStatsUpdated -= OnScreenShareStatsUpdated;
     }
 
     [RelayCommand]

@@ -64,168 +64,210 @@ public partial class ChatViewModel : BaseViewModel
         if (_eventHandlersRegistered) return;
         _eventHandlersRegistered = true;
 
-        _chatService.OnMessageReceived += message =>
+        // Chat service events
+        _chatService.OnMessageReceived += OnMessageReceived;
+        _chatService.OnUserJoined += OnUserJoined;
+        _chatService.OnUserLeft += OnUserLeft;
+        _chatService.OnOnlineUsersReceived += OnOnlineUsersReceived;
+        _chatService.OnChatHistoryReceived += OnChatHistoryReceived;
+        _chatService.OnChannelListReceived += OnChannelListReceived;
+        _chatService.OnUserTyping += OnUserTyping;
+        _chatService.OnMessageDeleted += OnMessageDeleted;
+        _chatService.OnUserProfileUpdated += OnUserProfileUpdated;
+
+        // Voice events
+        _voiceService.OnUserJoinedVoice += OnUserJoinedVoice;
+        _voiceService.OnUserLeftVoice += OnUserLeftVoice;
+        _voiceService.OnVoiceChannelUsers += OnVoiceChannelUsers;
+        _voiceService.OnUserSpeaking += OnUserSpeaking;
+    }
+
+    #region Event Handlers
+
+    private void OnMessageReceived(ChatMessageDto message)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            if (message.Channel == CurrentChannel)
             {
-                if (message.Channel == CurrentChannel)
+                if (!Messages.Any(m => m.Id == message.Id))
                 {
-                    // Check for duplicates to prevent double messages
-                    if (!Messages.Any(m => m.Id == message.Id))
-                    {
-                        Messages.Add(message);
-                    }
+                    Messages.Add(message);
                 }
-            });
-        };
+            }
+        });
+    }
 
-        _chatService.OnUserJoined += user =>
+    private void OnUserJoined(OnlineUserDto user)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            if (!OnlineUsers.Any(u => u.Id == user.Id))
+                OnlineUsers.Add(user);
+        });
+    }
+
+    private void OnUserLeft(OnlineUserDto user)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            var existingUser = OnlineUsers.FirstOrDefault(u => u.Id == user.Id);
+            if (existingUser != null)
+                OnlineUsers.Remove(existingUser);
+        });
+    }
+
+    private void OnOnlineUsersReceived(List<OnlineUserDto> users)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            OnlineUsers.Clear();
+            foreach (var user in users)
+                OnlineUsers.Add(user);
+        });
+    }
+
+    private void OnChatHistoryReceived(string channel, List<ChatMessageDto> messages)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            if (channel == CurrentChannel)
+            {
+                Messages.Clear();
+                foreach (var message in messages)
+                    Messages.Add(message);
+            }
+        });
+    }
+
+    private void OnChannelListReceived(List<ChannelDto> channels)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            Channels.Clear();
+            foreach (var channel in channels)
+                Channels.Add(channel);
+        });
+    }
+
+    private void OnUserTyping(string username, string channel)
+    {
+        if (channel == CurrentChannel && username != _apiService.CurrentUser?.Username)
         {
             System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
-                if (!OnlineUsers.Any(u => u.Id == user.Id))
-                    OnlineUsers.Add(user);
+                TypingUser = username;
             });
-        };
 
-        _chatService.OnUserLeft += user =>
-        {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                var existingUser = OnlineUsers.FirstOrDefault(u => u.Id == user.Id);
-                if (existingUser != null)
-                    OnlineUsers.Remove(existingUser);
-            });
-        };
-
-        _chatService.OnOnlineUsersReceived += users =>
-        {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                OnlineUsers.Clear();
-                foreach (var user in users)
-                    OnlineUsers.Add(user);
-            });
-        };
-
-        _chatService.OnChatHistoryReceived += (channel, messages) =>
-        {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                if (channel == CurrentChannel)
-                {
-                    Messages.Clear();
-                    foreach (var message in messages)
-                        Messages.Add(message);
-                }
-            });
-        };
-
-        _chatService.OnChannelListReceived += channels =>
-        {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                Channels.Clear();
-                foreach (var channel in channels)
-                    Channels.Add(channel);
-            });
-        };
-
-        _chatService.OnUserTyping += (username, channel) =>
-        {
-            if (channel == CurrentChannel && username != _apiService.CurrentUser?.Username)
+            // Clear typing indicator after 3 seconds
+            var capturedUsername = username;
+            Task.Delay(3000).ContinueWith(_ =>
             {
                 System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
                 {
-                    TypingUser = username;
+                    if (TypingUser == capturedUsername)
+                        TypingUser = null;
                 });
+            });
+        }
+    }
 
-                // Clear typing indicator after 3 seconds
-                Task.Delay(3000).ContinueWith(_ =>
-                {
-                    System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-                    {
-                        if (TypingUser == username)
-                            TypingUser = null;
-                    });
-                });
+    private void OnMessageDeleted(string messageId)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            var message = Messages.FirstOrDefault(m => m.Id == messageId);
+            if (message != null)
+                Messages.Remove(message);
+        });
+    }
+
+    private void OnUserProfileUpdated(OnlineUserDto updatedUser)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            var existingUser = OnlineUsers.FirstOrDefault(u => u.Id == updatedUser.Id);
+            if (existingUser != null)
+            {
+                var index = OnlineUsers.IndexOf(existingUser);
+                OnlineUsers.RemoveAt(index);
+                OnlineUsers.Insert(index, updatedUser);
             }
-        };
 
-        _chatService.OnMessageDeleted += messageId =>
-        {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            foreach (var message in Messages.Where(m => m.SenderId == updatedUser.Id))
             {
-                var message = Messages.FirstOrDefault(m => m.Id == messageId);
-                if (message != null)
-                    Messages.Remove(message);
-            });
-        };
+                message.SenderAvatarUrl = updatedUser.AvatarUrl;
+                message.SenderUsername = updatedUser.Username;
+            }
+        });
+    }
 
-        _chatService.OnUserProfileUpdated += updatedUser =>
+    private void OnUserJoinedVoice(VoiceUserState user)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                // Update online user in the list
-                var existingUser = OnlineUsers.FirstOrDefault(u => u.Id == updatedUser.Id);
-                if (existingUser != null)
-                {
-                    var index = OnlineUsers.IndexOf(existingUser);
-                    OnlineUsers.RemoveAt(index);
-                    OnlineUsers.Insert(index, updatedUser);
-                }
+            if (!VoiceUsers.Any(u => u.ConnectionId == user.ConnectionId))
+                VoiceUsers.Add(user);
+        });
+    }
 
-                // Update sender info in existing messages
-                foreach (var message in Messages.Where(m => m.SenderId == updatedUser.Id))
-                {
-                    message.SenderAvatarUrl = updatedUser.AvatarUrl;
-                    message.SenderUsername = updatedUser.Username;
-                }
-            });
-        };
-
-        // Voice events
-        _voiceService.OnUserJoinedVoice += user =>
+    private void OnUserLeftVoice(VoiceUserState user)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                if (!VoiceUsers.Any(u => u.ConnectionId == user.ConnectionId))
-                    VoiceUsers.Add(user);
-            });
-        };
+            var existingUser = VoiceUsers.FirstOrDefault(u => u.ConnectionId == user.ConnectionId);
+            if (existingUser != null)
+                VoiceUsers.Remove(existingUser);
+        });
+    }
 
-        _voiceService.OnUserLeftVoice += user =>
+    private void OnVoiceChannelUsers(List<VoiceUserState> users)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                var existingUser = VoiceUsers.FirstOrDefault(u => u.ConnectionId == user.ConnectionId);
-                if (existingUser != null)
-                    VoiceUsers.Remove(existingUser);
-            });
-        };
+            VoiceUsers.Clear();
+            foreach (var user in users)
+                VoiceUsers.Add(user);
+        });
+    }
 
-        _voiceService.OnVoiceChannelUsers += users =>
+    private void OnUserSpeaking(string connectionId, string username, bool isSpeaking, double audioLevel)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            var user = VoiceUsers.FirstOrDefault(u => u.ConnectionId == connectionId);
+            if (user != null)
             {
-                VoiceUsers.Clear();
-                foreach (var user in users)
-                    VoiceUsers.Add(user);
-            });
-        };
+                user.IsSpeaking = isSpeaking;
+                user.AudioLevel = audioLevel;
+            }
+        });
+    }
 
-        _voiceService.OnUserSpeaking += (connectionId, username, isSpeaking, audioLevel) =>
-        {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                var user = VoiceUsers.FirstOrDefault(u => u.ConnectionId == connectionId);
-                if (user != null)
-                {
-                    user.IsSpeaking = isSpeaking;
-                    user.AudioLevel = audioLevel;
-                }
-            });
-        };
+    #endregion
+
+    public void Cleanup()
+    {
+        if (!_eventHandlersRegistered) return;
+
+        // Unsubscribe from chat service events
+        _chatService.OnMessageReceived -= OnMessageReceived;
+        _chatService.OnUserJoined -= OnUserJoined;
+        _chatService.OnUserLeft -= OnUserLeft;
+        _chatService.OnOnlineUsersReceived -= OnOnlineUsersReceived;
+        _chatService.OnChatHistoryReceived -= OnChatHistoryReceived;
+        _chatService.OnChannelListReceived -= OnChannelListReceived;
+        _chatService.OnUserTyping -= OnUserTyping;
+        _chatService.OnMessageDeleted -= OnMessageDeleted;
+        _chatService.OnUserProfileUpdated -= OnUserProfileUpdated;
+
+        // Unsubscribe from voice service events
+        _voiceService.OnUserJoinedVoice -= OnUserJoinedVoice;
+        _voiceService.OnUserLeftVoice -= OnUserLeftVoice;
+        _voiceService.OnVoiceChannelUsers -= OnVoiceChannelUsers;
+        _voiceService.OnUserSpeaking -= OnUserSpeaking;
+
+        _eventHandlersRegistered = false;
     }
 
     [RelayCommand]

@@ -103,30 +103,48 @@ public partial class ProfileViewModel : BaseViewModel
         // Subscribe to leaderboard events
         if (_leaderboardService != null)
         {
-            _leaderboardService.OnNewProfilePost += post =>
-            {
-                if (post.ProfileUserId == User?.Id)
-                {
-                    System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-                    {
-                        ProfilePosts.Insert(0, post);
-                    });
-                }
-            };
-
-            _leaderboardService.OnProfilePostDeleted += postId =>
-            {
-                System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-                {
-                    var post = ProfilePosts.FirstOrDefault(p => p.Id == postId);
-                    if (post != null)
-                        ProfilePosts.Remove(post);
-                });
-            };
+            _leaderboardService.OnNewProfilePost += OnNewProfilePost;
+            _leaderboardService.OnProfilePostDeleted += OnProfilePostDeleted;
         }
 
         // Initialize with current user
         User = _apiService.CurrentUser;
+    }
+
+    #region Event Handlers
+
+    private void OnNewProfilePost(ProfilePost post)
+    {
+        if (post.ProfileUserId == User?.Id)
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                ProfilePosts.Insert(0, post);
+            });
+        }
+    }
+
+    private void OnProfilePostDeleted(string postId)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            var post = ProfilePosts.FirstOrDefault(p => p.Id == postId);
+            if (post != null)
+                ProfilePosts.Remove(post);
+        });
+    }
+
+    #endregion
+
+    public void Cleanup()
+    {
+        _navigationService.OnViewUserProfile -= OnViewUserProfile;
+
+        if (_leaderboardService != null)
+        {
+            _leaderboardService.OnNewProfilePost -= OnNewProfilePost;
+            _leaderboardService.OnProfilePostDeleted -= OnProfilePostDeleted;
+        }
     }
 
     private async void OnViewUserProfile(string? userId)

@@ -102,6 +102,7 @@ public partial class ChatView : UserControl
         {
             _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
             _viewModel.Messages.CollectionChanged -= OnMessagesCollectionChanged;
+            _viewModel.Cleanup();
         }
 
         _pendingAttachments.CollectionChanged -= OnPendingAttachmentsChanged;
