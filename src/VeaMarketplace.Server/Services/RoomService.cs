@@ -117,7 +117,11 @@ public class RoomService
 
     public List<Room> GetUserRooms(string userId)
     {
-        return _db.Rooms.Find(r => r.Members.Any(m => m.UserId == userId)).ToList();
+        // LiteDB doesn't support nested Any() expressions in Find()
+        // Fetch all rooms and filter in memory
+        return _db.Rooms.FindAll()
+            .Where(r => r.Members.Any(m => m.UserId == userId))
+            .ToList();
     }
 
     public (bool success, string message) UpdateRoom(string userId, string roomId, UpdateRoomRequest request)

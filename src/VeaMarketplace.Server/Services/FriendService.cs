@@ -165,10 +165,11 @@ public class FriendService
         if (string.IsNullOrWhiteSpace(query)) return new List<User>();
 
         var queryLower = query.ToLower();
-        return _db.Users
-            .Find(u => u.Username.ToLower().Contains(queryLower) ||
-                       u.DisplayName.ToLower().Contains(queryLower) ||
-                       u.Id == query)
+        // LiteDB may not support complex string Contains, filter in memory
+        return _db.Users.FindAll()
+            .Where(u => u.Username.ToLower().Contains(queryLower) ||
+                        u.DisplayName.ToLower().Contains(queryLower) ||
+                        u.Id == query)
             .Take(limit)
             .ToList();
     }
@@ -368,8 +369,9 @@ public class FriendService
             return [];
 
         // Get user details for mutual friends
-        return _db.Users
-            .Find(u => mutualIds.Contains(u.Id))
+        // LiteDB doesn't support external collection Contains in Find(), filter in memory
+        return _db.Users.FindAll()
+            .Where(u => mutualIds.Contains(u.Id))
             .Select(u => new UserDto
             {
                 Id = u.Id,

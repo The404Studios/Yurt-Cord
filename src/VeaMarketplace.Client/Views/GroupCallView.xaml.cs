@@ -125,7 +125,7 @@ public partial class GroupCallView : UserControl
         });
     }
 
-    private void OnLocalAudioLevel(float level)
+    private void OnLocalAudioLevel(double level)
     {
         Dispatcher.InvokeAsync(() =>
         {
@@ -135,7 +135,7 @@ public partial class GroupCallView : UserControl
             }
 
             // Update self speaking ring
-            SelfSpeakingRing.Visibility = level > 0.1f ? Visibility.Visible : Visibility.Collapsed;
+            SelfSpeakingRing.Visibility = level > 0.1 ? Visibility.Visible : Visibility.Collapsed;
         });
     }
 
