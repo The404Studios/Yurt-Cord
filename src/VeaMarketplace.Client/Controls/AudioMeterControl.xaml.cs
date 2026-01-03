@@ -44,6 +44,18 @@ public partial class AudioMeterControl : UserControl
         };
         _peakDecayTimer.Tick += PeakDecayTimer_Tick;
         _peakDecayTimer.Start();
+
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        if (_peakDecayTimer != null)
+        {
+            _peakDecayTimer.Stop();
+            _peakDecayTimer.Tick -= PeakDecayTimer_Tick;
+        }
+        Unloaded -= OnUnloaded;
     }
 
     private void CreateSegments()

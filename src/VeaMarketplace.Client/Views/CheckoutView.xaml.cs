@@ -24,13 +24,27 @@ public partial class CheckoutView : UserControl
         DataContext = viewModel;
 
         Loaded += CheckoutView_Loaded;
+        Unloaded += CheckoutView_Unloaded;
+    }
+
+    private void CheckoutView_Unloaded(object sender, RoutedEventArgs e)
+    {
+        Loaded -= CheckoutView_Loaded;
+        Unloaded -= CheckoutView_Unloaded;
     }
 
     private async void CheckoutView_Loaded(object sender, RoutedEventArgs e)
     {
-        if (_viewModel != null)
+        try
         {
-            await _viewModel.InitializeAsync();
+            if (_viewModel != null)
+            {
+                await _viewModel.InitializeAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to initialize checkout view: {ex.Message}");
         }
     }
 

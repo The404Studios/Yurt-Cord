@@ -251,6 +251,16 @@ public partial class FriendsViewModel : BaseViewModel
         }
     }
 
+    private void OnFriendsCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        PopulateFriendGroupMembers();
+    }
+
+    private void OnFriendGroupsCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        PopulateFriendGroupMembers();
+    }
+
     // Activity tracking
     public ObservableCollection<InteractionEvent>? RecentInteractions => _socialService?.RecentInteractions;
     public ObservableCollection<FriendRecommendation>? FriendRecommendations => _socialService?.Recommendations;
@@ -308,10 +318,10 @@ public partial class FriendsViewModel : BaseViewModel
         };
 
         // Populate friend group members when friends or groups change
-        Friends.CollectionChanged += (s, e) => PopulateFriendGroupMembers();
+        Friends.CollectionChanged += OnFriendsCollectionChanged;
         if (_socialService?.FriendGroups != null)
         {
-            _socialService.FriendGroups.CollectionChanged += (s, e) => PopulateFriendGroupMembers();
+            _socialService.FriendGroups.CollectionChanged += OnFriendGroupsCollectionChanged;
         }
 
         // Initial population
