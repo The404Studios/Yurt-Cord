@@ -38,6 +38,14 @@ public partial class StatusUpdateDialog : UserControl
     {
         InitializeComponent();
         InitializeQuickEmojis();
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        // Cleanup dynamic emoji buttons
+        QuickEmojis.Children.Clear();
+        Unloaded -= OnUnloaded;
     }
 
     private void InitializeQuickEmojis()

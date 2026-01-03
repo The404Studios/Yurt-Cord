@@ -22,6 +22,14 @@ public partial class ProductCard : UserControl
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        // Cleanup event subscriptions
+        DataContextChanged -= OnDataContextChanged;
+        Unloaded -= OnUnloaded;
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)

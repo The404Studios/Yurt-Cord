@@ -115,6 +115,17 @@ public partial class SocialActivityPanel : UserControl
 
         ActivityFeedControl.ItemsSource = _activities;
         SuggestedFriendsControl.ItemsSource = _suggestedFriends;
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        // Cleanup dynamic controls
+        OnlineFriendsPanel.Children.Clear();
+        _activities.Clear();
+        _onlineFriends.Clear();
+        _suggestedFriends.Clear();
+        Unloaded -= OnUnloaded;
     }
 
     public void SetOnlineFriends(IEnumerable<OnlineFriend> friends)

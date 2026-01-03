@@ -114,7 +114,12 @@ public partial class QuickActionsToolbar : UserControl
             To = 0,
             Duration = TimeSpan.FromMilliseconds(150)
         };
-        animation.Completed += (s, e) => Visibility = Visibility.Collapsed;
+        animation.Completed += OnHideAnimationCompleted;
         BeginAnimation(OpacityProperty, animation);
+    }
+
+    private void OnHideAnimationCompleted(object? sender, EventArgs e)
+    {
+        Visibility = Visibility.Collapsed;
     }
 }

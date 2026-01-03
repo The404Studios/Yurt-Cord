@@ -43,6 +43,15 @@ public partial class MutualFriendsDisplay : UserControl
         _friendService = App.ServiceProvider.GetService(typeof(IFriendService)) as IFriendService;
 
         FriendsListControl.ItemsSource = _friends;
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        // Cleanup dynamic avatar elements
+        AvatarStack.Children.Clear();
+        _friends.Clear();
+        Unloaded -= OnUnloaded;
     }
 
     public async Task LoadMutualFriendsAsync(string userId)

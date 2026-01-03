@@ -47,9 +47,42 @@ public partial class ChatMessageControl : UserControl
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        MouseEnter += OnMouseEnterHandler;
+        MouseLeave += OnMouseLeaveHandler;
+        Unloaded += OnUnloaded;
+    }
 
-        MouseEnter += (s, e) => ActionsPanel.Visibility = Visibility.Visible;
-        MouseLeave += (s, e) => ActionsPanel.Visibility = Visibility.Collapsed;
+    private void OnMouseEnterHandler(object sender, MouseEventArgs e)
+    {
+        ActionsPanel.Visibility = Visibility.Visible;
+    }
+
+    private void OnMouseLeaveHandler(object sender, MouseEventArgs e)
+    {
+        ActionsPanel.Visibility = Visibility.Collapsed;
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        // Cleanup event subscriptions
+        DataContextChanged -= OnDataContextChanged;
+        MouseEnter -= OnMouseEnterHandler;
+        MouseLeave -= OnMouseLeaveHandler;
+        Unloaded -= OnUnloaded;
+
+        // Clear embed controls to release their event handlers
+        foreach (var child in EmbedsContainer.Children)
+        {
+            if (child is SharedPostEmbed embedControl)
+            {
+                embedControl.ViewClicked -= EmbedControl_ViewClicked;
+                embedControl.ShareClicked -= EmbedControl_ShareClicked;
+                embedControl.LinkCopied -= EmbedControl_LinkCopied;
+                embedControl.BidClicked -= EmbedControl_BidClicked;
+                embedControl.ReactionClicked -= EmbedControl_ReactionClicked;
+            }
+        }
+        EmbedsContainer.Children.Clear();
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)

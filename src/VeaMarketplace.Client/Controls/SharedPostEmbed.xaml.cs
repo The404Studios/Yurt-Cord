@@ -22,6 +22,14 @@ public partial class SharedPostEmbed : UserControl
     public SharedPostEmbed()
     {
         InitializeComponent();
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        // Cleanup dynamic reaction buttons
+        ReactionsPanel.Children.Clear();
+        Unloaded -= OnUnloaded;
     }
 
     public void SetContent(EmbeddedContent content)
