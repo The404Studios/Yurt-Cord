@@ -60,7 +60,10 @@ public class RoleService
     public bool DeleteRole(string roleId)
     {
         // Remove role from all users first
-        var users = _db.Users.Find(u => u.CustomRoleIds.Contains(roleId)).ToList();
+        // LiteDB doesn't support Contains in Find(), filter in memory
+        var users = _db.Users.FindAll()
+            .Where(u => u.CustomRoleIds.Contains(roleId))
+            .ToList();
         foreach (var user in users)
         {
             user.CustomRoleIds.Remove(roleId);
