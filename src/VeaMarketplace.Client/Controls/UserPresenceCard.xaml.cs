@@ -20,8 +20,23 @@ public partial class UserPresenceCard : UserControl
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
-        _elapsedTimer?.Stop();
-        _elapsedTimer = null;
+        CleanupTimer();
+        Unloaded -= OnUnloaded;
+    }
+
+    private void CleanupTimer()
+    {
+        if (_elapsedTimer != null)
+        {
+            _elapsedTimer.Stop();
+            _elapsedTimer.Tick -= OnElapsedTimerTick;
+            _elapsedTimer = null;
+        }
+    }
+
+    private void OnElapsedTimerTick(object? sender, EventArgs e)
+    {
+        UpdateElapsedTime();
     }
 
     public void SetActivity(UserActivity? activity)
@@ -129,9 +144,9 @@ public partial class UserPresenceCard : UserControl
 
         // Start elapsed timer
         UpdateElapsedTime();
-        _elapsedTimer?.Stop();
+        CleanupTimer();
         _elapsedTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(activity.Type == ActivityType.Listening ? 1 : 60) };
-        _elapsedTimer.Tick += (s, e) => UpdateElapsedTime();
+        _elapsedTimer.Tick += OnElapsedTimerTick;
         _elapsedTimer.Start();
     }
 
@@ -179,7 +194,7 @@ public partial class UserPresenceCard : UserControl
     public void ClearActivity()
     {
         _currentActivity = null;
-        _elapsedTimer?.Stop();
+        CleanupTimer();
         RootBorder.Visibility = Visibility.Collapsed;
     }
 }

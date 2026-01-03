@@ -24,7 +24,14 @@ public partial class VoiceSettingsPanel : UserControl
             _voiceService = (IVoiceService?)App.ServiceProvider?.GetService(typeof(IVoiceService));
             LoadDevices();
             StartLevelMonitoring();
+            Unloaded += OnUnloaded;
         }
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        Cleanup();
+        Unloaded -= OnUnloaded;
     }
 
     private void LoadDevices()
@@ -56,15 +63,17 @@ public partial class VoiceSettingsPanel : UserControl
         {
             Interval = TimeSpan.FromMilliseconds(50)
         };
-        _levelTimer.Tick += (s, e) =>
-        {
-            // Smooth the level display
-            var targetWidth = _currentLevel * (InputLevelBar.Parent is FrameworkElement parent
-                ? parent.ActualWidth
-                : 200);
-            InputLevelBar.Width = Math.Max(0, Math.Min(targetWidth, InputLevelBar.Width * 0.8 + targetWidth * 0.2));
-        };
+        _levelTimer.Tick += OnLevelTimerTick;
         _levelTimer.Start();
+    }
+
+    private void OnLevelTimerTick(object? sender, EventArgs e)
+    {
+        // Smooth the level display
+        var targetWidth = _currentLevel * (InputLevelBar.Parent is FrameworkElement parent
+            ? parent.ActualWidth
+            : 200);
+        InputLevelBar.Width = Math.Max(0, Math.Min(targetWidth, InputLevelBar.Width * 0.8 + targetWidth * 0.2));
     }
 
     private void InputDevice_Changed(object sender, SelectionChangedEventArgs e)
@@ -203,19 +212,7 @@ public partial class VoiceSettingsPanel : UserControl
                 BufferMilliseconds = 20
             };
 
-            _testWaveIn.DataAvailable += (s, args) =>
-            {
-                // Calculate RMS level
-                float max = 0;
-                var buffer = new WaveBuffer(args.Buffer);
-                for (int i = 0; i < args.BytesRecorded / 2; i++)
-                {
-                    var sample = Math.Abs(buffer.ShortBuffer[i] / 32768f);
-                    if (sample > max) max = sample;
-                }
-                _currentLevel = max;
-            };
-
+            _testWaveIn.DataAvailable += OnTestWaveInDataAvailable;
             _testWaveIn.StartRecording();
 
             // Auto stop after 10 seconds
@@ -239,10 +236,36 @@ public partial class VoiceSettingsPanel : UserControl
         }
     }
 
+    private void OnTestWaveInDataAvailable(object? sender, WaveInEventArgs args)
+    {
+        // Calculate RMS level
+        float max = 0;
+        var buffer = new WaveBuffer(args.Buffer);
+        for (int i = 0; i < args.BytesRecorded / 2; i++)
+        {
+            var sample = Math.Abs(buffer.ShortBuffer[i] / 32768f);
+            if (sample > max) max = sample;
+        }
+        _currentLevel = max;
+    }
+
     public void Cleanup()
     {
-        _levelTimer?.Stop();
-        _testWaveIn?.StopRecording();
-        _testWaveIn?.Dispose();
+        // Cleanup timer
+        if (_levelTimer != null)
+        {
+            _levelTimer.Stop();
+            _levelTimer.Tick -= OnLevelTimerTick;
+            _levelTimer = null;
+        }
+
+        // Cleanup test wave in
+        if (_testWaveIn != null)
+        {
+            _testWaveIn.DataAvailable -= OnTestWaveInDataAvailable;
+            _testWaveIn.StopRecording();
+            _testWaveIn.Dispose();
+            _testWaveIn = null;
+        }
     }
 }

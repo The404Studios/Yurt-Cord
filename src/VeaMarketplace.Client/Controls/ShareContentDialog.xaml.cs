@@ -57,11 +57,27 @@ public partial class ShareContentDialog : UserControl
         {
             Interval = TimeSpan.FromSeconds(2)
         };
-        _copySuccessTimer.Tick += (s, e) =>
+        _copySuccessTimer.Tick += OnCopySuccessTimerTick;
+
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        // Cleanup timer
+        if (_copySuccessTimer != null)
         {
-            CopySuccessIcon.Visibility = Visibility.Collapsed;
             _copySuccessTimer.Stop();
-        };
+            _copySuccessTimer.Tick -= OnCopySuccessTimerTick;
+        }
+
+        Unloaded -= OnUnloaded;
+    }
+
+    private void OnCopySuccessTimerTick(object? sender, EventArgs e)
+    {
+        CopySuccessIcon.Visibility = Visibility.Collapsed;
+        _copySuccessTimer.Stop();
     }
 
     public void SetContent(ShareableContent content)

@@ -48,6 +48,7 @@ public partial class NotificationToast : UserControl
     {
         InitializeComponent();
         Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
         TimestampText.Text = "Just now";
     }
 
@@ -62,7 +63,7 @@ public partial class NotificationToast : UserControl
         _slideOutAnimation = _slideOutAnimation.Clone();
         _iconBounceAnimation = _iconBounceAnimation.Clone();
 
-        _slideOutAnimation.Completed += (s, args) => Closed?.Invoke(this, EventArgs.Empty);
+        _slideOutAnimation.Completed += OnSlideOutCompleted;
 
         // Start animations
         slideInAnimation.Begin(this);
@@ -73,6 +74,46 @@ public partial class NotificationToast : UserControl
 
         // Start auto-dismiss countdown
         StartCountdown();
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        // Cleanup timer
+        CleanupTimer();
+
+        // Unsubscribe from animation events
+        if (_slideOutAnimation != null)
+        {
+            _slideOutAnimation.Completed -= OnSlideOutCompleted;
+        }
+
+        // Unsubscribe from Loaded/Unloaded
+        Loaded -= OnLoaded;
+        Unloaded -= OnUnloaded;
+    }
+
+    private void OnSlideOutCompleted(object? sender, EventArgs e)
+    {
+        Closed?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnAutoDismissTimerTick(object? sender, EventArgs e)
+    {
+        _autoDismissTimer?.Stop();
+        if (!_isPaused)
+        {
+            Close();
+        }
+    }
+
+    private void CleanupTimer()
+    {
+        if (_autoDismissTimer != null)
+        {
+            _autoDismissTimer.Stop();
+            _autoDismissTimer.Tick -= OnAutoDismissTimerTick;
+            _autoDismissTimer = null;
+        }
     }
 
     private void StartCountdown()
@@ -88,19 +129,15 @@ public partial class NotificationToast : UserControl
         };
         ProgressScale.BeginAnimation(ScaleTransform.ScaleXProperty, _progressAnimation);
 
+        // Cleanup existing timer if any
+        CleanupTimer();
+
         // Timer for auto-dismiss
         _autoDismissTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromMilliseconds(_totalDurationMs)
         };
-        _autoDismissTimer.Tick += (s, e) =>
-        {
-            _autoDismissTimer.Stop();
-            if (!_isPaused)
-            {
-                Close();
-            }
-        };
+        _autoDismissTimer.Tick += OnAutoDismissTimerTick;
         _autoDismissTimer.Start();
     }
 
@@ -129,18 +166,14 @@ public partial class NotificationToast : UserControl
         };
         ProgressScale.BeginAnimation(ScaleTransform.ScaleXProperty, _progressAnimation);
 
+        // Cleanup existing timer before creating new one
+        CleanupTimer();
+
         _autoDismissTimer = new DispatcherTimer
         {
             Interval = remainingDuration
         };
-        _autoDismissTimer.Tick += (s, e) =>
-        {
-            _autoDismissTimer.Stop();
-            if (!_isPaused)
-            {
-                Close();
-            }
-        };
+        _autoDismissTimer.Tick += OnAutoDismissTimerTick;
         _autoDismissTimer.Start();
     }
 

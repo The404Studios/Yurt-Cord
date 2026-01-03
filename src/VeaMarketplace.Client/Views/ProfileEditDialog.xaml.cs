@@ -59,27 +59,57 @@ public partial class ProfileEditDialog : Window
         PreviewStatus.Text = string.IsNullOrEmpty(user.StatusMessage) ? "No status..." : user.StatusMessage;
 
         // Wire up character counters
-        StatusInput.TextChanged += (s, e) =>
-        {
-            StatusCharCount.Text = $"{StatusInput.Text.Length}/100";
-            PreviewStatus.Text = string.IsNullOrEmpty(StatusInput.Text) ? "No status..." : StatusInput.Text;
-        };
-        BioInput.TextChanged += (s, e) => BioCharCount.Text = $"{BioInput.Text.Length}/150";
-        DescriptionInput.TextChanged += (s, e) => DescCharCount.Text = $"{DescriptionInput.Text.Length}/500";
-        DisplayNameInput.TextChanged += (s, e) =>
-        {
-            PreviewName.Text = string.IsNullOrEmpty(DisplayNameInput.Text) ? UsernameInput.Text : DisplayNameInput.Text;
-        };
-        UsernameInput.TextChanged += (s, e) =>
-        {
-            if (string.IsNullOrEmpty(DisplayNameInput.Text))
-                PreviewName.Text = UsernameInput.Text;
-        };
+        StatusInput.TextChanged += OnStatusInputTextChanged;
+        BioInput.TextChanged += OnBioInputTextChanged;
+        DescriptionInput.TextChanged += OnDescriptionInputTextChanged;
+        DisplayNameInput.TextChanged += OnDisplayNameInputTextChanged;
+        UsernameInput.TextChanged += OnUsernameInputTextChanged;
 
         // Update initial counters
         StatusCharCount.Text = $"{StatusInput.Text.Length}/100";
         BioCharCount.Text = $"{BioInput.Text.Length}/150";
         DescCharCount.Text = $"{DescriptionInput.Text.Length}/500";
+
+        // Cleanup on close
+        Closed += OnWindowClosed;
+    }
+
+    private void OnWindowClosed(object? sender, EventArgs e)
+    {
+        // Unsubscribe from TextChanged events
+        StatusInput.TextChanged -= OnStatusInputTextChanged;
+        BioInput.TextChanged -= OnBioInputTextChanged;
+        DescriptionInput.TextChanged -= OnDescriptionInputTextChanged;
+        DisplayNameInput.TextChanged -= OnDisplayNameInputTextChanged;
+        UsernameInput.TextChanged -= OnUsernameInputTextChanged;
+        AccentColorInput.TextChanged -= AccentColorInput_TextChanged;
+    }
+
+    private void OnStatusInputTextChanged(object sender, TextChangedEventArgs e)
+    {
+        StatusCharCount.Text = $"{StatusInput.Text.Length}/100";
+        PreviewStatus.Text = string.IsNullOrEmpty(StatusInput.Text) ? "No status..." : StatusInput.Text;
+    }
+
+    private void OnBioInputTextChanged(object sender, TextChangedEventArgs e)
+    {
+        BioCharCount.Text = $"{BioInput.Text.Length}/150";
+    }
+
+    private void OnDescriptionInputTextChanged(object sender, TextChangedEventArgs e)
+    {
+        DescCharCount.Text = $"{DescriptionInput.Text.Length}/500";
+    }
+
+    private void OnDisplayNameInputTextChanged(object sender, TextChangedEventArgs e)
+    {
+        PreviewName.Text = string.IsNullOrEmpty(DisplayNameInput.Text) ? UsernameInput.Text : DisplayNameInput.Text;
+    }
+
+    private void OnUsernameInputTextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (string.IsNullOrEmpty(DisplayNameInput.Text))
+            PreviewName.Text = UsernameInput.Text;
     }
 
     #region Tab Navigation
