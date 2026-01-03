@@ -125,7 +125,7 @@
             <Grid Grid.Row="0" Background="#313338">
                 <!-- Header Bar -->
                 <Border VerticalAlignment="Top" Background="#2B2D31"
-                        Padding="16,12" ZIndex="10">
+                        Padding="16,12" Panel.ZIndex="10">
                     <Grid>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <!-- Call Icon -->
