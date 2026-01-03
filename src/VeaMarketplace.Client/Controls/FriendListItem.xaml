@@ -9,6 +9,46 @@
                 <ResourceDictionary Source="/Styles/Colors.xaml"/>
                 <ResourceDictionary Source="/Styles/Buttons.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Hover animations -->
+            <Storyboard x:Key="HoverIn">
+                <DoubleAnimation Storyboard.TargetName="RootBorder"
+                                 Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                 To="1.01" Duration="0:0:0.15">
+                    <DoubleAnimation.EasingFunction>
+                        <CubicEase EasingMode="EaseOut"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+                <DoubleAnimation Storyboard.TargetName="RootBorder"
+                                 Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                 To="1.01" Duration="0:0:0.15">
+                    <DoubleAnimation.EasingFunction>
+                        <CubicEase EasingMode="EaseOut"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+                <DoubleAnimation Storyboard.TargetName="ActionButtons"
+                                 Storyboard.TargetProperty="Opacity"
+                                 To="1" Duration="0:0:0.2"/>
+            </Storyboard>
+            <Storyboard x:Key="HoverOut">
+                <DoubleAnimation Storyboard.TargetName="RootBorder"
+                                 Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                 To="1" Duration="0:0:0.15">
+                    <DoubleAnimation.EasingFunction>
+                        <CubicEase EasingMode="EaseOut"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+                <DoubleAnimation Storyboard.TargetName="RootBorder"
+                                 Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                 To="1" Duration="0:0:0.15">
+                    <DoubleAnimation.EasingFunction>
+                        <CubicEase EasingMode="EaseOut"/>
+                    </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+                <DoubleAnimation Storyboard.TargetName="ActionButtons"
+                                 Storyboard.TargetProperty="Opacity"
+                                 To="0" Duration="0:0:0.15"/>
+            </Storyboard>
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -17,8 +57,12 @@
             CornerRadius="8"
             Padding="8"
             Cursor="Hand"
+            RenderTransformOrigin="0.5,0.5"
             MouseEnter="Border_MouseEnter"
             MouseLeave="Border_MouseLeave">
+        <Border.RenderTransform>
+            <ScaleTransform ScaleX="1" ScaleY="1"/>
+        </Border.RenderTransform>
 
         <Border.ContextMenu>
             <ContextMenu Style="{StaticResource ModernContextMenu}">
@@ -93,7 +137,7 @@
                         Grid.Column="2"
                         Orientation="Horizontal"
                         VerticalAlignment="Center"
-                        Visibility="Collapsed">
+                        Opacity="0">
                 <Button x:Name="MessageButton"
                         Width="32" Height="32"
                         Background="{StaticResource QuaternaryDarkBrush}"
