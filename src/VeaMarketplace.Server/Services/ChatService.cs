@@ -232,8 +232,8 @@ public class ChatService
             {
                 Emoji = g.Key,
                 Count = g.Count(),
-                UserIds = g.Select(r => r.UserId).ToList(),
-                HasReacted = false // Set by caller based on current user
+                UserNames = g.Select(r => r.Username).ToList(),
+                HasCurrentUserReacted = false // Set by caller based on current user
             })
             .ToList();
     }

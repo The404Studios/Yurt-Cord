@@ -171,7 +171,7 @@ public class CleanupBackgroundService : BackgroundService
 
             var threshold = DateTime.UtcNow - OfflineThreshold;
             var staleOnlineUsers = db.Users
-                .Find(u => u.IsOnline && u.LastSeen < threshold)
+                .Find(u => u.IsOnline && u.LastSeenAt < threshold)
                 .ToList();
 
             foreach (var user in staleOnlineUsers)

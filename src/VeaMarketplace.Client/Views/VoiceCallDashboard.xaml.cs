@@ -422,7 +422,7 @@ public partial class VoiceCallDashboard : UserControl
         });
     }
 
-    private void OnScreenShareStarted(ScreenShareInfo share)
+    private void OnScreenShareStarted(RemoteScreenShare share)
     {
         Dispatcher.Invoke(() =>
         {
