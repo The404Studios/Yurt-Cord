@@ -151,14 +151,22 @@ public partial class MarketplaceViewModel : BaseViewModel
         _navigationService = navigationService;
 
         _actionMessageTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
-        _actionMessageTimer.Tick += (s, e) =>
-        {
-            _actionMessageTimer.Stop();
-            ShowActionMessage = false;
-            ActionMessage = null;
-        };
+        _actionMessageTimer.Tick += OnActionMessageTimerTick;
 
         _ = InitializeAsync();
+    }
+
+    private void OnActionMessageTimerTick(object? sender, EventArgs e)
+    {
+        _actionMessageTimer.Stop();
+        ShowActionMessage = false;
+        ActionMessage = null;
+    }
+
+    public void Cleanup()
+    {
+        _actionMessageTimer.Stop();
+        _actionMessageTimer.Tick -= OnActionMessageTimerTick;
     }
 
     private async Task InitializeAsync()

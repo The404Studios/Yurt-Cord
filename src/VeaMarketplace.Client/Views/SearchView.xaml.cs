@@ -25,17 +25,31 @@ public partial class SearchView : UserControl
         DataContext = viewModel;
 
         Loaded += SearchView_Loaded;
+        Unloaded += SearchView_Unloaded;
+    }
+
+    private void SearchView_Unloaded(object sender, RoutedEventArgs e)
+    {
+        Loaded -= SearchView_Loaded;
+        Unloaded -= SearchView_Unloaded;
     }
 
     private async void SearchView_Loaded(object sender, RoutedEventArgs e)
     {
-        if (_viewModel != null)
+        try
         {
-            await _viewModel.InitializeAsync();
-        }
+            if (_viewModel != null)
+            {
+                await _viewModel.InitializeAsync();
+            }
 
-        // Focus the search box
-        SearchTextBox.Focus();
+            // Focus the search box
+            SearchTextBox.Focus();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to initialize search view: {ex.Message}");
+        }
     }
 
     private void ProductCard_Click(object sender, MouseButtonEventArgs e)

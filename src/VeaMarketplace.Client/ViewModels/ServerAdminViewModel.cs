@@ -121,16 +121,18 @@ public partial class ServerAdminViewModel : BaseViewModel
         {
             Interval = TimeSpan.FromSeconds(30)
         };
-        _refreshTimer.Tick += async (s, e) =>
-        {
-            if (AutoRefreshEnabled)
-            {
-                await RefreshDashboardAsync();
-            }
-        };
+        _refreshTimer.Tick += OnRefreshTimerTick;
         _refreshTimer.Start();
 
         _ = LoadDashboardAsync();
+    }
+
+    private async void OnRefreshTimerTick(object? sender, EventArgs e)
+    {
+        if (AutoRefreshEnabled)
+        {
+            await RefreshDashboardAsync();
+        }
     }
 
     private async Task LoadDashboardAsync()
@@ -396,6 +398,7 @@ public partial class ServerAdminViewModel : BaseViewModel
     public void Cleanup()
     {
         _refreshTimer.Stop();
+        _refreshTimer.Tick -= OnRefreshTimerTick;
     }
 }
 

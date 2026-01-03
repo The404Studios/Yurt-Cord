@@ -50,6 +50,18 @@ public partial class IncomingCallNotification : UserControl
             Interval = TimeSpan.FromSeconds(1)
         };
         _autoDeclineTimer.Tick += AutoDeclineTimer_Tick;
+
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        if (_autoDeclineTimer != null)
+        {
+            _autoDeclineTimer.Stop();
+            _autoDeclineTimer.Tick -= AutoDeclineTimer_Tick;
+        }
+        Unloaded -= OnUnloaded;
     }
 
     public void ShowCall(IncomingCall call)

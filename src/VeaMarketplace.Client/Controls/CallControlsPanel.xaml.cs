@@ -40,6 +40,18 @@ public partial class CallControlsPanel : UserControl
             Interval = TimeSpan.FromSeconds(1)
         };
         _durationTimer.Tick += DurationTimer_Tick;
+
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        if (_durationTimer != null)
+        {
+            _durationTimer.Stop();
+            _durationTimer.Tick -= DurationTimer_Tick;
+        }
+        Unloaded -= OnUnloaded;
     }
 
     public void StartCall(string callType = "Voice Call")
