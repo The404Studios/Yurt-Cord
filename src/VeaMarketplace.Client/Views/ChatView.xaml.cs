@@ -75,28 +75,10 @@ public partial class ChatView : UserControl
 
         // Setup attachment preview list
         AttachmentPreviewList.ItemsSource = _pendingAttachments;
-        _pendingAttachments.CollectionChanged += (s, e) =>
-        {
-            AttachmentPreviewArea.Visibility = _pendingAttachments.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-            // Adjust input border corners when attachments are shown
-            if (_pendingAttachments.Count > 0)
-            {
-                InputBorder.CornerRadius = new CornerRadius(0, 0, 8, 8);
-            }
-            else
-            {
-                InputBorder.CornerRadius = new CornerRadius(8);
-            }
-        };
+        _pendingAttachments.CollectionChanged += OnPendingAttachmentsChanged;
 
         // Subscribe to messages collection changes to auto-scroll
-        _viewModel.Messages.CollectionChanged += (s, e) =>
-        {
-            Dispatcher.InvokeAsync(() =>
-            {
-                MessagesScrollViewer.ScrollToEnd();
-            }, System.Windows.Threading.DispatcherPriority.Background);
-        };
+        _viewModel.Messages.CollectionChanged += OnMessagesCollectionChanged;
 
         // Subscribe to typing indicator - now handles multiple users
         _chatService.OnUserTyping += OnUserTyping;
@@ -119,7 +101,32 @@ public partial class ChatView : UserControl
         if (_viewModel != null)
         {
             _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            _viewModel.Messages.CollectionChanged -= OnMessagesCollectionChanged;
         }
+
+        _pendingAttachments.CollectionChanged -= OnPendingAttachmentsChanged;
+    }
+
+    private void OnPendingAttachmentsChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        AttachmentPreviewArea.Visibility = _pendingAttachments.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        // Adjust input border corners when attachments are shown
+        if (_pendingAttachments.Count > 0)
+        {
+            InputBorder.CornerRadius = new CornerRadius(0, 0, 8, 8);
+        }
+        else
+        {
+            InputBorder.CornerRadius = new CornerRadius(8);
+        }
+    }
+
+    private void OnMessagesCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        Dispatcher.InvokeAsync(() =>
+        {
+            MessagesScrollViewer.ScrollToEnd();
+        }, System.Windows.Threading.DispatcherPriority.Background);
     }
 
     private void OnUserTyping(string username, string channel)

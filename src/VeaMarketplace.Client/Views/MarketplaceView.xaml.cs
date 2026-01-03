@@ -30,22 +30,57 @@ public partial class MarketplaceView : UserControl
 
         ProductsItemsControl.ItemsSource = _viewModel.Products;
 
-        _viewModel.PropertyChanged += (s, e) =>
-        {
-            Dispatcher.Invoke(() =>
-            {
-                if (e.PropertyName == nameof(MarketplaceViewModel.IsLoading))
-                    LoadingOverlay.Visibility = _viewModel.IsLoading ? Visibility.Visible : Visibility.Collapsed;
+        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
 
-                if (e.PropertyName == nameof(MarketplaceViewModel.CurrentPage) ||
-                    e.PropertyName == nameof(MarketplaceViewModel.TotalPages))
-                {
-                    PageInfoText.Text = $"Page {_viewModel.CurrentPage} of {_viewModel.TotalPages}";
-                    PrevPageButton.IsEnabled = _viewModel.CurrentPage > 1;
-                    NextPageButton.IsEnabled = _viewModel.CurrentPage < _viewModel.TotalPages;
-                }
-            });
-        };
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        // Initialize page info
+        if (_viewModel != null)
+        {
+            PageInfoText.Text = $"Page {_viewModel.CurrentPage} of {_viewModel.TotalPages}";
+            PrevPageButton.IsEnabled = _viewModel.CurrentPage > 1;
+            NextPageButton.IsEnabled = _viewModel.CurrentPage < _viewModel.TotalPages;
+        }
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        // Cleanup to prevent memory leaks
+        if (_viewModel != null)
+        {
+            _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        }
+
+        // Cleanup toast timer
+        if (_toastTimer != null)
+        {
+            _toastTimer.Stop();
+            _toastTimer.Tick -= ToastTimer_Tick;
+            _toastTimer = null;
+        }
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            if (_viewModel == null) return;
+
+            if (e.PropertyName == nameof(MarketplaceViewModel.IsLoading))
+                LoadingOverlay.Visibility = _viewModel.IsLoading ? Visibility.Visible : Visibility.Collapsed;
+
+            if (e.PropertyName == nameof(MarketplaceViewModel.CurrentPage) ||
+                e.PropertyName == nameof(MarketplaceViewModel.TotalPages))
+            {
+                PageInfoText.Text = $"Page {_viewModel.CurrentPage} of {_viewModel.TotalPages}";
+                PrevPageButton.IsEnabled = _viewModel.CurrentPage > 1;
+                NextPageButton.IsEnabled = _viewModel.CurrentPage < _viewModel.TotalPages;
+            }
+        });
     }
 
     private void SearchBox_KeyDown(object sender, KeyEventArgs e)

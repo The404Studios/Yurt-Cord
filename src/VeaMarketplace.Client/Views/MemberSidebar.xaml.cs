@@ -34,27 +34,41 @@ public partial class MemberSidebar : UserControl
         OnlineMembersControl.ItemsSource = _viewModel.OnlineUsers;
 
         // Update online count
-        _viewModel.OnlineUsers.CollectionChanged += (s, e) =>
-        {
-            Dispatcher.Invoke(() =>
-            {
-                OnlineHeaderText.Text = $"ONLINE — {_viewModel.OnlineUsers.Count}";
+        _viewModel.OnlineUsers.CollectionChanged += OnOnlineUsersChanged;
 
-                // Separate staff members
-                var staff = _viewModel.OnlineUsers.Where(u => u.Role >= UserRole.Moderator).ToList();
-                if (staff.Count > 0)
-                {
-                    StaffHeader.Visibility = Visibility.Visible;
-                    StaffMembersControl.Visibility = Visibility.Visible;
-                    StaffMembersControl.ItemsSource = staff;
-                }
-                else
-                {
-                    StaffHeader.Visibility = Visibility.Collapsed;
-                    StaffMembersControl.Visibility = Visibility.Collapsed;
-                }
-            });
-        };
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel != null)
+        {
+            _viewModel.OnlineUsers.CollectionChanged -= OnOnlineUsersChanged;
+        }
+    }
+
+    private void OnOnlineUsersChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            if (_viewModel == null) return;
+
+            OnlineHeaderText.Text = $"ONLINE — {_viewModel.OnlineUsers.Count}";
+
+            // Separate staff members
+            var staff = _viewModel.OnlineUsers.Where(u => u.Role >= UserRole.Moderator).ToList();
+            if (staff.Count > 0)
+            {
+                StaffHeader.Visibility = Visibility.Visible;
+                StaffMembersControl.Visibility = Visibility.Visible;
+                StaffMembersControl.ItemsSource = staff;
+            }
+            else
+            {
+                StaffHeader.Visibility = Visibility.Collapsed;
+                StaffMembersControl.Visibility = Visibility.Collapsed;
+            }
+        });
     }
 
     private void StartGroupCall_Click(object sender, RoutedEventArgs e)
