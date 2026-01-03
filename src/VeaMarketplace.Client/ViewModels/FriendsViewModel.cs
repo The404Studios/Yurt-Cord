@@ -293,29 +293,19 @@ public partial class FriendsViewModel : BaseViewModel
         _callTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _callTimer.Tick += CallTimer_Tick;
 
-        // Subscribe to events
-        _friendService.OnNewFriendRequest += request =>
-        {
-            var toastService = (IToastNotificationService?)App.ServiceProvider?.GetService(typeof(IToastNotificationService));
-            toastService?.ShowFriendRequest(request.RequesterUsername);
-        };
-
-        _friendService.OnDirectMessageReceived += message =>
-        {
-            // Only notify if not currently viewing this conversation
-            if (SelectedFriend?.UserId != message.SenderId)
-            {
-                var toastService = (IToastNotificationService?)App.ServiceProvider?.GetService(typeof(IToastNotificationService));
-                var content = message.Content ?? string.Empty;
-                var preview = content.Length > 50 ? content[..47] + "..." : content;
-                toastService?.ShowMessage(message.SenderUsername, preview);
-            }
-        };
-
-        _friendService.OnError += error =>
-        {
-            SetError(error);
-        };
+        // Subscribe to events using named handlers for proper cleanup
+        _friendService.OnNewFriendRequest += OnNewFriendRequest;
+        _friendService.OnDirectMessageReceived += OnDirectMessageReceived;
+        _friendService.OnError += OnFriendServiceError;
+        _friendService.OnSuccess += OnFriendServiceSuccess;
+        _friendService.OnUserSearchResult += OnUserSearchResult;
+        _friendService.OnUserTypingDM += OnUserTypingDM;
+        _friendService.OnUserStoppedTypingDM += OnUserStoppedTypingDM;
+        _friendService.OnFriendRemoved += OnFriendRemoved;
+        _friendService.OnUserBlocked += OnUserBlocked;
+        _friendService.OnFriendOnline += OnFriendOnline;
+        _friendService.OnFriendOffline += OnFriendOffline;
+        _friendService.OnConversationsUpdated += OnConversationsUpdated;
 
         // Populate friend group members when friends or groups change
         Friends.CollectionChanged += OnFriendsCollectionChanged;
@@ -327,181 +317,249 @@ public partial class FriendsViewModel : BaseViewModel
         // Initial population
         PopulateFriendGroupMembers();
 
-        _friendService.OnSuccess += message =>
-        {
-            // Could show toast notification
-            ClearError();
-        };
-
-        _friendService.OnUserSearchResult += result =>
-        {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                IsSearchingUser = false;
-                UserSearchCompleted = true;
-                SearchedUser = result;
-
-                if (result != null)
-                {
-                    if (result.IsFriend)
-                    {
-                        UserSearchMessage = "You're already friends!";
-                    }
-                    else
-                    {
-                        UserSearchMessage = string.Empty;
-                    }
-                }
-                else
-                {
-                    UserSearchMessage = "No user found with that username";
-                }
-
-                OnPropertyChanged(nameof(CanSendFriendRequest));
-            });
-        };
-
-        _friendService.OnUserTypingDM += (userId, username) =>
-        {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                if (SelectedFriend?.UserId == userId)
-                {
-                    IsPartnerTyping = true;
-                    TypingUsername = username;
-                }
-            });
-        };
-
-        _friendService.OnUserStoppedTypingDM += userId =>
-        {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                if (SelectedFriend?.UserId == userId)
-                {
-                    IsPartnerTyping = false;
-                    TypingUsername = null;
-                }
-            });
-        };
-
-        _friendService.OnFriendRemoved += friend =>
-        {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                OnPropertyChanged(nameof(TotalFriendsCount));
-                OnPropertyChanged(nameof(OnlineFriendsCount));
-            });
-        };
-
-        _friendService.OnUserBlocked += user =>
-        {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                OnPropertyChanged(nameof(TotalFriendsCount));
-                OnPropertyChanged(nameof(OnlineFriendsCount));
-            });
-        };
-
-        _friendService.OnFriendOnline += friend =>
-        {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                OnPropertyChanged(nameof(OnlineFriendsCount));
-            });
-        };
-
-        _friendService.OnFriendOffline += userId =>
-        {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                OnPropertyChanged(nameof(OnlineFriendsCount));
-            });
-        };
-
-        _friendService.OnConversationsUpdated += () =>
-        {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                OnPropertyChanged(nameof(UnreadConversationsCount));
-            });
-        };
-
         // Subscribe to voice service call events
-        _voiceService.OnIncomingCall += call =>
-        {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                CurrentCall = call;
-                HasIncomingCall = true;
-                // Find the friend for the caller
-                SelectedFriend = Friends.FirstOrDefault(f => f.UserId == call.CallerId);
-            });
-        };
+        _voiceService.OnIncomingCall += OnIncomingCall;
+        _voiceService.OnCallAnswered += OnCallAnswered;
+        _voiceService.OnCallDeclined += OnCallDeclined;
+        _voiceService.OnCallEnded += OnCallEnded;
+        _voiceService.OnCallFailed += OnCallFailed;
+        _voiceService.OnCallUserSpeaking += OnCallUserSpeaking;
+        _voiceService.OnLocalAudioLevel += OnLocalAudioLevel;
+    }
 
-        _voiceService.OnCallAnswered += call =>
-        {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                CurrentCall = call;
-                HasIncomingCall = false;
-                IsInCall = true;
-                _callStartTime = call.AnsweredAt ?? DateTime.UtcNow;
-                _callTimer.Start();
-            });
-        };
+    #region Event Handlers
 
-        _voiceService.OnCallDeclined += call =>
-        {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                HasIncomingCall = false;
-                IsInCall = false;
-                CurrentCall = null;
-            });
-        };
+    private void OnNewFriendRequest(FriendRequestDto request)
+    {
+        var toastService = (IToastNotificationService?)App.ServiceProvider?.GetService(typeof(IToastNotificationService));
+        toastService?.ShowFriendRequest(request.RequesterUsername);
+    }
 
-        _voiceService.OnCallEnded += (callId, reason) =>
+    private void OnDirectMessageReceived(DirectMessageDto message)
+    {
+        // Only notify if not currently viewing this conversation
+        if (SelectedFriend?.UserId != message.SenderId)
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                IsInCall = false;
-                HasIncomingCall = false;
-                CurrentCall = null;
-                _callTimer.Stop();
-                CallDuration = "00:00";
-            });
-        };
+            var toastService = (IToastNotificationService?)App.ServiceProvider?.GetService(typeof(IToastNotificationService));
+            var content = message.Content ?? string.Empty;
+            var preview = content.Length > 50 ? content[..47] + "..." : content;
+            toastService?.ShowMessage(message.SenderUsername, preview);
+        }
+    }
 
-        _voiceService.OnCallFailed += error =>
-        {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                IsInCall = false;
-                HasIncomingCall = false;
-                CurrentCall = null;
-                SetError(error);
-            });
-        };
+    private void OnFriendServiceError(string error)
+    {
+        SetError(error);
+    }
 
-        _voiceService.OnCallUserSpeaking += (connectionId, isSpeaking, audioLevel) =>
-        {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                IsCallUserSpeaking = isSpeaking;
-                CallUserAudioLevel = audioLevel;
-            });
-        };
+    private void OnFriendServiceSuccess(string message)
+    {
+        ClearError();
+    }
 
-        // Update audio level indicator
-        _voiceService.OnLocalAudioLevel += level =>
+    private void OnUserSearchResult(UserSearchResultDto? result)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            IsSearchingUser = false;
+            UserSearchCompleted = true;
+            SearchedUser = result;
+
+            if (result != null)
             {
-                // Scale to width (max 80 pixels for the audio bar)
-                AudioLevelWidth = level * 80;
-            });
-        };
+                UserSearchMessage = result.IsFriend ? "You're already friends!" : string.Empty;
+            }
+            else
+            {
+                UserSearchMessage = "No user found with that username";
+            }
+
+            OnPropertyChanged(nameof(CanSendFriendRequest));
+        });
+    }
+
+    private void OnUserTypingDM(string userId, string username)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            if (SelectedFriend?.UserId == userId)
+            {
+                IsPartnerTyping = true;
+                TypingUsername = username;
+            }
+        });
+    }
+
+    private void OnUserStoppedTypingDM(string userId)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            if (SelectedFriend?.UserId == userId)
+            {
+                IsPartnerTyping = false;
+                TypingUsername = null;
+            }
+        });
+    }
+
+    private void OnFriendRemoved(FriendDto friend)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            OnPropertyChanged(nameof(TotalFriendsCount));
+            OnPropertyChanged(nameof(OnlineFriendsCount));
+        });
+    }
+
+    private void OnUserBlocked(BlockedUserDto user)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            OnPropertyChanged(nameof(TotalFriendsCount));
+            OnPropertyChanged(nameof(OnlineFriendsCount));
+        });
+    }
+
+    private void OnFriendOnline(FriendDto friend)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            OnPropertyChanged(nameof(OnlineFriendsCount));
+        });
+    }
+
+    private void OnFriendOffline(string userId)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            OnPropertyChanged(nameof(OnlineFriendsCount));
+        });
+    }
+
+    private void OnConversationsUpdated()
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            OnPropertyChanged(nameof(UnreadConversationsCount));
+        });
+    }
+
+    private void OnIncomingCall(VoiceCallDto call)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            CurrentCall = call;
+            HasIncomingCall = true;
+            SelectedFriend = Friends.FirstOrDefault(f => f.UserId == call.CallerId);
+        });
+    }
+
+    private void OnCallAnswered(VoiceCallDto call)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            CurrentCall = call;
+            HasIncomingCall = false;
+            IsInCall = true;
+            _callStartTime = call.AnsweredAt ?? DateTime.UtcNow;
+            _callTimer.Start();
+        });
+    }
+
+    private void OnCallDeclined(VoiceCallDto call)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            HasIncomingCall = false;
+            IsInCall = false;
+            CurrentCall = null;
+        });
+    }
+
+    private void OnCallEnded(string callId, string reason)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            IsInCall = false;
+            HasIncomingCall = false;
+            CurrentCall = null;
+            _callTimer.Stop();
+            CallDuration = "00:00";
+        });
+    }
+
+    private void OnCallFailed(string error)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            IsInCall = false;
+            HasIncomingCall = false;
+            CurrentCall = null;
+            SetError(error);
+        });
+    }
+
+    private void OnCallUserSpeaking(string connectionId, bool isSpeaking, double audioLevel)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            IsCallUserSpeaking = isSpeaking;
+            CallUserAudioLevel = audioLevel;
+        });
+    }
+
+    private void OnLocalAudioLevel(double level)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            AudioLevelWidth = level * 80;
+        });
+    }
+
+    #endregion
+
+    public void Cleanup()
+    {
+        // Cleanup timers
+        _callTimer.Stop();
+        _callTimer.Tick -= CallTimer_Tick;
+
+        if (_usernameSearchDebounce != null)
+        {
+            _usernameSearchDebounce.Stop();
+            _usernameSearchDebounce.Tick -= OnUsernameSearchDebounceTick;
+            _usernameSearchDebounce = null;
+        }
+
+        // Unsubscribe from friend service events
+        _friendService.OnNewFriendRequest -= OnNewFriendRequest;
+        _friendService.OnDirectMessageReceived -= OnDirectMessageReceived;
+        _friendService.OnError -= OnFriendServiceError;
+        _friendService.OnSuccess -= OnFriendServiceSuccess;
+        _friendService.OnUserSearchResult -= OnUserSearchResult;
+        _friendService.OnUserTypingDM -= OnUserTypingDM;
+        _friendService.OnUserStoppedTypingDM -= OnUserStoppedTypingDM;
+        _friendService.OnFriendRemoved -= OnFriendRemoved;
+        _friendService.OnUserBlocked -= OnUserBlocked;
+        _friendService.OnFriendOnline -= OnFriendOnline;
+        _friendService.OnFriendOffline -= OnFriendOffline;
+        _friendService.OnConversationsUpdated -= OnConversationsUpdated;
+
+        // Unsubscribe from collection changed events
+        Friends.CollectionChanged -= OnFriendsCollectionChanged;
+        if (_socialService?.FriendGroups != null)
+        {
+            _socialService.FriendGroups.CollectionChanged -= OnFriendGroupsCollectionChanged;
+        }
+
+        // Unsubscribe from voice service events
+        _voiceService.OnIncomingCall -= OnIncomingCall;
+        _voiceService.OnCallAnswered -= OnCallAnswered;
+        _voiceService.OnCallDeclined -= OnCallDeclined;
+        _voiceService.OnCallEnded -= OnCallEnded;
+        _voiceService.OnCallFailed -= OnCallFailed;
+        _voiceService.OnCallUserSpeaking -= OnCallUserSpeaking;
+        _voiceService.OnLocalAudioLevel -= OnLocalAudioLevel;
     }
 
     private void CallTimer_Tick(object? sender, EventArgs e)
@@ -1001,8 +1059,13 @@ public partial class FriendsViewModel : BaseViewModel
         UserSearchCompleted = false;
         UserSearchMessage = string.Empty;
 
-        // Debounce the search
-        _usernameSearchDebounce?.Stop();
+        // Debounce the search - cleanup old timer if exists
+        if (_usernameSearchDebounce != null)
+        {
+            _usernameSearchDebounce.Stop();
+            _usernameSearchDebounce.Tick -= OnUsernameSearchDebounceTick;
+            _usernameSearchDebounce = null;
+        }
 
         if (string.IsNullOrWhiteSpace(value))
         {
@@ -1012,12 +1075,14 @@ public partial class FriendsViewModel : BaseViewModel
 
         IsSearchingUser = true;
         _usernameSearchDebounce = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
-        _usernameSearchDebounce.Tick += async (s, e) =>
-        {
-            _usernameSearchDebounce.Stop();
-            await _friendService.SearchUserAsync(value);
-        };
+        _usernameSearchDebounce.Tick += OnUsernameSearchDebounceTick;
         _usernameSearchDebounce.Start();
+    }
+
+    private async void OnUsernameSearchDebounceTick(object? sender, EventArgs e)
+    {
+        _usernameSearchDebounce?.Stop();
+        await _friendService.SearchUserAsync(FriendRequestUsername);
     }
 
     public bool CanSendFriendRequest => SearchedUser != null && !SearchedUser.IsFriend && UserSearchCompleted;
