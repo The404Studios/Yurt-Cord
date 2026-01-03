@@ -209,7 +209,7 @@
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <TextBlock Text="Memory:" FontSize="12" Foreground="{StaticResource TextMuted}"
                                    VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <TextBlock Text="{Binding MemoryUsageMb, StringFormat='{0} MB'}" FontSize="12"
+                        <TextBlock Text="{Binding MemoryUsageMb, StringFormat='{}{0} MB'}" FontSize="12"
                                    Foreground="{StaticResource Cyan}" FontWeight="SemiBold"
                                    VerticalAlignment="Center" Margin="0,0,20,0"/>
                         <TextBlock Text="Threads:" FontSize="12" Foreground="{StaticResource TextMuted}"
@@ -524,7 +524,7 @@
                             <TextBlock Text="Online Users" FontSize="22" FontWeight="Bold" Foreground="White"/>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                 <Ellipse Width="12" Height="12" Fill="#43B581" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding OnlineUsers, StringFormat='{0} users online'}"
+                                <TextBlock Text="{Binding OnlineUsers, StringFormat='{}{0} users online'}"
                                            FontSize="14" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Grid>
