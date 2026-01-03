@@ -28,29 +28,59 @@ public partial class LoginView : UserControl
         _viewModel = (LoginViewModel)App.ServiceProvider.GetService(typeof(LoginViewModel))!;
         DataContext = _viewModel;
 
-        _viewModel.OnLoginSuccess += () => OnLoginSuccess?.Invoke();
+        _viewModel.OnLoginSuccess += OnViewModelLoginSuccess;
         _viewModel.OnLoginFailed += ShowError;
 
         // Enter key submits
-        PasswordBox.KeyDown += (s, e) =>
-        {
-            if (e.Key == Key.Enter) ActionButton_Click(s, e);
-        };
-
-        UsernameBox.KeyDown += (s, e) =>
-        {
-            if (e.Key == Key.Enter) PasswordBox.Focus();
-        };
+        PasswordBox.KeyDown += OnPasswordBoxKeyDown;
+        UsernameBox.KeyDown += OnUsernameBoxKeyDown;
 
         // Focus username on load with slight delay for animation
-        Loaded += async (s, e) =>
-        {
-            await Task.Delay(400); // Wait for card entry animation
-            UsernameBox.Focus();
-        };
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
 
         // Get spinner storyboard reference
         _spinnerStoryboard = (Storyboard)FindResource("SpinnerAnimation");
+    }
+
+    private void OnViewModelLoginSuccess()
+    {
+        OnLoginSuccess?.Invoke();
+    }
+
+    private void OnPasswordBoxKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter) ActionButton_Click(sender, e);
+    }
+
+    private void OnUsernameBoxKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter) PasswordBox.Focus();
+    }
+
+    private async void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        await Task.Delay(400); // Wait for card entry animation
+        UsernameBox.Focus();
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        // Unsubscribe from ViewModel events
+        if (_viewModel != null)
+        {
+            _viewModel.OnLoginSuccess -= OnViewModelLoginSuccess;
+            _viewModel.OnLoginFailed -= ShowError;
+        }
+
+        // Unsubscribe from control events
+        PasswordBox.KeyDown -= OnPasswordBoxKeyDown;
+        UsernameBox.KeyDown -= OnUsernameBoxKeyDown;
+        Loaded -= OnLoaded;
+        Unloaded -= OnUnloaded;
+
+        // Stop spinner
+        _spinnerStoryboard?.Stop(this);
     }
 
     private async void ActionButton_Click(object sender, RoutedEventArgs e)
