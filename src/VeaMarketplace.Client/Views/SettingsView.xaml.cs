@@ -30,6 +30,13 @@ public partial class SettingsView : UserControl
         DataContext = _viewModel;
 
         Loaded += SettingsView_Loaded;
+        Unloaded += SettingsView_Unloaded;
+    }
+
+    private void SettingsView_Unloaded(object sender, RoutedEventArgs e)
+    {
+        Loaded -= SettingsView_Loaded;
+        Unloaded -= SettingsView_Unloaded;
     }
 
     private void SettingsView_Loaded(object sender, RoutedEventArgs e)
