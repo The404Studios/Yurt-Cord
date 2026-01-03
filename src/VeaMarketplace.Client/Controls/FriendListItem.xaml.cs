@@ -128,13 +128,15 @@ public partial class FriendListItem : UserControl
     private void Border_MouseEnter(object sender, MouseEventArgs e)
     {
         RootBorder.Background = (Brush)FindResource("QuaternaryDarkBrush");
-        ActionButtons.Visibility = Visibility.Visible;
+        var hoverIn = (System.Windows.Media.Animation.Storyboard)FindResource("HoverIn");
+        hoverIn.Begin(this);
     }
 
     private void Border_MouseLeave(object sender, MouseEventArgs e)
     {
         RootBorder.Background = Brushes.Transparent;
-        ActionButtons.Visibility = Visibility.Collapsed;
+        var hoverOut = (System.Windows.Media.Animation.Storyboard)FindResource("HoverOut");
+        hoverOut.Begin(this);
     }
 
     private void ViewProfile_Click(object sender, RoutedEventArgs e)
