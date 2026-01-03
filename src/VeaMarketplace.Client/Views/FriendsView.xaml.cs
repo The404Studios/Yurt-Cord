@@ -43,6 +43,12 @@ public partial class FriendsView : UserControl
             _typingTimer.Tick -= TypingTimer_Tick;
         }
 
+        // Cleanup ViewModel
+        if (DataContext is FriendsViewModel vm)
+        {
+            vm.Cleanup();
+        }
+
         // Unsubscribe from events
         Loaded -= OnLoaded;
         Unloaded -= OnUnloaded;

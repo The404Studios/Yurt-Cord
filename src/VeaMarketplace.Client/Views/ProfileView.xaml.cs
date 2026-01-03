@@ -55,6 +55,7 @@ public partial class ProfileView : UserControl
         if (_viewModel != null)
         {
             _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            _viewModel.Cleanup();
         }
     }
 
