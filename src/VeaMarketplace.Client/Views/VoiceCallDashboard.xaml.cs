@@ -222,7 +222,7 @@ public partial class VoiceCallDashboard : UserControl
         });
     }
 
-    private void OnLocalAudioLevel(float level)
+    private void OnLocalAudioLevel(double level)
     {
         Dispatcher.Invoke(() =>
         {

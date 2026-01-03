@@ -45,7 +45,7 @@ public class UserMuteDto
     public string MutedBy { get; set; } = string.Empty;
     public string? Reason { get; set; }
     public DateTime MutedAt { get; set; }
-    public DateTime ExpiresAt { get; set; }
+    public DateTime? ExpiresAt { get; set; } // null = permanent
     public bool IsActive { get; set; } = true;
     public List<string> MutedChannels { get; set; } = new();
 }

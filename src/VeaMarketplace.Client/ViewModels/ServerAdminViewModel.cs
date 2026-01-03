@@ -225,7 +225,7 @@ public partial class ServerAdminViewModel : BaseViewModel
             RecentUsers.Clear();
             foreach (var user in users.Take(20))
             {
-                var userDto = await _apiService.GetUserAsync(user.Id);
+                var userDto = await _apiService.GetUserAsync(user.UserId);
                 if (userDto != null)
                     RecentUsers.Add(userDto);
             }
@@ -265,7 +265,7 @@ public partial class ServerAdminViewModel : BaseViewModel
     {
         await ExecuteAsync(async () =>
         {
-            SelectedUser = await _apiService.GetUserAsync(user.Id);
+            SelectedUser = await _apiService.GetUserAsync(user.UserId);
             IsUserActionDialogOpen = true;
         }, "Failed to load user details");
     }
@@ -402,7 +402,7 @@ public partial class ServerAdminViewModel : BaseViewModel
     }
 }
 
-public class OnlineUserDto
+public class AdminOnlineUserDto
 {
     public string Id { get; set; } = string.Empty;
     public string Username { get; set; } = string.Empty;
