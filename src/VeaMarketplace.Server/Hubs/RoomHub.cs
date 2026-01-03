@@ -518,16 +518,16 @@ public class RoomHub : Hub
             if (userHasNoMoreConnections)
             {
                 // Stop any active streams and notify room members
-                foreach (var (roomId, roomStreams) in _activeStreams)
+                foreach (var (streamRoomId, roomStreams) in _activeStreams)
                 {
                     if (roomStreams.TryRemove(userId, out var streamInfo))
                     {
                         // Notify room members that stream stopped
-                        await Clients.Group($"room_{roomId}").SendAsync("StreamStopped", new
+                        await Clients.Group($"room_{streamRoomId}").SendAsync("StreamStopped", new
                         {
                             UserId = userId,
-                            StreamType = streamInfo.StreamType,
-                            RoomId = roomId
+                            StreamType = streamInfo.Type,
+                            RoomId = streamRoomId
                         });
                     }
                 }

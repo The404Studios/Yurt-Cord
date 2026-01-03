@@ -8,6 +8,7 @@ using VeaMarketplace.Client.Services;
 using VeaMarketplace.Client.ViewModels;
 using VeaMarketplace.Shared.DTOs;
 using VeaMarketplace.Shared.Enums;
+using OnlineUserDto = VeaMarketplace.Shared.DTOs.OnlineUserDto;
 
 namespace VeaMarketplace.Client.Views;
 
