@@ -51,92 +51,138 @@ public partial class ChannelSidebar : UserControl
         VoiceUsersItemsControl.ItemsSource = _viewModel.VoiceUsers;
 
         // Update user panel when logged in
-        Loaded += (s, e) => UpdateUserPanel();
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
 
         // Show/hide voice connected panel and users when in a voice channel
-        _viewModel.PropertyChanged += (s, e) =>
-        {
-            if (e.PropertyName == nameof(ChatViewModel.IsInVoiceChannel) ||
-                e.PropertyName == nameof(ChatViewModel.CurrentVoiceChannel))
-            {
-                Dispatcher.Invoke(() =>
-                {
-                    var isInVoice = _viewModel.IsInVoiceChannel;
-                    var currentChannel = _viewModel.CurrentVoiceChannel;
-
-                    // Hide all voice user panels first
-                    GeneralVoiceUsersPanel.Visibility = Visibility.Collapsed;
-                    MusicVoiceUsersPanel.Visibility = Visibility.Collapsed;
-                    MarketplaceVoiceUsersPanel.Visibility = Visibility.Collapsed;
-                    VoiceUsersPanel.Visibility = Visibility.Collapsed;
-
-                    VoiceConnectedPanel.Visibility = isInVoice ? Visibility.Visible : Visibility.Collapsed;
-
-                    if (isInVoice && currentChannel != null)
-                    {
-                        VoiceChannelNameText.Text = ChannelDisplayNames.TryGetValue(
-                            currentChannel, out var name) ? name : currentChannel;
-
-                        // Show the correct voice users panel based on current channel
-                        switch (currentChannel)
-                        {
-                            case "general-voice":
-                                GeneralVoiceUsersPanel.Visibility = Visibility.Visible;
-                                GeneralVoiceUsersControl.ItemsSource = _viewModel.VoiceUsers;
-                                break;
-                            case "music-voice":
-                                MusicVoiceUsersPanel.Visibility = Visibility.Visible;
-                                MusicVoiceUsersControl.ItemsSource = _viewModel.VoiceUsers;
-                                break;
-                            case "marketplace-voice":
-                                MarketplaceVoiceUsersPanel.Visibility = Visibility.Visible;
-                                MarketplaceVoiceUsersControl.ItemsSource = _viewModel.VoiceUsers;
-                                break;
-                        }
-                    }
-                });
-            }
-        };
+        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
 
         // Subscribe to audio level updates
         if (_voiceService != null)
         {
-            _voiceService.OnLocalAudioLevel += level =>
-            {
-                Dispatcher.Invoke(() =>
-                {
-                    // Update audio level bar (max width is about 150px based on panel width)
-                    var maxWidth = 150.0;
-                    AudioLevelBar.Width = level * maxWidth;
-
-                    // Change icon based on mute state
-                    AudioLevelIcon.Text = _isMuted ? "🔇" : "🎤";
-                    AudioLevelIcon.Foreground = _isMuted
-                        ? (System.Windows.Media.Brush)FindResource("TextMutedBrush")
-                        : (level > 0.1
-                            ? (System.Windows.Media.Brush)FindResource("AccentGreenBrush")
-                            : (System.Windows.Media.Brush)FindResource("TextMutedBrush"));
-                });
-            };
-
-            _voiceService.OnUserDisconnectedByAdmin += reason =>
-            {
-                Dispatcher.Invoke(() =>
-                {
-                    _toastService?.ShowWarning("Disconnected", reason);
-                });
-            };
-
-            _voiceService.OnUserMovedToChannel += (channelId, movedBy) =>
-            {
-                Dispatcher.Invoke(() =>
-                {
-                    var channelName = ChannelDisplayNames.TryGetValue(channelId, out var name) ? name : channelId;
-                    VoiceChannelNameText.Text = channelName;
-                    _toastService?.ShowInfo("Moved", $"You were moved to {channelName}");
-                });
-            };
+            _voiceService.OnLocalAudioLevel += OnLocalAudioLevel;
+            _voiceService.OnUserDisconnectedByAdmin += OnUserDisconnectedByAdmin;
+            _voiceService.OnUserMovedToChannel += OnUserMovedToChannel;
         }
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        UpdateUserPanel();
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        // Unsubscribe from ViewModel events
+        if (_viewModel != null)
+        {
+            _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        }
+
+        // Unsubscribe from VoiceService events
+        if (_voiceService != null)
+        {
+            _voiceService.OnLocalAudioLevel -= OnLocalAudioLevel;
+            _voiceService.OnUserDisconnectedByAdmin -= OnUserDisconnectedByAdmin;
+            _voiceService.OnUserMovedToChannel -= OnUserMovedToChannel;
+        }
+
+        // Unsubscribe from ChatService events
+        if (_chatService != null)
+        {
+            _chatService.OnConnectionHandshake -= OnConnectionHandshake;
+            _chatService.OnAuthenticated -= OnAuthenticated;
+            _chatService.OnAuthenticationFailed -= OnAuthenticationFailed;
+        }
+
+        // Stop and dispose latency timer
+        if (_latencyTimer != null)
+        {
+            _latencyTimer.Stop();
+            _latencyTimer.Elapsed -= CheckLatencyHandler;
+            _latencyTimer.Dispose();
+            _latencyTimer = null;
+        }
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ChatViewModel.IsInVoiceChannel) ||
+            e.PropertyName == nameof(ChatViewModel.CurrentVoiceChannel))
+        {
+            Dispatcher.Invoke(() =>
+            {
+                var isInVoice = _viewModel!.IsInVoiceChannel;
+                var currentChannel = _viewModel.CurrentVoiceChannel;
+
+                // Hide all voice user panels first
+                GeneralVoiceUsersPanel.Visibility = Visibility.Collapsed;
+                MusicVoiceUsersPanel.Visibility = Visibility.Collapsed;
+                MarketplaceVoiceUsersPanel.Visibility = Visibility.Collapsed;
+                VoiceUsersPanel.Visibility = Visibility.Collapsed;
+
+                VoiceConnectedPanel.Visibility = isInVoice ? Visibility.Visible : Visibility.Collapsed;
+
+                if (isInVoice && currentChannel != null)
+                {
+                    VoiceChannelNameText.Text = ChannelDisplayNames.TryGetValue(
+                        currentChannel, out var name) ? name : currentChannel;
+
+                    // Show the correct voice users panel based on current channel
+                    switch (currentChannel)
+                    {
+                        case "general-voice":
+                            GeneralVoiceUsersPanel.Visibility = Visibility.Visible;
+                            GeneralVoiceUsersControl.ItemsSource = _viewModel.VoiceUsers;
+                            break;
+                        case "music-voice":
+                            MusicVoiceUsersPanel.Visibility = Visibility.Visible;
+                            MusicVoiceUsersControl.ItemsSource = _viewModel.VoiceUsers;
+                            break;
+                        case "marketplace-voice":
+                            MarketplaceVoiceUsersPanel.Visibility = Visibility.Visible;
+                            MarketplaceVoiceUsersControl.ItemsSource = _viewModel.VoiceUsers;
+                            break;
+                    }
+                }
+            });
+        }
+    }
+
+    private void OnLocalAudioLevel(float level)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            // Update audio level bar (max width is about 150px based on panel width)
+            var maxWidth = 150.0;
+            AudioLevelBar.Width = level * maxWidth;
+
+            // Change icon based on mute state
+            AudioLevelIcon.Text = _isMuted ? "🔇" : "🎤";
+            AudioLevelIcon.Foreground = _isMuted
+                ? (System.Windows.Media.Brush)FindResource("TextMutedBrush")
+                : (level > 0.1
+                    ? (System.Windows.Media.Brush)FindResource("AccentGreenBrush")
+                    : (System.Windows.Media.Brush)FindResource("TextMutedBrush"));
+        });
+    }
+
+    private void OnUserDisconnectedByAdmin(string reason)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            _toastService?.ShowWarning("Disconnected", reason);
+        });
+    }
+
+    private void OnUserMovedToChannel(string channelId, string movedBy)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            var channelName = ChannelDisplayNames.TryGetValue(channelId, out var name) ? name : channelId;
+            VoiceChannelNameText.Text = channelName;
+            _toastService?.ShowInfo("Moved", $"You were moved to {channelName}");
+        });
     }
 
     private void UpdateUserPanel()
@@ -481,40 +527,50 @@ public partial class ChannelSidebar : UserControl
         if (_chatService == null) return;
 
         // Subscribe to connection handshake
-        _chatService.OnConnectionHandshake += () =>
-        {
-            Dispatcher.Invoke(() =>
-            {
-                Debug.WriteLine("ChannelSidebar: Connection handshake received");
-                UpdateConnectionStatus(ConnectionState.Connected);
-            });
-        };
+        _chatService.OnConnectionHandshake += OnConnectionHandshake;
 
         // Subscribe to authentication events
-        _chatService.OnAuthenticated += user =>
-        {
-            Dispatcher.Invoke(() =>
-            {
-                Debug.WriteLine($"ChannelSidebar: Authenticated as {user?.Username}");
-                UpdateConnectionStatus(ConnectionState.Connected);
-                ConnectionDetailText.Text = $"Session: {_chatService.SessionId?[..8] ?? "active"}";
-            });
-        };
-
-        _chatService.OnAuthenticationFailed += error =>
-        {
-            Dispatcher.Invoke(() =>
-            {
-                Debug.WriteLine($"ChannelSidebar: Authentication failed: {error}");
-                UpdateConnectionStatus(ConnectionState.Disconnected);
-            });
-        };
+        _chatService.OnAuthenticated += OnAuthenticated;
+        _chatService.OnAuthenticationFailed += OnAuthenticationFailed;
 
         // Start latency monitoring timer
         _latencyTimer = new System.Timers.Timer(10000); // Check every 10 seconds
-        _latencyTimer.Elapsed += (s, e) => CheckLatency();
+        _latencyTimer.Elapsed += CheckLatencyHandler;
         _latencyTimer.AutoReset = true;
         _latencyTimer.Start();
+    }
+
+    private void OnConnectionHandshake()
+    {
+        Dispatcher.Invoke(() =>
+        {
+            Debug.WriteLine("ChannelSidebar: Connection handshake received");
+            UpdateConnectionStatus(ConnectionState.Connected);
+        });
+    }
+
+    private void OnAuthenticated(Shared.DTOs.UserDto? user)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            Debug.WriteLine($"ChannelSidebar: Authenticated as {user?.Username}");
+            UpdateConnectionStatus(ConnectionState.Connected);
+            ConnectionDetailText.Text = $"Session: {_chatService?.SessionId?[..8] ?? "active"}";
+        });
+    }
+
+    private void OnAuthenticationFailed(string error)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            Debug.WriteLine($"ChannelSidebar: Authentication failed: {error}");
+            UpdateConnectionStatus(ConnectionState.Disconnected);
+        });
+    }
+
+    private void CheckLatencyHandler(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        CheckLatency();
     }
 
     private void CheckLatency()

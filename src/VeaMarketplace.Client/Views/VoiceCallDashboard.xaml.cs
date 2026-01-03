@@ -59,22 +59,48 @@ public partial class VoiceCallDashboard : UserControl
         {
             Interval = TimeSpan.FromSeconds(1)
         };
-        _statsTimer.Tick += (s, e) =>
-        {
-            if (_lastWidth > 0 && _lastHeight > 0)
-            {
-                StreamFpsText.Text = $"{_frameCount} FPS | {_lastWidth}x{_lastHeight}";
-            }
-            _frameCount = 0;
-            _selfPreviewFrameCount = 0;
-        };
+        _statsTimer.Tick += StatsTimer_Tick;
         _statsTimer.Start();
 
-        // Cleanup timer when unloaded
-        Unloaded += (s, e) =>
+        // Cleanup on unloaded
+        Unloaded += OnUnloaded;
+    }
+
+    private void StatsTimer_Tick(object? sender, EventArgs e)
+    {
+        if (_lastWidth > 0 && _lastHeight > 0)
         {
-            _statsTimer?.Stop();
-        };
+            StreamFpsText.Text = $"{_frameCount} FPS | {_lastWidth}x{_lastHeight}";
+        }
+        _frameCount = 0;
+        _selfPreviewFrameCount = 0;
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        // Stop and cleanup timer
+        if (_statsTimer != null)
+        {
+            _statsTimer.Stop();
+            _statsTimer.Tick -= StatsTimer_Tick;
+            _statsTimer = null;
+        }
+
+        // Unsubscribe from all VoiceService events
+        _voiceService.OnUserJoinedVoice -= OnUserJoinedVoice;
+        _voiceService.OnUserLeftVoice -= OnUserLeftVoice;
+        _voiceService.OnVoiceChannelUsers -= OnVoiceChannelUsers;
+        _voiceService.OnUserSpeaking -= OnUserSpeaking;
+        _voiceService.OnLocalAudioLevel -= OnLocalAudioLevel;
+        _voiceService.OnScreenFrameReceived -= OnScreenFrameReceived;
+        _voiceService.OnUserScreenShareChanged -= OnUserScreenShareChanged;
+        _voiceService.OnUserDisconnectedByAdmin -= OnUserDisconnectedByAdmin;
+        _voiceService.OnLocalScreenFrameReady -= OnLocalScreenFrameReady;
+        _voiceService.ScreenSharingManager.OnScreenShareStarted -= OnScreenShareStarted;
+        _voiceService.ScreenSharingManager.OnScreenShareStopped -= OnScreenShareStopped;
+
+        // Close any open windows
+        CloseViewingWindows();
     }
 
     private void LoadOutputDevices()
@@ -115,304 +141,314 @@ public partial class VoiceCallDashboard : UserControl
 
     private void SetupEventHandlers()
     {
-        _voiceService.OnUserJoinedVoice += user =>
+        _voiceService.OnUserJoinedVoice += OnUserJoinedVoice;
+        _voiceService.OnUserLeftVoice += OnUserLeftVoice;
+        _voiceService.OnVoiceChannelUsers += OnVoiceChannelUsers;
+        _voiceService.OnUserSpeaking += OnUserSpeaking;
+        _voiceService.OnLocalAudioLevel += OnLocalAudioLevel;
+        _voiceService.OnScreenFrameReceived += OnScreenFrameReceived;
+        _voiceService.OnUserScreenShareChanged += OnUserScreenShareChanged;
+        _voiceService.OnUserDisconnectedByAdmin += OnUserDisconnectedByAdmin;
+        _voiceService.OnLocalScreenFrameReady += OnLocalScreenFrameReady;
+        _voiceService.ScreenSharingManager.OnScreenShareStarted += OnScreenShareStarted;
+        _voiceService.ScreenSharingManager.OnScreenShareStopped += OnScreenShareStopped;
+    }
+
+    private void OnUserJoinedVoice(VoiceUserState user)
+    {
+        Dispatcher.Invoke(() =>
         {
-            Dispatcher.Invoke(() =>
+            if (!_participants.Any(p => p.ConnectionId == user.ConnectionId))
             {
-                if (!_participants.Any(p => p.ConnectionId == user.ConnectionId))
-                {
-                    _participants.Add(new VoiceParticipant(user));
-                }
-                UpdateParticipantCount();
-            });
-        };
+                _participants.Add(new VoiceParticipant(user));
+            }
+            UpdateParticipantCount();
+        });
+    }
 
-        _voiceService.OnUserLeftVoice += user =>
+    private void OnUserLeftVoice(VoiceUserState user)
+    {
+        Dispatcher.Invoke(() =>
         {
-            Dispatcher.Invoke(() =>
+            var participant = _participants.FirstOrDefault(p => p.ConnectionId == user.ConnectionId);
+            if (participant != null)
             {
-                var participant = _participants.FirstOrDefault(p => p.ConnectionId == user.ConnectionId);
-                if (participant != null)
-                {
-                    _participants.Remove(participant);
-                }
-                UpdateParticipantCount();
+                _participants.Remove(participant);
+            }
+            UpdateParticipantCount();
 
-                // If this user was sharing, clear the stream
-                if (_currentScreenSharerConnectionId == user.ConnectionId)
-                {
-                    ClearScreenShare();
-                }
-            });
-        };
+            // If this user was sharing, clear the stream
+            if (_currentScreenSharerConnectionId == user.ConnectionId)
+            {
+                ClearScreenShare();
+            }
+        });
+    }
 
-        _voiceService.OnVoiceChannelUsers += users =>
+    private void OnVoiceChannelUsers(List<VoiceUserState> users)
+    {
+        Dispatcher.Invoke(() =>
         {
-            Dispatcher.Invoke(() =>
+            _participants.Clear();
+            foreach (var user in users)
             {
-                _participants.Clear();
-                foreach (var user in users)
+                _participants.Add(new VoiceParticipant(user));
+
+                // Auto-watch if someone is already screen sharing
+                if (user.IsScreenSharing && _currentScreenSharerConnectionId == null)
                 {
-                    _participants.Add(new VoiceParticipant(user));
-
-                    // Auto-watch if someone is already screen sharing
-                    if (user.IsScreenSharing && _currentScreenSharerConnectionId == null)
-                    {
-                        _currentScreenSharerConnectionId = user.ConnectionId;
-                        StreamerNameText.Text = user.Username;
-                        StreamInfoPanel.Visibility = Visibility.Visible;
-                        NoStreamPanel.Visibility = Visibility.Collapsed;
-                        ScreenShareImage.Visibility = Visibility.Visible;
-                    }
+                    _currentScreenSharerConnectionId = user.ConnectionId;
+                    StreamerNameText.Text = user.Username;
+                    StreamInfoPanel.Visibility = Visibility.Visible;
+                    NoStreamPanel.Visibility = Visibility.Collapsed;
+                    ScreenShareImage.Visibility = Visibility.Visible;
                 }
-                UpdateParticipantCount();
-                UpdateChannelName();
-            });
-        };
+            }
+            UpdateParticipantCount();
+            UpdateChannelName();
+        });
+    }
 
-        _voiceService.OnUserSpeaking += (connectionId, username, isSpeaking, audioLevel) =>
+    private void OnUserSpeaking(string connectionId, string username, bool isSpeaking, double audioLevel)
+    {
+        Dispatcher.Invoke(() =>
         {
-            Dispatcher.Invoke(() =>
+            var participant = _participants.FirstOrDefault(p => p.ConnectionId == connectionId);
+            if (participant != null)
             {
-                var participant = _participants.FirstOrDefault(p => p.ConnectionId == connectionId);
-                if (participant != null)
-                {
-                    participant.IsSpeaking = isSpeaking;
-                    participant.AudioLevel = audioLevel;
-                }
-            });
-        };
+                participant.IsSpeaking = isSpeaking;
+                participant.AudioLevel = audioLevel;
+            }
+        });
+    }
 
-        _voiceService.OnLocalAudioLevel += level =>
+    private void OnLocalAudioLevel(float level)
+    {
+        Dispatcher.Invoke(() =>
         {
-            Dispatcher.Invoke(() =>
-            {
-                var maxWidth = MicLevelBar.Parent is Border parent ? parent.ActualWidth : 200;
-                MicLevelBar.Width = level * maxWidth;
+            var maxWidth = MicLevelBar.Parent is Border parent ? parent.ActualWidth : 200;
+            MicLevelBar.Width = level * maxWidth;
 
-                MicLevelIcon.Text = _isMuted ? "🔇" : "🎤";
-                MicLevelIcon.Foreground = _isMuted
-                    ? (System.Windows.Media.Brush)FindResource("TextMutedBrush")
-                    : (level > 0.1
-                        ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(67, 181, 129))
-                        : (System.Windows.Media.Brush)FindResource("TextMutedBrush"));
-            });
-        };
+            MicLevelIcon.Text = _isMuted ? "🔇" : "🎤";
+            MicLevelIcon.Foreground = _isMuted
+                ? (System.Windows.Media.Brush)FindResource("TextMutedBrush")
+                : (level > 0.1
+                    ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(67, 181, 129))
+                    : (System.Windows.Media.Brush)FindResource("TextMutedBrush"));
+        });
+    }
 
-        _voiceService.OnScreenFrameReceived += (senderConnectionId, frameData, width, height) =>
+    private void OnScreenFrameReceived(string senderConnectionId, byte[] frameData, int width, int height)
+    {
+        // Track stats without UI update
+        _frameCount++;
+        _lastWidth = width;
+        _lastHeight = height;
+
+        // Use BeginInvoke for non-blocking async UI updates
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Render, () =>
         {
-            // Track stats without UI update
-            _frameCount++;
-            _lastWidth = width;
-            _lastHeight = height;
-
-            // Use BeginInvoke for non-blocking async UI updates
-            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Render, () =>
+            try
             {
-                try
+                // Only update stream info UI when switching streams (not every frame)
+                if (_currentScreenSharerConnectionId != senderConnectionId)
                 {
-                    // Only update stream info UI when switching streams (not every frame)
-                    if (_currentScreenSharerConnectionId != senderConnectionId)
-                    {
-                        _currentScreenSharerConnectionId = senderConnectionId;
-                        var sharer = _participants.FirstOrDefault(p => p.ConnectionId == senderConnectionId);
-                        StreamerNameText.Text = sharer?.Username ?? "Unknown";
-                        StreamInfoPanel.Visibility = Visibility.Visible;
-                        NoStreamPanel.Visibility = Visibility.Collapsed;
-                        ScreenShareImage.Visibility = Visibility.Visible;
-                        // Show stream controls when viewing a stream
-                        StreamControlsPanel.Visibility = Visibility.Visible;
-                    }
-
-                    // Display frame directly
-                    using var ms = new MemoryStream(frameData);
-                    var bitmap = new BitmapImage();
-                    bitmap.BeginInit();
-                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmap.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
-                    bitmap.StreamSource = ms;
-                    bitmap.EndInit();
-                    bitmap.Freeze();
-
-                    ScreenShareImage.Source = bitmap;
-
-                    // Update PiP window if open
-                    if (_pipWindow?.Content is System.Windows.Controls.Image pipImage)
-                    {
-                        pipImage.Source = bitmap;
-                    }
-                    // Update fullscreen window if open
-                    if (_fullscreenWindow?.Content is System.Windows.Controls.Image fsImage)
-                    {
-                        fsImage.Source = bitmap;
-                    }
+                    _currentScreenSharerConnectionId = senderConnectionId;
+                    var sharer = _participants.FirstOrDefault(p => p.ConnectionId == senderConnectionId);
+                    StreamerNameText.Text = sharer?.Username ?? "Unknown";
+                    StreamInfoPanel.Visibility = Visibility.Visible;
+                    NoStreamPanel.Visibility = Visibility.Collapsed;
+                    ScreenShareImage.Visibility = Visibility.Visible;
+                    // Show stream controls when viewing a stream
+                    StreamControlsPanel.Visibility = Visibility.Visible;
                 }
-                catch
+
+                // Display frame directly
+                using var ms = new MemoryStream(frameData);
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
+                bitmap.StreamSource = ms;
+                bitmap.EndInit();
+                bitmap.Freeze();
+
+                ScreenShareImage.Source = bitmap;
+
+                // Update PiP window if open
+                if (_pipWindow?.Content is System.Windows.Controls.Image pipImage)
                 {
-                    // Ignore frame errors
+                    pipImage.Source = bitmap;
                 }
-            });
-        };
+                // Update fullscreen window if open
+                if (_fullscreenWindow?.Content is System.Windows.Controls.Image fsImage)
+                {
+                    fsImage.Source = bitmap;
+                }
+            }
+            catch
+            {
+                // Ignore frame errors
+            }
+        });
+    }
 
-        _voiceService.OnUserScreenShareChanged += (connectionId, isSharing) =>
+    private void OnUserScreenShareChanged(string connectionId, bool isSharing)
+    {
+        Dispatcher.Invoke(() =>
         {
-            Dispatcher.Invoke(() =>
+            var participant = _participants.FirstOrDefault(p => p.ConnectionId == connectionId);
+            if (participant != null)
             {
-                var participant = _participants.FirstOrDefault(p => p.ConnectionId == connectionId);
-                if (participant != null)
-                {
-                    participant.IsScreenSharing = isSharing;
-                }
+                participant.IsScreenSharing = isSharing;
+            }
 
-                if (isSharing)
-                {
-                    // Add to active shares list
-                    if (!_activeShares.Any(s => s.ConnectionId == connectionId))
-                    {
-                        _activeShares.Add(new ActiveScreenShare
-                        {
-                            ConnectionId = connectionId,
-                            Username = participant?.Username ?? "Unknown"
-                        });
-                    }
-                    UpdateActiveSharesVisibility();
-
-                    // Auto-watch new screen share if not viewing self preview
-                    if (!_isViewingSelfPreview || _previewHidden)
-                    {
-                        _currentScreenSharerConnectionId = connectionId;
-                        StreamerNameText.Text = participant?.Username ?? "Unknown";
-                        StreamInfoPanel.Visibility = Visibility.Visible;
-                        NoStreamPanel.Visibility = Visibility.Collapsed;
-                        ScreenShareImage.Visibility = Visibility.Visible;
-                        _frameCount = 0;
-                    }
-                }
-                else
-                {
-                    // Remove from active shares list
-                    var share = _activeShares.FirstOrDefault(s => s.ConnectionId == connectionId);
-                    if (share != null)
-                    {
-                        _activeShares.Remove(share);
-                    }
-                    UpdateActiveSharesVisibility();
-
-                    if (_currentScreenSharerConnectionId == connectionId)
-                    {
-                        // If we were viewing this share, switch to another or self preview
-                        if (_isViewingSelfPreview && !_previewHidden && _voiceService.IsScreenSharing)
-                        {
-                            // Stay on self preview
-                            _currentScreenSharerConnectionId = null;
-                        }
-                        else
-                        {
-                            // Find another active sharer if available
-                            var otherSharer = _participants.FirstOrDefault(p => p.IsScreenSharing && p.ConnectionId != connectionId);
-                            if (otherSharer != null)
-                            {
-                                _currentScreenSharerConnectionId = otherSharer.ConnectionId;
-                                StreamerNameText.Text = otherSharer.Username;
-                            }
-                            else if (_voiceService.IsScreenSharing && !_previewHidden)
-                            {
-                                // Switch to self preview
-                                _isViewingSelfPreview = true;
-                                _currentScreenSharerConnectionId = null;
-                            }
-                            else
-                            {
-                                ClearScreenShare();
-                            }
-                        }
-                    }
-                }
-            });
-        };
-
-        _voiceService.OnUserDisconnectedByAdmin += reason =>
-        {
-            Dispatcher.Invoke(() =>
+            if (isSharing)
             {
-                _toastService.ShowWarning("Disconnected", reason);
-            });
-        };
-
-        // Subscribe to local screen share frames for self-preview
-        _voiceService.OnLocalScreenFrameReady += (frameData, width, height) =>
-        {
-            // Track stats
-            _selfPreviewFrameCount++;
-
-            // Only process if we're viewing self preview and not hidden
-            if (!_voiceService.IsScreenSharing || !_isViewingSelfPreview || _previewHidden)
-                return;
-
-            // Use BeginInvoke for non-blocking async UI updates
-            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Render, () =>
-            {
-                try
-                {
-                    // Update visibility only once when starting preview
-                    if (SelfSharePreviewToggle.Visibility != Visibility.Visible)
-                    {
-                        SelfSharePreviewToggle.Visibility = Visibility.Visible;
-                        UpdateActiveSharesVisibility();
-                        ScreenShareImage.Visibility = Visibility.Visible;
-                        NoStreamPanel.Visibility = Visibility.Collapsed;
-                        StreamInfoPanel.Visibility = Visibility.Visible;
-                        StreamerNameText.Text = "You (Preview)";
-                    }
-
-                    // Display frame
-                    using var ms = new MemoryStream(frameData);
-                    var bitmap = new BitmapImage();
-                    bitmap.BeginInit();
-                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmap.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
-                    bitmap.StreamSource = ms;
-                    bitmap.EndInit();
-                    bitmap.Freeze();
-
-                    ScreenShareImage.Source = bitmap;
-                }
-                catch
-                {
-                    // Ignore frame errors
-                }
-            });
-        };
-
-        // Track screen share manager events for active shares list
-        _voiceService.ScreenSharingManager.OnScreenShareStarted += share =>
-        {
-            Dispatcher.Invoke(() =>
-            {
-                if (!_activeShares.Any(s => s.ConnectionId == share.ConnectionId))
+                // Add to active shares list
+                if (!_activeShares.Any(s => s.ConnectionId == connectionId))
                 {
                     _activeShares.Add(new ActiveScreenShare
                     {
-                        ConnectionId = share.ConnectionId,
-                        Username = share.Username
+                        ConnectionId = connectionId,
+                        Username = participant?.Username ?? "Unknown"
                     });
                 }
                 UpdateActiveSharesVisibility();
-            });
-        };
 
-        _voiceService.ScreenSharingManager.OnScreenShareStopped += connectionId =>
-        {
-            Dispatcher.Invoke(() =>
+                // Auto-watch new screen share if not viewing self preview
+                if (!_isViewingSelfPreview || _previewHidden)
+                {
+                    _currentScreenSharerConnectionId = connectionId;
+                    StreamerNameText.Text = participant?.Username ?? "Unknown";
+                    StreamInfoPanel.Visibility = Visibility.Visible;
+                    NoStreamPanel.Visibility = Visibility.Collapsed;
+                    ScreenShareImage.Visibility = Visibility.Visible;
+                    _frameCount = 0;
+                }
+            }
+            else
             {
+                // Remove from active shares list
                 var share = _activeShares.FirstOrDefault(s => s.ConnectionId == connectionId);
                 if (share != null)
                 {
                     _activeShares.Remove(share);
                 }
                 UpdateActiveSharesVisibility();
-            });
-        };
+
+                if (_currentScreenSharerConnectionId == connectionId)
+                {
+                    // If we were viewing this share, switch to another or self preview
+                    if (_isViewingSelfPreview && !_previewHidden && _voiceService.IsScreenSharing)
+                    {
+                        // Stay on self preview
+                        _currentScreenSharerConnectionId = null;
+                    }
+                    else
+                    {
+                        // Find another active sharer if available
+                        var otherSharer = _participants.FirstOrDefault(p => p.IsScreenSharing && p.ConnectionId != connectionId);
+                        if (otherSharer != null)
+                        {
+                            _currentScreenSharerConnectionId = otherSharer.ConnectionId;
+                            StreamerNameText.Text = otherSharer.Username;
+                        }
+                        else if (_voiceService.IsScreenSharing && !_previewHidden)
+                        {
+                            // Switch to self preview
+                            _isViewingSelfPreview = true;
+                            _currentScreenSharerConnectionId = null;
+                        }
+                        else
+                        {
+                            ClearScreenShare();
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    private void OnUserDisconnectedByAdmin(string reason)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            _toastService.ShowWarning("Disconnected", reason);
+        });
+    }
+
+    private void OnLocalScreenFrameReady(byte[] frameData, int width, int height)
+    {
+        // Track stats
+        _selfPreviewFrameCount++;
+
+        // Only process if we're viewing self preview and not hidden
+        if (!_voiceService.IsScreenSharing || !_isViewingSelfPreview || _previewHidden)
+            return;
+
+        // Use BeginInvoke for non-blocking async UI updates
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Render, () =>
+        {
+            try
+            {
+                // Update visibility only once when starting preview
+                if (SelfSharePreviewToggle.Visibility != Visibility.Visible)
+                {
+                    SelfSharePreviewToggle.Visibility = Visibility.Visible;
+                    UpdateActiveSharesVisibility();
+                    ScreenShareImage.Visibility = Visibility.Visible;
+                    NoStreamPanel.Visibility = Visibility.Collapsed;
+                    StreamInfoPanel.Visibility = Visibility.Visible;
+                    StreamerNameText.Text = "You (Preview)";
+                }
+
+                // Display frame
+                using var ms = new MemoryStream(frameData);
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
+                bitmap.StreamSource = ms;
+                bitmap.EndInit();
+                bitmap.Freeze();
+
+                ScreenShareImage.Source = bitmap;
+            }
+            catch
+            {
+                // Ignore frame errors
+            }
+        });
+    }
+
+    private void OnScreenShareStarted(ScreenShareInfo share)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            if (!_activeShares.Any(s => s.ConnectionId == share.ConnectionId))
+            {
+                _activeShares.Add(new ActiveScreenShare
+                {
+                    ConnectionId = share.ConnectionId,
+                    Username = share.Username
+                });
+            }
+            UpdateActiveSharesVisibility();
+        });
+    }
+
+    private void OnScreenShareStopped(string connectionId)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            var share = _activeShares.FirstOrDefault(s => s.ConnectionId == connectionId);
+            if (share != null)
+            {
+                _activeShares.Remove(share);
+            }
+            UpdateActiveSharesVisibility();
+        });
     }
 
     private void UpdateActiveSharesVisibility()

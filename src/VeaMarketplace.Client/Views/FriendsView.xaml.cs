@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 using VeaMarketplace.Client.ViewModels;
@@ -22,11 +23,29 @@ public partial class FriendsView : UserControl
         _typingTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _typingTimer.Tick += TypingTimer_Tick;
 
-        // Cleanup timer when unloaded
-        Unloaded += (s, e) =>
+        // Use named method for proper cleanup
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        // Focus on the view when loaded
+        Focus();
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        // Cleanup timer
+        if (_typingTimer != null)
         {
-            _typingTimer?.Stop();
-        };
+            _typingTimer.Stop();
+            _typingTimer.Tick -= TypingTimer_Tick;
+        }
+
+        // Unsubscribe from events
+        Loaded -= OnLoaded;
+        Unloaded -= OnUnloaded;
     }
 
     private void DmInput_TextChanged(object sender, TextChangedEventArgs e)

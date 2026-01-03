@@ -115,6 +115,12 @@ public partial class FriendsViewModel : BaseViewModel
     public int TotalFriendsCount => Friends.Count;
     public int PendingRequestsCount => PendingRequests.Count;
     public int UnreadConversationsCount => Conversations.Count(c => c.UnreadCount > 0);
+    public bool HasPendingRequests => PendingRequests.Count > 0;
+    public bool HasNoFriends => Friends.Count == 0;
+
+    // Current user info for the user panel
+    public string? CurrentUsername => _apiService.CurrentUser?.Username;
+    public string? CurrentUserAvatar => _apiService.CurrentUser?.AvatarUrl;
 
     // Filtered and sorted friends list
     public IEnumerable<FriendDto> FilteredFriends
@@ -836,6 +842,93 @@ public partial class FriendsViewModel : BaseViewModel
     private async Task RefreshConversationsAsync()
     {
         await _friendService.RefreshConversationsAsync();
+    }
+
+    // Create new DM - opens friend selector
+    [RelayCommand]
+    private void CreateDM()
+    {
+        // Switch to friends view to select someone to message
+        CurrentView = "Friends";
+        IsInDMView = false;
+    }
+
+    // Start video call with friend
+    [RelayCommand]
+    private async Task StartVideoCallAsync(FriendDto? friend)
+    {
+        if (friend == null) return;
+
+        try
+        {
+            // Ensure voice service is connected
+            if (!_voiceService.IsConnected)
+            {
+                await _voiceService.ConnectAsync();
+                if (_apiService.AuthToken != null)
+                {
+                    await _voiceService.AuthenticateForCallsAsync(_apiService.AuthToken);
+                }
+            }
+
+            SelectedFriend = friend;
+            await _voiceService.StartCallAsync(friend.UserId);
+            // Enable video after call starts
+            IsVideoEnabled = true;
+            await _voiceService.StartVideoAsync();
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to start video call: {ex.Message}");
+        }
+    }
+
+    // Add friends to existing DM (convert to group)
+    [RelayCommand]
+    private void AddToDM()
+    {
+        if (SelectedFriend == null) return;
+
+        // Show friend selector to add to group DM
+        var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+        toastService?.ShowInfo("Coming Soon", "Group DMs will be available in a future update");
+    }
+
+    // Start group call
+    [RelayCommand]
+    private async Task StartGroupCallAsync()
+    {
+        try
+        {
+            if (!_voiceService.IsConnected)
+            {
+                await _voiceService.ConnectAsync();
+                if (_apiService.AuthToken != null)
+                {
+                    await _voiceService.AuthenticateForCallsAsync(_apiService.AuthToken);
+                }
+            }
+
+            // Create a new group call with no initial invites
+            var callName = $"{CurrentUsername}'s Call";
+            await _voiceService.StartGroupCallAsync(callName, new List<string>());
+
+            // Navigate to group call view
+            _navigationService.NavigateToGroupCall();
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to start group call: {ex.Message}");
+        }
+    }
+
+    // Create group DM
+    [RelayCommand]
+    private void CreateGroupDM()
+    {
+        // Show friend selector for group DM
+        var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+        toastService?.ShowInfo("Coming Soon", "Group DMs will be available in a future update");
     }
 
     // View friend profile

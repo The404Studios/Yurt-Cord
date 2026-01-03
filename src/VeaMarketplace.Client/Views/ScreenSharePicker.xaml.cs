@@ -106,8 +106,14 @@ public partial class ScreenSharePicker : Window
         // Capture initial previews
         CaptureAllPreviews();
 
-        // Stop timer when window closes
-        Closed += (s, e) => _previewTimer.Stop();
+        // Clean up when window closes
+        Closed += OnWindowClosed;
+    }
+
+    private void OnWindowClosed(object? sender, EventArgs e)
+    {
+        _previewTimer.Stop();
+        _previewTimer.Tick -= PreviewTimer_Tick;
     }
 
     private void PreviewTimer_Tick(object? sender, EventArgs e)

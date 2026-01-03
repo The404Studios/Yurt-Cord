@@ -61,17 +61,30 @@ public partial class GroupCallInviteNotification : Window
         {
             Interval = TimeSpan.FromSeconds(30)
         };
-        _autoDeclineTimer.Tick += (s, e) =>
-        {
-            _autoDeclineTimer.Stop();
-            _ringTimer.Stop();
-            DeclineCall();
-        };
+        _autoDeclineTimer.Tick += AutoDeclineTimer_Tick;
         _autoDeclineTimer.Start();
 
         // Play initial ring
         PlayRingSound();
         _ringTimer.Start();
+
+        // Clean up on close
+        Closed += OnWindowClosed;
+    }
+
+    private void AutoDeclineTimer_Tick(object? sender, EventArgs e)
+    {
+        _autoDeclineTimer.Stop();
+        _ringTimer.Stop();
+        DeclineCall();
+    }
+
+    private void OnWindowClosed(object? sender, EventArgs e)
+    {
+        _autoDeclineTimer.Stop();
+        _autoDeclineTimer.Tick -= AutoDeclineTimer_Tick;
+        _ringTimer.Stop();
+        _ringTimer.Tick -= RingTimer_Tick;
     }
 
     private void RingTimer_Tick(object? sender, EventArgs e)

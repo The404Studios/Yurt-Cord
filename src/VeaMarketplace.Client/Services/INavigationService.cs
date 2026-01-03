@@ -18,6 +18,7 @@ public interface INavigationService
     void NavigateToSettings(string section);
     void NavigateToFriends();
     void NavigateToVoiceCall();
+    void NavigateToGroupCall();
     void NavigateToProduct(string productId);
     void NavigateToDirectMessage(string userId);
     void NavigateToOrders();
@@ -72,6 +73,7 @@ public class NavigationService : INavigationService
 
     public void NavigateToFriends() => NavigateTo("Friends");
     public void NavigateToVoiceCall() => NavigateTo("VoiceCall");
+    public void NavigateToGroupCall() => NavigateTo("GroupCall");
 
     public void NavigateToProduct(string productId)
     {

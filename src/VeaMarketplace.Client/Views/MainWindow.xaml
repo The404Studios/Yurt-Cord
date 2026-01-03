@@ -219,6 +219,7 @@
                         <views:SettingsView x:Name="SettingsViewControl" Visibility="Collapsed"/>
                         <views:FriendsView x:Name="FriendsViewControl" Visibility="Collapsed"/>
                         <views:VoiceCallDashboard x:Name="VoiceCallDashboardControl" Visibility="Collapsed"/>
+                        <views:GroupCallView x:Name="GroupCallViewControl" Visibility="Collapsed"/>
                         <views:CartView x:Name="CartViewControl" Visibility="Collapsed"/>
                         <views:WishlistView x:Name="WishlistViewControl" Visibility="Collapsed"/>
                         <views:OrderHistoryView x:Name="OrderHistoryViewControl" Visibility="Collapsed"/>
