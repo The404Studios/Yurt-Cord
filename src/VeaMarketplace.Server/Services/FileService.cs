@@ -79,7 +79,7 @@ public class FileService
             _uploadPath = ServerPaths.UploadDirectory;
         }
 
-        _baseUrl = configuration.GetValue<string>("FileStorage:BaseUrl") ?? "http://162.248.94.23:5000/api/files";
+        _baseUrl = configuration.GetValue<string>("FileStorage:BaseUrl") ?? "http://162.248.94.149:5000/api/files";
 
         // Ensure upload directories exist
         EnsureDirectoriesExist();

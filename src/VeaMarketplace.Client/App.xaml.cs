@@ -39,7 +39,7 @@ public partial class App : Application
 
         var services = new ServiceCollection();
 
-        // Services
+        // Core Services
         services.AddSingleton<IApiService, ApiService>();
         services.AddSingleton<IChatService, ChatService>();
         services.AddSingleton<IVoiceService, VoiceService>();
@@ -58,6 +58,28 @@ public partial class App : Application
         services.AddSingleton<IQoLService, QoLService>();
         services.AddSingleton<ISocialService, SocialService>();
         services.AddSingleton<ILeaderboardService, LeaderboardService>();
+
+        // Advanced Infrastructure Services
+        services.AddSingleton<IPerformanceMonitorService, PerformanceMonitorService>();
+        services.AddSingleton<INetworkQualityService, NetworkQualityService>();
+        services.AddSingleton<IConnectionStatsService, ConnectionStatsService>();
+        services.AddSingleton<ICacheManagementService, CacheManagementService>();
+        services.AddSingleton<IAutoReconnectionService, AutoReconnectionService>();
+        services.AddSingleton<IOfflineMessageQueueService, OfflineMessageQueueService>();
+        services.AddSingleton<IBandwidthThrottleService, BandwidthThrottleService>();
+        services.AddSingleton<IDiagnosticLoggerService, DiagnosticLoggerService>();
+
+        // Enterprise Services
+        services.AddSingleton<IRateLimitingService, RateLimitingService>();
+        services.AddSingleton<ICircuitBreakerService, CircuitBreakerService>();
+        services.AddSingleton<IHealthCheckService, HealthCheckService>();
+        services.AddSingleton<IConfigurationService, ConfigurationService>();
+        services.AddSingleton<IFeatureFlagService, FeatureFlagService>();
+        services.AddSingleton<IBackgroundTaskScheduler, BackgroundTaskScheduler>();
+        services.AddSingleton<ICrashReportingService, CrashReportingService>();
+
+        // Application Initialization Service
+        services.AddSingleton<ApplicationInitializationService>();
 
         // ViewModels
         services.AddTransient<LoginViewModel>();
@@ -85,6 +107,10 @@ public partial class App : Application
         services.AddTransient<CheckoutViewModel>();
 
         ServiceProvider = services.BuildServiceProvider();
+
+        // Initialize all services using the initialization service
+        var appInit = ServiceProvider.GetRequiredService<ApplicationInitializationService>();
+        await appInit.InitializeAsync();
 
         // Initialize services that need async startup
         var socialService = ServiceProvider.GetRequiredService<ISocialService>();
