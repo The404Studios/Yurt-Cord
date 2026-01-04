@@ -12,7 +12,7 @@ namespace VeaMarketplace.Client.Services;
 /// Service for caching images locally to improve performance and reduce network requests.
 /// Images are stored in the user's local app data folder.
 /// </summary>
-public interface IImageCacheService
+public interface IImageCacheService : IDisposable
 {
     Task<BitmapImage?> GetImageAsync(string imageUrl, bool forceRefresh = false);
     void ClearCache();
@@ -26,6 +26,7 @@ public class ImageCacheService : IImageCacheService
     private readonly string _cacheDirectory;
     private readonly TimeSpan _defaultCacheExpiry = TimeSpan.FromDays(7);
     private static readonly object _cacheLock = new();
+    private bool _disposed = false;
 
     // In-memory cache for frequently accessed images
     private readonly Dictionary<string, (BitmapImage image, DateTime cachedAt)> _memoryCache = new();
@@ -52,6 +53,9 @@ public class ImageCacheService : IImageCacheService
     /// </summary>
     public async Task<BitmapImage?> GetImageAsync(string imageUrl, bool forceRefresh = false)
     {
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(ImageCacheService));
+
         if (string.IsNullOrEmpty(imageUrl))
             return null;
 
@@ -251,6 +255,30 @@ public class ImageCacheService : IImageCacheService
             }
 
             _memoryCache[key] = (image, DateTime.Now);
+        }
+    }
+
+    /// <summary>
+    /// Dispose of resources
+    /// </summary>
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                // Dispose managed resources
+                _httpClient?.Dispose();
+                _memoryCache.Clear();
+            }
+
+            _disposed = true;
         }
     }
 }

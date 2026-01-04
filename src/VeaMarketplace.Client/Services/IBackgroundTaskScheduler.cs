@@ -39,7 +39,7 @@ public class ScheduledTask
     public int MaxExecutions { get; set; } = -1; // -1 = infinite
 }
 
-public interface IBackgroundTaskScheduler
+public interface IBackgroundTaskScheduler : IDisposable
 {
     string ScheduleTask(string name, Func<CancellationToken, Task> action, TimeSpan delay);
     string ScheduleRecurringTask(string name, Func<CancellationToken, Task> action, TimeSpan interval, int maxExecutions = -1);
@@ -63,6 +63,7 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler
     private readonly Timer _schedulerTimer;
     private readonly SemaphoreSlim _executionLock = new(10, 10); // Max 10 concurrent tasks
     private bool _isShuttingDown;
+    private bool _disposed = false;
 
     public event Action<string, TaskStatus>? OnTaskStatusChanged;
 
@@ -201,23 +202,61 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler
 
     public void Shutdown()
     {
-        _isShuttingDown = true;
-
-        Debug.WriteLine("Shutting down background task scheduler...");
-
-        // Cancel all running tasks
-        foreach (var cts in _taskCancellations.Values)
+        if (!_disposed)
         {
-            cts.Cancel();
+            Dispose();
         }
+    }
 
-        // Wait for running tasks to complete (with timeout)
-        var waitTask = Task.WhenAll(_runningTasks.Values);
-        waitTask.Wait(TimeSpan.FromSeconds(10));
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
 
-        _schedulerTimer.Dispose();
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                _isShuttingDown = true;
 
-        Debug.WriteLine("Background task scheduler shutdown complete");
+                Debug.WriteLine("Shutting down background task scheduler...");
+
+                // Cancel all running tasks
+                foreach (var cts in _taskCancellations.Values)
+                {
+                    try
+                    {
+                        cts.Cancel();
+                        cts.Dispose();
+                    }
+                    catch { }
+                }
+
+                // Wait for running tasks to complete (with timeout)
+                try
+                {
+                    var waitTask = Task.WhenAll(_runningTasks.Values);
+                    waitTask.Wait(TimeSpan.FromSeconds(10));
+                }
+                catch { }
+
+                // Dispose resources
+                _schedulerTimer?.Dispose();
+                _executionLock?.Dispose();
+
+                // Clear collections
+                _tasks.Clear();
+                _taskCancellations.Clear();
+                _runningTasks.Clear();
+
+                Debug.WriteLine("Background task scheduler shutdown complete");
+            }
+
+            _disposed = true;
+        }
     }
 
     private void ProcessPendingTasks()
