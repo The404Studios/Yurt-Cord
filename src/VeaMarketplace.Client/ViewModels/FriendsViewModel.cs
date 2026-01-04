@@ -16,6 +16,7 @@ public partial class FriendsViewModel : BaseViewModel
     private readonly IVoiceService _voiceService;
     private readonly INavigationService _navigationService;
     private readonly ISocialService? _socialService;
+    private readonly IQoLService? _qolService;
     private readonly DispatcherTimer _callTimer;
     private DateTime _callStartTime;
 
@@ -193,14 +194,12 @@ public partial class FriendsViewModel : BaseViewModel
 
     private string? GetFriendNickname(string userId)
     {
-        var qolService = App.ServiceProvider?.GetService(typeof(IQoLService)) as IQoLService;
-        return qolService?.GetFriendNote(userId)?.Nickname;
+        return _qolService?.GetFriendNote(userId)?.Nickname;
     }
 
     private List<string> GetFriendTags(string userId)
     {
-        var qolService = App.ServiceProvider?.GetService(typeof(IQoLService)) as IQoLService;
-        return qolService?.GetFriendNote(userId)?.Tags ?? new List<string>();
+        return _qolService?.GetFriendNote(userId)?.Tags ?? new List<string>();
     }
 
     private DateTime GetFriendLastActivity(string userId)
@@ -286,8 +285,9 @@ public partial class FriendsViewModel : BaseViewModel
         _voiceService = voiceService;
         _navigationService = navigationService;
 
-        // Try to get optional social service (handles groups, activity, reactions)
+        // Try to get optional services (handles groups, activity, reactions, QoL features)
         _socialService = App.ServiceProvider?.GetService(typeof(ISocialService)) as ISocialService;
+        _qolService = App.ServiceProvider?.GetService(typeof(IQoLService)) as IQoLService;
 
         // Set up call timer
         _callTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -426,6 +426,12 @@ public partial class FriendsViewModel : BaseViewModel
         System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
         {
             OnPropertyChanged(nameof(OnlineFriendsCount));
+
+            // Notify QoL service to trigger friend online notifications if enabled
+            _qolService?.NotifyFriendOnline(friend.UserId, friend.Username);
+
+            // Track friend interaction
+            _qolService?.TrackFriendInteraction(friend.UserId);
         });
     }
 
@@ -1111,13 +1117,9 @@ public partial class FriendsViewModel : BaseViewModel
     [RelayCommand]
     private void EditFriendNote(FriendDto friend)
     {
-        if (friend == null) return;
+        if (friend == null || _qolService == null) return;
 
-        // Get QoL service
-        var qolService = App.ServiceProvider.GetService(typeof(IQoLService)) as IQoLService;
-        if (qolService == null) return;
-
-        var existingNote = qolService.GetFriendNote(friend.UserId);
+        var existingNote = _qolService.GetFriendNote(friend.UserId);
 
         // Show dialog with current note
         var dialog = new System.Windows.Window
@@ -1186,12 +1188,9 @@ public partial class FriendsViewModel : BaseViewModel
     [RelayCommand]
     private void SetFriendBirthday(FriendDto friend)
     {
-        if (friend == null) return;
+        if (friend == null || _qolService == null) return;
 
-        var qolService = App.ServiceProvider.GetService(typeof(IQoLService)) as IQoLService;
-        if (qolService == null) return;
-
-        var existingNote = qolService.GetFriendNote(friend.UserId);
+        var existingNote = _qolService.GetFriendNote(friend.UserId);
 
         var dialog = new System.Windows.Window
         {
@@ -1253,12 +1252,9 @@ public partial class FriendsViewModel : BaseViewModel
     [RelayCommand]
     private void AddFriendTag(FriendDto friend)
     {
-        if (friend == null) return;
+        if (friend == null || _qolService == null) return;
 
-        var qolService = App.ServiceProvider.GetService(typeof(IQoLService)) as IQoLService;
-        if (qolService == null) return;
-
-        var existingNote = qolService.GetFriendNote(friend.UserId);
+        var existingNote = _qolService.GetFriendNote(friend.UserId);
         var currentTags = existingNote?.Tags ?? [];
 
         var dialog = new System.Windows.Window
