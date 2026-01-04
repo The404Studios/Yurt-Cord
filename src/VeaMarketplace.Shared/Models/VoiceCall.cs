@@ -13,9 +13,23 @@ public class VoiceCall
     public DateTime StartedAt { get; set; } = DateTime.UtcNow;
     public DateTime? AnsweredAt { get; set; }
     public DateTime? EndedAt { get; set; }
-    public TimeSpan Duration => EndedAt.HasValue && AnsweredAt.HasValue
-        ? EndedAt.Value - AnsweredAt.Value
-        : TimeSpan.Zero;
+
+    /// <summary>
+    /// Calculates call duration. For ended calls, returns EndedAt - AnsweredAt.
+    /// For in-progress calls, returns current time - AnsweredAt.
+    /// For calls not yet answered, returns TimeSpan.Zero.
+    /// </summary>
+    public TimeSpan Duration
+    {
+        get
+        {
+            if (!AnsweredAt.HasValue)
+                return TimeSpan.Zero;
+
+            var endTime = EndedAt ?? DateTime.UtcNow;
+            return endTime - AnsweredAt.Value;
+        }
+    }
 }
 
 public enum VoiceCallStatus

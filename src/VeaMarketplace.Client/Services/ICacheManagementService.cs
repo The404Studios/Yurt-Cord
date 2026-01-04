@@ -33,12 +33,8 @@ public class CacheManagementService : ICacheManagementService
 
     public CacheManagementService()
     {
-        // Use the cache directory from settings or default
-        _baseCachePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "YurtCord",
-            "Cache"
-        );
+        // Use XDG-compliant cache directory for cross-platform support
+        _baseCachePath = Path.Combine(Helpers.XdgDirectories.CacheHome, "Cache");
 
         EnsureCacheDirectoryExists();
     }
@@ -49,44 +45,50 @@ public class CacheManagementService : ICacheManagementService
         {
             lock (_lock)
             {
-                var stats = new CacheStats();
-
-                if (!Directory.Exists(_baseCachePath))
-                {
-                    return stats;
-                }
-
-                try
-                {
-                    var allFiles = Directory.GetFiles(_baseCachePath, "*.*", SearchOption.AllDirectories);
-                    stats.FileCount = allFiles.Length;
-
-                    var fileInfos = allFiles.Select(f => new FileInfo(f)).ToList();
-
-                    stats.TotalSizeBytes = fileInfos.Sum(f => f.Length);
-                    stats.OldestFileDate = fileInfos.Any() ? fileInfos.Min(f => f.CreationTime) : null;
-                    stats.NewestFileDate = fileInfos.Any() ? fileInfos.Max(f => f.CreationTime) : null;
-
-                    // Calculate size by category (subdirectories)
-                    var categories = Directory.GetDirectories(_baseCachePath);
-                    foreach (var category in categories)
-                    {
-                        var categoryName = Path.GetFileName(category);
-                        var categoryFiles = Directory.GetFiles(category, "*.*", SearchOption.AllDirectories);
-                        var categorySize = categoryFiles.Sum(f => new FileInfo(f).Length);
-                        stats.SizeByCategory[categoryName] = categorySize;
-                    }
-
-                    Debug.WriteLine($"Cache stats: {stats.FileCount} files, {FormatBytes(stats.TotalSizeBytes)}");
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Failed to get cache stats: {ex.Message}");
-                }
-
-                return stats;
+                return GetCacheStatsCore();
             }
         });
+    }
+
+    // Synchronous version for use within locked contexts (avoids deadlock)
+    private CacheStats GetCacheStatsCore()
+    {
+        var stats = new CacheStats();
+
+        if (!Directory.Exists(_baseCachePath))
+        {
+            return stats;
+        }
+
+        try
+        {
+            var allFiles = Directory.GetFiles(_baseCachePath, "*.*", SearchOption.AllDirectories);
+            stats.FileCount = allFiles.Length;
+
+            var fileInfos = allFiles.Select(f => new FileInfo(f)).ToList();
+
+            stats.TotalSizeBytes = fileInfos.Sum(f => f.Length);
+            stats.OldestFileDate = fileInfos.Any() ? fileInfos.Min(f => f.CreationTime) : null;
+            stats.NewestFileDate = fileInfos.Any() ? fileInfos.Max(f => f.CreationTime) : null;
+
+            // Calculate size by category (subdirectories)
+            var categories = Directory.GetDirectories(_baseCachePath);
+            foreach (var category in categories)
+            {
+                var categoryName = Path.GetFileName(category);
+                var categoryFiles = Directory.GetFiles(category, "*.*", SearchOption.AllDirectories);
+                var categorySize = categoryFiles.Sum(f => new FileInfo(f).Length);
+                stats.SizeByCategory[categoryName] = categorySize;
+            }
+
+            Debug.WriteLine($"Cache stats: {stats.FileCount} files, {FormatBytes(stats.TotalSizeBytes)}");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to get cache stats: {ex.Message}");
+        }
+
+        return stats;
     }
 
     public async Task<long> ClearCacheAsync(TimeSpan? olderThan = null)
@@ -232,7 +234,7 @@ public class CacheManagementService : ICacheManagementService
             {
                 try
                 {
-                    var stats = GetCacheStatsAsync().Result;
+                    var stats = GetCacheStatsCore();
 
                     if (stats.TotalSizeBytes <= maxSizeBytes)
                     {

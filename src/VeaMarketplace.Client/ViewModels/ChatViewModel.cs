@@ -345,9 +345,9 @@ public partial class ChatViewModel : BaseViewModel
     partial void OnMessageInputChanged(string value)
     {
         // Send typing indicator
-        if (!string.IsNullOrEmpty(value) && (DateTime.Now - _lastTypingSent).TotalSeconds > 2)
+        if (!string.IsNullOrEmpty(value) && (DateTime.UtcNow - _lastTypingSent).TotalSeconds > 2)
         {
-            _lastTypingSent = DateTime.Now;
+            _lastTypingSent = DateTime.UtcNow;
             _ = _chatService.SendTypingAsync(CurrentChannel);
         }
     }

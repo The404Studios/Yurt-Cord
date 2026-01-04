@@ -54,11 +54,8 @@ public class ConfigurationService : IConfigurationService
 
     public ConfigurationService(string? configFilePath = null)
     {
-        var appDataPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "YurtCord",
-            "Config"
-        );
+        // Use XDG-compliant config directory for configuration files (cross-platform support)
+        var appDataPath = Path.Combine(Helpers.XdgDirectories.ConfigHome, "Config");
 
         Directory.CreateDirectory(appDataPath);
 

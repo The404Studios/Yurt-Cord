@@ -22,6 +22,7 @@ public class ActivityController : ControllerBase
     [HttpGet]
     public ActionResult<List<UserActivityDto>> GetActivityFeed(
         [FromHeader(Name = "Authorization")] string? authorization,
+        [FromQuery] string? filter = null,
         [FromQuery] ActivityType? type = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50)
@@ -30,16 +31,39 @@ public class ActivityController : ControllerBase
         if (user == null)
             return Unauthorized();
 
-        var activities = _activityService.GetActivityFeed(user.Id, type, page, pageSize);
+        List<UserActivityDto> activities;
+
+        // Handle filter types
+        if (filter?.ToLower() == "friends")
+        {
+            activities = _activityService.GetFriendsFeed(user.Id, page, pageSize);
+            // Apply type filter if specified
+            if (type.HasValue)
+            {
+                activities = activities.Where(a => a.Type == type.Value).ToList();
+            }
+        }
+        else if (type.HasValue)
+        {
+            // Get global activities filtered by type
+            activities = _activityService.GetGlobalFeed(type, page, pageSize);
+        }
+        else
+        {
+            // Default: get user's own activities
+            activities = _activityService.GetActivityFeed(user.Id, null, page, pageSize);
+        }
+
         return Ok(activities);
     }
 
     [HttpGet("global")]
     public ActionResult<List<UserActivityDto>> GetGlobalFeed(
+        [FromQuery] ActivityType? type = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50)
     {
-        var activities = _activityService.GetGlobalFeed(page, pageSize);
+        var activities = _activityService.GetGlobalFeed(type, page, pageSize);
         return Ok(activities);
     }
 

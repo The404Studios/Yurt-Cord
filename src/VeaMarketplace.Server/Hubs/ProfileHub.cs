@@ -208,6 +208,8 @@ public class ProfileHub : Hub
 
         if (_connectionUsers.TryRemove(connectionId, out var userId))
         {
+            UserDto? userToNotify = null;
+
             // Remove this connection from user's connection list
             if (_userConnections.TryGetValue(userId, out var connIds))
             {
@@ -218,26 +220,22 @@ public class ProfileHub : Hub
                     if (connIds.Count == 0)
                     {
                         _userConnections.TryRemove(userId, out _);
-                        _onlineUsers.TryRemove(userId, out var userDto);
-
-                        // Notify all users that this user went offline
-                        if (userDto != null)
-                        {
-                            // Fire-and-forget with error handling
-                            _ = Task.Run(async () =>
-                            {
-                                try
-                                {
-                                    await Clients.Group("online_users").SendAsync("UserOffline", userId, userDto.Username);
-                                }
-                                catch (Exception ex)
-                                {
-                                    // Log error but don't propagate - user is already disconnecting
-                                    System.Diagnostics.Debug.WriteLine($"ProfileHub: Failed to notify UserOffline: {ex.Message}");
-                                }
-                            });
-                        }
+                        _onlineUsers.TryRemove(userId, out userToNotify);
                     }
+                }
+            }
+
+            // Notify outside of lock to avoid blocking
+            if (userToNotify != null)
+            {
+                try
+                {
+                    await Clients.Group("online_users").SendAsync("UserOffline", userId, userToNotify.Username);
+                }
+                catch (Exception ex)
+                {
+                    // Log error but don't propagate - user is already disconnecting
+                    System.Diagnostics.Debug.WriteLine($"ProfileHub: Failed to notify UserOffline: {ex.Message}");
                 }
             }
         }

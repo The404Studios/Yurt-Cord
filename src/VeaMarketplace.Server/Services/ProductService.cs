@@ -21,7 +21,7 @@ public class ProductService
     public ProductDto CreateProduct(string userId, CreateProductRequest request)
     {
         var user = _db.Users.FindById(userId);
-        if (user == null) throw new Exception("User not found");
+        if (user == null) throw new ArgumentException($"User with ID '{userId}' not found", nameof(userId));
 
         var product = new Product
         {

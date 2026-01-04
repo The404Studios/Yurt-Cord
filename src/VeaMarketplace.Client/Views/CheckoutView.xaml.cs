@@ -45,6 +45,24 @@ public partial class CheckoutView : UserControl
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Failed to initialize checkout view: {ex.Message}");
+
+            // Show error to user and provide recovery option
+            var result = MessageBox.Show(
+                $"Failed to load checkout: {ex.Message}\n\nWould you like to try again?",
+                "Checkout Error",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Error);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                // Retry initialization
+                CheckoutView_Loaded(sender, e);
+            }
+            else
+            {
+                // Navigate back to cart
+                _navigationService?.NavigateBack();
+            }
         }
     }
 

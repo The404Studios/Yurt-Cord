@@ -315,6 +315,10 @@ public class FriendService : IFriendService, IAsyncDisposable
             {
                 CurrentDMPartnerId = partnerId;
                 CurrentDMHistory.Clear();
+
+                // Apply message grouping - messages from the same sender within 5 minutes are grouped
+                ApplyMessageGrouping(messages);
+
                 foreach (var msg in messages)
                     CurrentDMHistory.Add(msg);
             });
@@ -327,6 +331,9 @@ public class FriendService : IFriendService, IAsyncDisposable
                 // If we're in a conversation with this person, add the message
                 if (CurrentDMPartnerId == message.SenderId || CurrentDMPartnerId == message.RecipientId)
                 {
+                    // Apply grouping for new message
+                    var lastMessage = CurrentDMHistory.LastOrDefault();
+                    message.IsFirstInGroup = ShouldStartNewGroup(lastMessage, message);
                     CurrentDMHistory.Add(message);
                 }
                 OnDirectMessageReceived?.Invoke(message);
@@ -378,18 +385,14 @@ public class FriendService : IFriendService, IAsyncDisposable
                 OnUserTypingDM?.Invoke(userId, username);
 
                 // Auto-clear typing indicator after 3 seconds using DispatcherTimer (runs on UI thread)
-                _typingTimer?.Stop();
+                // Properly dispose old timer to avoid memory leaks
+                DisposeTypingTimer();
+
                 _typingTimer = new DispatcherTimer
                 {
                     Interval = TimeSpan.FromSeconds(3)
                 };
-                _typingTimer.Tick += (s, e) =>
-                {
-                    TypingUserId = null;
-                    TypingUsername = null;
-                    OnUserStoppedTypingDM?.Invoke(userId);
-                    _typingTimer?.Stop();
-                };
+                _typingTimer.Tick += OnTypingTimerTick;
                 _typingTimer.Start();
             });
         });
@@ -711,13 +714,100 @@ public class FriendService : IFriendService, IAsyncDisposable
         }
     }
 
+    #region Timer Management
+
+    /// <summary>
+    /// Properly disposes the typing timer to avoid memory leaks.
+    /// </summary>
+    private void DisposeTypingTimer()
+    {
+        if (_typingTimer != null)
+        {
+            _typingTimer.Stop();
+            _typingTimer.Tick -= OnTypingTimerTick;
+            _typingTimer = null;
+        }
+    }
+
+    /// <summary>
+    /// Handler for the typing timer tick event.
+    /// </summary>
+    private void OnTypingTimerTick(object? sender, EventArgs e)
+    {
+        var userId = TypingUserId;
+        TypingUserId = null;
+        TypingUsername = null;
+
+        if (userId != null)
+        {
+            OnUserStoppedTypingDM?.Invoke(userId);
+        }
+
+        DisposeTypingTimer();
+    }
+
+    #endregion
+
+    #region Message Grouping
+
+    /// <summary>
+    /// Applies message grouping to a list of messages.
+    /// Messages from the same sender within 5 minutes are grouped together.
+    /// </summary>
+    private static void ApplyMessageGrouping(List<DirectMessageDto> messages)
+    {
+        if (messages == null || messages.Count == 0)
+            return;
+
+        for (int i = 0; i < messages.Count; i++)
+        {
+            if (i == 0)
+            {
+                messages[i].IsFirstInGroup = true;
+            }
+            else
+            {
+                messages[i].IsFirstInGroup = ShouldStartNewGroup(messages[i - 1], messages[i]);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Determines if a message should start a new group based on the previous message.
+    /// A new group starts when:
+    /// - The sender changes
+    /// - More than 5 minutes have passed since the last message
+    /// - The previous message is a reply
+    /// </summary>
+    private static bool ShouldStartNewGroup(DirectMessageDto? previous, DirectMessageDto current)
+    {
+        if (previous == null)
+            return true;
+
+        // Different sender = new group
+        if (previous.SenderId != current.SenderId)
+            return true;
+
+        // More than 5 minutes apart = new group
+        var timeDiff = current.Timestamp - previous.Timestamp;
+        if (timeDiff.TotalMinutes > 5)
+            return true;
+
+        // Current message is a reply = new group
+        if (current.IsReply)
+            return true;
+
+        return false;
+    }
+
+    #endregion
+
     public async Task DisconnectAsync()
     {
         StopHeartbeat();
 
-        // Stop and dispose typing timer
-        _typingTimer?.Stop();
-        _typingTimer = null;
+        // Stop and dispose typing timer (properly unsubscribe from event)
+        DisposeTypingTimer();
 
         ConnectionId = null;
 

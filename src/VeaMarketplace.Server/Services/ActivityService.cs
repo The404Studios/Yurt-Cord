@@ -33,10 +33,17 @@ public class ActivityService
             .ToList();
     }
 
-    public List<UserActivityDto> GetGlobalFeed(int page = 1, int pageSize = 50)
+    public List<UserActivityDto> GetGlobalFeed(ActivityType? type = null, int page = 1, int pageSize = 50)
     {
-        return _db.UserActivities.Query()
-            .Where(a => a.IsPublic)
+        var query = _db.UserActivities.Query()
+            .Where(a => a.IsPublic);
+
+        if (type.HasValue)
+        {
+            query = query.Where(a => a.Type == type.Value);
+        }
+
+        return query
             .OrderByDescending(a => a.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Limit(pageSize)
