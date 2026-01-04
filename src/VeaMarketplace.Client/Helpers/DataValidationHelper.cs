@@ -267,11 +267,7 @@ public static class DataValidationHelper
             return false;
 
         // Basic profanity filter (should be expanded based on requirements)
-        var profanityWords = new[]
-        {
-            // Add profanity words as needed
-            // This is a placeholder implementation
-        };
+        var profanityWords = Array.Empty<string>();
 
         var lowerText = text.ToLower();
         return profanityWords.Any(word => lowerText.Contains(word));
