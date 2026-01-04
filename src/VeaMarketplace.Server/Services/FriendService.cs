@@ -83,6 +83,10 @@ public class FriendService
             .Find(f => f.RequesterId == userId && f.Status == FriendshipStatus.Pending)
             .ToList();
 
+        // Cache requester info to avoid multiple lookups
+        var requester = _db.Users.FindById(userId);
+        if (requester == null) return [];
+
         var result = new List<FriendRequestDto>();
         foreach (var request in requests)
         {
@@ -92,10 +96,12 @@ public class FriendService
                 result.Add(new FriendRequestDto
                 {
                     Id = request.Id,
-                    RequesterId = addressee.Id,
-                    RequesterUsername = addressee.Username,
-                    RequesterAvatarUrl = addressee.AvatarUrl,
-                    RequesterRole = addressee.Role,
+                    RequesterId = userId, // Fixed: should be the requester (us)
+                    RequesterUsername = requester.Username,
+                    RequesterAvatarUrl = requester.AvatarUrl,
+                    RequesterRole = requester.Role,
+                    RecipientId = addressee.Id, // Fixed: who we sent the request to
+                    RecipientUsername = addressee.Username,
                     RequestedAt = request.CreatedAt
                 });
             }
