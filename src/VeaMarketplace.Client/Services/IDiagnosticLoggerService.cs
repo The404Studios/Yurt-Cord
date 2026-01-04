@@ -62,11 +62,8 @@ public class DiagnosticLoggerService : IDiagnosticLoggerService
 
     public DiagnosticLoggerService()
     {
-        var appDataPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "YurtCord",
-            "Logs"
-        );
+        // Use XDG-compliant state directory for logs (cross-platform support)
+        var appDataPath = Path.Combine(Helpers.XdgDirectories.StateHome, "Logs");
 
         Directory.CreateDirectory(appDataPath);
 

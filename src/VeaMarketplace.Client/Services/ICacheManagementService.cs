@@ -33,12 +33,8 @@ public class CacheManagementService : ICacheManagementService
 
     public CacheManagementService()
     {
-        // Use the cache directory from settings or default
-        _baseCachePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "YurtCord",
-            "Cache"
-        );
+        // Use XDG-compliant cache directory for cross-platform support
+        _baseCachePath = Path.Combine(Helpers.XdgDirectories.CacheHome, "Cache");
 
         EnsureCacheDirectoryExists();
     }

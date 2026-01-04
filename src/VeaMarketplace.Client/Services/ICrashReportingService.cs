@@ -60,11 +60,8 @@ public class CrashReportingService : ICrashReportingService
 
     public CrashReportingService()
     {
-        var appDataPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "YurtCord",
-            "CrashReports"
-        );
+        // Use XDG-compliant state directory for crash reports (cross-platform support)
+        var appDataPath = Path.Combine(Helpers.XdgDirectories.StateHome, "CrashReports");
 
         Directory.CreateDirectory(appDataPath);
         _crashReportsPath = appDataPath;

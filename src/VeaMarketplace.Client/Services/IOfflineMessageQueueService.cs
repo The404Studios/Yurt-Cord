@@ -46,11 +46,8 @@ public class OfflineMessageQueueService : IOfflineMessageQueueService
 
     public OfflineMessageQueueService()
     {
-        var appDataPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "YurtCord",
-            "Data"
-        );
+        // Use XDG-compliant data directory for cross-platform support
+        var appDataPath = Path.Combine(Helpers.XdgDirectories.DataHome, "Data");
 
         Directory.CreateDirectory(appDataPath);
 
