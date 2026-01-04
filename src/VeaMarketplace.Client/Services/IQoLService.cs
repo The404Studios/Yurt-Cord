@@ -883,7 +883,11 @@ public class QoLService : IQoLService, IDisposable
     public void Dispose()
     {
         _schedulerTimer.Stop();
+        _schedulerTimer.Tick -= SchedulerTimer_Tick;
+
         _autoAwayTimer.Stop();
+        _autoAwayTimer.Tick -= AutoAwayTimer_Tick;
+
         GC.SuppressFinalize(this);
     }
 }

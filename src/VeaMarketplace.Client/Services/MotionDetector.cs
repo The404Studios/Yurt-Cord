@@ -88,8 +88,8 @@ public class MotionDetector : IDisposable
             {
                 int blockIdx = by * blocksX + bx;
 
-                // Compare current block hash with previous
-                if (Math.Abs(currentHash[blockIdx] - _previousFrameHash[blockIdx]) > SensitivityThreshold)
+                // Compare current block hash with previous (null check already done above)
+                if (Math.Abs(currentHash[blockIdx] - _previousFrameHash![blockIdx]) > SensitivityThreshold)
                 {
                     // Block changed - add to changed regions
                     int x = bx * BlockSize;

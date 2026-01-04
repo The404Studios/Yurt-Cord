@@ -86,7 +86,6 @@ public class ConnectionRetryHelper
     {
         return ex is TaskCanceledException or
             TimeoutException or
-            HttpRequestException or
             System.Net.Sockets.SocketException or
             System.Net.Http.HttpRequestException;
     }

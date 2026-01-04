@@ -427,9 +427,6 @@ public partial class FriendsViewModel : BaseViewModel
         {
             OnPropertyChanged(nameof(OnlineFriendsCount));
 
-            // Notify QoL service to trigger friend online notifications if enabled
-            _qolService?.NotifyFriendOnline(friend.UserId, friend.Username);
-
             // Track friend interaction
             _qolService?.TrackFriendInteraction(friend.UserId);
         });
@@ -1165,7 +1162,7 @@ public partial class FriendsViewModel : BaseViewModel
 
         saveBtn.Click += (s, e) =>
         {
-            qolService.SetFriendNote(new FriendNote
+            _qolService?.SetFriendNote(new FriendNote
             {
                 UserId = friend.UserId,
                 Note = noteBox.Text,
@@ -1229,7 +1226,7 @@ public partial class FriendsViewModel : BaseViewModel
 
         saveBtn.Click += (s, e) =>
         {
-            qolService.SetFriendNote(new FriendNote
+            _qolService?.SetFriendNote(new FriendNote
             {
                 UserId = friend.UserId,
                 Note = existingNote?.Note ?? "",
@@ -1312,7 +1309,7 @@ public partial class FriendsViewModel : BaseViewModel
                     newTags.Add(tagBox.Text.Trim());
                 }
 
-                qolService.SetFriendNote(new FriendNote
+                _qolService?.SetFriendNote(new FriendNote
                 {
                     UserId = friend.UserId,
                     Note = existingNote?.Note ?? "",

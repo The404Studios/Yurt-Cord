@@ -85,6 +85,12 @@ public class SocialService : ISocialService
     private readonly string _dataPath;
     private SocialData _data = new();
 
+    // Cached JSON serializer options for performance
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented = true
+    };
+
     // Collections
     public ObservableCollection<FriendGroup> FriendGroups { get; } = new();
     public ObservableCollection<InteractionEvent> RecentInteractions { get; } = new();
@@ -733,7 +739,7 @@ public class SocialService : ISocialService
             }
 
             _data.CurrentActivity = CurrentActivity;
-            var json = JsonSerializer.Serialize(_data, new JsonSerializerOptions { WriteIndented = true });
+            var json = JsonSerializer.Serialize(_data, JsonOptions);
             await File.WriteAllTextAsync(_dataPath, json);
         }
         catch (IOException ex)

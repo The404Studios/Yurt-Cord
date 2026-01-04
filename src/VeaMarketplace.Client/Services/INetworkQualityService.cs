@@ -87,7 +87,7 @@ public class NetworkQualityService : INetworkQualityService
                 stopwatch.Stop();
 
                 bool isSuccess = reply?.Status == IPStatus.Success;
-                int latency = isSuccess ? (int)reply.RoundtripTime : TimeoutMs;
+                int latency = isSuccess && reply != null ? (int)reply.RoundtripTime : TimeoutMs;
 
                 UpdateSamples(latency, isSuccess);
                 UpdateQuality();

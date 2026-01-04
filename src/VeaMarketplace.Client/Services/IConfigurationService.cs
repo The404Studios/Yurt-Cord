@@ -43,6 +43,13 @@ public class ConfigurationService : IConfigurationService
     private readonly ReaderWriterLockSlim _lock = new();
     private readonly SemaphoreSlim _fileLock = new(1, 1);
 
+    // Cached JSON serializer options for performance
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        WriteIndented = true,
+        IncludeFields = true
+    };
+
     public event Action<string, object?>? OnConfigurationChanged;
 
     public ConfigurationService(string? configFilePath = null)
@@ -220,11 +227,7 @@ public class ConfigurationService : IConfigurationService
                 _lock.ExitReadLock();
             }
 
-            var json = JsonSerializer.Serialize(configCopy, new JsonSerializerOptions
-            {
-                WriteIndented = true,
-                IncludeFields = true
-            });
+            var json = JsonSerializer.Serialize(configCopy, JsonOptions);
 
             await File.WriteAllTextAsync(_configFilePath, json);
 

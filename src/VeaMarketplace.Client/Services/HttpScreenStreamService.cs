@@ -23,6 +23,12 @@ public class HttpScreenStreamService : IDisposable
     private string? _authToken;
     private bool _disposed;
 
+    // Cached JSON serializer options for performance
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
     // Stats
     private long _framesSent;
     private long _bytesSent;
@@ -80,10 +86,7 @@ public class HttpScreenStreamService : IDisposable
             }
 
             var json = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<StartStreamResponse>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var result = JsonSerializer.Deserialize<StartStreamResponse>(json, JsonOptions);
 
             _currentStreamId = result?.StreamId;
             _framesSent = 0;
@@ -220,10 +223,7 @@ public class HttpScreenStreamService : IDisposable
                 return new List<StreamInfo>();
 
             var json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<List<StreamInfo>>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            }) ?? new List<StreamInfo>();
+            return JsonSerializer.Deserialize<List<StreamInfo>>(json, JsonOptions) ?? new List<StreamInfo>();
         }
         catch
         {
