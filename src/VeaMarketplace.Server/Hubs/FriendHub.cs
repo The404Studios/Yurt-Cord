@@ -156,7 +156,8 @@ public class FriendHub : Hub
             return;
 
         var user = _friendService.SearchUserByIdOrUsername(query);
-        if (user != null && user.Id != userId)
+        // Don't show user if blocked (either direction)
+        if (user != null && user.Id != userId && !_friendService.IsBlocked(userId, user.Id))
         {
             // Check if already friends or pending
             var isFriend = _friendService.AreFriends(userId, user.Id);
@@ -188,8 +189,15 @@ public class FriendHub : Hub
             return;
 
         var users = _friendService.SearchUsers(query);
+        if (users == null)
+        {
+            await Clients.Caller.SendAsync("UserSearchResults", new List<UserSearchResultDto>());
+            return;
+        }
+
         var results = users
             .Where(u => u.Id != userId)
+            .Where(u => !_friendService.IsBlocked(userId, u.Id)) // Filter out blocked users
             .Select(u => new UserSearchResultDto
             {
                 UserId = u.Id,

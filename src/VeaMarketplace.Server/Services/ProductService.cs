@@ -117,6 +117,19 @@ public class ProductService
         return MapToDto(product, seller);
     }
 
+    /// <summary>
+    /// Gets product info without incrementing view count.
+    /// Use this for internal operations like notifications.
+    /// </summary>
+    public ProductDto? GetProductById(string productId)
+    {
+        var product = _db.Products.FindById(productId);
+        if (product == null) return null;
+
+        var seller = _db.Users.FindById(product.SellerId);
+        return MapToDto(product, seller);
+    }
+
     public List<ProductDto> GetUserProducts(string userId)
     {
         var user = _db.Users.FindById(userId);

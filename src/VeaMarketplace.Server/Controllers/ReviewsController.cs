@@ -12,17 +12,20 @@ public class ReviewsController : ControllerBase
 {
     private readonly ReviewService _reviewService;
     private readonly AuthService _authService;
+    private readonly ProductService _productService;
     private readonly NotificationService _notificationService;
     private readonly IHubContext<ContentHub> _contentHub;
 
     public ReviewsController(
         ReviewService reviewService,
         AuthService authService,
+        ProductService productService,
         NotificationService notificationService,
         IHubContext<ContentHub> contentHub)
     {
         _reviewService = reviewService;
         _authService = authService;
+        _productService = productService;
         _notificationService = notificationService;
         _contentHub = contentHub;
     }
@@ -57,15 +60,27 @@ public class ReviewsController : ControllerBase
         if (review == null)
             return BadRequest("Unable to create review. You may have already reviewed this product.");
 
-        // Notify the seller
-        var product = _authService.GetUserById(user.Id); // Get product info through service
+        // Get product info and notify the seller
+        var product = _productService.GetProductById(request.ProductId);
+        if (product != null && product.SellerId != user.Id)
+        {
+            // Notify the seller about the new review
+            _notificationService.CreateNotification(
+                product.SellerId,
+                "New Review",
+                $"{user.Username} left a {request.Rating}-star review on {product.Title}",
+                "review",
+                review.Id);
+        }
+
         // Broadcast review event
         await _contentHub.Clients.All.SendAsync("NewReview", new
         {
             ProductId = request.ProductId,
             ReviewId = review.Id,
             Username = user.Username,
-            Rating = request.Rating
+            Rating = request.Rating,
+            SellerId = product?.SellerId
         });
 
         return Ok(review);

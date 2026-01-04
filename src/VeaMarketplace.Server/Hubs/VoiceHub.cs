@@ -15,7 +15,7 @@ public class VoiceHub : Hub
     private readonly ILogger<VoiceHub> _logger;
     private static readonly ConcurrentDictionary<string, VoiceChannelState> _voiceChannels = new();
     private static readonly ConcurrentDictionary<string, VoiceUserState> _voiceUsers = new();
-    private static readonly ConcurrentDictionary<string, string> _userConnections = new(); // userId -> connectionId
+    private static readonly ConcurrentDictionary<string, List<string>> _userConnections = new(); // userId -> connectionIds (supports multiple)
     private static readonly ConcurrentDictionary<string, string> _connectionUsers = new(); // connectionId -> userId
     private static readonly ConcurrentDictionary<string, string> _activeCalls = new(); // callId -> (caller|recipient connectionId pair)
     private static readonly ConcurrentDictionary<string, DateTime> _connectionTimestamps = new();
@@ -898,7 +898,7 @@ public class VoiceHub : Hub
         }
 
         // Check if target is online
-        if (!_userConnections.TryGetValue(targetUserId, out var targetConnectionId))
+        if (!_userConnections.TryGetValue(targetUserId, out var targetConnectionIds))
         {
             await Clients.Caller.SendAsync("NudgeError", "User is not online");
             return;
@@ -914,7 +914,13 @@ public class VoiceHub : Hub
             Message = message
         };
 
-        await Clients.Client(targetConnectionId).SendAsync("NudgeReceived", nudge);
+        // Send nudge to all user connections
+        List<string> connIdsCopy;
+        lock (targetConnectionIds) { connIdsCopy = targetConnectionIds.ToList(); }
+        foreach (var connId in connIdsCopy)
+        {
+            await Clients.Client(connId).SendAsync("NudgeReceived", nudge);
+        }
         await Clients.Caller.SendAsync("NudgeSent", nudge);
     }
 
@@ -1052,10 +1058,23 @@ public class VoiceHub : Hub
         // Handle call disconnection
         if (_connectionUsers.TryRemove(Context.ConnectionId, out var userId))
         {
-            _userConnections.TryRemove(userId, out _);
+            // Remove this connection from user's connection list
+            bool userHasNoMoreConnections = false;
+            if (_userConnections.TryGetValue(userId, out var connIds))
+            {
+                lock (connIds)
+                {
+                    connIds.Remove(Context.ConnectionId);
+                    if (connIds.Count == 0)
+                    {
+                        _userConnections.TryRemove(userId, out _);
+                        userHasNoMoreConnections = true;
+                    }
+                }
+            }
 
-            // End any active calls
-            if (_callService != null)
+            // Only end calls if user has no more connections
+            if (userHasNoMoreConnections && _callService != null)
             {
                 try
                 {
@@ -1066,9 +1085,14 @@ public class VoiceHub : Hub
                         if (call != null)
                         {
                             var otherUserId = call.CallerId == userId ? call.RecipientId : call.CallerId;
-                            if (_userConnections.TryGetValue(otherUserId, out var otherConnId))
+                            if (_userConnections.TryGetValue(otherUserId, out var otherConnIds))
                             {
-                                await Clients.Client(otherConnId).SendAsync("CallEnded", call.Id, "User disconnected");
+                                List<string> connIdsCopy;
+                                lock (otherConnIds) { connIdsCopy = otherConnIds.ToList(); }
+                                foreach (var connId in connIdsCopy)
+                                {
+                                    await Clients.Client(connId).SendAsync("CallEnded", call.Id, "User disconnected");
+                                }
                             }
                         }
                     }
@@ -1094,7 +1118,12 @@ public class VoiceHub : Hub
             return;
         }
 
-        _userConnections[user.Id] = Context.ConnectionId;
+        // Support multiple connections per user (multiple tabs/devices)
+        _userConnections.AddOrUpdate(
+            user.Id,
+            _ => new List<string> { Context.ConnectionId },
+            (_, list) => { lock (list) { if (!list.Contains(Context.ConnectionId)) list.Add(Context.ConnectionId); } return list; }
+        );
         _connectionUsers[Context.ConnectionId] = user.Id;
 
         await Groups.AddToGroupAsync(Context.ConnectionId, $"user_{user.Id}");
@@ -1123,10 +1152,10 @@ public class VoiceHub : Hub
                 StartedAt = call.StartedAt
             });
 
-            // Notify recipient
-            if (_userConnections.TryGetValue(recipientId, out var recipientConnId))
+            // Notify recipient (all connections)
+            if (_userConnections.TryGetValue(recipientId, out var recipientConnIds))
             {
-                await Clients.Client(recipientConnId).SendAsync("IncomingCall", new VoiceCallDto
+                var callDto = new VoiceCallDto
                 {
                     Id = call.Id,
                     CallerId = call.CallerId,
@@ -1137,7 +1166,13 @@ public class VoiceHub : Hub
                     RecipientAvatarUrl = call.RecipientAvatarUrl,
                     Status = call.Status,
                     StartedAt = call.StartedAt
-                });
+                };
+                List<string> connIdsCopy;
+                lock (recipientConnIds) { connIdsCopy = recipientConnIds.ToList(); }
+                foreach (var connId in connIdsCopy)
+                {
+                    await Clients.Client(connId).SendAsync("IncomingCall", callDto);
+                }
             }
             else
             {
@@ -1179,18 +1214,28 @@ public class VoiceHub : Hub
             {
                 await Clients.Caller.SendAsync("CallAnswered", dto);
 
-                if (_userConnections.TryGetValue(call.CallerId, out var callerConnId))
+                if (_userConnections.TryGetValue(call.CallerId, out var callerConnIds))
                 {
-                    await Clients.Client(callerConnId).SendAsync("CallAnswered", dto);
+                    List<string> connIdsCopy;
+                    lock (callerConnIds) { connIdsCopy = callerConnIds.ToList(); }
+                    foreach (var connId in connIdsCopy)
+                    {
+                        await Clients.Client(connId).SendAsync("CallAnswered", dto);
+                    }
                 }
             }
             else
             {
                 await Clients.Caller.SendAsync("CallDeclined", dto);
 
-                if (_userConnections.TryGetValue(call.CallerId, out var callerConnId))
+                if (_userConnections.TryGetValue(call.CallerId, out var callerConnIds))
                 {
-                    await Clients.Client(callerConnId).SendAsync("CallDeclined", dto);
+                    List<string> connIdsCopy;
+                    lock (callerConnIds) { connIdsCopy = callerConnIds.ToList(); }
+                    foreach (var connId in connIdsCopy)
+                    {
+                        await Clients.Client(connId).SendAsync("CallDeclined", dto);
+                    }
                 }
             }
         }
@@ -1227,9 +1272,14 @@ public class VoiceHub : Hub
             await Clients.Caller.SendAsync("CallEnded", dto.Id, "Call ended");
 
             var otherUserId = call.CallerId == userId ? call.RecipientId : call.CallerId;
-            if (_userConnections.TryGetValue(otherUserId, out var otherConnId))
+            if (_userConnections.TryGetValue(otherUserId, out var otherConnIds))
             {
-                await Clients.Client(otherConnId).SendAsync("CallEnded", dto.Id, "Call ended");
+                List<string> connIdsCopy;
+                lock (otherConnIds) { connIdsCopy = otherConnIds.ToList(); }
+                foreach (var connId in connIdsCopy)
+                {
+                    await Clients.Client(connId).SendAsync("CallEnded", dto.Id, "Call ended");
+                }
             }
         }
     }
@@ -1246,10 +1296,15 @@ public class VoiceHub : Hub
             if (activeCall != null && activeCall.Id == callId && activeCall.Status == VoiceCallStatus.InProgress)
             {
                 var otherUserId = activeCall.CallerId == userId ? activeCall.RecipientId : activeCall.CallerId;
-                if (_userConnections.TryGetValue(otherUserId, out var otherConnId))
+                if (_userConnections.TryGetValue(otherUserId, out var otherConnIds))
                 {
-                    // Include sender connection ID for per-user volume control
-                    await Clients.Client(otherConnId).SendAsync("ReceiveCallAudio", Context.ConnectionId, audioData);
+                    // Send audio to all connections of the other user
+                    List<string> connIdsCopy;
+                    lock (otherConnIds) { connIdsCopy = otherConnIds.ToList(); }
+                    foreach (var connId in connIdsCopy)
+                    {
+                        await Clients.Client(connId).SendAsync("ReceiveCallAudio", Context.ConnectionId, audioData);
+                    }
                 }
             }
         }
@@ -1267,9 +1322,14 @@ public class VoiceHub : Hub
             if (activeCall != null && activeCall.Id == callId)
             {
                 var otherUserId = activeCall.CallerId == userId ? activeCall.RecipientId : activeCall.CallerId;
-                if (_userConnections.TryGetValue(otherUserId, out var otherConnId))
+                if (_userConnections.TryGetValue(otherUserId, out var otherConnIds))
                 {
-                    await Clients.Client(otherConnId).SendAsync("CallUserSpeaking", userId, isSpeaking, audioLevel);
+                    List<string> connIdsCopy;
+                    lock (otherConnIds) { connIdsCopy = otherConnIds.ToList(); }
+                    foreach (var connId in connIdsCopy)
+                    {
+                        await Clients.Client(connId).SendAsync("CallUserSpeaking", userId, isSpeaking, audioLevel);
+                    }
                 }
             }
         }
@@ -1316,10 +1376,10 @@ public class VoiceHub : Hub
         // Send call started to host
         await Clients.Caller.SendAsync("GroupCallStarted", call.ToDto());
 
-        // Send invites to invited users
+        // Send invites to invited users (all connections)
         foreach (var invitedId in invitedUserIds)
         {
-            if (_userConnections.TryGetValue(invitedId, out var invitedConnId))
+            if (_userConnections.TryGetValue(invitedId, out var invitedConnIds))
             {
                 var invite = new GroupCallInviteDto
                 {
@@ -1331,7 +1391,12 @@ public class VoiceHub : Hub
                     ParticipantCount = 1,
                     InvitedAt = DateTime.UtcNow
                 };
-                await Clients.Client(invitedConnId).SendAsync("GroupCallInvite", invite);
+                List<string> connIdsCopy;
+                lock (invitedConnIds) { connIdsCopy = invitedConnIds.ToList(); }
+                foreach (var connId in connIdsCopy)
+                {
+                    await Clients.Client(connId).SendAsync("GroupCallInvite", invite);
+                }
             }
         }
     }
@@ -1432,7 +1497,7 @@ public class VoiceHub : Hub
             return;
         }
 
-        if (_userConnections.TryGetValue(targetUserId, out var targetConnId))
+        if (_userConnections.TryGetValue(targetUserId, out var targetConnIds))
         {
             var invite = new GroupCallInviteDto
             {
@@ -1444,7 +1509,12 @@ public class VoiceHub : Hub
                 ParticipantCount = call.Participants.Count,
                 InvitedAt = DateTime.UtcNow
             };
-            await Clients.Client(targetConnId).SendAsync("GroupCallInvite", invite);
+            List<string> connIdsCopy;
+            lock (targetConnIds) { connIdsCopy = targetConnIds.ToList(); }
+            foreach (var connId in connIdsCopy)
+            {
+                await Clients.Client(connId).SendAsync("GroupCallInvite", invite);
+            }
         }
     }
 
@@ -1457,9 +1527,14 @@ public class VoiceHub : Hub
 
         if (_groupCalls.TryGetValue(callId, out var call))
         {
-            if (_userConnections.TryGetValue(call.HostId, out var hostConnId))
+            if (_userConnections.TryGetValue(call.HostId, out var hostConnIds))
             {
-                await Clients.Client(hostConnId).SendAsync("GroupCallInviteDeclined", callId, userId);
+                List<string> connIdsCopy;
+                lock (hostConnIds) { connIdsCopy = hostConnIds.ToList(); }
+                foreach (var connId in connIdsCopy)
+                {
+                    await Clients.Client(connId).SendAsync("GroupCallInviteDeclined", callId, userId);
+                }
             }
         }
     }
