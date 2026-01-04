@@ -36,7 +36,15 @@ public unsafe class HardwareVideoDecoder : IDisposable
 
         try
         {
-            // Set FFmpeg binaries path - look in app directory first
+            // Use shared FFmpegHelper for initialization - ensures consistent cross-platform behavior
+            if (FFmpegHelper.IsAvailable)
+            {
+                _ffmpegInitialized = true;
+                Debug.WriteLine($"FFmpeg decoder initialized via FFmpegHelper, Path: {FFmpegHelper.FFmpegPath ?? "system"}");
+                return;
+            }
+
+            // Fallback: Set FFmpeg binaries path - look in app directory first
             var appDir = AppDomain.CurrentDomain.BaseDirectory;
             var ffmpegPath = Path.Combine(appDir, "ffmpeg");
 
@@ -46,13 +54,8 @@ public unsafe class HardwareVideoDecoder : IDisposable
             }
             else
             {
-                // Try common installation paths
-                var commonPaths = new[]
-                {
-                    @"C:\ffmpeg\bin",
-                    @"C:\Program Files\ffmpeg\bin",
-                    Environment.GetEnvironmentVariable("FFMPEG_PATH") ?? ""
-                };
+                // Try platform-specific installation paths
+                var commonPaths = GetPlatformFFmpegPaths();
 
                 foreach (var path in commonPaths)
                 {
@@ -71,6 +74,39 @@ public unsafe class HardwareVideoDecoder : IDisposable
         {
             Debug.WriteLine($"FFmpeg decoder initialization failed: {ex.Message}");
         }
+    }
+
+    private static string[] GetPlatformFFmpegPaths()
+    {
+        var paths = new List<string>();
+
+        // Environment variable takes priority
+        var envPath = Environment.GetEnvironmentVariable("FFMPEG_PATH");
+        if (!string.IsNullOrEmpty(envPath))
+        {
+            paths.Add(envPath);
+        }
+
+        // Platform-specific paths
+        if (OperatingSystem.IsWindows())
+        {
+            paths.AddRange(new[]
+            {
+                @"C:\ffmpeg\bin",
+                @"C:\Program Files\ffmpeg\bin",
+                @"C:\Program Files (x86)\ffmpeg\bin"
+            });
+        }
+        else if (OperatingSystem.IsLinux())
+        {
+            paths.AddRange(new[] { "/usr/bin", "/usr/local/bin", "/usr/lib/ffmpeg", "/opt/ffmpeg/bin" });
+        }
+        else if (OperatingSystem.IsMacOS())
+        {
+            paths.AddRange(new[] { "/usr/local/bin", "/opt/homebrew/bin", "/opt/local/bin" });
+        }
+
+        return paths.ToArray();
     }
 
     public string DecoderName { get; private set; } = "none";

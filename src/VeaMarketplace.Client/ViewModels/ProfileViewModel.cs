@@ -215,9 +215,11 @@ public partial class ProfileViewModel : BaseViewModel
                 ProfilePosts.Add(post);
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Silently fail
+            System.Diagnostics.Debug.WriteLine($"Failed to load profile posts for {userId}: {ex.Message}");
+            // Clear posts on error to show empty state
+            ProfilePosts.Clear();
         }
     }
 
@@ -229,9 +231,11 @@ public partial class ProfileViewModel : BaseViewModel
         {
             ProfileStats = await _leaderboardService.GetUserStatsAsync(userId);
         }
-        catch
+        catch (Exception ex)
         {
-            // Silently fail
+            System.Diagnostics.Debug.WriteLine($"Failed to load profile stats for {userId}: {ex.Message}");
+            // Reset stats on error
+            ProfileStats = null;
         }
     }
 

@@ -57,13 +57,8 @@ public static class FFmpegHelper
                 }
                 else
                 {
-                    // Try common installation paths
-                    var commonPaths = new[]
-                    {
-                        @"C:\ffmpeg\bin",
-                        @"C:\Program Files\ffmpeg\bin",
-                        Environment.GetEnvironmentVariable("FFMPEG_PATH") ?? ""
-                    };
+                    // Try common installation paths (cross-platform)
+                    var commonPaths = GetPlatformFFmpegPaths();
 
                     foreach (var path in commonPaths)
                     {
@@ -147,5 +142,55 @@ public static class FFmpegHelper
         {
             return false;
         }
+    }
+
+    /// <summary>
+    /// Gets platform-specific FFmpeg installation paths.
+    /// </summary>
+    private static string[] GetPlatformFFmpegPaths()
+    {
+        var paths = new List<string>();
+
+        // Environment variable takes priority
+        var envPath = Environment.GetEnvironmentVariable("FFMPEG_PATH");
+        if (!string.IsNullOrEmpty(envPath))
+        {
+            paths.Add(envPath);
+        }
+
+        // Platform-specific paths
+        if (OperatingSystem.IsWindows())
+        {
+            paths.AddRange(new[]
+            {
+                @"C:\ffmpeg\bin",
+                @"C:\Program Files\ffmpeg\bin",
+                @"C:\Program Files (x86)\ffmpeg\bin",
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ffmpeg", "bin")
+            });
+        }
+        else if (OperatingSystem.IsLinux())
+        {
+            paths.AddRange(new[]
+            {
+                "/usr/bin",
+                "/usr/local/bin",
+                "/usr/lib/ffmpeg",
+                "/opt/ffmpeg/bin",
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "bin")
+            });
+        }
+        else if (OperatingSystem.IsMacOS())
+        {
+            paths.AddRange(new[]
+            {
+                "/usr/local/bin",
+                "/opt/homebrew/bin",
+                "/opt/local/bin",
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "bin")
+            });
+        }
+
+        return paths.ToArray();
     }
 }
