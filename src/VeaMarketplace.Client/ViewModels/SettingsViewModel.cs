@@ -57,6 +57,54 @@ public partial class SettingsViewModel : BaseViewModel
     [ObservableProperty]
     private bool _isTesting;
 
+    // Privacy Settings
+    [ObservableProperty]
+    private bool _allowFriendRequests;
+
+    [ObservableProperty]
+    private bool _allowDirectMessages;
+
+    [ObservableProperty]
+    private bool _showOnlineStatus;
+
+    [ObservableProperty]
+    private bool _showActivityStatus;
+
+    // Appearance Settings
+    [ObservableProperty]
+    private string _theme = "Dark";
+
+    [ObservableProperty]
+    private string _accentColor = "#00B4D8";
+
+    [ObservableProperty]
+    private double _fontScale = 1.0;
+
+    [ObservableProperty]
+    private bool _compactMode;
+
+    [ObservableProperty]
+    private bool _animationsEnabled = true;
+
+    // Notification Settings
+    [ObservableProperty]
+    private bool _desktopNotifications = true;
+
+    [ObservableProperty]
+    private bool _soundNotifications = true;
+
+    [ObservableProperty]
+    private bool _badgeNotifications = true;
+
+    [ObservableProperty]
+    private bool _mentionNotifications = true;
+
+    [ObservableProperty]
+    private bool _dmNotifications = true;
+
+    [ObservableProperty]
+    private string _notificationSound = "default";
+
     public SettingsViewModel(
         ISettingsService settingsService,
         IAudioDeviceService audioDeviceService,
@@ -79,6 +127,8 @@ public partial class SettingsViewModel : BaseViewModel
     private void LoadSettings()
     {
         var settings = _settingsService.Settings;
+
+        // Voice & Audio
         Volume = settings.Volume;
         MicrophoneVolume = settings.MicrophoneVolume;
         PushToTalkEnabled = settings.PushToTalk;
@@ -92,6 +142,27 @@ public partial class SettingsViewModel : BaseViewModel
             PushToTalkKey = key;
             PushToTalkKeyDisplay = key.ToString();
         }
+
+        // Privacy Settings
+        AllowFriendRequests = settings.AllowFriendRequests;
+        AllowDirectMessages = settings.AllowDirectMessages;
+        ShowOnlineStatus = settings.ShowOnlineStatus;
+        ShowActivityStatus = settings.ShowActivityStatus;
+
+        // Appearance Settings
+        Theme = settings.Theme;
+        AccentColor = settings.AccentColor;
+        FontScale = settings.FontScale;
+        CompactMode = settings.CompactMode;
+        AnimationsEnabled = settings.AnimationsEnabled;
+
+        // Notification Settings
+        DesktopNotifications = settings.DesktopNotifications;
+        SoundNotifications = settings.SoundNotifications;
+        BadgeNotifications = settings.BadgeNotifications;
+        MentionNotifications = settings.MentionNotifications;
+        DmNotifications = settings.DMNotifications;
+        NotificationSound = settings.NotificationSound;
 
         // Apply to voice service
         _voiceService.PushToTalkEnabled = PushToTalkEnabled;
@@ -201,6 +272,99 @@ public partial class SettingsViewModel : BaseViewModel
     partial void OnEchoCancellationChanged(bool value)
     {
         _settingsService.Settings.EchoCancellation = value;
+        SaveSettings();
+    }
+
+    // Privacy Settings Property Changed Handlers
+    partial void OnAllowFriendRequestsChanged(bool value)
+    {
+        _settingsService.Settings.AllowFriendRequests = value;
+        SaveSettings();
+    }
+
+    partial void OnAllowDirectMessagesChanged(bool value)
+    {
+        _settingsService.Settings.AllowDirectMessages = value;
+        SaveSettings();
+    }
+
+    partial void OnShowOnlineStatusChanged(bool value)
+    {
+        _settingsService.Settings.ShowOnlineStatus = value;
+        SaveSettings();
+    }
+
+    partial void OnShowActivityStatusChanged(bool value)
+    {
+        _settingsService.Settings.ShowActivityStatus = value;
+        SaveSettings();
+    }
+
+    // Appearance Settings Property Changed Handlers
+    partial void OnThemeChanged(string value)
+    {
+        _settingsService.Settings.Theme = value;
+        SaveSettings();
+    }
+
+    partial void OnAccentColorChanged(string value)
+    {
+        _settingsService.Settings.AccentColor = value;
+        SaveSettings();
+    }
+
+    partial void OnFontScaleChanged(double value)
+    {
+        _settingsService.Settings.FontScale = value;
+        SaveSettings();
+    }
+
+    partial void OnCompactModeChanged(bool value)
+    {
+        _settingsService.Settings.CompactMode = value;
+        SaveSettings();
+    }
+
+    partial void OnAnimationsEnabledChanged(bool value)
+    {
+        _settingsService.Settings.AnimationsEnabled = value;
+        SaveSettings();
+    }
+
+    // Notification Settings Property Changed Handlers
+    partial void OnDesktopNotificationsChanged(bool value)
+    {
+        _settingsService.Settings.DesktopNotifications = value;
+        SaveSettings();
+    }
+
+    partial void OnSoundNotificationsChanged(bool value)
+    {
+        _settingsService.Settings.SoundNotifications = value;
+        SaveSettings();
+    }
+
+    partial void OnBadgeNotificationsChanged(bool value)
+    {
+        _settingsService.Settings.BadgeNotifications = value;
+        SaveSettings();
+    }
+
+    partial void OnMentionNotificationsChanged(bool value)
+    {
+        _settingsService.Settings.MentionNotifications = value;
+        SaveSettings();
+    }
+
+    partial void OnDmNotificationsChanged(bool value)
+    {
+        _settingsService.Settings.DMNotifications = value;
+        SaveSettings();
+    }
+
+    partial void OnNotificationSoundChanged(string value)
+    {
+        _settingsService.Settings.NotificationSound = value;
         SaveSettings();
     }
 

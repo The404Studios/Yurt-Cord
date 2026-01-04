@@ -383,36 +383,6 @@
                                    Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,16"/>
 
                         <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20" Margin="0,0,0,12">
-                            <StackPanel>
-                                <TextBlock Text="Theme" FontSize="14" FontWeight="Medium"
-                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
-                                <StackPanel Orientation="Horizontal">
-                                    <RadioButton x:Name="DarkTheme" Content="Dark" IsChecked="True"
-                                                 Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,24,0"/>
-                                    <RadioButton x:Name="LightTheme" Content="Light"
-                                                 Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,24,0"/>
-                                    <RadioButton x:Name="SystemTheme" Content="System"
-                                                 Foreground="{StaticResource TextPrimaryBrush}"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-
-                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20" Margin="0,0,0,12">
-                            <StackPanel>
-                                <TextBlock Text="Accent Color" FontSize="14" FontWeight="Medium"
-                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
-                                <WrapPanel>
-                                    <Button Width="36" Height="36" Margin="4" Background="#5865F2" Style="{StaticResource ColorPickerBtn}"/>
-                                    <Button Width="36" Height="36" Margin="4" Background="#3BA55C" Style="{StaticResource ColorPickerBtn}"/>
-                                    <Button Width="36" Height="36" Margin="4" Background="#FAA61A" Style="{StaticResource ColorPickerBtn}"/>
-                                    <Button Width="36" Height="36" Margin="4" Background="#ED4245" Style="{StaticResource ColorPickerBtn}"/>
-                                    <Button Width="36" Height="36" Margin="4" Background="#EB459E" Style="{StaticResource ColorPickerBtn}"/>
-                                    <Button Width="36" Height="36" Margin="4" Background="#00D4FF" Style="{StaticResource ColorPickerBtn}"/>
-                                </WrapPanel>
-                            </StackPanel>
-                        </Border>
-
-                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -424,7 +394,27 @@
                                     <TextBlock Text="Make elements smaller for more content"
                                                FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
                                 </StackPanel>
-                                <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" VerticalAlignment="Center"/>
+                                <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}"
+                                          IsChecked="{Binding CompactMode, Mode=TwoWay}"
+                                          VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Animations Enabled" FontSize="14" FontWeight="Medium"
+                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="Enable smooth animations throughout the app"
+                                               FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                                </StackPanel>
+                                <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}"
+                                          IsChecked="{Binding AnimationsEnabled, Mode=TwoWay}"
+                                          VerticalAlignment="Center"/>
                             </Grid>
                         </Border>
                     </StackPanel>
@@ -447,7 +437,9 @@
                                         <TextBlock Text="Show notifications on your desktop"
                                                    FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
                                     </StackPanel>
-                                    <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" IsChecked="True" VerticalAlignment="Center"/>
+                                    <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}"
+                                              IsChecked="{Binding DesktopNotifications, Mode=TwoWay}"
+                                              VerticalAlignment="Center"/>
                                 </Grid>
 
                                 <Grid Margin="0,0,0,16">
@@ -456,12 +448,30 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel>
-                                        <TextBlock Text="Message Sounds" FontSize="14" FontWeight="Medium"
+                                        <TextBlock Text="Sound Notifications" FontSize="14" FontWeight="Medium"
                                                    Foreground="{StaticResource TextPrimaryBrush}"/>
                                         <TextBlock Text="Play a sound for new messages"
                                                    FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
                                     </StackPanel>
-                                    <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" IsChecked="True" VerticalAlignment="Center"/>
+                                    <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}"
+                                              IsChecked="{Binding SoundNotifications, Mode=TwoWay}"
+                                              VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <Grid Margin="0,0,0,16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Mention Notifications" FontSize="14" FontWeight="Medium"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Get notified when someone mentions you"
+                                                   FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                                    </StackPanel>
+                                    <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}"
+                                              IsChecked="{Binding MentionNotifications, Mode=TwoWay}"
+                                              VerticalAlignment="Center"/>
                                 </Grid>
 
                                 <Grid>
@@ -470,12 +480,14 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel>
-                                        <TextBlock Text="Friend Request Notifications" FontSize="14" FontWeight="Medium"
+                                        <TextBlock Text="DM Notifications" FontSize="14" FontWeight="Medium"
                                                    Foreground="{StaticResource TextPrimaryBrush}"/>
-                                        <TextBlock Text="Get notified when someone sends a friend request"
+                                        <TextBlock Text="Get notified for direct messages"
                                                    FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
                                     </StackPanel>
-                                    <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" IsChecked="True" VerticalAlignment="Center"/>
+                                    <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}"
+                                              IsChecked="{Binding DmNotifications, Mode=TwoWay}"
+                                              VerticalAlignment="Center"/>
                                 </Grid>
                             </StackPanel>
                         </Border>
@@ -487,16 +499,21 @@
                                    Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,16"/>
 
                         <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20" Margin="0,0,0,12">
-                            <StackPanel>
-                                <TextBlock Text="Who can send you friend requests" FontSize="14" FontWeight="Medium"
-                                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
-                                <RadioButton Content="Everyone" IsChecked="True"
-                                             Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-                                <RadioButton Content="Friends of Friends"
-                                             Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-                                <RadioButton Content="No One"
-                                             Foreground="{StaticResource TextPrimaryBrush}"/>
-                            </StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Allow Friend Requests" FontSize="14" FontWeight="Medium"
+                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="Anyone can send you friend requests"
+                                               FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                                </StackPanel>
+                                <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}"
+                                          IsChecked="{Binding AllowFriendRequests, Mode=TwoWay}"
+                                          VerticalAlignment="Center"/>
+                            </Grid>
                         </Border>
 
                         <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20" Margin="0,0,0,12">
@@ -511,7 +528,9 @@
                                     <TextBlock Text="Let others see when you're online"
                                                FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
                                 </StackPanel>
-                                <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" IsChecked="True" VerticalAlignment="Center"/>
+                                <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}"
+                                          IsChecked="{Binding ShowOnlineStatus, Mode=TwoWay}"
+                                          VerticalAlignment="Center"/>
                             </Grid>
                         </Border>
 
@@ -522,12 +541,32 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel>
-                                    <TextBlock Text="Allow Direct Messages from Server Members" FontSize="14" FontWeight="Medium"
+                                    <TextBlock Text="Show Activity Status" FontSize="14" FontWeight="Medium"
                                                Foreground="{StaticResource TextPrimaryBrush}"/>
-                                    <TextBlock Text="People in the same servers can message you"
+                                    <TextBlock Text="Show what you're doing"
                                                FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
                                 </StackPanel>
-                                <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}" IsChecked="True" VerticalAlignment="Center"/>
+                                <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}"
+                                          IsChecked="{Binding ShowActivityStatus, Mode=TwoWay}"
+                                          VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+
+                        <Border Background="{StaticResource SecondaryDarkBrush}" CornerRadius="8" Padding="20" Margin="0,0,0,12">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Allow Direct Messages" FontSize="14" FontWeight="Medium"
+                                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="People can send you direct messages"
+                                               FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                                </StackPanel>
+                                <CheckBox Grid.Column="1" Style="{StaticResource ToggleSwitch}"
+                                          IsChecked="{Binding AllowDirectMessages, Mode=TwoWay}"
+                                          VerticalAlignment="Center"/>
                             </Grid>
                         </Border>
 
