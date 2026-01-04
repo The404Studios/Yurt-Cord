@@ -866,17 +866,19 @@ public class ScreenSharingManager : IScreenSharingManager
                     }
                 }
 
-                // Get next frame from queue - don't skip all frames, just keep queue manageable
-                // Only skip if queue is backing up significantly (>3 frames)
+                // Get next frame from queue - improved stability with better backpressure handling
+                // Only drop frames if queue is significantly backed up (>10 frames)
+                // This gives better quality at 60 FPS while preventing unbounded memory growth
                 CapturedFrame? frameToSend = null;
                 if (_frameQueue.TryDequeue(out var frame))
                 {
                     frameToSend = frame;
-                    // If queue is too backed up, skip some to catch up (but not all)
-                    if (_frameQueue.Count > 3)
+                    // If queue is significantly backed up, skip some to catch up
+                    // Use more conservative threshold (10 frames) for smoother 60 FPS playback
+                    if (_frameQueue.Count > 10)
                     {
-                        // Skip half the backlog, not all of it
-                        var skipCount = _frameQueue.Count / 2;
+                        // Skip only 30% of backlog to maintain smoothness
+                        var skipCount = Math.Max(1, _frameQueue.Count / 3);
                         for (int i = 0; i < skipCount && _frameQueue.TryDequeue(out var skipped); i++)
                         {
                             frameToSend = skipped; // Use the newer frame
