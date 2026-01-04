@@ -16,15 +16,18 @@ public class ProductsController : ControllerBase
 {
     private readonly ProductService _productService;
     private readonly AuthService _authService;
+    private readonly ActivityService _activityService;
     private readonly IHubContext<ContentHub> _contentHubContext;
 
     public ProductsController(
         ProductService productService,
         AuthService authService,
+        ActivityService activityService,
         IHubContext<ContentHub> contentHubContext)
     {
         _productService = productService;
         _authService = authService;
+        _activityService = activityService;
         _contentHubContext = contentHubContext;
     }
 
@@ -65,6 +68,9 @@ public class ProductsController : ControllerBase
             return BadRequest("Price must be greater than 0");
 
         var product = _productService.CreateProduct(user.Id, request);
+
+        // Log activity for product listing
+        _activityService.LogProductListed(user.Id, product.Id);
 
         // Broadcast new product event to all connected clients
         await ContentHub.BroadcastNewProduct(_contentHubContext, new NewProductEvent

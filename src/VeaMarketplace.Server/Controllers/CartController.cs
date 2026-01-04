@@ -38,6 +38,16 @@ public class CartController : ControllerBase
         if (user == null)
             return Unauthorized();
 
+        // Validate request
+        if (string.IsNullOrWhiteSpace(request.ProductId))
+            return BadRequest("Product ID is required");
+
+        if (request.Quantity <= 0)
+            return BadRequest("Quantity must be greater than 0");
+
+        if (request.Quantity > 100)
+            return BadRequest("Quantity cannot exceed 100");
+
         var cart = _cartService.AddToCart(user.Id, request);
         if (cart == null)
             return BadRequest("Unable to add item to cart. Product may not be available.");
@@ -54,6 +64,13 @@ public class CartController : ControllerBase
         var user = GetUserFromToken(authorization);
         if (user == null)
             return Unauthorized();
+
+        // Validate request
+        if (request.Quantity <= 0)
+            return BadRequest("Quantity must be greater than 0");
+
+        if (request.Quantity > 100)
+            return BadRequest("Quantity cannot exceed 100");
 
         var cart = _cartService.UpdateCartItem(user.Id, request);
         if (cart == null)
@@ -99,7 +116,10 @@ public class CartController : ControllerBase
         if (user == null)
             return Unauthorized();
 
-        var result = _cartService.ApplyCoupon(user.Id, request.CouponCode);
+        if (string.IsNullOrWhiteSpace(request.CouponCode))
+            return BadRequest("Coupon code is required");
+
+        var result = _cartService.ApplyCoupon(user.Id, request.CouponCode.Trim().ToUpperInvariant());
         if (!result.IsValid)
             return BadRequest(result);
 

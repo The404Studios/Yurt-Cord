@@ -13,6 +13,7 @@ public class ReviewsController : ControllerBase
     private readonly ReviewService _reviewService;
     private readonly AuthService _authService;
     private readonly ProductService _productService;
+    private readonly ActivityService _activityService;
     private readonly NotificationService _notificationService;
     private readonly IHubContext<ContentHub> _contentHub;
 
@@ -20,12 +21,14 @@ public class ReviewsController : ControllerBase
         ReviewService reviewService,
         AuthService authService,
         ProductService productService,
+        ActivityService activityService,
         NotificationService notificationService,
         IHubContext<ContentHub> contentHub)
     {
         _reviewService = reviewService;
         _authService = authService;
         _productService = productService;
+        _activityService = activityService;
         _notificationService = notificationService;
         _contentHub = contentHub;
     }
@@ -59,6 +62,9 @@ public class ReviewsController : ControllerBase
         var review = _reviewService.CreateReview(user.Id, request);
         if (review == null)
             return BadRequest("Unable to create review. You may have already reviewed this product.");
+
+        // Log activity for review posted
+        _activityService.LogReviewPosted(user.Id, request.ProductId, request.Rating);
 
         // Get product info and notify the seller
         var product = _productService.GetProductById(request.ProductId);

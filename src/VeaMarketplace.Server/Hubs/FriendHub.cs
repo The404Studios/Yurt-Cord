@@ -12,16 +12,26 @@ public class FriendHub : Hub
     private readonly FriendService _friendService;
     private readonly DirectMessageService _dmService;
     private readonly AuthService _authService;
+    private readonly ActivityService _activityService;
+    private readonly NotificationService _notificationService;
     private readonly ILogger<FriendHub> _logger;
     private static readonly ConcurrentDictionary<string, List<string>> _userConnections = new(); // userId -> connectionIds
     private static readonly ConcurrentDictionary<string, string> _connectionUsers = new(); // connectionId -> userId
     private static readonly ConcurrentDictionary<string, DateTime> _connectionTimestamps = new();
 
-    public FriendHub(FriendService friendService, DirectMessageService dmService, AuthService authService, ILogger<FriendHub> logger)
+    public FriendHub(
+        FriendService friendService,
+        DirectMessageService dmService,
+        AuthService authService,
+        ActivityService activityService,
+        NotificationService notificationService,
+        ILogger<FriendHub> logger)
     {
         _friendService = friendService;
         _dmService = dmService;
         _authService = authService;
+        _activityService = activityService;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -234,6 +244,13 @@ public class FriendHub : Hub
 
         if (success)
         {
+            // Log activity for both users when friend request is accepted
+            if (accept)
+            {
+                _activityService.LogFriendAdded(userId, friendship.RequesterId);
+                _activityService.LogFriendAdded(friendship.RequesterId, userId);
+            }
+
             // Update both users' friend lists
             var myFriends = _friendService.GetFriends(userId);
             var myPending = _friendService.GetPendingRequests(userId);

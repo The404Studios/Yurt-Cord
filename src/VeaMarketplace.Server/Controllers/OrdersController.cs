@@ -71,6 +71,13 @@ public class OrdersController : ControllerBase
         if (user == null)
             return Unauthorized();
 
+        // Validate request
+        if (string.IsNullOrWhiteSpace(request.ProductId))
+            return BadRequest("Product ID is required");
+
+        if (!Enum.IsDefined(typeof(PaymentMethod), request.PaymentMethod))
+            return BadRequest("Invalid payment method");
+
         var order = _orderService.CreateOrder(user.Id, request);
         if (order == null)
             return BadRequest("Unable to create order. Check product availability and your balance.");

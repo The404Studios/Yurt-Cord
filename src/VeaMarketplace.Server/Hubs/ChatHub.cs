@@ -302,6 +302,17 @@ public class ChatHub : Hub
         }
     }
 
+    public async Task StopTyping(string channel)
+    {
+        if (!_connectionUserMap.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        if (_onlineUsers.TryGetValue(userId, out var user))
+        {
+            await Clients.OthersInGroup(channel).SendAsync("UserStoppedTyping", user.Username, channel);
+        }
+    }
+
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         var connectionId = Context.ConnectionId;
