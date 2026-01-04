@@ -140,6 +140,18 @@ public class FriendHub : Hub
             var outgoing = _friendService.GetOutgoingRequests(userId);
             await Clients.Caller.SendAsync("OutgoingRequests", outgoing);
 
+            // Create a persistent notification for the addressee
+            var requester = _authService.GetUserById(userId);
+            if (requester != null)
+            {
+                _notificationService.CreateNotification(
+                    friendship.AddresseeId,
+                    "Friend Request",
+                    $"{requester.Username} sent you a friend request",
+                    "friend_request",
+                    friendship.Id);
+            }
+
             // Notify the addressee if online (all their connections)
             if (_userConnections.TryGetValue(friendship.AddresseeId, out var addresseeConnIds))
             {
@@ -249,6 +261,20 @@ public class FriendHub : Hub
             {
                 _activityService.LogFriendAdded(userId, friendship.RequesterId);
                 _activityService.LogFriendAdded(friendship.RequesterId, userId);
+            }
+
+            // Create notification for the requester about the response
+            var responder = _authService.GetUserById(userId);
+            if (responder != null)
+            {
+                _notificationService.CreateNotification(
+                    friendship.RequesterId,
+                    accept ? "Friend Request Accepted" : "Friend Request Declined",
+                    accept
+                        ? $"{responder.Username} accepted your friend request"
+                        : $"{responder.Username} declined your friend request",
+                    "friend_request",
+                    requestId);
             }
 
             // Update both users' friend lists
