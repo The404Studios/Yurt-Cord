@@ -204,14 +204,16 @@ public class ApplicationInitializationService
             _autoReconnect.StopMonitoring();
             MemoryManagementHelper.StopMonitoring();
 
-            // Shutdown background tasks
-            _taskScheduler.Shutdown();
-
-            // Save final configuration
+            // Save final configuration before shutting down logger
             await _config.SaveAsync();
 
             // Log shutdown
             _diagnosticLogger.Info("AppShutdown", "Application shutdown completed successfully");
+
+            // Dispose IDisposable services (in reverse order of initialization)
+            (_taskScheduler as IDisposable)?.Dispose();
+            (_diagnosticLogger as IDisposable)?.Dispose();
+            (_crashReporter as IDisposable)?.Dispose();
 
             Debug.WriteLine("Application shutdown completed successfully!");
         }

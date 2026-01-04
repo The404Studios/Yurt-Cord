@@ -30,7 +30,7 @@ public class LogEntry
     public Dictionary<string, object>? Properties { get; set; }
 }
 
-public interface IDiagnosticLoggerService
+public interface IDiagnosticLoggerService : IDisposable
 {
     LogLevel MinimumLevel { get; set; }
     void Log(LogLevel level, string category, string message, Exception? exception = null, Dictionary<string, object>? properties = null);
@@ -49,7 +49,9 @@ public class DiagnosticLoggerService : IDiagnosticLoggerService
 {
     private readonly ConcurrentQueue<LogEntry> _logBuffer = new();
     private readonly SemaphoreSlim _fileLock = new(1, 1);
+    private readonly CancellationTokenSource _cts = new();
     private readonly string _logFilePath;
+    private bool _disposed = false;
 
     private const int MaxBufferSize = 10000;
     private const int FlushThreshold = 100;
@@ -239,17 +241,29 @@ public class DiagnosticLoggerService : IDiagnosticLoggerService
 
     private async Task StartBackgroundFlushAsync()
     {
-        while (true)
+        try
         {
-            try
+            while (!_cts.Token.IsCancellationRequested)
             {
-                await Task.Delay(TimeSpan.FromSeconds(30));
-                await FlushLogsAsync();
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(30), _cts.Token);
+                    await FlushLogsAsync();
+                }
+                catch (OperationCanceledException)
+                {
+                    // Expected when disposing
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Background flush error: {ex.Message}");
+                }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Background flush error: {ex.Message}");
-            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected when disposing
         }
     }
 
@@ -280,5 +294,39 @@ public class DiagnosticLoggerService : IDiagnosticLoggerService
         }
 
         return sb.ToString();
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                // Stop background flush
+                _cts.Cancel();
+
+                // Final flush before disposing
+                try
+                {
+                    FlushLogsAsync().Wait(TimeSpan.FromSeconds(5));
+                }
+                catch { }
+
+                // Dispose resources
+                _cts?.Dispose();
+                _fileLock?.Dispose();
+                _logBuffer.Clear();
+
+                System.Diagnostics.Debug.WriteLine("Diagnostic logger disposed");
+            }
+
+            _disposed = true;
+        }
     }
 }

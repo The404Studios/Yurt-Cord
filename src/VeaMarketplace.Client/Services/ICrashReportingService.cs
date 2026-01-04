@@ -39,7 +39,7 @@ public class CrashReport
     public bool IsHandled { get; set; }
 }
 
-public interface ICrashReportingService
+public interface ICrashReportingService : IDisposable
 {
     void Initialize();
     void ReportCrash(Exception exception, CrashSeverity severity = CrashSeverity.High, Dictionary<string, string>? customData = null);
@@ -54,6 +54,7 @@ public class CrashReportingService : ICrashReportingService
 {
     private readonly string _crashReportsPath;
     private bool _isInitialized;
+    private bool _disposed = false;
 
     public event Action<CrashReport>? OnCrashReported;
 
@@ -399,5 +400,39 @@ public class CrashReportingService : ICrashReportingService
         sb.AppendLine("═══════════════════════════════════════════════════════");
 
         return sb.ToString();
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                // Unsubscribe from events to prevent memory leaks
+                if (_isInitialized)
+                {
+                    try
+                    {
+                        AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
+                        System.Windows.Application.Current.DispatcherUnhandledException -= OnDispatcherUnhandledException;
+                        TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error unsubscribing from events: {ex.Message}");
+                    }
+                }
+
+                Debug.WriteLine("Crash reporting service disposed");
+            }
+
+            _disposed = true;
+        }
     }
 }
