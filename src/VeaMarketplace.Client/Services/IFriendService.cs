@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Timers;
+using System.Windows.Threading;
 using VeaMarketplace.Client.Models;
 using VeaMarketplace.Shared.DTOs;
 
@@ -78,7 +79,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 {
     private HubConnection? _connection;
     private static readonly string HubUrl = AppConstants.Hubs.GetFriendsUrl();
-    private System.Timers.Timer? _typingTimer;
+    private DispatcherTimer? _typingTimer;
     private System.Timers.Timer? _heartbeatTimer;
     private string? _authToken;
     private bool _handshakeReceived;
@@ -376,21 +377,19 @@ public class FriendService : IFriendService, IAsyncDisposable
                 TypingUsername = username;
                 OnUserTypingDM?.Invoke(userId, username);
 
-                // Auto-clear typing indicator after 3 seconds
+                // Auto-clear typing indicator after 3 seconds using DispatcherTimer (runs on UI thread)
                 _typingTimer?.Stop();
-                _typingTimer?.Dispose();
-                _typingTimer = new System.Timers.Timer(3000);
-                _typingTimer.Elapsed += (s, e) =>
+                _typingTimer = new DispatcherTimer
                 {
-                    System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-                    {
-                        TypingUserId = null;
-                        TypingUsername = null;
-                        OnUserStoppedTypingDM?.Invoke(userId);
-                    });
+                    Interval = TimeSpan.FromSeconds(3)
+                };
+                _typingTimer.Tick += (s, e) =>
+                {
+                    TypingUserId = null;
+                    TypingUsername = null;
+                    OnUserStoppedTypingDM?.Invoke(userId);
                     _typingTimer?.Stop();
                 };
-                _typingTimer.AutoReset = false;
                 _typingTimer.Start();
             });
         });
@@ -715,6 +714,11 @@ public class FriendService : IFriendService, IAsyncDisposable
     public async Task DisconnectAsync()
     {
         StopHeartbeat();
+
+        // Stop and dispose typing timer
+        _typingTimer?.Stop();
+        _typingTimer = null;
+
         ConnectionId = null;
 
         if (_connection != null)

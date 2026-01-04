@@ -89,7 +89,7 @@ public class ScreenShareViewerService : IScreenShareViewerService
     // Jitter buffer for smooth playback - holds frames and releases at steady rate
     private readonly ConcurrentDictionary<string, ConcurrentQueue<BufferedFrame>> _frameBuffers = new();
     private readonly ConcurrentDictionary<string, int> _targetFps = new();
-    private volatile DispatcherTimer? _playbackTimer;  // Volatile for thread-safe double-checked locking
+    private DispatcherTimer? _playbackTimer;
     private readonly object _timerLock = new();
 
     // Hardware decoders for H.264 streams (one per sharer)
