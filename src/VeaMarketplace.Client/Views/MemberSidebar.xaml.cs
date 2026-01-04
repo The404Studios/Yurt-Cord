@@ -265,36 +265,77 @@ public partial class MemberSidebar : UserControl
         _toastService?.ShowInfo("Copied", $"@{user.Username} copied to clipboard");
     }
 
-    private void InviteToVoice_Click(object sender, RoutedEventArgs e)
+    private async void InviteToVoice_Click(object sender, RoutedEventArgs e)
     {
         var user = GetUserFromSender(sender);
-        if (user == null) return;
+        if (user == null || _voiceService == null) return;
 
-        _toastService?.ShowInfo("Invite Sent", $"Invited {user.Username} to voice channel");
+        try
+        {
+            // Get current voice channel
+            var currentChannel = _voiceService.CurrentChannel;
+            if (string.IsNullOrEmpty(currentChannel))
+            {
+                _toastService?.ShowWarning("Not in Voice", "You must be in a voice channel to invite someone");
+                return;
+            }
+
+            // Invite user to current voice channel
+            await _voiceService.InviteToChannelAsync(user.Id, currentChannel);
+            _toastService?.ShowSuccess("Invite Sent", $"Invited {user.Username} to voice channel");
+        }
+        catch (Exception ex)
+        {
+            _toastService?.ShowError("Invite Failed", $"Failed to invite user: {ex.Message}");
+        }
     }
 
-    private void MuteUser_Click(object sender, RoutedEventArgs e)
+    private async void MuteUser_Click(object sender, RoutedEventArgs e)
     {
         var user = GetUserFromSender(sender);
-        if (user == null) return;
+        if (user == null || _voiceService == null) return;
 
-        _toastService?.ShowInfo("User Muted", $"Muted {user.Username}");
+        try
+        {
+            // Mute user in current voice channel
+            var currentChannel = _voiceService.CurrentChannel;
+            if (string.IsNullOrEmpty(currentChannel))
+            {
+                _toastService?.ShowWarning("Not in Voice", "You must be in a voice channel to mute someone");
+                return;
+            }
+
+            await _voiceService.MuteUserAsync(user.Id, currentChannel);
+            _toastService?.ShowSuccess("User Muted", $"Muted {user.Username}");
+        }
+        catch (Exception ex)
+        {
+            _toastService?.ShowError("Mute Failed", $"Failed to mute user: {ex.Message}");
+        }
     }
 
-    private void BlockUser_Click(object sender, RoutedEventArgs e)
+    private async void BlockUser_Click(object sender, RoutedEventArgs e)
     {
         var user = GetUserFromSender(sender);
-        if (user == null) return;
+        if (user == null || _friendService == null) return;
 
         var result = MessageBox.Show(
-            $"Are you sure you want to block {user.Username}?",
+            $"Are you sure you want to block {user.Username}?\n\nBlocked users cannot send you messages or friend requests.",
             "Block User",
             MessageBoxButton.YesNo,
             MessageBoxImage.Warning);
 
         if (result == MessageBoxResult.Yes)
         {
-            _toastService?.ShowSuccess("User Blocked", $"Blocked {user.Username}");
+            try
+            {
+                await _friendService.BlockUserAsync(user.Id);
+                _toastService?.ShowSuccess("User Blocked", $"Blocked {user.Username}");
+            }
+            catch (Exception ex)
+            {
+                _toastService?.ShowError("Block Failed", $"Failed to block user: {ex.Message}");
+            }
         }
     }
 

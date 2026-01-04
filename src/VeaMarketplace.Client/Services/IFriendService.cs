@@ -218,7 +218,7 @@ public class FriendService : IFriendService, IAsyncDisposable
         // Connection handshake from server
         _connection.On<JsonElement>("ConnectionHandshake", handshake =>
         {
-            if (handshake.TryGetProperty("ConnectionId", out var connId))
+            if (handshake.TryGetProperty(nameof(ConnectionId), out var connId))
             {
                 ConnectionId = connId.GetString();
             }
