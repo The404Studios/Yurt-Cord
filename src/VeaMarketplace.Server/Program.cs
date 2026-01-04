@@ -155,6 +155,11 @@ builder.Services.AddSignalR(options =>
 // Database
 builder.Services.AddSingleton<DatabaseService>();
 
+// Scalability Services (Singleton for high performance)
+builder.Services.AddSingleton<ConnectionStateManager>();
+builder.Services.AddSingleton<MessageBatchingService>();
+builder.Services.AddSingleton<ScalabilityConfigurationService>();
+
 // Services
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ChatService>();
