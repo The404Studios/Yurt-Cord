@@ -53,7 +53,7 @@ public class ChatService
     public ChatMessageDto SaveMessage(string userId, SendMessageRequest request)
     {
         var user = _db.Users.FindById(userId);
-        if (user == null) throw new Exception("User not found");
+        if (user == null) throw new ArgumentException($"User with ID '{userId}' not found", nameof(userId));
 
         var message = new ChatMessage
         {
@@ -75,7 +75,7 @@ public class ChatService
     public ChatMessageDto SaveMessageWithAttachments(string userId, SendMessageRequest request, List<MessageAttachmentDto> attachments)
     {
         var user = _db.Users.FindById(userId);
-        if (user == null) throw new Exception("User not found");
+        if (user == null) throw new ArgumentException($"User with ID '{userId}' not found", nameof(userId));
 
         var message = new ChatMessage
         {

@@ -146,9 +146,22 @@ public class VoiceHub : Hub
         }
     }
 
+    // Maximum audio packet size (100KB should be plenty for Opus encoded audio frames)
+    private const int MaxAudioPacketSize = 102400;
+
     // Send audio to all other users in the voice channel
     public async Task SendAudio(byte[] audioData)
     {
+        // Validate audio data
+        if (audioData == null || audioData.Length == 0)
+            return;
+
+        if (audioData.Length > MaxAudioPacketSize)
+        {
+            System.Diagnostics.Debug.WriteLine($"VoiceHub: Rejected oversized audio packet ({audioData.Length} bytes) from {Context.ConnectionId}");
+            return;
+        }
+
         if (_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
         {
             // Don't send if user is muted

@@ -187,10 +187,19 @@ public class UsersController : ControllerBase
             return BadRequest("Username already taken");
 
         // Broadcast profile update to all connected clients via SignalR
+        // This is best-effort - don't fail the API call if broadcast fails
         var updatedUser = _db.Users.FindById(user.Id);
         if (updatedUser != null)
         {
-            await ChatHub.BroadcastProfileUpdate(_chatHubContext, updatedUser);
+            try
+            {
+                await ChatHub.BroadcastProfileUpdate(_chatHubContext, updatedUser);
+            }
+            catch (Exception ex)
+            {
+                // Log but don't fail - the profile update itself succeeded
+                System.Diagnostics.Debug.WriteLine($"UsersController: Failed to broadcast profile update: {ex.Message}");
+            }
         }
 
         return Ok(result);
