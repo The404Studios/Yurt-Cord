@@ -306,6 +306,7 @@ public partial class FriendsViewModel : BaseViewModel
         _friendService.OnFriendOnline += OnFriendOnline;
         _friendService.OnFriendOffline += OnFriendOffline;
         _friendService.OnConversationsUpdated += OnConversationsUpdated;
+        _friendService.OnFriendProfileUpdated += OnFriendProfileUpdated;
 
         // Populate friend group members when friends or groups change
         Friends.CollectionChanged += OnFriendsCollectionChanged;
@@ -444,6 +445,23 @@ public partial class FriendsViewModel : BaseViewModel
         });
     }
 
+    private void OnFriendProfileUpdated(FriendDto friend)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            // The Friends collection is already updated by the service
+            // We just need to refresh the UI if the selected friend was updated
+            if (SelectedFriend?.UserId == friend.UserId)
+            {
+                // Force UI refresh for the selected friend's profile
+                OnPropertyChanged(nameof(SelectedFriend));
+            }
+
+            // Refresh filtered friends list to show updated avatar/banner/status
+            OnPropertyChanged(nameof(FilteredFriends));
+        });
+    }
+
     private void OnIncomingCall(VoiceCallDto call)
     {
         System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
@@ -544,6 +562,7 @@ public partial class FriendsViewModel : BaseViewModel
         _friendService.OnFriendOnline -= OnFriendOnline;
         _friendService.OnFriendOffline -= OnFriendOffline;
         _friendService.OnConversationsUpdated -= OnConversationsUpdated;
+        _friendService.OnFriendProfileUpdated -= OnFriendProfileUpdated;
 
         // Unsubscribe from collection changed events
         Friends.CollectionChanged -= OnFriendsCollectionChanged;
