@@ -35,6 +35,9 @@ public class DirectMessageService
         var conversations = new List<ConversationDto>();
         foreach (var partnerId in partnerIds)
         {
+            // Skip blocked users
+            if (_friendService.IsBlocked(userId, partnerId)) continue;
+
             var partner = _db.Users.FindById(partnerId);
             if (partner == null) continue;
 
@@ -68,6 +71,10 @@ public class DirectMessageService
 
     public List<DirectMessageDto> GetMessages(string userId, string partnerId, int limit = 50)
     {
+        // Don't show messages if either user has blocked the other
+        if (_friendService.IsBlocked(userId, partnerId))
+            return [];
+
         var messages = _db.DirectMessages
             .Query()
             .Where(m => !m.IsDeleted &&
@@ -89,6 +96,10 @@ public class DirectMessageService
 
         if (sender == null || recipient == null)
             return (false, "User not found", null);
+
+        // Check if either user has blocked the other
+        if (_friendService.IsBlocked(senderId, recipientId))
+            return (false, "Unable to send message to this user", null);
 
         // Check if they are friends (optional - can allow DMs to anyone)
         // For now, we'll allow DMs to friends only
