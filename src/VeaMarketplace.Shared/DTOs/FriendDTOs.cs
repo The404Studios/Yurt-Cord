@@ -10,6 +10,7 @@ public class FriendDto
     public string Username { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     public string AvatarUrl { get; set; } = string.Empty;
+    public string? BannerUrl { get; set; }
     public string Bio { get; set; } = string.Empty;
     public string StatusMessage { get; set; } = string.Empty;
     public string AccentColor { get; set; } = "#00B4D8"; // Yurt Cord teal
@@ -17,6 +18,17 @@ public class FriendDto
     public UserRank Rank { get; set; }
     public bool IsOnline { get; set; }
     public DateTime FriendsSince { get; set; }
+    public DateTime? LastSeen { get; set; }
+
+    // Custom status (alias for StatusMessage for UI binding compatibility)
+    public string? CustomStatus => string.IsNullOrEmpty(StatusMessage) ? null : StatusMessage;
+
+    // Activity status emoji
+    public string? StatusEmoji { get; set; }
+
+    // Rich presence data
+    public string? CurrentActivity { get; set; }
+    public string? CurrentActivityDetails { get; set; }
 
     // Helper to get display name or username
     public string GetDisplayName() => string.IsNullOrEmpty(DisplayName) ? Username : DisplayName;
@@ -77,6 +89,22 @@ public class DirectMessageDto
     public string Content { get; set; } = string.Empty;
     public DateTime Timestamp { get; set; }
     public bool IsRead { get; set; }
+
+    // Message editing/deletion state
+    public DateTime? EditedAt { get; set; }
+    public bool IsDeleted { get; set; }
+
+    // Message grouping for display - set by client when processing messages
+    public bool IsFirstInGroup { get; set; } = true;
+
+    // Reply support
+    public string? ReplyToMessageId { get; set; }
+    public string? ReplyToContent { get; set; }
+    public string? ReplyToUsername { get; set; }
+
+    // Computed properties
+    public bool IsEdited => EditedAt.HasValue;
+    public bool IsReply => !string.IsNullOrEmpty(ReplyToMessageId);
 }
 
 public class SendDirectMessageDto

@@ -96,6 +96,7 @@ public interface IApiService
     // Activity Feed
     Task<List<UserActivityDto>> GetActivityFeedAsync(string? filter = null, int page = 1, int pageSize = 20);
     Task<List<UserActivityDto>> GetFollowingActivityFeedAsync(int page = 1, int pageSize = 20);
+    Task<List<UserActivityDto>> GetActivityFeedByTypeAsync(VeaMarketplace.Shared.Models.ActivityType type, int page = 1, int pageSize = 20);
 
     // Following
     Task<bool> FollowUserAsync(string userId);
@@ -766,6 +767,13 @@ public class ApiService : IApiService
     public async Task<List<UserActivityDto>> GetFollowingActivityFeedAsync(int page = 1, int pageSize = 20)
     {
         var response = await _httpClient.GetAsync($"/api/activity/following?page={page}&pageSize={pageSize}").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return [];
+        return await response.Content.ReadFromJsonAsync<List<UserActivityDto>>(JsonOptions).ConfigureAwait(false) ?? [];
+    }
+
+    public async Task<List<UserActivityDto>> GetActivityFeedByTypeAsync(VeaMarketplace.Shared.Models.ActivityType type, int page = 1, int pageSize = 20)
+    {
+        var response = await _httpClient.GetAsync($"/api/activity?type={type}&page={page}&pageSize={pageSize}").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return [];
         return await response.Content.ReadFromJsonAsync<List<UserActivityDto>>(JsonOptions).ConfigureAwait(false) ?? [];
     }

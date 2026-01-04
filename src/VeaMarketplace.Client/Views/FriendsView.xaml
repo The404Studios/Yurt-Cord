@@ -527,6 +527,91 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+
+                            <!-- Outgoing Requests (within Pending view) -->
+                            <TextBlock FontSize="11" FontWeight="SemiBold"
+                                       Foreground="#B5BAC1" Margin="0,24,0,12"
+                                       Visibility="{Binding OutgoingRequests.Count, Converter={StaticResource CountToVisibilityConverter}}">
+                                <Run Text="OUTGOING — "/>
+                                <Run Text="{Binding OutgoingRequests.Count, Mode=OneWay}"/>
+                            </TextBlock>
+
+                            <ItemsControl ItemsSource="{Binding OutgoingRequests}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#2B2D31" CornerRadius="8"
+                                                Margin="0,0,0,8" Padding="12">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <Ellipse Width="40" Height="40" Margin="0,0,12,0">
+                                                    <Ellipse.Fill>
+                                                        <ImageBrush ImageSource="{Binding RequesterAvatarUrl, FallbackValue='/Assets/default-avatar.png'}"/>
+                                                    </Ellipse.Fill>
+                                                </Ellipse>
+
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding RecipientUsername}"
+                                                               FontSize="15" FontWeight="Medium"
+                                                               Foreground="#F2F3F5"/>
+                                                    <TextBlock Text="Outgoing Friend Request"
+                                                               FontSize="12" Foreground="#B5BAC1"/>
+                                                </StackPanel>
+
+                                                <Button Grid.Column="2" Width="36" Height="36"
+                                                        ToolTip="Cancel Request"
+                                                        Command="{Binding DataContext.CancelFriendRequestCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}">
+                                                    <Button.Template>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border x:Name="border" Background="#3C3F44"
+                                                                    CornerRadius="18">
+                                                                <TextBlock Text="✕" FontSize="16"
+                                                                           Foreground="#B5BAC1"
+                                                                           HorizontalAlignment="Center"
+                                                                           VerticalAlignment="Center"/>
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter TargetName="border" Property="Background" Value="#F23F43"/>
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Button.Template>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Empty State for Pending -->
+                            <StackPanel HorizontalAlignment="Center" Margin="0,32,0,0">
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding PendingRequests.Count}" Value="0"/>
+                                                    <Condition Binding="{Binding OutgoingRequests.Count}" Value="0"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
+                                <TextBlock Text="📭" FontSize="48" HorizontalAlignment="Center"/>
+                                <TextBlock Text="No pending requests" FontSize="16" FontWeight="Medium"
+                                           Foreground="#F2F3F5" HorizontalAlignment="Center" Margin="0,12,0,0"/>
+                                <TextBlock Text="Friend requests you've sent or received will appear here"
+                                           FontSize="13" Foreground="#B5BAC1"
+                                           HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                            </StackPanel>
                         </StackPanel>
 
                         <!-- Friends List -->

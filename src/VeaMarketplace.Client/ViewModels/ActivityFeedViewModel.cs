@@ -60,16 +60,49 @@ public partial class ActivityFeedViewModel : BaseViewModel
             List<UserActivityDto> activities;
 
             // Handle different filter types
-            if (CurrentFilter == "Following")
+            switch (CurrentFilter)
             {
-                // Get activities from followed users
-                activities = await _apiService.GetFollowingActivityFeedAsync(_currentPage, PageSize);
-            }
-            else
-            {
-                // Use existing filter logic
-                var filter = ShowFriendsOnly || CurrentFilter == "Friends" ? "friends" : null;
-                activities = await _apiService.GetActivityFeedAsync(filter, _currentPage, PageSize);
+                case "Following":
+                    // Get activities from followed users
+                    activities = await _apiService.GetFollowingActivityFeedAsync(_currentPage, PageSize);
+                    break;
+
+                case "Friends":
+                    // Get activities from friends only
+                    activities = await _apiService.GetActivityFeedAsync("friends", _currentPage, PageSize);
+                    break;
+
+                case "Purchases":
+                    // Get purchase-related activities
+                    activities = await _apiService.GetActivityFeedByTypeAsync(
+                        VeaMarketplace.Shared.Models.ActivityType.ProductPurchased, _currentPage, PageSize);
+                    break;
+
+                case "Listings":
+                    // Get product listing activities
+                    activities = await _apiService.GetActivityFeedByTypeAsync(
+                        VeaMarketplace.Shared.Models.ActivityType.ProductListed, _currentPage, PageSize);
+                    break;
+
+                case "Voice":
+                    // Get voice-related activities (joined/left voice channels)
+                    var voiceJoined = await _apiService.GetActivityFeedByTypeAsync(
+                        VeaMarketplace.Shared.Models.ActivityType.VoiceJoined, _currentPage, PageSize);
+                    var voiceLeft = await _apiService.GetActivityFeedByTypeAsync(
+                        VeaMarketplace.Shared.Models.ActivityType.VoiceLeft, _currentPage, PageSize);
+                    // Merge and sort by timestamp
+                    activities = voiceJoined.Concat(voiceLeft)
+                        .OrderByDescending(a => a.Timestamp)
+                        .Take(PageSize)
+                        .ToList();
+                    break;
+
+                case "All":
+                default:
+                    // Get all activities (optionally filtered to friends)
+                    var filter = ShowFriendsOnly ? "friends" : null;
+                    activities = await _apiService.GetActivityFeedAsync(filter, _currentPage, PageSize);
+                    break;
             }
 
             if (activities.Count < PageSize)
@@ -77,8 +110,17 @@ public partial class ActivityFeedViewModel : BaseViewModel
                 HasMoreActivities = false;
             }
 
+            // Apply client-side filtering for friends if needed
+            if (ShowFriendsOnly && CurrentFilter != "Friends" && CurrentFilter != "Following")
+            {
+                var friendIds = await GetFriendIdsAsync();
+                activities = activities.Where(a => friendIds.Contains(a.UserId)).ToList();
+            }
+
             foreach (var activity in activities)
             {
+                // Set icon based on activity type
+                activity.Icon = GetActivityIcon(activity.Type);
                 Activities.Add(activity);
             }
 
@@ -93,6 +135,19 @@ public partial class ActivityFeedViewModel : BaseViewModel
         {
             IsLoading = false;
             IsRefreshing = false;
+        }
+    }
+
+    private async Task<HashSet<string>> GetFriendIdsAsync()
+    {
+        try
+        {
+            var friends = _friendService.Friends;
+            return friends.Select(f => f.UserId).ToHashSet();
+        }
+        catch
+        {
+            return new HashSet<string>();
         }
     }
 
