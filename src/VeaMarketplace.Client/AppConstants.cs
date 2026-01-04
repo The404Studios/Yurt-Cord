@@ -25,7 +25,7 @@ public static class AppConstants
     #region Server Configuration
 
     /// <summary>Default server URL for production.</summary>
-    public const string DefaultServerUrl = "http://162.248.94.23:5000";
+    public const string DefaultServerUrl = "http://162.248.94.149:5000";
 
     /// <summary>API base path.</summary>
     public const string ApiBasePath = "/api";
