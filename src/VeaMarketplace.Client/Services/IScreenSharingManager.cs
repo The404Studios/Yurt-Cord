@@ -23,14 +23,23 @@ public enum ScreenShareQuality
 /// </summary>
 public class ScreenShareSettings
 {
-    public int TargetFps { get; set; } = 30; // Default to 30fps for lower CPU usage
+    public int TargetFps { get; set; } = 30; // Default to 30fps for balanced CPU/quality
     public int TargetWidth { get; set; } = 1280;
     public int TargetHeight { get; set; } = 720;
-    public int JpegQuality { get; set; } = 45; // Lower quality = less CPU for encoding
+    public int JpegQuality { get; set; } = 75; // Industry standard quality for good visual fidelity
     public int MaxFrameSizeKb { get; set; } = 80;
     public int BitrateKbps { get; set; } = 4000; // Target bitrate in kbps
     public bool AdaptiveQuality { get; set; } = true;
-    public bool ShareAudio { get; set; } = false;
+
+    /// <summary>
+    /// Enable system audio (desktop audio) capture during screen sharing.
+    /// NOTE: WASAPI loopback implementation is NOT YET COMPLETE.
+    /// See SYSTEM_AUDIO_IMPLEMENTATION_GUIDE.md for full implementation details.
+    /// When implemented, this will capture all desktop audio (games, music, apps)
+    /// and stream it alongside video to viewers.
+    /// </summary>
+    public bool ShareAudio { get; set; } = true; // Ready for system audio when implemented
+
     public bool AllowDownscaling { get; set; } = true; // Allow viewers to request lower quality
 
     /// <summary>
@@ -52,7 +61,7 @@ public class ScreenShareSettings
             TargetFps = 30,
             TargetWidth = 854,
             TargetHeight = 480,
-            JpegQuality = 50,
+            JpegQuality = 60, // Improved: readable text even on low preset
             MaxFrameSizeKb = 80, // ~2 Mbps
             BitrateKbps = 2000
         },
@@ -61,7 +70,7 @@ public class ScreenShareSettings
             TargetFps = 30,
             TargetWidth = 1280,
             TargetHeight = 720,
-            JpegQuality = 60,
+            JpegQuality = 70, // Improved: good balance of quality/bandwidth
             MaxFrameSizeKb = 160, // ~4 Mbps
             BitrateKbps = 4000
         },
@@ -70,16 +79,16 @@ public class ScreenShareSettings
             TargetFps = 60,
             TargetWidth = 1280,
             TargetHeight = 720,
-            JpegQuality = 50, // Lower quality for less CPU usage
-            MaxFrameSizeKb = 100, // ~5 Mbps at 60fps
-            BitrateKbps = 5000
+            JpegQuality = 80, // Improved: smooth 60 FPS with great quality
+            MaxFrameSizeKb = 125, // ~6 Mbps at 60fps
+            BitrateKbps = 6000
         },
         ScreenShareQuality.HD => new ScreenShareSettings
         {
             TargetFps = 30,
             TargetWidth = 1920,
             TargetHeight = 1080,
-            JpegQuality = 70,
+            JpegQuality = 80, // Improved: 1080p deserves high quality
             MaxFrameSizeKb = 330, // ~8 Mbps
             BitrateKbps = 8000
         },
@@ -88,7 +97,7 @@ public class ScreenShareSettings
             TargetFps = 60,
             TargetWidth = 1920,
             TargetHeight = 1080,
-            JpegQuality = 75,
+            JpegQuality = 85, // Improved: premium quality for 1080p60
             MaxFrameSizeKb = 330, // ~16 Mbps at 60fps
             BitrateKbps = 16000
         },
@@ -97,7 +106,7 @@ public class ScreenShareSettings
             TargetFps = 30,
             TargetWidth = 2560,
             TargetHeight = 1440,
-            JpegQuality = 75,
+            JpegQuality = 85, // Improved: high quality for 1440p
             MaxFrameSizeKb = 830, // ~20 Mbps
             BitrateKbps = 20000
         },
@@ -106,7 +115,7 @@ public class ScreenShareSettings
             TargetFps = 60,
             TargetWidth = 2560,
             TargetHeight = 1440,
-            JpegQuality = 80,
+            JpegQuality = 90, // Improved: near-lossless for 1440p60
             MaxFrameSizeKb = 625, // ~30 Mbps at 60fps
             BitrateKbps = 30000
         },
@@ -115,7 +124,7 @@ public class ScreenShareSettings
             TargetFps = 30,
             TargetWidth = 3840,
             TargetHeight = 2160,
-            JpegQuality = 80,
+            JpegQuality = 90, // Improved: near-lossless for 4K
             MaxFrameSizeKb = 1250, // ~30 Mbps
             BitrateKbps = 30000
         },
