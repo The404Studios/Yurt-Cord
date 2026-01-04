@@ -97,6 +97,9 @@ public class ScreenShareViewerService : IScreenShareViewerService
     private readonly ConcurrentDictionary<string, HardwareVideoDecoder> _h264Decoders = new();
     private readonly ReaderWriterLockSlim _decoderLock = new();
 
+    // Thumbnail cache for UI previews
+    private readonly ScreenShareThumbnailCache _thumbnailCache = new();
+
     // Buffer settings - tuned for smooth high-FPS playback with memory trade-off
     private const int TargetBufferSize = 5;   // Buffer 5 frames before starting playback (increased for stability)
     private const int MaxBufferSize = 45;     // ~150MB at 720p (3.5MB per decoded frame) - supports 60fps with headroom
@@ -313,6 +316,13 @@ public class ScreenShareViewerService : IScreenShareViewerService
                     if (_screenShares.TryGetValue(sharerConnectionId, out var share))
                     {
                         share.Fps++;
+
+                        // Update thumbnail cache (rate-limited internally)
+                        _thumbnailCache.UpdateThumbnail(
+                            sharerConnectionId,
+                            frame.DecodedBitmap,
+                            share.SharerUsername,
+                            share.ChannelId);
                     }
 
                     OnFrameReceived?.Invoke(sharerConnectionId, frame.DecodedBitmap);
@@ -377,6 +387,9 @@ public class ScreenShareViewerService : IScreenShareViewerService
         _latestFrames.TryRemove(connectionId, out _);
         _frameBuffers.TryRemove(connectionId, out _); // Clear frame buffer
 
+        // Remove thumbnail from cache
+        _thumbnailCache.RemoveThumbnail(connectionId);
+
         // Dispose H.264 decoder for this sharer with write lock
         // This ensures no decode operations are in progress
         _decoderLock.EnterWriteLock();
@@ -414,12 +427,32 @@ public class ScreenShareViewerService : IScreenShareViewerService
         return _latestFrames.TryGetValue(sharerConnectionId, out var frame) ? frame : null;
     }
 
+    /// <summary>
+    /// Gets a thumbnail preview for a screen share.
+    /// Returns null if not available.
+    /// </summary>
+    public BitmapSource? GetThumbnail(string sharerConnectionId)
+    {
+        return _thumbnailCache.GetThumbnail(sharerConnectionId)?.Thumbnail;
+    }
+
+    /// <summary>
+    /// Gets all available screen share thumbnails for UI display.
+    /// </summary>
+    public IEnumerable<ScreenShareThumbnailCache.ThumbnailInfo> GetAllThumbnails()
+    {
+        return _thumbnailCache.GetAllThumbnails();
+    }
+
     public void Clear()
     {
         _viewingConnectionId = null;
         _ownConnectionId = null;
         _latestFrames.Clear();
         _screenShares.Clear();
+
+        // Clear thumbnail cache
+        _thumbnailCache.Clear();
 
         // Stop playback and clear buffers
         StopPlaybackTimer();
