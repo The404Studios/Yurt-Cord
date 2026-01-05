@@ -126,9 +126,9 @@ public partial class App : Application
         await Task.Delay(2500);
         await splash.CompleteAndClose();
 
-        // Show main window
-        var mainWindow = new MainWindow();
-        mainWindow.Show();
+        // Show Overseer main window with Matrix background and circular design
+        var overseerWindow = new OverseerWindow();
+        overseerWindow.Show();
 
         base.OnStartup(e);
     }
