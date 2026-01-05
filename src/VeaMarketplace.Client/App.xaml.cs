@@ -58,6 +58,7 @@ public partial class App : Application
         services.AddSingleton<IQoLService, QoLService>();
         services.AddSingleton<ISocialService, SocialService>();
         services.AddSingleton<ILeaderboardService, LeaderboardService>();
+        services.AddSingleton<IOverlayService, OverlayService>();
 
         // Advanced Infrastructure Services
         services.AddSingleton<IPerformanceMonitorService, PerformanceMonitorService>();
@@ -130,7 +131,41 @@ public partial class App : Application
         var overseerWindow = new OverseerWindow();
         overseerWindow.Show();
 
+        // Initialize the transparent overlay for flying messages across screen
+        InitializeOverseerOverlay();
+
         base.OnStartup(e);
+    }
+
+    private void InitializeOverseerOverlay()
+    {
+        // Create and show the overlay (it's transparent and click-through)
+        var overlay = OverseerOverlay.Instance;
+        overlay.Show();
+
+        // Wire up friend service for flying message notifications
+        var friendService = (IFriendService)ServiceProvider.GetService(typeof(IFriendService))!;
+        friendService.OnDirectMessageReceived += (msg) =>
+        {
+            // Spawn flying message when DM received
+            overlay.SpawnFlyingMessage(msg.SenderUsername, msg.Content);
+        };
+
+        // Wire up for friend requests
+        friendService.OnNewFriendRequest += (request) =>
+        {
+            overlay.SpawnFlyingNotification(
+                "FRIEND REQUEST",
+                $"{request.RequesterUsername} wants to connect",
+                OverseerOverlay.NotificationType.FriendRequest);
+        };
+
+        // Wire up voice service for nudges
+        var voiceService = (IVoiceService)ServiceProvider.GetService(typeof(IVoiceService))!;
+        voiceService.OnNudgeReceived += (nudge) =>
+        {
+            overlay.SpawnFlyingEnvelope(nudge.FromUsername);
+        };
     }
 
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
