@@ -10,6 +10,7 @@
                 <ResourceDictionary Source="Styles/TextStyles.xaml"/>
                 <ResourceDictionary Source="Styles/Animations.xaml"/>
                 <ResourceDictionary Source="Styles/Controls.xaml"/>
+                <ResourceDictionary Source="Themes/OverseerTheme.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
             <!-- Converters -->
