@@ -251,6 +251,12 @@ public class ChatHub : Hub
         if (!_connectionUserMap.TryGetValue(Context.ConnectionId, out var userId))
             return;
 
+        if (string.IsNullOrWhiteSpace(content))
+            return;
+
+        if (string.IsNullOrWhiteSpace(channel))
+            channel = "general";
+
         var request = new SendMessageRequest
         {
             Content = content,
@@ -269,13 +275,20 @@ public class ChatHub : Hub
         if (!_connectionUserMap.TryGetValue(Context.ConnectionId, out var userId))
             return;
 
+        // Validate inputs - at least content or attachments must be present
+        if (string.IsNullOrWhiteSpace(content) && (attachments == null || attachments.Count == 0))
+            return;
+
+        if (string.IsNullOrWhiteSpace(channel))
+            return;
+
         var request = new SendMessageRequest
         {
-            Content = content,
+            Content = content ?? string.Empty,
             Channel = channel
         };
 
-        var message = _chatService.SaveMessageWithAttachments(userId, request, attachments);
+        var message = _chatService.SaveMessageWithAttachments(userId, request, attachments ?? new List<MessageAttachmentDto>());
         await Clients.Group(channel).SendAsync("ReceiveMessage", message);
     }
 
@@ -291,6 +304,39 @@ public class ChatHub : Hub
         }
     }
 
+    /// <summary>
+    /// Edit a message. Only the message owner can edit within a time limit.
+    /// </summary>
+    public async Task EditMessage(string messageId, string newContent, string channel = "general")
+    {
+        if (!_connectionUserMap.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        if (string.IsNullOrWhiteSpace(messageId))
+        {
+            await Clients.Caller.SendAsync("EditError", "Message ID is required");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(newContent))
+        {
+            await Clients.Caller.SendAsync("EditError", "Message content is required");
+            return;
+        }
+
+        var (success, message, updatedMessage) = _chatService.EditMessage(messageId, userId, newContent);
+
+        if (success && updatedMessage != null)
+        {
+            // Notify all users in the channel about the edit
+            await Clients.Group(channel).SendAsync("MessageEdited", updatedMessage);
+        }
+        else
+        {
+            await Clients.Caller.SendAsync("EditError", message);
+        }
+    }
+
     public async Task SendTyping(string channel)
     {
         if (!_connectionUserMap.TryGetValue(Context.ConnectionId, out var userId))
@@ -299,6 +345,17 @@ public class ChatHub : Hub
         if (_onlineUsers.TryGetValue(userId, out var user))
         {
             await Clients.OthersInGroup(channel).SendAsync("UserTyping", user.Username, channel);
+        }
+    }
+
+    public async Task StopTyping(string channel)
+    {
+        if (!_connectionUserMap.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        if (_onlineUsers.TryGetValue(userId, out var user))
+        {
+            await Clients.OthersInGroup(channel).SendAsync("UserStoppedTyping", user.Username, channel);
         }
     }
 

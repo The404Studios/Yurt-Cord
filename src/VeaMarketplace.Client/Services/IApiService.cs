@@ -391,7 +391,12 @@ public class ApiService : IApiService
         if (!response.IsSuccessStatusCode) return null;
 
         var user = await response.Content.ReadFromJsonAsync<UserDto>(JsonOptions).ConfigureAwait(false);
-        if (user != null) CurrentUser = user;
+        if (user != null)
+        {
+            CurrentUser = user;
+            // Invalidate cached profile so fresh data is fetched next time
+            InvalidateCache($"profile:{user.Id}");
+        }
         return user;
     }
 

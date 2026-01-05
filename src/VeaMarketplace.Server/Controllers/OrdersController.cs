@@ -16,19 +16,22 @@ public class OrdersController : ControllerBase
     private readonly NotificationService _notificationService;
     private readonly ActivityService _activityService;
     private readonly IHubContext<ContentHub> _contentHub;
+    private readonly IHubContext<NotificationHub> _notificationHub;
 
     public OrdersController(
         OrderService orderService,
         AuthService authService,
         NotificationService notificationService,
         ActivityService activityService,
-        IHubContext<ContentHub> contentHub)
+        IHubContext<ContentHub> contentHub,
+        IHubContext<NotificationHub> notificationHub)
     {
         _orderService = orderService;
         _authService = authService;
         _notificationService = notificationService;
         _activityService = activityService;
         _contentHub = contentHub;
+        _notificationHub = notificationHub;
     }
 
     [HttpGet]
@@ -71,19 +74,35 @@ public class OrdersController : ControllerBase
         if (user == null)
             return Unauthorized();
 
+        // Validate request
+        if (string.IsNullOrWhiteSpace(request.ProductId))
+            return BadRequest("Product ID is required");
+
+        if (!Enum.IsDefined(typeof(PaymentMethod), request.PaymentMethod))
+            return BadRequest("Invalid payment method");
+
         var order = _orderService.CreateOrder(user.Id, request);
         if (order == null)
             return BadRequest("Unable to create order. Check product availability and your balance.");
 
-        // Notify seller
+        // Notify seller (database notification)
         _notificationService.NotifyProductSold(order.SellerId, order.ProductTitle, user.Username, order.TotalAmount);
 
         // Log activity
         _activityService.LogProductPurchased(user.Id, order.ProductId);
         _activityService.LogProductSold(order.SellerId, order.ProductId);
 
-        // Broadcast order event
-        await _contentHub.Clients.User(order.SellerId).SendAsync("OrderReceived", order);
+        // Real-time notifications (wrapped in try-catch for graceful degradation)
+        try
+        {
+            await NotificationHub.NotifyNewOrder(
+                _notificationHub, order.SellerId, user.Username, order.ProductTitle, order.TotalAmount, order.Id);
+            await _contentHub.Clients.User(order.SellerId).SendAsync("OrderReceived", order);
+        }
+        catch
+        {
+            // SignalR broadcast failure shouldn't fail the order
+        }
 
         return Ok(order);
     }
@@ -104,8 +123,17 @@ public class OrdersController : ControllerBase
         // Notify seller
         _notificationService.NotifyOrderUpdate(order.SellerId, order.Id, "completed", order.ProductTitle);
 
-        // Broadcast completion
-        await _contentHub.Clients.User(order.SellerId).SendAsync("OrderCompleted", order);
+        // Real-time notifications
+        try
+        {
+            await NotificationHub.NotifyOrderStatusChange(
+                _notificationHub, order.SellerId, order.Id, order.ProductTitle, "Completed");
+            await _contentHub.Clients.User(order.SellerId).SendAsync("OrderCompleted", order);
+        }
+        catch
+        {
+            // SignalR broadcast failure shouldn't fail the operation
+        }
 
         return Ok(order);
     }
@@ -128,7 +156,17 @@ public class OrdersController : ControllerBase
         var otherUserId = order.BuyerId == user.Id ? order.SellerId : order.BuyerId;
         _notificationService.NotifyOrderUpdate(otherUserId, order.Id, "cancelled", order.ProductTitle);
 
-        await _contentHub.Clients.User(otherUserId).SendAsync("OrderCancelled", order);
+        // Real-time notifications
+        try
+        {
+            await NotificationHub.NotifyOrderStatusChange(
+                _notificationHub, otherUserId, order.Id, order.ProductTitle, "Cancelled");
+            await _contentHub.Clients.User(otherUserId).SendAsync("OrderCancelled", order);
+        }
+        catch
+        {
+            // SignalR broadcast failure shouldn't fail the operation
+        }
 
         return Ok(order);
     }
@@ -151,7 +189,17 @@ public class OrdersController : ControllerBase
         // Notify seller and admins
         _notificationService.NotifyOrderUpdate(order.SellerId, order.Id, "disputed", order.ProductTitle);
 
-        await _contentHub.Clients.User(order.SellerId).SendAsync("OrderDisputed", order);
+        // Real-time notifications
+        try
+        {
+            await NotificationHub.NotifyOrderStatusChange(
+                _notificationHub, order.SellerId, order.Id, order.ProductTitle, "Disputed");
+            await _contentHub.Clients.User(order.SellerId).SendAsync("OrderDisputed", order);
+        }
+        catch
+        {
+            // SignalR broadcast failure shouldn't fail the operation
+        }
 
         return Ok(order);
     }
@@ -178,8 +226,15 @@ public class OrdersController : ControllerBase
         _notificationService.NotifyOrderUpdate(order.BuyerId, order.Id, "dispute resolved", order.ProductTitle);
         _notificationService.NotifyOrderUpdate(order.SellerId, order.Id, "dispute resolved", order.ProductTitle);
 
-        await _contentHub.Clients.Users(new[] { order.BuyerId, order.SellerId })
-            .SendAsync("DisputeResolved", order);
+        try
+        {
+            await _contentHub.Clients.Users(new[] { order.BuyerId, order.SellerId })
+                .SendAsync("DisputeResolved", order);
+        }
+        catch
+        {
+            // SignalR broadcast failure shouldn't fail the operation
+        }
 
         return Ok(order);
     }

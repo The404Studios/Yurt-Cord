@@ -85,6 +85,9 @@ public class UsersController : ControllerBase
         if (string.IsNullOrWhiteSpace(query))
             return BadRequest("Query is required");
 
+        if (query.Length > 100)
+            return BadRequest("Query is too long");
+
         var requestingUser = GetUserFromToken(authorization);
         var requesterId = requestingUser?.Id;
 
@@ -117,6 +120,9 @@ public class UsersController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(query))
             return BadRequest("Query is required");
+
+        if (query.Length > 100)
+            return BadRequest("Query is too long");
 
         var requestingUser = GetUserFromToken(authorization);
         var requesterId = requestingUser?.Id;

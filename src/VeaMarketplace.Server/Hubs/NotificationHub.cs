@@ -102,6 +102,9 @@ public class NotificationHub : Hub
         if (!_connectionUserMap.TryGetValue(Context.ConnectionId, out var userId))
             return;
 
+        if (string.IsNullOrWhiteSpace(notificationId))
+            return;
+
         if (_notificationService.MarkAsRead(notificationId, userId))
         {
             var unreadCount = _notificationService.GetUnreadCount(userId);
@@ -131,12 +134,62 @@ public class NotificationHub : Hub
         if (!_connectionUserMap.TryGetValue(Context.ConnectionId, out var userId))
             return;
 
+        if (string.IsNullOrWhiteSpace(notificationId))
+            return;
+
         if (_notificationService.DeleteNotification(notificationId, userId))
         {
             var unreadCount = _notificationService.GetUnreadCount(userId);
             await Clients.Caller.SendAsync("NotificationDeleted", notificationId);
             await Clients.Caller.SendAsync("UnreadCount", unreadCount);
         }
+    }
+
+    /// <summary>
+    /// Send a system-wide broadcast message. Only admins can use this.
+    /// </summary>
+    public async Task SendSystemBroadcast(string title, string message, string? actionUrl = null)
+    {
+        if (!_connectionUserMap.TryGetValue(Context.ConnectionId, out var userId))
+        {
+            await Clients.Caller.SendAsync("BroadcastError", "You must be authenticated");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            await Clients.Caller.SendAsync("BroadcastError", "Title is required");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            await Clients.Caller.SendAsync("BroadcastError", "Message is required");
+            return;
+        }
+
+        // Only admins can send system broadcasts
+        var user = _authService.GetUserById(userId);
+        if (user == null || user.Role < UserRole.Admin)
+        {
+            await Clients.Caller.SendAsync("BroadcastError", "Only administrators can send system broadcasts");
+            return;
+        }
+
+        var notification = new NotificationDto
+        {
+            Id = Guid.NewGuid().ToString(),
+            Type = NotificationType.System,
+            Title = title,
+            Message = message,
+            Icon = "System",
+            ActionUrl = actionUrl,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        // Broadcast to all connected users
+        await Clients.All.SendAsync("SystemNotification", notification);
+        await Clients.Caller.SendAsync("BroadcastSent", notification);
     }
 
     /// <summary>

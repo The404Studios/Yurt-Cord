@@ -13,21 +13,27 @@ public class ReviewsController : ControllerBase
     private readonly ReviewService _reviewService;
     private readonly AuthService _authService;
     private readonly ProductService _productService;
+    private readonly ActivityService _activityService;
     private readonly NotificationService _notificationService;
     private readonly IHubContext<ContentHub> _contentHub;
+    private readonly IHubContext<NotificationHub> _notificationHub;
 
     public ReviewsController(
         ReviewService reviewService,
         AuthService authService,
         ProductService productService,
+        ActivityService activityService,
         NotificationService notificationService,
-        IHubContext<ContentHub> contentHub)
+        IHubContext<ContentHub> contentHub,
+        IHubContext<NotificationHub> notificationHub)
     {
         _reviewService = reviewService;
         _authService = authService;
         _productService = productService;
+        _activityService = activityService;
         _notificationService = notificationService;
         _contentHub = contentHub;
+        _notificationHub = notificationHub;
     }
 
     [HttpGet("product/{productId}")]
@@ -60,28 +66,49 @@ public class ReviewsController : ControllerBase
         if (review == null)
             return BadRequest("Unable to create review. You may have already reviewed this product.");
 
+        // Log activity for review posted
+        _activityService.LogReviewPosted(user.Id, request.ProductId, request.Rating);
+
         // Get product info and notify the seller
         var product = _productService.GetProductById(request.ProductId);
         if (product != null && product.SellerId != user.Id)
         {
-            // Notify the seller about the new review
+            // Notify the seller about the new review (database notification)
             _notificationService.CreateNotification(
                 product.SellerId,
                 "New Review",
                 $"{user.Username} left a {request.Rating}-star review on {product.Title}",
                 "review",
                 review.Id);
+
+            // Real-time notification via NotificationHub
+            try
+            {
+                await NotificationHub.NotifyNewReview(
+                    _notificationHub, product.SellerId, user.Username, product.Title, request.Rating, request.ProductId);
+            }
+            catch
+            {
+                // SignalR broadcast failure shouldn't fail the operation
+            }
         }
 
         // Broadcast review event
-        await _contentHub.Clients.All.SendAsync("NewReview", new
+        try
         {
-            ProductId = request.ProductId,
-            ReviewId = review.Id,
-            Username = user.Username,
-            Rating = request.Rating,
-            SellerId = product?.SellerId
-        });
+            await _contentHub.Clients.All.SendAsync("NewReview", new
+            {
+                ProductId = request.ProductId,
+                ReviewId = review.Id,
+                Username = user.Username,
+                Rating = request.Rating,
+                SellerId = product?.SellerId
+            });
+        }
+        catch
+        {
+            // SignalR broadcast failure shouldn't fail the review creation
+        }
 
         return Ok(review);
     }

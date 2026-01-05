@@ -12,16 +12,26 @@ public class FriendHub : Hub
     private readonly FriendService _friendService;
     private readonly DirectMessageService _dmService;
     private readonly AuthService _authService;
+    private readonly ActivityService _activityService;
+    private readonly NotificationService _notificationService;
     private readonly ILogger<FriendHub> _logger;
     private static readonly ConcurrentDictionary<string, List<string>> _userConnections = new(); // userId -> connectionIds
     private static readonly ConcurrentDictionary<string, string> _connectionUsers = new(); // connectionId -> userId
     private static readonly ConcurrentDictionary<string, DateTime> _connectionTimestamps = new();
 
-    public FriendHub(FriendService friendService, DirectMessageService dmService, AuthService authService, ILogger<FriendHub> logger)
+    public FriendHub(
+        FriendService friendService,
+        DirectMessageService dmService,
+        AuthService authService,
+        ActivityService activityService,
+        NotificationService notificationService,
+        ILogger<FriendHub> logger)
     {
         _friendService = friendService;
         _dmService = dmService;
         _authService = authService;
+        _activityService = activityService;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -105,6 +115,12 @@ public class FriendHub : Hub
         if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
             return;
 
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            await Clients.Caller.SendAsync("FriendRequestError", "Username is required");
+            return;
+        }
+
         var (success, message, friendship) = _friendService.SendFriendRequest(userId, username);
         await HandleFriendRequestResult(userId, success, message, friendship);
     }
@@ -114,6 +130,12 @@ public class FriendHub : Hub
     {
         if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
             return;
+
+        if (string.IsNullOrWhiteSpace(targetUserId))
+        {
+            await Clients.Caller.SendAsync("FriendRequestError", "User ID is required");
+            return;
+        }
 
         var (success, message, friendship) = _friendService.SendFriendRequestById(userId, targetUserId);
         await HandleFriendRequestResult(userId, success, message, friendship);
@@ -129,6 +151,18 @@ public class FriendHub : Hub
             // Update requester's outgoing requests
             var outgoing = _friendService.GetOutgoingRequests(userId);
             await Clients.Caller.SendAsync("OutgoingRequests", outgoing);
+
+            // Create a persistent notification for the addressee
+            var requester = _authService.GetUserById(userId);
+            if (requester != null)
+            {
+                _notificationService.CreateNotification(
+                    friendship.AddresseeId,
+                    "Friend Request",
+                    $"{requester.Username} sent you a friend request",
+                    "friend_request",
+                    friendship.Id);
+            }
 
             // Notify the addressee if online (all their connections)
             if (_userConnections.TryGetValue(friendship.AddresseeId, out var addresseeConnIds))
@@ -154,6 +188,12 @@ public class FriendHub : Hub
     {
         if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
             return;
+
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            await Clients.Caller.SendAsync("UserSearchResult", null);
+            return;
+        }
 
         var user = _friendService.SearchUserByIdOrUsername(query);
         // Don't show user if blocked (either direction)
@@ -187,6 +227,12 @@ public class FriendHub : Hub
     {
         if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
             return;
+
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            await Clients.Caller.SendAsync("UserSearchResults", new List<UserSearchResultDto>());
+            return;
+        }
 
         var users = _friendService.SearchUsers(query);
         if (users == null)
@@ -234,6 +280,27 @@ public class FriendHub : Hub
 
         if (success)
         {
+            // Log activity for both users when friend request is accepted
+            if (accept)
+            {
+                _activityService.LogFriendAdded(userId, friendship.RequesterId);
+                _activityService.LogFriendAdded(friendship.RequesterId, userId);
+            }
+
+            // Create notification for the requester about the response
+            var responder = _authService.GetUserById(userId);
+            if (responder != null)
+            {
+                _notificationService.CreateNotification(
+                    friendship.RequesterId,
+                    accept ? "Friend Request Accepted" : "Friend Request Declined",
+                    accept
+                        ? $"{responder.Username} accepted your friend request"
+                        : $"{responder.Username} declined your friend request",
+                    "friend_request",
+                    requestId);
+            }
+
             // Update both users' friend lists
             var myFriends = _friendService.GetFriends(userId);
             var myPending = _friendService.GetPendingRequests(userId);
@@ -359,12 +426,27 @@ public class FriendHub : Hub
         if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
             return;
 
+        if (string.IsNullOrWhiteSpace(recipientId))
+        {
+            await Clients.Caller.SendAsync("DMError", "Recipient is required");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            await Clients.Caller.SendAsync("DMError", "Message content is required");
+            return;
+        }
+
         var (success, message, dto) = _dmService.SendMessage(userId, recipientId, content);
 
         if (success && dto != null)
         {
             // Send to sender
             await Clients.Caller.SendAsync("DirectMessageReceived", dto);
+
+            // Get sender info for notification
+            var sender = _authService.GetUserById(userId);
 
             // Send to recipient if online (all connections)
             if (_userConnections.TryGetValue(recipientId, out var recipientConnIds))
@@ -376,6 +458,20 @@ public class FriendHub : Hub
                 {
                     await Clients.Client(connId).SendAsync("DirectMessageReceived", dto);
                     await Clients.Client(connId).SendAsync("Conversations", theirConversations);
+                }
+            }
+            else
+            {
+                // Recipient is offline - create a persistent notification
+                if (sender != null)
+                {
+                    var truncatedContent = content.Length > 50 ? content[..50] + "..." : content;
+                    _notificationService.CreateNotification(
+                        recipientId,
+                        "New Message",
+                        $"{sender.Username}: {truncatedContent}",
+                        "direct_message",
+                        dto.Id);
                 }
             }
 

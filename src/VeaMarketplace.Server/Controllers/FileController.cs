@@ -258,10 +258,10 @@ public class FileController : ControllerBase
 
     private string? ValidateToken(string? authorization)
     {
-        if (string.IsNullOrEmpty(authorization))
+        if (string.IsNullOrEmpty(authorization) || !authorization.StartsWith("Bearer "))
             return null;
 
-        var token = authorization.Replace("Bearer ", "");
+        var token = authorization["Bearer ".Length..];
         var user = _authService.ValidateToken(token);
         return user?.Id;
     }

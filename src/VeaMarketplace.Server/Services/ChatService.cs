@@ -144,6 +144,39 @@ public class ChatService
     }
 
     /// <summary>
+    /// Edits a message. Only the message owner can edit within a time limit.
+    /// </summary>
+    public (bool Success, string Message, ChatMessageDto? UpdatedMessage) EditMessage(string messageId, string userId, string newContent)
+    {
+        if (string.IsNullOrWhiteSpace(newContent))
+            return (false, "Message content cannot be empty", null);
+
+        var message = _db.Messages.FindById(messageId);
+        if (message == null)
+            return (false, "Message not found", null);
+
+        // Only the message owner can edit
+        if (message.SenderId != userId)
+            return (false, "You can only edit your own messages", null);
+
+        // Check if message is too old to edit (15 minute limit)
+        var timeSincePost = DateTime.UtcNow - message.Timestamp;
+        if (timeSincePost.TotalMinutes > 15)
+            return (false, "Messages can only be edited within 15 minutes of posting", null);
+
+        // Update the message
+        message.Content = newContent;
+        message.IsEdited = true;
+        message.EditedAt = DateTime.UtcNow;
+        _db.Messages.Update(message);
+
+        var user = _db.Users.FindById(userId);
+        var dto = MapToDto(message, user);
+
+        return (true, "Message edited", dto);
+    }
+
+    /// <summary>
     /// Adds a reaction to a message. Returns the updated reaction info or null if failed.
     /// </summary>
     public (bool Success, string Channel, MessageReactionDto? Reaction) AddReaction(string userId, string messageId, string emoji)

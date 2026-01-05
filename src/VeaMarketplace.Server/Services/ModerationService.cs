@@ -418,4 +418,153 @@ public class ModerationService
             _ => "Moderation action"
         };
     }
+
+    #region Product Reports
+
+    /// <summary>
+    /// Submit a report for a product
+    /// </summary>
+    public ProductReportDto? ReportProduct(string reporterId, ReportProductRequest request)
+    {
+        var reporter = _db.Users.FindById(reporterId);
+        if (reporter == null) return null;
+
+        var product = _db.Products.FindById(request.ProductId);
+        if (product == null) return null;
+
+        var seller = _db.Users.FindById(product.SellerId);
+
+        // Check if user has already reported this product
+        var existingReport = _db.ProductReports.FindOne(r =>
+            r.ProductId == request.ProductId &&
+            r.ReporterId == reporterId &&
+            r.Status == ReportStatus.Pending);
+
+        if (existingReport != null)
+        {
+            // Update existing report
+            existingReport.Reason = request.Reason;
+            existingReport.AdditionalInfo = request.AdditionalInfo;
+            _db.ProductReports.Update(existingReport);
+            return MapProductReportToDto(existingReport);
+        }
+
+        var report = new ProductReport
+        {
+            ProductId = request.ProductId,
+            ProductTitle = product.Title,
+            SellerId = product.SellerId,
+            SellerUsername = seller?.Username ?? "Unknown",
+            ReporterId = reporterId,
+            ReporterUsername = reporter.Username,
+            Reason = request.Reason,
+            AdditionalInfo = request.AdditionalInfo
+        };
+
+        _db.ProductReports.Insert(report);
+        return MapProductReportToDto(report);
+    }
+
+    /// <summary>
+    /// Get all pending product reports
+    /// </summary>
+    public List<ProductReportDto> GetPendingProductReports()
+    {
+        return _db.ProductReports.Find(r => r.Status == ReportStatus.Pending)
+            .OrderByDescending(r => r.CreatedAt)
+            .Select(MapProductReportToDto)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Get all product reports with optional status filter
+    /// </summary>
+    public List<ProductReportDto> GetProductReports(ReportStatus? status = null)
+    {
+        var query = status.HasValue
+            ? _db.ProductReports.Find(r => r.Status == status.Value)
+            : _db.ProductReports.FindAll();
+
+        return query
+            .OrderByDescending(r => r.CreatedAt)
+            .Select(MapProductReportToDto)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Resolve a product report
+    /// </summary>
+    public bool ResolveProductReport(string reportId, string moderatorId, string resolution, bool takeAction = false)
+    {
+        var report = _db.ProductReports.FindById(reportId);
+        if (report == null) return false;
+
+        var moderator = _db.Users.FindById(moderatorId);
+        if (moderator == null || moderator.Role < UserRole.Moderator) return false;
+
+        report.Status = ReportStatus.Resolved;
+        report.ReviewedBy = moderator.Username;
+        report.ReviewedAt = DateTime.UtcNow;
+        report.Resolution = resolution;
+        _db.ProductReports.Update(report);
+
+        // If taking action, delete the product
+        if (takeAction)
+        {
+            var product = _db.Products.FindById(report.ProductId);
+            if (product != null)
+            {
+                product.IsDeleted = true;
+                _db.Products.Update(product);
+
+                // Log the moderation action
+                LogModerationAction(moderatorId, ModerationType.MessageDelete, report.SellerId, report.SellerUsername,
+                    $"Removed product '{report.ProductTitle}' due to report: {resolution}");
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Dismiss a product report
+    /// </summary>
+    public bool DismissProductReport(string reportId, string moderatorId)
+    {
+        var report = _db.ProductReports.FindById(reportId);
+        if (report == null) return false;
+
+        var moderator = _db.Users.FindById(moderatorId);
+        if (moderator == null || moderator.Role < UserRole.Moderator) return false;
+
+        report.Status = ReportStatus.Dismissed;
+        report.ReviewedBy = moderator.Username;
+        report.ReviewedAt = DateTime.UtcNow;
+        _db.ProductReports.Update(report);
+
+        return true;
+    }
+
+    private static ProductReportDto MapProductReportToDto(ProductReport report)
+    {
+        return new ProductReportDto
+        {
+            Id = report.Id,
+            ProductId = report.ProductId,
+            ProductTitle = report.ProductTitle,
+            SellerId = report.SellerId,
+            SellerUsername = report.SellerUsername,
+            ReporterId = report.ReporterId,
+            ReporterUsername = report.ReporterUsername,
+            Reason = report.Reason,
+            AdditionalInfo = report.AdditionalInfo,
+            Status = report.Status,
+            CreatedAt = report.CreatedAt,
+            ReviewedBy = report.ReviewedBy,
+            ReviewedAt = report.ReviewedAt,
+            Resolution = report.Resolution
+        };
+    }
+
+    #endregion
 }

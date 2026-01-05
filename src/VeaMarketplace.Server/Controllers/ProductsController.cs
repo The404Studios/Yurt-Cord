@@ -16,15 +16,21 @@ public class ProductsController : ControllerBase
 {
     private readonly ProductService _productService;
     private readonly AuthService _authService;
+    private readonly ActivityService _activityService;
+    private readonly ModerationService _moderationService;
     private readonly IHubContext<ContentHub> _contentHubContext;
 
     public ProductsController(
         ProductService productService,
         AuthService authService,
+        ActivityService activityService,
+        ModerationService moderationService,
         IHubContext<ContentHub> contentHubContext)
     {
         _productService = productService;
         _authService = authService;
+        _activityService = activityService;
+        _moderationService = moderationService;
         _contentHubContext = contentHubContext;
     }
 
@@ -65,6 +71,11 @@ public class ProductsController : ControllerBase
             return BadRequest("Price must be greater than 0");
 
         var product = _productService.CreateProduct(user.Id, request);
+        if (product == null)
+            return BadRequest("Unable to create product");
+
+        // Log activity for product listing
+        _activityService.LogProductListed(user.Id, product.Id);
 
         // Broadcast new product event to all connected clients
         await ContentHub.BroadcastNewProduct(_contentHubContext, new NewProductEvent
@@ -168,6 +179,27 @@ public class ProductsController : ControllerBase
             return Ok(new { Success = true });
 
         return NotFound(new { Success = false, Message = "Product not found" });
+    }
+
+    [HttpPost("{id}/report")]
+    public ActionResult<ProductReportDto> ReportProduct(
+        string id,
+        [FromHeader(Name = "Authorization")] string? authorization,
+        [FromBody] ReportProductRequest request)
+    {
+        var user = GetUserFromToken(authorization);
+        if (user == null)
+            return Unauthorized();
+
+        // Ensure the product ID in the route matches the request
+        if (request.ProductId != id)
+            request.ProductId = id;
+
+        var report = _moderationService.ReportProduct(user.Id, request);
+        if (report == null)
+            return BadRequest(new { Success = false, Message = "Unable to submit report. Product may not exist." });
+
+        return Ok(report);
     }
 
     private Shared.Models.User? GetUserFromToken(string? authorization)
