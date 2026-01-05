@@ -154,6 +154,41 @@
         </Setter>
     </Style>
 
+    <!-- Circular PasswordBox Style -->
+    <Style x:Key="OverseerPasswordBox" TargetType="PasswordBox">
+        <Setter Property="Background" Value="{StaticResource OverseerSurfaceBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource OverseerTextBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource OverseerAccentBrush}"/>
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="Padding" Value="16,12"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="CaretBrush" Value="{StaticResource OverseerPrimaryBrush}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="PasswordBox">
+                    <Border x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="25"
+                            Effect="{StaticResource NeonGlowPink}">
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource OverseerPrimaryBrush}"/>
+                            <Setter TargetName="border" Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect Color="#00FF88" BlurRadius="25" ShadowDepth="0" Opacity="1"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- Circular Card Style -->
     <Style x:Key="OverseerCard" TargetType="Border">
         <Setter Property="Background" Value="{StaticResource OverseerSurfaceBrush}"/>

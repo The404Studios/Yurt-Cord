@@ -352,7 +352,7 @@
                         </TextBlock.Effect>
                     </TextBlock>
                     <PasswordBox x:Name="PasswordBox"
-                                 Style="{StaticResource ModernPasswordBox}"
+                                 Style="{StaticResource OverseerPasswordBox}"
                                  Margin="0,0,0,18"/>
 
                     <!-- Confirm Password (Register only) -->
@@ -365,7 +365,7 @@
                             </TextBlock.Effect>
                         </TextBlock>
                         <PasswordBox x:Name="ConfirmPasswordBox"
-                                     Style="{StaticResource ModernPasswordBox}"
+                                     Style="{StaticResource OverseerPasswordBox}"
                                      Margin="0,0,0,18"/>
                     </StackPanel>
 
