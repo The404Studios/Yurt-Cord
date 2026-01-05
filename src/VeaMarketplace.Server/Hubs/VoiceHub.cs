@@ -881,6 +881,165 @@ public class VoiceHub : Hub
         }
     }
 
+    /// <summary>
+    /// Kick a user from a voice room. Only host or moderators can kick users.
+    /// </summary>
+    public async Task KickUser(string roomId, string targetUserId, string? reason = null)
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var callerId))
+        {
+            await Clients.Caller.SendAsync("VoiceRoomError", "You must be authenticated");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(roomId))
+        {
+            await Clients.Caller.SendAsync("VoiceRoomError", "Room ID is required");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(targetUserId))
+        {
+            await Clients.Caller.SendAsync("VoiceRoomError", "Target user ID is required");
+            return;
+        }
+
+        if (!_voiceRooms.TryGetValue(roomId, out var room))
+        {
+            await Clients.Caller.SendAsync("VoiceRoomError", "Room not found");
+            return;
+        }
+
+        // Check if caller is host or moderator
+        bool isHost = room.HostId == callerId;
+        bool isMod = room.Moderators.Contains(callerId);
+
+        if (!isHost && !isMod)
+        {
+            await Clients.Caller.SendAsync("VoiceRoomError", "Only host or moderators can kick users");
+            return;
+        }
+
+        // Can't kick the host
+        if (targetUserId == room.HostId)
+        {
+            await Clients.Caller.SendAsync("VoiceRoomError", "Cannot kick the room host");
+            return;
+        }
+
+        // Moderators can't kick other moderators
+        if (!isHost && room.Moderators.Contains(targetUserId))
+        {
+            await Clients.Caller.SendAsync("VoiceRoomError", "Only the host can kick moderators");
+            return;
+        }
+
+        // Find and remove the target user
+        if (room.Participants.TryRemove(targetUserId, out var kickedParticipant))
+        {
+            room.Moderators.Remove(targetUserId);
+
+            // Find their connection(s) and disconnect them from the room
+            var targetConnections = _voiceUsers.Values
+                .Where(u => u.UserId == targetUserId)
+                .Select(u => u.ConnectionId)
+                .ToList();
+
+            foreach (var connId in targetConnections)
+            {
+                await Groups.RemoveFromGroupAsync(connId, $"room_{roomId}");
+                _voiceUsers.TryRemove(connId, out _);
+
+                // Notify the kicked user
+                await Clients.Client(connId).SendAsync("KickedFromRoom", new
+                {
+                    RoomId = roomId,
+                    RoomName = room.Name,
+                    Reason = reason ?? "You have been kicked from the voice room",
+                    KickedBy = callerId
+                });
+            }
+
+            // Notify remaining room members
+            await Clients.Group($"room_{roomId}").SendAsync("UserKicked", new
+            {
+                UserId = targetUserId,
+                Username = kickedParticipant.Username,
+                Reason = reason
+            });
+
+            await Clients.Caller.SendAsync("KickSuccess", targetUserId);
+        }
+        else
+        {
+            await Clients.Caller.SendAsync("VoiceRoomError", "User not found in room");
+        }
+    }
+
+    /// <summary>
+    /// Kick a user from a voice channel (non-room). Requires moderator privileges.
+    /// </summary>
+    public async Task KickUserFromChannel(string channelId, string targetUserId, string? reason = null)
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var callerId))
+        {
+            await Clients.Caller.SendAsync("VoiceError", "You must be authenticated");
+            return;
+        }
+
+        // Verify caller is a moderator or admin
+        var caller = _authService.GetUserById(callerId);
+        if (caller == null || caller.Role < UserRole.Moderator)
+        {
+            await Clients.Caller.SendAsync("VoiceError", "Only moderators can kick users from voice channels");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(channelId))
+        {
+            await Clients.Caller.SendAsync("VoiceError", "Channel ID is required");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(targetUserId))
+        {
+            await Clients.Caller.SendAsync("VoiceError", "Target user ID is required");
+            return;
+        }
+
+        // Find and remove the target user from voice channel
+        var targetVoiceUsers = _voiceUsers.Values
+            .Where(u => u.UserId == targetUserId && u.ChannelId == channelId)
+            .ToList();
+
+        if (targetVoiceUsers.Count == 0)
+        {
+            await Clients.Caller.SendAsync("VoiceError", "User not found in this channel");
+            return;
+        }
+
+        foreach (var voiceUser in targetVoiceUsers)
+        {
+            var connId = voiceUser.ConnectionId;
+
+            await Groups.RemoveFromGroupAsync(connId, $"voice_{channelId}");
+            _voiceUsers.TryRemove(connId, out _);
+
+            // Notify the kicked user
+            await Clients.Client(connId).SendAsync("KickedFromChannel", new
+            {
+                ChannelId = channelId,
+                Reason = reason ?? "You have been kicked from the voice channel",
+                KickedBy = caller.Username
+            });
+        }
+
+        // Notify remaining channel members
+        await Clients.Group($"voice_{channelId}").SendAsync("UserLeftVoice", targetUserId);
+
+        await Clients.Caller.SendAsync("KickSuccess", targetUserId);
+    }
+
     // === Nudge System ===
 
     public async Task SendNudge(string targetUserId, string? message = null)

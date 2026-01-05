@@ -146,6 +146,53 @@ public class NotificationHub : Hub
     }
 
     /// <summary>
+    /// Send a system-wide broadcast message. Only admins can use this.
+    /// </summary>
+    public async Task SendSystemBroadcast(string title, string message, string? actionUrl = null)
+    {
+        if (!_connectionUserMap.TryGetValue(Context.ConnectionId, out var userId))
+        {
+            await Clients.Caller.SendAsync("BroadcastError", "You must be authenticated");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            await Clients.Caller.SendAsync("BroadcastError", "Title is required");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            await Clients.Caller.SendAsync("BroadcastError", "Message is required");
+            return;
+        }
+
+        // Only admins can send system broadcasts
+        var user = _authService.GetUserById(userId);
+        if (user == null || user.Role < UserRole.Admin)
+        {
+            await Clients.Caller.SendAsync("BroadcastError", "Only administrators can send system broadcasts");
+            return;
+        }
+
+        var notification = new NotificationDto
+        {
+            Id = Guid.NewGuid().ToString(),
+            Type = NotificationType.System,
+            Title = title,
+            Message = message,
+            Icon = "System",
+            ActionUrl = actionUrl,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        // Broadcast to all connected users
+        await Clients.All.SendAsync("SystemNotification", notification);
+        await Clients.Caller.SendAsync("BroadcastSent", notification);
+    }
+
+    /// <summary>
     /// Broadcast a notification to a specific user
     /// </summary>
     public static async Task SendNotificationToUser(

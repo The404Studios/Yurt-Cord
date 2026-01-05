@@ -17,17 +17,20 @@ public class ProductsController : ControllerBase
     private readonly ProductService _productService;
     private readonly AuthService _authService;
     private readonly ActivityService _activityService;
+    private readonly ModerationService _moderationService;
     private readonly IHubContext<ContentHub> _contentHubContext;
 
     public ProductsController(
         ProductService productService,
         AuthService authService,
         ActivityService activityService,
+        ModerationService moderationService,
         IHubContext<ContentHub> contentHubContext)
     {
         _productService = productService;
         _authService = authService;
         _activityService = activityService;
+        _moderationService = moderationService;
         _contentHubContext = contentHubContext;
     }
 
@@ -176,6 +179,27 @@ public class ProductsController : ControllerBase
             return Ok(new { Success = true });
 
         return NotFound(new { Success = false, Message = "Product not found" });
+    }
+
+    [HttpPost("{id}/report")]
+    public ActionResult<ProductReportDto> ReportProduct(
+        string id,
+        [FromHeader(Name = "Authorization")] string? authorization,
+        [FromBody] ReportProductRequest request)
+    {
+        var user = GetUserFromToken(authorization);
+        if (user == null)
+            return Unauthorized();
+
+        // Ensure the product ID in the route matches the request
+        if (request.ProductId != id)
+            request.ProductId = id;
+
+        var report = _moderationService.ReportProduct(user.Id, request);
+        if (report == null)
+            return BadRequest(new { Success = false, Message = "Unable to submit report. Product may not exist." });
+
+        return Ok(report);
     }
 
     private Shared.Models.User? GetUserFromToken(string? authorization)

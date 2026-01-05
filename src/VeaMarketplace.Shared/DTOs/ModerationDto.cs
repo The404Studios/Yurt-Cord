@@ -130,3 +130,28 @@ public class CreateAutoModRuleRequest
     public int? MaxCapitalPercent { get; set; }
     public string? CustomRegex { get; set; }
 }
+
+public class ProductReportDto
+{
+    public string Id { get; set; } = string.Empty;
+    public string ProductId { get; set; } = string.Empty;
+    public string ProductTitle { get; set; } = string.Empty;
+    public string SellerId { get; set; } = string.Empty;
+    public string SellerUsername { get; set; } = string.Empty;
+    public string ReporterId { get; set; } = string.Empty;
+    public string ReporterUsername { get; set; } = string.Empty;
+    public ProductReportReason Reason { get; set; }
+    public string? AdditionalInfo { get; set; }
+    public ReportStatus Status { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public string? ReviewedBy { get; set; }
+    public DateTime? ReviewedAt { get; set; }
+    public string? Resolution { get; set; }
+}
+
+public class ReportProductRequest
+{
+    public string ProductId { get; set; } = string.Empty;
+    public ProductReportReason Reason { get; set; }
+    public string? AdditionalInfo { get; set; }
+}

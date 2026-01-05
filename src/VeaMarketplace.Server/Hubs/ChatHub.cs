@@ -304,6 +304,39 @@ public class ChatHub : Hub
         }
     }
 
+    /// <summary>
+    /// Edit a message. Only the message owner can edit within a time limit.
+    /// </summary>
+    public async Task EditMessage(string messageId, string newContent, string channel = "general")
+    {
+        if (!_connectionUserMap.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        if (string.IsNullOrWhiteSpace(messageId))
+        {
+            await Clients.Caller.SendAsync("EditError", "Message ID is required");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(newContent))
+        {
+            await Clients.Caller.SendAsync("EditError", "Message content is required");
+            return;
+        }
+
+        var (success, message, updatedMessage) = _chatService.EditMessage(messageId, userId, newContent);
+
+        if (success && updatedMessage != null)
+        {
+            // Notify all users in the channel about the edit
+            await Clients.Group(channel).SendAsync("MessageEdited", updatedMessage);
+        }
+        else
+        {
+            await Clients.Caller.SendAsync("EditError", message);
+        }
+    }
+
     public async Task SendTyping(string channel)
     {
         if (!_connectionUserMap.TryGetValue(Context.ConnectionId, out var userId))

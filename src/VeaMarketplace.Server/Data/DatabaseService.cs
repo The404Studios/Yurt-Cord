@@ -42,6 +42,7 @@ public class DatabaseService : IDisposable
     public ILiteCollection<UserMute> UserMutes => _database.GetCollection<UserMute>("user_mutes");
     public ILiteCollection<UserWarning> UserWarnings => _database.GetCollection<UserWarning>("user_warnings");
     public ILiteCollection<MessageReport> MessageReports => _database.GetCollection<MessageReport>("message_reports");
+    public ILiteCollection<ProductReport> ProductReports => _database.GetCollection<ProductReport>("product_reports");
     public ILiteCollection<ModerationLog> ModerationLogs => _database.GetCollection<ModerationLog>("moderation_logs");
     public ILiteCollection<AutoModRule> AutoModRules => _database.GetCollection<AutoModRule>("automod_rules");
 
