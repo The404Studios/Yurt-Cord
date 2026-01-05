@@ -102,6 +102,9 @@ public class NotificationHub : Hub
         if (!_connectionUserMap.TryGetValue(Context.ConnectionId, out var userId))
             return;
 
+        if (string.IsNullOrWhiteSpace(notificationId))
+            return;
+
         if (_notificationService.MarkAsRead(notificationId, userId))
         {
             var unreadCount = _notificationService.GetUnreadCount(userId);
@@ -129,6 +132,9 @@ public class NotificationHub : Hub
     public async Task DeleteNotification(string notificationId)
     {
         if (!_connectionUserMap.TryGetValue(Context.ConnectionId, out var userId))
+            return;
+
+        if (string.IsNullOrWhiteSpace(notificationId))
             return;
 
         if (_notificationService.DeleteNotification(notificationId, userId))

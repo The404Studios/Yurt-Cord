@@ -115,6 +115,12 @@ public class FriendHub : Hub
         if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
             return;
 
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            await Clients.Caller.SendAsync("FriendRequestError", "Username is required");
+            return;
+        }
+
         var (success, message, friendship) = _friendService.SendFriendRequest(userId, username);
         await HandleFriendRequestResult(userId, success, message, friendship);
     }
@@ -124,6 +130,12 @@ public class FriendHub : Hub
     {
         if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
             return;
+
+        if (string.IsNullOrWhiteSpace(targetUserId))
+        {
+            await Clients.Caller.SendAsync("FriendRequestError", "User ID is required");
+            return;
+        }
 
         var (success, message, friendship) = _friendService.SendFriendRequestById(userId, targetUserId);
         await HandleFriendRequestResult(userId, success, message, friendship);
@@ -177,6 +189,12 @@ public class FriendHub : Hub
         if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
             return;
 
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            await Clients.Caller.SendAsync("UserSearchResult", null);
+            return;
+        }
+
         var user = _friendService.SearchUserByIdOrUsername(query);
         // Don't show user if blocked (either direction)
         if (user != null && user.Id != userId && !_friendService.IsBlocked(userId, user.Id))
@@ -209,6 +227,12 @@ public class FriendHub : Hub
     {
         if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
             return;
+
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            await Clients.Caller.SendAsync("UserSearchResults", new List<UserSearchResultDto>());
+            return;
+        }
 
         var users = _friendService.SearchUsers(query);
         if (users == null)
@@ -401,6 +425,18 @@ public class FriendHub : Hub
     {
         if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var userId))
             return;
+
+        if (string.IsNullOrWhiteSpace(recipientId))
+        {
+            await Clients.Caller.SendAsync("DMError", "Recipient is required");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            await Clients.Caller.SendAsync("DMError", "Message content is required");
+            return;
+        }
 
         var (success, message, dto) = _dmService.SendMessage(userId, recipientId, content);
 

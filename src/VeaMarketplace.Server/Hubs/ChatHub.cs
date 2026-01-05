@@ -251,6 +251,12 @@ public class ChatHub : Hub
         if (!_connectionUserMap.TryGetValue(Context.ConnectionId, out var userId))
             return;
 
+        if (string.IsNullOrWhiteSpace(content))
+            return;
+
+        if (string.IsNullOrWhiteSpace(channel))
+            channel = "general";
+
         var request = new SendMessageRequest
         {
             Content = content,
@@ -269,13 +275,20 @@ public class ChatHub : Hub
         if (!_connectionUserMap.TryGetValue(Context.ConnectionId, out var userId))
             return;
 
+        // Validate inputs - at least content or attachments must be present
+        if (string.IsNullOrWhiteSpace(content) && (attachments == null || attachments.Count == 0))
+            return;
+
+        if (string.IsNullOrWhiteSpace(channel))
+            return;
+
         var request = new SendMessageRequest
         {
-            Content = content,
+            Content = content ?? string.Empty,
             Channel = channel
         };
 
-        var message = _chatService.SaveMessageWithAttachments(userId, request, attachments);
+        var message = _chatService.SaveMessageWithAttachments(userId, request, attachments ?? new List<MessageAttachmentDto>());
         await Clients.Group(channel).SendAsync("ReceiveMessage", message);
     }
 

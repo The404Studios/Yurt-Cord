@@ -128,6 +128,12 @@ public class RoomHub : Hub
             return;
         }
 
+        if (string.IsNullOrWhiteSpace(roomId))
+        {
+            await Clients.Caller.SendAsync("RoomError", "Room ID is required");
+            return;
+        }
+
         var user = _authService.GetUserById(userId);
         if (user == null)
         {
