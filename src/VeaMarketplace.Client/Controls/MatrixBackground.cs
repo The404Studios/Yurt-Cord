@@ -213,7 +213,7 @@ public class MatrixBackground : Canvas
         var tb = new TextBlock
         {
             Text = _matrixChars[_random.Next(_matrixChars.Length)].ToString(),
-            FontFamily = new FontFamily("Consolas, Courier New"),
+            FontFamily = new System.Windows.Media.FontFamily("Consolas, Courier New"),
             FontSize = 14,
             FontWeight = FontWeights.Bold,
             Foreground = new SolidColorBrush(GlowColor)

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 using VeaMarketplace.Server.Hubs;
 using VeaMarketplace.Server.Services;
 using VeaMarketplace.Shared.DTOs;
+using VeaMarketplace.Shared.Models;
 
 namespace VeaMarketplace.Server.Controllers;
 
@@ -76,6 +77,7 @@ public class ReviewsController : ControllerBase
             // Notify the seller about the new review (database notification)
             _notificationService.CreateNotification(
                 product.SellerId,
+                NotificationType.Review,
                 "New Review",
                 $"{user.Username} left a {request.Rating}-star review on {product.Title}",
                 "review",

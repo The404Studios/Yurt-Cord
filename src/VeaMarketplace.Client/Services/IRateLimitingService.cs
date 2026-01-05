@@ -50,14 +50,14 @@ public class RateLimitingService : IRateLimitingService
 {
     private readonly ConcurrentDictionary<string, RateLimitBucket> _buckets = new();
     private readonly RateLimitConfig _defaultConfig;
-    private readonly Timer _cleanupTimer;
+    private readonly System.Threading.Timer _cleanupTimer;
 
     public RateLimitingService(RateLimitConfig? defaultConfig = null)
     {
         _defaultConfig = defaultConfig ?? new RateLimitConfig();
 
         // Cleanup old buckets every 5 minutes
-        _cleanupTimer = new Timer(_ => CleanupExpiredBuckets(), null, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
+        _cleanupTimer = new System.Threading.Timer(_ => CleanupExpiredBuckets(), null, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
     }
 
     public async Task<RateLimitResult> CheckRateLimitAsync(string key, RateLimitConfig? config = null)

@@ -60,7 +60,7 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler
     private readonly ConcurrentDictionary<string, ScheduledTask> _tasks = new();
     private readonly ConcurrentDictionary<string, CancellationTokenSource> _taskCancellations = new();
     private readonly ConcurrentDictionary<string, Task> _runningTasks = new();
-    private readonly Timer _schedulerTimer;
+    private readonly System.Threading.Timer _schedulerTimer;
     private readonly SemaphoreSlim _executionLock = new(10, 10); // Max 10 concurrent tasks
     private bool _isShuttingDown;
     private bool _disposed = false;
@@ -70,7 +70,7 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler
     public BackgroundTaskScheduler()
     {
         // Check for pending tasks every second
-        _schedulerTimer = new Timer(_ => ProcessPendingTasks(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+        _schedulerTimer = new System.Threading.Timer(_ => ProcessPendingTasks(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
 
         Debug.WriteLine("Background task scheduler initialized");
     }

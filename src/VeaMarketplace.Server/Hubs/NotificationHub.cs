@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.SignalR;
 using System.Collections.Concurrent;
 using VeaMarketplace.Server.Services;
 using VeaMarketplace.Shared.DTOs;
+using VeaMarketplace.Shared.Enums;
 using VeaMarketplace.Shared.Models;
 
 namespace VeaMarketplace.Server.Hubs;

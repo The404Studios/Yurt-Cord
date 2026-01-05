@@ -292,8 +292,7 @@
                                    Text="AUTHENTICATE TO PROCEED"
                                    FontSize="11" Foreground="#6060A0"
                                    HorizontalAlignment="Center"
-                                   Margin="0,8,0,0" FontWeight="SemiBold"
-                                   LetterSpacing="2"/>
+                                   Margin="0,8,0,0" FontWeight="SemiBold"/>
                     </StackPanel>
 
                     <!-- Error Message -->
@@ -319,8 +318,7 @@
 
                     <!-- Username Input -->
                     <TextBlock Text="IDENTITY" FontSize="10" FontWeight="Bold"
-                               Foreground="#00FF88" Margin="8,0,0,8"
-                               LetterSpacing="2">
+                               Foreground="#00FF88" Margin="8,0,0,8">
                         <TextBlock.Effect>
                             <DropShadowEffect Color="#00FF88" BlurRadius="5" ShadowDepth="0" Opacity="0.5"/>
                         </TextBlock.Effect>
@@ -332,8 +330,7 @@
                     <!-- Email Input (Register only) -->
                     <StackPanel x:Name="EmailPanel" Visibility="Collapsed">
                         <TextBlock Text="COMM CHANNEL" FontSize="10" FontWeight="Bold"
-                                   Foreground="#00CCFF" Margin="8,0,0,8"
-                                   LetterSpacing="2">
+                                   Foreground="#00CCFF" Margin="8,0,0,8">
                             <TextBlock.Effect>
                                 <DropShadowEffect Color="#00CCFF" BlurRadius="5" ShadowDepth="0" Opacity="0.5"/>
                             </TextBlock.Effect>
@@ -345,8 +342,7 @@
 
                     <!-- Password Input -->
                     <TextBlock Text="ACCESS CODE" FontSize="10" FontWeight="Bold"
-                               Foreground="#FF00FF" Margin="8,0,0,8"
-                               LetterSpacing="2">
+                               Foreground="#FF00FF" Margin="8,0,0,8">
                         <TextBlock.Effect>
                             <DropShadowEffect Color="#FF00FF" BlurRadius="5" ShadowDepth="0" Opacity="0.5"/>
                         </TextBlock.Effect>
@@ -358,8 +354,7 @@
                     <!-- Confirm Password (Register only) -->
                     <StackPanel x:Name="ConfirmPasswordPanel" Visibility="Collapsed">
                         <TextBlock Text="CONFIRM ACCESS CODE" FontSize="10" FontWeight="Bold"
-                                   Foreground="#FF00FF" Margin="8,0,0,8"
-                                   LetterSpacing="2">
+                                   Foreground="#FF00FF" Margin="8,0,0,8">
                             <TextBlock.Effect>
                                 <DropShadowEffect Color="#FF00FF" BlurRadius="5" ShadowDepth="0" Opacity="0.5"/>
                             </TextBlock.Effect>
@@ -394,7 +389,7 @@
                         <Border Background="#0A0A15"
                                 HorizontalAlignment="Center" Padding="16,0">
                             <TextBlock Text="ALTERNATIVE ACCESS" FontSize="9"
-                                       Foreground="#505070" LetterSpacing="2"/>
+                                       Foreground="#505070"/>
                         </Border>
                     </Grid>
 
@@ -468,8 +463,7 @@
                         </Grid>
                         <TextBlock x:Name="LoadingText" Text="CONNECTING..."
                                    Foreground="#00FF88" FontWeight="Bold"
-                                   Margin="0,18,0,0" FontSize="13"
-                                   LetterSpacing="2">
+                                   Margin="0,18,0,0" FontSize="13">
                             <TextBlock.Effect>
                                 <DropShadowEffect Color="#00FF88" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
                             </TextBlock.Effect>

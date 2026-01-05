@@ -146,7 +146,7 @@ public class OverseerMessageBubble : UserControl
             FontWeight = FontWeights.SemiBold,
             Foreground = new SolidColorBrush(Color.FromRgb(0, 255, 136)),
             Margin = new Thickness(0, 0, 8, 0),
-            Cursor = Cursors.Hand,
+            Cursor = System.Windows.Input.Cursors.Hand,
             Effect = new DropShadowEffect
             {
                 Color = Color.FromRgb(0, 255, 136),
@@ -173,7 +173,7 @@ public class OverseerMessageBubble : UserControl
         _messageText = new TextBlock
         {
             TextWrapping = TextWrapping.Wrap,
-            FontFamily = new FontFamily("Segoe UI, Arial"),
+            FontFamily = new System.Windows.Media.FontFamily("Segoe UI, Arial"),
             FontSize = 14,
             Margin = new Thickness(0, 6, 0, 0)
         };
@@ -264,7 +264,7 @@ public class OverseerMessageBubble : UserControl
         style.Setters.Add(new Setter(ForegroundProperty, new SolidColorBrush(Color.FromRgb(0, 255, 136))));
         style.Setters.Add(new Setter(BorderBrushProperty, new SolidColorBrush(Color.FromArgb(100, 0, 255, 136))));
         style.Setters.Add(new Setter(BorderThicknessProperty, new Thickness(1)));
-        style.Setters.Add(new Setter(CursorProperty, Cursors.Hand));
+        style.Setters.Add(new Setter(CursorProperty, System.Windows.Input.Cursors.Hand));
 
         var template = new ControlTemplate(typeof(Button));
         var border = new FrameworkElementFactory(typeof(Border));
@@ -323,7 +323,7 @@ public class OverseerMessageBubble : UserControl
                 Height = 32,
                 Background = Brushes.Transparent,
                 BorderThickness = new Thickness(0),
-                Cursor = Cursors.Hand
+                Cursor = System.Windows.Input.Cursors.Hand
             };
             btn.Click += async (s, ev) =>
             {
@@ -741,7 +741,7 @@ public class OverseerMessageBubble : UserControl
             // Click handler to open envelope
             _envelopeCanvas.MouseLeftButtonDown -= OnEnvelopeClick;
             _envelopeCanvas.MouseLeftButtonDown += OnEnvelopeClick;
-            _envelopeCanvas.Cursor = Cursors.Hand;
+            _envelopeCanvas.Cursor = System.Windows.Input.Cursors.Hand;
         };
     }
 

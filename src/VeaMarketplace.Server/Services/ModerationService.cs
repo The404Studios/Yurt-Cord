@@ -514,11 +514,11 @@ public class ModerationService
             var product = _db.Products.FindById(report.ProductId);
             if (product != null)
             {
-                product.IsDeleted = true;
+                product.Status = ProductStatus.Removed;
                 _db.Products.Update(product);
 
                 // Log the moderation action
-                LogModerationAction(moderatorId, ModerationType.MessageDelete, report.SellerId, report.SellerUsername,
+                LogModerationAction(moderatorId, moderator.Username, ModerationType.MessageDelete, report.SellerId, report.SellerUsername,
                     $"Removed product '{report.ProductTitle}' due to report: {resolution}");
             }
         }
