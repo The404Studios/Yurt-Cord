@@ -68,6 +68,8 @@ public class ProductsController : ControllerBase
             return BadRequest("Price must be greater than 0");
 
         var product = _productService.CreateProduct(user.Id, request);
+        if (product == null)
+            return BadRequest("Unable to create product");
 
         // Log activity for product listing
         _activityService.LogProductListed(user.Id, product.Id);

@@ -226,8 +226,15 @@ public class OrdersController : ControllerBase
         _notificationService.NotifyOrderUpdate(order.BuyerId, order.Id, "dispute resolved", order.ProductTitle);
         _notificationService.NotifyOrderUpdate(order.SellerId, order.Id, "dispute resolved", order.ProductTitle);
 
-        await _contentHub.Clients.Users(new[] { order.BuyerId, order.SellerId })
-            .SendAsync("DisputeResolved", order);
+        try
+        {
+            await _contentHub.Clients.Users(new[] { order.BuyerId, order.SellerId })
+                .SendAsync("DisputeResolved", order);
+        }
+        catch
+        {
+            // SignalR broadcast failure shouldn't fail the operation
+        }
 
         return Ok(order);
     }

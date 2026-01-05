@@ -12,6 +12,7 @@ public class VoiceHub : Hub
 {
     private readonly VoiceCallService _callService;
     private readonly AuthService _authService;
+    private readonly FriendService _friendService;
     private readonly ILogger<VoiceHub> _logger;
     private static readonly ConcurrentDictionary<string, VoiceChannelState> _voiceChannels = new();
     private static readonly ConcurrentDictionary<string, VoiceUserState> _voiceUsers = new();
@@ -34,10 +35,11 @@ public class VoiceHub : Hub
     private const long MaxDownloadBytesPerSecond = 50L * 1024 * 1024; // 50 MB/s download per user
     private const int MaxConcurrentStreamsPerChannel = 10;
 
-    public VoiceHub(VoiceCallService callService, AuthService authService, ILogger<VoiceHub> logger)
+    public VoiceHub(VoiceCallService callService, AuthService authService, FriendService friendService, ILogger<VoiceHub> logger)
     {
         _callService = callService;
         _authService = authService;
+        _friendService = friendService;
         _logger = logger;
     }
 
@@ -894,6 +896,13 @@ public class VoiceHub : Hub
         if (senderInfo == null)
         {
             await Clients.Caller.SendAsync("NudgeError", "Could not find your user information");
+            return;
+        }
+
+        // Check if either user has blocked the other
+        if (_friendService.IsBlocked(senderId, targetUserId))
+        {
+            await Clients.Caller.SendAsync("NudgeError", "Unable to send nudge to this user");
             return;
         }
 
