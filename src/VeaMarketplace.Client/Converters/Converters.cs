@@ -522,3 +522,194 @@ public class GreaterThanOneToVisibilityConverter : IValueConverter
         return System.Windows.Data.Binding.DoNothing;
     }
 }
+
+/// <summary>
+/// Multi-value converter for checking equality between two values
+/// Returns true if both values are equal
+/// </summary>
+public class EqualityMultiConverter : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (values == null || values.Length < 2)
+            return false;
+
+        var value1 = values[0];
+        var value2 = values[1];
+
+        if (value1 == null && value2 == null)
+            return true;
+        if (value1 == null || value2 == null)
+            return false;
+
+        return value1.Equals(value2);
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Converts audio level (0-1 or 0-100) to width based on max width
+/// Used with MultiBinding: first value is audio level, second is max width
+/// </summary>
+public class AudioLevelConverter : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (values == null || values.Length < 2)
+            return 0.0;
+
+        double level = 0;
+        double maxWidth = 100;
+
+        // First value is the audio level
+        if (values[0] is double d)
+            level = d;
+        else if (values[0] is float f)
+            level = f;
+        else if (values[0] is int i)
+            level = i / 100.0;
+
+        // Second value is the max width
+        if (values[1] is double w)
+            maxWidth = w;
+
+        // Normalize level to 0-1
+        if (level > 1)
+            level /= 100;
+
+        return Math.Max(0, Math.Min(maxWidth, level * maxWidth));
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Converts audio level to height for visualization bars
+/// ConverterParameter specifies max height (default 50)
+/// </summary>
+public class AudioLevelToHeightConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        double level = 0;
+        double maxHeight = 50;
+
+        if (value is double d)
+            level = d;
+        else if (value is float f)
+            level = f;
+        else if (value is int i)
+            level = i / 100.0;
+
+        if (parameter is string paramStr && double.TryParse(paramStr, out double parsed))
+            maxHeight = parsed;
+
+        // Normalize to 0-1
+        if (level > 1)
+            level /= 100;
+
+        return Math.Max(2, level * maxHeight);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return Binding.DoNothing;
+    }
+}
+
+/// <summary>
+/// Converts slider value to width for custom slider controls
+/// Takes value, minimum, maximum, and total width as multi-binding values
+/// </summary>
+public class SliderWidthConverter : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (values == null || values.Length < 4)
+            return 0.0;
+
+        if (values[0] is not double value ||
+            values[1] is not double minimum ||
+            values[2] is not double maximum ||
+            values[3] is not double totalWidth)
+            return 0.0;
+
+        if (maximum <= minimum)
+            return 0.0;
+
+        var percentage = (value - minimum) / (maximum - minimum);
+        return Math.Max(0, Math.Min(totalWidth, percentage * totalWidth));
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Converts role enum to color brush
+/// </summary>
+public class RoleToColorConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        // Default color
+        var defaultColor = System.Windows.Media.Color.FromRgb(200, 200, 220);
+
+        if (value == null)
+            return new System.Windows.Media.SolidColorBrush(defaultColor);
+
+        var roleName = value.ToString()?.ToLowerInvariant() ?? "";
+
+        var color = roleName switch
+        {
+            "owner" => System.Windows.Media.Color.FromRgb(255, 215, 0),      // Gold
+            "admin" => System.Windows.Media.Color.FromRgb(255, 68, 68),      // Red
+            "moderator" => System.Windows.Media.Color.FromRgb(180, 100, 255), // Purple
+            "vip" => System.Windows.Media.Color.FromRgb(0, 255, 136),        // Neon Green
+            "verified" => System.Windows.Media.Color.FromRgb(0, 204, 255),   // Cyan
+            _ => defaultColor
+        };
+
+        return new System.Windows.Media.SolidColorBrush(color);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return Binding.DoNothing;
+    }
+}
+
+/// <summary>
+/// Converts rank/position to badge text
+/// </summary>
+public class RankToBadgeConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not int rank)
+            return "";
+
+        return rank switch
+        {
+            1 => "🥇",
+            2 => "🥈",
+            3 => "🥉",
+            _ when rank <= 10 => $"#{rank}",
+            _ => ""
+        };
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return Binding.DoNothing;
+    }
+}

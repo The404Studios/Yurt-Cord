@@ -11,7 +11,7 @@ namespace VeaMarketplace.Client.Helpers;
 /// </summary>
 public static class MemoryManagementHelper
 {
-    private static Timer? _monitoringTimer;
+    private static System.Threading.Timer? _monitoringTimer;
     private static long _lastWorkingSet;
     private static long _peakWorkingSet;
 
@@ -113,7 +113,7 @@ public static class MemoryManagementHelper
     {
         StopMonitoring();
 
-        _monitoringTimer = new Timer(
+        _monitoringTimer = new System.Threading.Timer(
             _ =>
             {
                 var stats = GetMemoryStats();

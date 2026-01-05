@@ -158,6 +158,7 @@ public class FriendHub : Hub
             {
                 _notificationService.CreateNotification(
                     friendship.AddresseeId,
+                    NotificationType.FriendRequest,
                     "Friend Request",
                     $"{requester.Username} sent you a friend request",
                     "friend_request",
@@ -293,6 +294,7 @@ public class FriendHub : Hub
             {
                 _notificationService.CreateNotification(
                     friendship.RequesterId,
+                    NotificationType.FriendRequest,
                     accept ? "Friend Request Accepted" : "Friend Request Declined",
                     accept
                         ? $"{responder.Username} accepted your friend request"
@@ -468,6 +470,7 @@ public class FriendHub : Hub
                     var truncatedContent = content.Length > 50 ? content[..50] + "..." : content;
                     _notificationService.CreateNotification(
                         recipientId,
+                        NotificationType.Message,
                         "New Message",
                         $"{sender.Username}: {truncatedContent}",
                         "direct_message",

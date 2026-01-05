@@ -75,7 +75,7 @@
                 <TextBlock x:Name="ConnectionBannerText" Grid.Column="1"
                            Text="RECONNECTING TO NETWORK..." FontSize="12"
                            Foreground="#050510" FontWeight="Bold"
-                           VerticalAlignment="Center" LetterSpacing="1"/>
+                           VerticalAlignment="Center"/>
 
                 <Button x:Name="ConnectionRetryButton" Grid.Column="2"
                         Content="RETRY" Visibility="Collapsed"
@@ -488,7 +488,7 @@
                                     Tag="Smileys" Click="EmojiCategory_Click" FontSize="10" Margin="2,0"/>
                             <Button Content="+1" Style="{StaticResource OverseerCircleButton}" Width="36" Height="36"
                                     Tag="Gestures" Click="EmojiCategory_Click" FontSize="10" Margin="2,0"/>
-                            <Button Content="<3" Style="{StaticResource OverseerCircleButton}" Width="36" Height="36"
+                            <Button Content="&lt;3" Style="{StaticResource OverseerCircleButton}" Width="36" Height="36"
                                     Tag="Symbols" Click="EmojiCategory_Click" FontSize="10" Margin="2,0"/>
                             <Button Content=":3" Style="{StaticResource OverseerCircleButton}" Width="36" Height="36"
                                     Tag="Animals" Click="EmojiCategory_Click" FontSize="10" Margin="2,0"/>
