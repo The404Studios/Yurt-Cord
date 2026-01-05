@@ -409,6 +409,9 @@ public class FriendHub : Hub
             // Send to sender
             await Clients.Caller.SendAsync("DirectMessageReceived", dto);
 
+            // Get sender info for notification
+            var sender = _authService.GetUserById(userId);
+
             // Send to recipient if online (all connections)
             if (_userConnections.TryGetValue(recipientId, out var recipientConnIds))
             {
@@ -419,6 +422,20 @@ public class FriendHub : Hub
                 {
                     await Clients.Client(connId).SendAsync("DirectMessageReceived", dto);
                     await Clients.Client(connId).SendAsync("Conversations", theirConversations);
+                }
+            }
+            else
+            {
+                // Recipient is offline - create a persistent notification
+                if (sender != null)
+                {
+                    var truncatedContent = content.Length > 50 ? content[..50] + "..." : content;
+                    _notificationService.CreateNotification(
+                        recipientId,
+                        "New Message",
+                        $"{sender.Username}: {truncatedContent}",
+                        "direct_message",
+                        dto.Id);
                 }
             }
 
