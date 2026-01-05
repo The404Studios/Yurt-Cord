@@ -2,16 +2,24 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:VeaMarketplace.Client.Controls"
-             Background="{StaticResource TertiaryDarkBrush}">
+             Background="Transparent">
 
-    <!-- BoolToVis and ChatMessageControl are available from App.xaml and Controls namespace -->
+    <UserControl.Resources>
+        <!-- Neon glow animation for input -->
+        <Storyboard x:Key="InputFocusGlow" RepeatBehavior="Forever">
+            <ColorAnimation Storyboard.TargetName="InputBorderBrush"
+                            Storyboard.TargetProperty="Color"
+                            From="#00FF88" To="#00CCFF" Duration="0:0:2"
+                            AutoReverse="True"/>
+        </Storyboard>
+    </UserControl.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
             <!-- Connection Banner -->
             <RowDefinition Height="Auto"/>
             <!-- Header -->
-            <RowDefinition Height="48"/>
+            <RowDefinition Height="56"/>
             <!-- Messages -->
             <RowDefinition Height="*"/>
             <!-- Typing Indicator -->
@@ -20,14 +28,18 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Connection Status Banner (shown when reconnecting/disconnected) -->
+        <!-- Connection Status Banner (Overseer style) -->
         <Border x:Name="ConnectionBanner" Grid.Row="0" Visibility="Collapsed"
-                Padding="12,8">
-            <Border.Style>
-                <Style TargetType="Border">
-                    <Setter Property="Background" Value="#FAA81A"/>
-                </Style>
-            </Border.Style>
+                Padding="14,10" CornerRadius="0,0,20,20" Margin="20,0">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Color="#FFD700" Offset="0"/>
+                    <GradientStop Color="#FF8C00" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+            <Border.Effect>
+                <DropShadowEffect Color="#FFD700" BlurRadius="15" ShadowDepth="0" Opacity="0.5"/>
+            </Border.Effect>
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -35,10 +47,10 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Spinner/Icon -->
-                <Grid Grid.Column="0" Margin="0,0,12,0" Width="20" Height="20">
-                    <Ellipse x:Name="ConnectionSpinner" Width="20" Height="20"
-                             Stroke="White" StrokeThickness="2"
+                <!-- Spinner -->
+                <Grid Grid.Column="0" Margin="0,0,14,0" Width="22" Height="22">
+                    <Ellipse x:Name="ConnectionSpinner" Width="22" Height="22"
+                             Stroke="#050510" StrokeThickness="2"
                              StrokeDashArray="3,2" RenderTransformOrigin="0.5,0.5">
                         <Ellipse.RenderTransform>
                             <RotateTransform x:Name="BannerSpinnerRotation"/>
@@ -49,100 +61,149 @@
                                     <Storyboard RepeatBehavior="Forever">
                                         <DoubleAnimation Storyboard.TargetName="BannerSpinnerRotation"
                                                          Storyboard.TargetProperty="Angle"
-                                                         From="0" To="360" Duration="0:0:1"/>
+                                                         From="0" To="360" Duration="0:0:0.8"/>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </EventTrigger>
                         </Ellipse.Triggers>
                     </Ellipse>
                     <TextBlock x:Name="ConnectionIcon" Text="" FontSize="14"
-                               Foreground="White" HorizontalAlignment="Center"
+                               Foreground="#050510" HorizontalAlignment="Center"
                                VerticalAlignment="Center" Visibility="Collapsed"/>
                 </Grid>
 
                 <TextBlock x:Name="ConnectionBannerText" Grid.Column="1"
-                           Text="Reconnecting to chat..." FontSize="13"
-                           Foreground="White" FontWeight="SemiBold"
-                           VerticalAlignment="Center"/>
+                           Text="RECONNECTING TO NETWORK..." FontSize="12"
+                           Foreground="#050510" FontWeight="Bold"
+                           VerticalAlignment="Center" LetterSpacing="1"/>
 
                 <Button x:Name="ConnectionRetryButton" Grid.Column="2"
-                        Content="Retry" Visibility="Collapsed"
-                        Style="{StaticResource IconButton}"
-                        Background="White" Foreground="#1E1F22"
-                        Padding="12,4" FontWeight="SemiBold"
-                        Click="ConnectionRetry_Click"/>
+                        Content="RETRY" Visibility="Collapsed"
+                        Style="{StaticResource OverseerPillButton}"
+                        Height="30" Padding="16,4" FontSize="10"/>
             </Grid>
         </Border>
 
-        <!-- Channel Header -->
-        <Border Grid.Row="1" Background="{StaticResource TertiaryDarkBrush}"
-                BorderBrush="{StaticResource PrimaryDarkBrush}" BorderThickness="0,0,0,1">
-            <Grid Margin="16,0">
+        <!-- Channel Header (Overseer style) -->
+        <Border Grid.Row="1" CornerRadius="25" Margin="8,8,8,0">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Color="#15101020" Offset="0"/>
+                    <GradientStop Color="#25101020" Offset="0.5"/>
+                    <GradientStop Color="#15101020" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+            <Border.BorderBrush>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Color="#3000FF88" Offset="0"/>
+                    <GradientStop Color="#3000CCFF" Offset="0.5"/>
+                    <GradientStop Color="#30FF00FF" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.BorderBrush>
+            <Border.BorderThickness>1</Border.BorderThickness>
+            <Grid Margin="20,0">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- Channel Icon with subtle glow effect -->
-                    <Border CornerRadius="4" Padding="6,2" Margin="0,0,8,0"
-                            Background="#2B2D31">
-                        <TextBlock Text="#" FontSize="18" FontWeight="Bold"
-                                   Foreground="{StaticResource AccentBrush}"/>
+                    <!-- Channel Icon -->
+                    <Border CornerRadius="15" Width="30" Height="30" Margin="0,0,12,0">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#00FF88" Offset="0"/>
+                                <GradientStop Color="#00CCFF" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Border.Effect>
+                            <DropShadowEffect Color="#00FF88" BlurRadius="10" ShadowDepth="0" Opacity="0.6"/>
+                        </Border.Effect>
+                        <TextBlock Text="#" FontSize="16" FontWeight="Bold"
+                                   Foreground="#050510"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <TextBlock x:Name="ChannelNameText" Text="general"
-                               FontSize="16" FontWeight="SemiBold"
-                               Foreground="{StaticResource TextPrimaryBrush}"
-                               VerticalAlignment="Center"/>
-                    <Border Width="1" Height="24" Background="{StaticResource QuaternaryDarkBrush}"
-                            Margin="16,0"/>
-                    <TextBlock x:Name="ChannelDescText" Text="General chat for everyone"
-                               FontSize="14" Foreground="{StaticResource TextMutedBrush}"
+                               FontSize="15" FontWeight="SemiBold"
+                               Foreground="#00FF88"
+                               VerticalAlignment="Center">
+                        <TextBlock.Effect>
+                            <DropShadowEffect Color="#00FF88" BlurRadius="8" ShadowDepth="0" Opacity="0.5"/>
+                        </TextBlock.Effect>
+                    </TextBlock>
+                    <Rectangle Width="1" Height="20" Margin="16,0">
+                        <Rectangle.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="Transparent" Offset="0"/>
+                                <GradientStop Color="#00CCFF" Offset="0.5"/>
+                                <GradientStop Color="Transparent" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
+                    <TextBlock x:Name="ChannelDescText" Text="General communications channel"
+                               FontSize="12" Foreground="#6060A0"
                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
-                               MaxWidth="300"/>
+                               MaxWidth="280"/>
                 </StackPanel>
 
                 <!-- Header Actions -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
                             VerticalAlignment="Center">
                     <!-- Online indicator -->
-                    <Border CornerRadius="10" Background="#2B2D31" Padding="8,4" Margin="0,0,8,0">
+                    <Border CornerRadius="15" Padding="10,5" Margin="0,0,10,0">
+                        <Border.Background>
+                            <SolidColorBrush Color="#15101020"/>
+                        </Border.Background>
+                        <Border.BorderBrush>
+                            <SolidColorBrush Color="#3000FF88"/>
+                        </Border.BorderBrush>
+                        <Border.BorderThickness>1</Border.BorderThickness>
                         <StackPanel Orientation="Horizontal">
-                            <Ellipse Width="8" Height="8" Fill="#57F287" Margin="0,0,6,0"/>
+                            <Ellipse Width="8" Height="8" Fill="#00FF88" Margin="0,0,8,0">
+                                <Ellipse.Effect>
+                                    <DropShadowEffect Color="#00FF88" BlurRadius="8" ShadowDepth="0"/>
+                                </Ellipse.Effect>
+                            </Ellipse>
                             <TextBlock x:Name="OnlineCountText" Text="0 online"
-                                       FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                                       FontSize="11" Foreground="#8080A0"/>
                         </StackPanel>
                     </Border>
-                    <Button Style="{StaticResource IconButton}" ToolTip="Pinned Messages"
+                    <Button Style="{StaticResource OverseerCircleButton}" ToolTip="Pinned"
                             Width="36" Height="36">
-                        <TextBlock Text="📌" FontSize="16"/>
+                        <TextBlock Text=">" FontSize="14"/>
                     </Button>
-                    <Button Style="{StaticResource IconButton}" ToolTip="Search Messages"
-                            Width="36" Height="36">
-                        <TextBlock Text="🔍" FontSize="16"/>
-                    </Button>
-                    <Button Style="{StaticResource IconButton}" ToolTip="Notification Settings"
-                            Width="36" Height="36">
-                        <TextBlock Text="🔔" FontSize="16"/>
+                    <Button Style="{StaticResource OverseerCircleButton}" ToolTip="Search"
+                            Width="36" Height="36" Margin="6,0">
+                        <TextBlock Text="?" FontSize="14"/>
                     </Button>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- Messages List -->
+        <!-- Messages List (with Overseer styling) -->
         <ScrollViewer Grid.Row="2" x:Name="MessagesScrollViewer"
                       VerticalScrollBarVisibility="Auto"
-                      Style="{StaticResource ModernScrollViewer}">
-            <ItemsControl x:Name="MessagesItemsControl" Margin="16,8">
+                      Style="{StaticResource OverseerScrollViewer}"
+                      Margin="8,8">
+            <ItemsControl x:Name="MessagesItemsControl" Margin="12,8">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <controls:ChatMessageControl Margin="0,4"/>
+                        <!-- Use OverseerMessageBubble for animated messages -->
+                        <controls:OverseerMessageBubble Margin="0,6"/>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </ScrollViewer>
 
-        <!-- Typing Indicator -->
-        <Border Grid.Row="3" Margin="16,4" Visibility="Collapsed" x:Name="TypingIndicator">
+        <!-- Typing Indicator (Overseer style) -->
+        <Border Grid.Row="3" Margin="20,6" Visibility="Collapsed" x:Name="TypingIndicator"
+                CornerRadius="15" Padding="12,6"
+                HorizontalAlignment="Left">
+            <Border.Background>
+                <SolidColorBrush Color="#20101020"/>
+            </Border.Background>
             <StackPanel Orientation="Horizontal">
-                <Canvas Width="40" Height="20">
-                    <Ellipse Width="8" Height="8" Fill="{StaticResource TextMutedBrush}"
-                             Canvas.Left="0" Canvas.Top="6">
+                <Canvas Width="44" Height="16">
+                    <Ellipse Width="8" Height="8" Fill="#00FF88"
+                             Canvas.Left="0" Canvas.Top="4">
+                        <Ellipse.Effect>
+                            <DropShadowEffect Color="#00FF88" BlurRadius="6" ShadowDepth="0"/>
+                        </Ellipse.Effect>
                         <Ellipse.Triggers>
                             <EventTrigger RoutedEvent="Loaded">
                                 <BeginStoryboard>
@@ -155,8 +216,11 @@
                             </EventTrigger>
                         </Ellipse.Triggers>
                     </Ellipse>
-                    <Ellipse Width="8" Height="8" Fill="{StaticResource TextMutedBrush}"
-                             Canvas.Left="12" Canvas.Top="6">
+                    <Ellipse Width="8" Height="8" Fill="#00CCFF"
+                             Canvas.Left="14" Canvas.Top="4">
+                        <Ellipse.Effect>
+                            <DropShadowEffect Color="#00CCFF" BlurRadius="6" ShadowDepth="0"/>
+                        </Ellipse.Effect>
                         <Ellipse.Triggers>
                             <EventTrigger RoutedEvent="Loaded">
                                 <BeginStoryboard>
@@ -169,8 +233,11 @@
                             </EventTrigger>
                         </Ellipse.Triggers>
                     </Ellipse>
-                    <Ellipse Width="8" Height="8" Fill="{StaticResource TextMutedBrush}"
-                             Canvas.Left="24" Canvas.Top="6">
+                    <Ellipse Width="8" Height="8" Fill="#FF00FF"
+                             Canvas.Left="28" Canvas.Top="4">
+                        <Ellipse.Effect>
+                            <DropShadowEffect Color="#FF00FF" BlurRadius="6" ShadowDepth="0"/>
+                        </Ellipse.Effect>
                         <Ellipse.Triggers>
                             <EventTrigger RoutedEvent="Loaded">
                                 <BeginStoryboard>
@@ -184,13 +251,13 @@
                         </Ellipse.Triggers>
                     </Ellipse>
                 </Canvas>
-                <TextBlock x:Name="TypingUserText" Text="Someone is typing..."
-                           Foreground="{StaticResource TextMutedBrush}"
+                <TextBlock x:Name="TypingUserText" Text="Agent is transmitting..."
+                           Foreground="#8080A0" FontSize="11"
                            VerticalAlignment="Center"/>
             </StackPanel>
         </Border>
 
-        <!-- Message Input Area -->
+        <!-- Message Input Area (Overseer style) -->
         <Grid Grid.Row="4" Margin="16,8,16,16">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -199,8 +266,17 @@
 
             <!-- Attachment Preview Area -->
             <Border x:Name="AttachmentPreviewArea" Grid.Row="0" Visibility="Collapsed"
-                    Background="{StaticResource QuaternaryDarkBrush}"
-                    CornerRadius="8,8,0,0" Padding="8" Margin="0,0,0,0">
+                    CornerRadius="20,20,0,0" Padding="12" Margin="0,0,0,0">
+                <Border.Background>
+                    <SolidColorBrush Color="#20101020"/>
+                </Border.Background>
+                <Border.BorderBrush>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Color="#3000FF88" Offset="0"/>
+                        <GradientStop Color="#3000CCFF" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.BorderBrush>
+                <Border.BorderThickness>1,1,1,0</Border.BorderThickness>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -215,8 +291,12 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Background="#2B2D31" CornerRadius="6" Padding="8" Margin="4"
-                                        MaxWidth="200">
+                                <Border CornerRadius="12" Padding="10" Margin="4"
+                                        MaxWidth="200" BorderThickness="1"
+                                        BorderBrush="#3000CCFF">
+                                    <Border.Background>
+                                        <SolidColorBrush Color="#25101020"/>
+                                    </Border.Background>
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
@@ -224,27 +304,31 @@
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
 
-                                        <!-- File Type Icon/Preview -->
-                                        <Border Grid.Column="0" Width="48" Height="48" CornerRadius="4"
-                                                Background="#1E1F22" Margin="0,0,8,0">
+                                        <!-- File Preview -->
+                                        <Border Grid.Column="0" Width="44" Height="44" CornerRadius="8"
+                                                Margin="0,0,10,0">
+                                            <Border.Background>
+                                                <SolidColorBrush Color="#15101020"/>
+                                            </Border.Background>
                                             <Image x:Name="PreviewImage" Stretch="UniformToFill"
                                                    Source="{Binding ThumbnailPath}"/>
                                         </Border>
 
                                         <!-- File Info -->
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding FileName}" FontSize="12"
-                                                       Foreground="{StaticResource TextPrimaryBrush}"
-                                                       TextTrimming="CharacterEllipsis" MaxWidth="100"/>
-                                            <TextBlock Text="{Binding FileSizeText}" FontSize="10"
-                                                       Foreground="{StaticResource TextMutedBrush}"/>
+                                            <TextBlock Text="{Binding FileName}" FontSize="11"
+                                                       Foreground="#E0E0FF"
+                                                       TextTrimming="CharacterEllipsis" MaxWidth="90"/>
+                                            <TextBlock Text="{Binding FileSizeText}" FontSize="9"
+                                                       Foreground="#6060A0"/>
                                         </StackPanel>
 
                                         <!-- Remove Button -->
-                                        <Button Grid.Column="2" Style="{StaticResource IconButton}"
-                                                Width="24" Height="24" VerticalAlignment="Top"
-                                                Click="RemoveAttachment_Click" Tag="{Binding}">
-                                            <TextBlock Text="X" FontSize="12" Foreground="#ED4245"/>
+                                        <Button Grid.Column="2" Style="{StaticResource OverseerCircleButton}"
+                                                Width="26" Height="26" VerticalAlignment="Top"
+                                                Click="RemoveAttachment_Click" Tag="{Binding}"
+                                                BorderBrush="#FF4444" Foreground="#FF4444">
+                                            <TextBlock Text="X" FontSize="10"/>
                                         </Button>
                                     </Grid>
                                 </Border>
@@ -254,18 +338,35 @@
 
                     <!-- Upload Progress -->
                     <StackPanel x:Name="UploadProgressPanel" Grid.Column="1"
-                                VerticalAlignment="Center" Visibility="Collapsed" Margin="8,0">
-                        <TextBlock Text="Uploading..." FontSize="11"
-                                   Foreground="{StaticResource TextMutedBrush}"/>
+                                VerticalAlignment="Center" Visibility="Collapsed" Margin="10,0">
+                        <TextBlock Text="UPLOADING..." FontSize="10"
+                                   Foreground="#00FF88" FontWeight="SemiBold"/>
                         <ProgressBar x:Name="UploadProgressBar" Width="100" Height="4"
-                                     Background="#2B2D31" Foreground="{StaticResource AccentBrush}"/>
+                                     Background="#20101020" Foreground="#00FF88"/>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <Border Grid.Row="1" Background="{StaticResource QuaternaryDarkBrush}"
-                    CornerRadius="8" Padding="4"
-                    x:Name="InputBorder">
+            <!-- Main Input Border -->
+            <Border Grid.Row="1" CornerRadius="25" Padding="6"
+                    x:Name="InputBorder" BorderThickness="2">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#15152A" Offset="0"/>
+                        <GradientStop Color="#0A0A15" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+                <Border.BorderBrush>
+                    <SolidColorBrush x:Name="InputBorderBrush" Color="#00FF88"/>
+                </Border.BorderBrush>
+                <Border.Effect>
+                    <DropShadowEffect Color="#00FF88" BlurRadius="15" ShadowDepth="0" Opacity="0.4"/>
+                </Border.Effect>
+                <Border.Triggers>
+                    <EventTrigger RoutedEvent="Loaded">
+                        <BeginStoryboard Storyboard="{StaticResource InputFocusGlow}"/>
+                    </EventTrigger>
+                </Border.Triggers>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -274,21 +375,22 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Add Attachment Button -->
-                    <Button Grid.Column="0" Style="{StaticResource IconButton}"
-                            Width="44" Height="44" x:Name="AddAttachmentButton"
-                            Click="AddAttachment_Click" ToolTip="Add Attachment">
-                        <TextBlock Text="➕" FontSize="20" Foreground="{StaticResource TextMutedBrush}"/>
+                    <Button Grid.Column="0" Style="{StaticResource OverseerCircleButton}"
+                            Width="42" Height="42" x:Name="AddAttachmentButton"
+                            Click="AddAttachment_Click" ToolTip="Add Attachment"
+                            BorderBrush="#00CCFF">
+                        <TextBlock Text="+" FontSize="22" Margin="0,-2,0,0"/>
                     </Button>
 
                     <!-- Message TextBox -->
                     <TextBox x:Name="MessageTextBox" Grid.Column="1"
                              Background="Transparent"
                              BorderThickness="0"
-                             Foreground="{StaticResource TextPrimaryBrush}"
-                             CaretBrush="{StaticResource TextPrimaryBrush}"
+                             Foreground="#E0E0FF"
+                             CaretBrush="#00FF88"
                              FontSize="14"
                              VerticalContentAlignment="Center"
-                             Padding="8"
+                             Padding="12,8"
                              TextWrapping="Wrap"
                              AcceptsReturn="False"
                              MaxHeight="100"
@@ -302,9 +404,9 @@
                                             <Grid>
                                                 <ScrollViewer x:Name="PART_ContentHost" />
                                                 <TextBlock x:Name="Placeholder"
-                                                           Text="Message #general"
-                                                           Foreground="{StaticResource TextMutedBrush}"
-                                                           Padding="8"
+                                                           Text="Transmit to #general..."
+                                                           Foreground="#505070"
+                                                           Padding="12,8"
                                                            VerticalAlignment="Center"
                                                            Visibility="Collapsed"/>
                                             </Grid>
@@ -322,29 +424,41 @@
 
                     <!-- Emoji and Send Buttons -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal">
-                        <Button x:Name="EmojiButton" Style="{StaticResource IconButton}" Width="44" Height="44"
-                                ToolTip="Emoji" Click="EmojiButton_Click">
-                            <TextBlock Text="😊" FontSize="20"/>
+                        <Button x:Name="EmojiButton" Style="{StaticResource OverseerCircleButton}"
+                                Width="42" Height="42" ToolTip="Emoji"
+                                Click="EmojiButton_Click" BorderBrush="#FF00FF">
+                            <TextBlock Text="^" FontSize="18"/>
                         </Button>
-                        <Button x:Name="SendButton" Style="{StaticResource IconButton}"
-                                Width="44" Height="44"
-                                Click="SendButton_Click"
-                                ToolTip="Send Message">
-                            <TextBlock Text="➤" FontSize="20" Foreground="{StaticResource AccentBrush}"/>
+                        <Button x:Name="SendButton" Style="{StaticResource OverseerCircleButton}"
+                                Width="42" Height="42" Margin="6,0,0,0"
+                                Click="SendButton_Click" ToolTip="Transmit">
+                            <TextBlock Text=">" FontSize="20"/>
                         </Button>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- Emoji Picker Popup -->
+            <!-- Emoji Picker Popup (Overseer style) -->
             <Popup x:Name="EmojiPopup" PlacementTarget="{Binding ElementName=EmojiButton}"
                    Placement="Top" StaysOpen="False" AllowsTransparency="True">
-                <Border Background="#2B2D31" CornerRadius="8" Padding="8"
-                        BorderBrush="#40444B" BorderThickness="1">
+                <Border CornerRadius="20" Padding="12"
+                        BorderThickness="2">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#15152A" Offset="0"/>
+                            <GradientStop Color="#0A0A15" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Border.BorderBrush>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#00FF88" Offset="0"/>
+                            <GradientStop Color="#FF00FF" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.BorderBrush>
                     <Border.Effect>
-                        <DropShadowEffect BlurRadius="10" ShadowDepth="3" Opacity="0.5"/>
+                        <DropShadowEffect BlurRadius="25" ShadowDepth="0" Opacity="0.7" Color="#00FF88"/>
                     </Border.Effect>
-                    <Grid Width="320" Height="280">
+                    <Grid Width="340" Height="300">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
@@ -352,39 +466,41 @@
                         </Grid.RowDefinitions>
 
                         <!-- Search -->
-                        <Border Grid.Row="0" Background="#1E1F22" CornerRadius="4"
-                                Padding="8,6" Margin="0,0,0,8">
+                        <Border Grid.Row="0" CornerRadius="15" Padding="12,8" Margin="0,0,0,10"
+                                BorderThickness="1" BorderBrush="#3000CCFF">
+                            <Border.Background>
+                                <SolidColorBrush Color="#15101020"/>
+                            </Border.Background>
                             <Grid>
-                                <TextBlock Text="🔍 Search emojis..." Foreground="#72767D"
-                                           FontSize="13" x:Name="EmojiSearchPlaceholder"/>
+                                <TextBlock Text="Search signals..." Foreground="#505070"
+                                           FontSize="12" x:Name="EmojiSearchPlaceholder"/>
                                 <TextBox x:Name="EmojiSearchBox" Background="Transparent"
-                                         BorderThickness="0" Foreground="White" FontSize="13"
+                                         BorderThickness="0" Foreground="#E0E0FF" FontSize="12"
+                                         CaretBrush="#00FF88"
                                          TextChanged="EmojiSearch_TextChanged"/>
                             </Grid>
                         </Border>
 
                         <!-- Category Tabs -->
-                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
-                            <Button Content="😀" Style="{StaticResource IconButton}" Width="32" Height="32"
-                                    Tag="Smileys" Click="EmojiCategory_Click" FontSize="16"/>
-                            <Button Content="👍" Style="{StaticResource IconButton}" Width="32" Height="32"
-                                    Tag="Gestures" Click="EmojiCategory_Click" FontSize="16"/>
-                            <Button Content="❤" Style="{StaticResource IconButton}" Width="32" Height="32"
-                                    Tag="Symbols" Click="EmojiCategory_Click" FontSize="16"/>
-                            <Button Content="🐱" Style="{StaticResource IconButton}" Width="32" Height="32"
-                                    Tag="Animals" Click="EmojiCategory_Click" FontSize="16"/>
-                            <Button Content="🍕" Style="{StaticResource IconButton}" Width="32" Height="32"
-                                    Tag="Food" Click="EmojiCategory_Click" FontSize="16"/>
-                            <Button Content="⚽" Style="{StaticResource IconButton}" Width="32" Height="32"
-                                    Tag="Activities" Click="EmojiCategory_Click" FontSize="16"/>
-                            <Button Content="🚗" Style="{StaticResource IconButton}" Width="32" Height="32"
-                                    Tag="Travel" Click="EmojiCategory_Click" FontSize="16"/>
-                            <Button Content="💡" Style="{StaticResource IconButton}" Width="32" Height="32"
-                                    Tag="Objects" Click="EmojiCategory_Click" FontSize="16"/>
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10"
+                                    HorizontalAlignment="Center">
+                            <Button Content="^_^" Style="{StaticResource OverseerCircleButton}" Width="36" Height="36"
+                                    Tag="Smileys" Click="EmojiCategory_Click" FontSize="10" Margin="2,0"/>
+                            <Button Content="+1" Style="{StaticResource OverseerCircleButton}" Width="36" Height="36"
+                                    Tag="Gestures" Click="EmojiCategory_Click" FontSize="10" Margin="2,0"/>
+                            <Button Content="<3" Style="{StaticResource OverseerCircleButton}" Width="36" Height="36"
+                                    Tag="Symbols" Click="EmojiCategory_Click" FontSize="10" Margin="2,0"/>
+                            <Button Content=":3" Style="{StaticResource OverseerCircleButton}" Width="36" Height="36"
+                                    Tag="Animals" Click="EmojiCategory_Click" FontSize="10" Margin="2,0"/>
+                            <Button Content="nom" Style="{StaticResource OverseerCircleButton}" Width="36" Height="36"
+                                    Tag="Food" Click="EmojiCategory_Click" FontSize="10" Margin="2,0"/>
+                            <Button Content="go" Style="{StaticResource OverseerCircleButton}" Width="36" Height="36"
+                                    Tag="Activities" Click="EmojiCategory_Click" FontSize="10" Margin="2,0"/>
                         </StackPanel>
 
                         <!-- Emoji Grid -->
-                        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto"
+                                      Style="{StaticResource OverseerScrollViewer}">
                             <ItemsControl x:Name="EmojiGrid">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
@@ -393,10 +509,10 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Button Content="{Binding}" Style="{StaticResource IconButton}"
-                                                Width="36" Height="36" FontSize="20"
+                                        <Button Content="{Binding}" Style="{StaticResource OverseerCircleButton}"
+                                                Width="40" Height="40" FontSize="18"
                                                 Click="Emoji_Click" Tag="{Binding}"
-                                                Margin="2"/>
+                                                Margin="3"/>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
