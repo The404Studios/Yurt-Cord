@@ -1,97 +1,113 @@
-# Plugin
+# OVERSEER
 
-A modern marketplace and community platform built with .NET 8, WPF, and SignalR. Featuring a sleek orange and black theme with smooth animations.
+> **Observe • Connect • Control**
+
+A cutting-edge marketplace and community platform built with .NET 8, WPF, and SignalR. Featuring a stunning cyberpunk aesthetic with neon glow effects, animated matrix backgrounds, and a fully circular UI design.
+
+<!-- Add your screenshots here -->
+<!-- ![Overseer Dashboard](images/dashboard.png) -->
+<!-- ![Overseer Chat](images/chat.png) -->
+<!-- ![Overseer Marketplace](images/marketplace.png) -->
+
+---
+
+## Design Philosophy
+
+Overseer features a futuristic **cyberpunk design system** with:
+
+- **Matrix-style animated backgrounds** - Cascading code rain effect
+- **Circular/Pill-shaped UI elements** - Rounded corners on all components (24-40px radius)
+- **Neon glow effects** - Primary green (#00FF88), secondary cyan (#00CCFF), accent magenta (#FF00FF)
+- **Deep space backgrounds** - Ultra-dark surfaces (#050510, #101020)
+- **Hover interactions** - Elements illuminate with enhanced glow on interaction
+
+---
 
 ## Features
 
-### Chat System
-- Real-time IRC-style chat with SignalR
+### Real-Time Chat System
+- SignalR-powered real-time messaging
 - Multiple channels (text and voice)
-- Typing indicators
-- Message history
-- System notifications (join/leave)
+- Typing indicators with neon effects
+- Message history and search
+- System notifications with animated transitions
 
-### Voice Channels
-- Real-time voice communication
-- Voice activity visualization
-- Mute/Deafen controls
-- Audio level indicators
+### Voice Communication
+- Crystal-clear real-time voice
+- Animated voice activity visualization
+- Mute/Deafen controls with circular buttons
+- Audio level bars with glow effects
 - Screen sharing support
 
 ### Marketplace
-- List items for sale
+- List items for sale with beautiful product cards
 - Category filtering (Software, Games, Services, Digital, etc.)
-- Advanced search functionality
-- Product detail views
+- Advanced search with instant results
+- Product detail views with image galleries
 - $1.50 listing fee
 - PayPal and Bitcoin payment support
-- Product reviews and ratings
+- Star ratings and review system
 
 ### User System
-- User registration and login
-- JWT authentication
-- Role system:
-  - Owner (Gold)
-  - Admin (Orange)
-  - Moderator (Purple)
-  - VIP (Green)
-  - Verified (Blue)
-  - Member (Gray)
-- Rank system based on sales:
-  - Legend
-  - Elite
-  - Diamond
-  - Platinum
-  - Gold
-  - Silver
-  - Bronze
-  - Newcomer
+- Secure registration and login
+- JWT authentication with refresh tokens
+- **Role Hierarchy:**
+  | Role | Color | Glow |
+  |------|-------|------|
+  | Owner | Gold | #FFD700 |
+  | Admin | Red | #FF4444 |
+  | Moderator | Purple | #B464FF |
+  | VIP | Neon Green | #00FF88 |
+  | Verified | Cyan | #00CCFF |
+  | Member | Gray | #8080A0 |
+
+- **Rank System** based on sales activity:
+  - Legend, Elite, Diamond, Platinum, Gold, Silver, Bronze, Newcomer
 
 ### Social Features
-- Friend system with requests
-- Direct messaging
-- User profiles with customization
-- Activity feed
-- Leaderboards
+- Friend system with glowing request indicators
+- Direct messaging with typing animations
+- Customizable user profiles
+- Activity feed with real-time updates
+- Leaderboards with animated rank badges
 
-### Moderation
+### Moderation Tools
 - Ban system (temporary and permanent)
-- Mute system
-- Warning system
-- Auto-moderation with filters
-- Moderation logs
+- Mute system with duration controls
+- Warning system with tracking
+- Auto-moderation with content filters
+- Detailed moderation logs
 
-### UI/UX
-- Premium dark theme with orange accent
-- Orange glow effects on interactive elements
-- Smooth animations and transitions
-- Custom window chrome
-- Responsive design
-- Modern button hover effects with scale and glow
+---
 
 ## Project Structure
 
 ```
-VeaMarketplace/
+Overseer/
 ├── src/
-│   ├── VeaMarketplace.Shared/     # Shared models and DTOs
+│   ├── VeaMarketplace.Shared/      # Shared models and DTOs
 │   │   ├── Models/
 │   │   ├── DTOs/
 │   │   └── Enums/
-│   ├── VeaMarketplace.Server/     # ASP.NET Core Server
+│   ├── VeaMarketplace.Server/      # ASP.NET Core Server
 │   │   ├── Controllers/
 │   │   ├── Hubs/
 │   │   ├── Services/
 │   │   └── Data/
-│   └── VeaMarketplace.Client/     # WPF Client (Plugin)
+│   └── VeaMarketplace.Client/      # WPF Client (Overseer)
 │       ├── Views/
 │       ├── ViewModels/
 │       ├── Controls/
+│       │   └── MatrixBackground.cs # Animated background
 │       ├── Services/
 │       ├── Styles/
+│       ├── Themes/
+│       │   └── OverseerTheme.xaml  # Core theme resources
 │       └── Converters/
 └── VeaMarketplace.sln
 ```
+
+---
 
 ## Getting Started
 
@@ -124,6 +140,8 @@ Or open the solution in Visual Studio and run the client project.
 dotnet build VeaMarketplace.sln
 ```
 
+---
+
 ## Configuration
 
 ### Server (appsettings.json)
@@ -146,31 +164,70 @@ dotnet build VeaMarketplace.sln
 }
 ```
 
-## Technologies Used
+---
 
-- **Backend**
-  - ASP.NET Core 8
-  - SignalR for real-time communication
-  - LiteDB for data persistence
-  - JWT for authentication
-  - BCrypt for password hashing
+## Technologies
 
-- **Frontend**
-  - WPF (.NET 8)
-  - CommunityToolkit.Mvvm
-  - NAudio for voice
-  - Custom animations and styles
+### Backend
+- ASP.NET Core 8
+- SignalR for real-time communication
+- LiteDB for data persistence
+- JWT for authentication
+- BCrypt for password hashing
 
-## Theme
+### Frontend
+- WPF (.NET 8)
+- CommunityToolkit.Mvvm
+- NAudio for voice processing
+- FFmpeg.AutoGen for video/screen sharing
+- Custom animations and theme system
 
-Plugin features a premium dark theme with:
-- Deep black backgrounds (#0A0A0B, #111113, #18181B)
-- Vibrant orange accent (#FF6B00)
-- Fire gradient effects (orange to gold)
-- Orange glow on hover states
-- Smooth scale animations on buttons
-- High contrast text for readability
+---
+
+## Theme System
+
+Overseer uses a comprehensive theme system defined in `OverseerTheme.xaml`:
+
+### Color Palette
+| Name | Hex | Usage |
+|------|-----|-------|
+| Primary | `#00FF88` | Main accent, success states |
+| Secondary | `#00CCFF` | Links, secondary actions |
+| Accent | `#FF00FF` | Highlights, special elements |
+| Warning | `#FFD700` | Warnings, important notices |
+| Danger | `#FF4444` | Errors, destructive actions |
+| Background | `#050510` | App background |
+| Surface | `#101020` | Cards, panels |
+| Text | `#E0E0FF` | Primary text |
+| TextDim | `#8080A0` | Secondary text |
+
+### Available Styles
+- `OverseerCircleButton` - Circular buttons with neon glow
+- `OverseerPillButton` - Pill-shaped action buttons
+- `OverseerTextBox` - Rounded input fields
+- `OverseerPasswordBox` - Secure password inputs
+- `OverseerCard` - Content cards with glow
+- `OverseerPanel` - Gradient panels
+- `OverseerNavItem` - Navigation buttons
+- `OverseerAvatar` - User avatar containers
+- `OverseerGlowLabel` - Glowing text labels
+- `OverseerRainbowLabel` - Rainbow gradient text
+
+---
+
+## Screenshots
+
+*Add your screenshots here to showcase the Overseer interface*
+
+---
 
 ## License
 
 MIT License
+
+---
+
+<p align="center">
+  <strong>OVERSEER</strong><br>
+  <em>Observe • Connect • Control</em>
+</p>
