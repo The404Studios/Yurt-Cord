@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:VeaMarketplace.Client.Views"
         xmlns:controls="clr-namespace:VeaMarketplace.Client.Controls"
-        Title="Yurt Cord"
+        Title="Overseer"
         Height="800" Width="1280"
         MinHeight="600" MinWidth="900"
         WindowStyle="None"
@@ -15,8 +15,11 @@
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </Window.Resources>
 
-    <Border Background="{StaticResource TertiaryDarkBrush}" CornerRadius="8">
+    <Border Background="{StaticResource OverseerBackgroundBrush}" CornerRadius="24">
         <Grid>
+            <!-- Matrix Background Animation -->
+            <controls:MatrixBackground x:Name="MatrixBg" Opacity="0.3"/>
+
             <!-- Login View -->
             <views:LoginView x:Name="LoginView" Visibility="Visible"/>
 
@@ -42,14 +45,18 @@
                         MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <Grid>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="80,0,0,0">
-                            <TextBlock Text="YURT CORD" FontWeight="Bold" FontSize="13"
-                                       Foreground="{StaticResource AccentBrush}"
-                                       VerticalAlignment="Center"/>
-                            <TextBlock Text="/" FontWeight="Light" FontSize="13"
-                                       Foreground="{StaticResource TextMutedBrush}"
-                                       VerticalAlignment="Center" Margin="6,0"/>
-                            <TextBlock Text="Your Community" FontWeight="Normal" FontSize="12"
-                                       Foreground="{StaticResource TextSecondaryBrush}"
+                            <TextBlock Text="OVERSEER" FontWeight="Bold" FontSize="13"
+                                       Foreground="{StaticResource OverseerPrimaryBrush}"
+                                       VerticalAlignment="Center">
+                                <TextBlock.Effect>
+                                    <DropShadowEffect Color="#00FF88" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
+                                </TextBlock.Effect>
+                            </TextBlock>
+                            <TextBlock Text="•" FontWeight="Light" FontSize="13"
+                                       Foreground="{StaticResource OverseerSecondaryBrush}"
+                                       VerticalAlignment="Center" Margin="8,0"/>
+                            <TextBlock Text="Observe • Connect • Control" FontWeight="Normal" FontSize="11"
+                                       Foreground="{StaticResource OverseerTextDimBrush}"
                                        VerticalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -103,115 +110,105 @@
                     </Grid>
                 </Border>
 
-                <!-- Server Sidebar (Dark) -->
-                <Border Grid.Column="0" Background="{StaticResource PrimaryDarkBrush}"
-                        Margin="0,32,0,0">
-                    <StackPanel Margin="0,12">
-                        <!-- Home Button -->
-                        <Button Style="{StaticResource IconButton}" Width="48" Height="48"
-                                Margin="0,0,0,8" Click="HomeButton_Click">
-                            <Border Background="{StaticResource AccentBrush}" CornerRadius="16"
-                                    Width="48" Height="48">
-                                <TextBlock Text="🏠" FontSize="24"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
+                <!-- Server Sidebar (Overseer Dark with glow) -->
+                <Border Grid.Column="0" Margin="0,32,0,0" CornerRadius="0,20,20,0">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#08081A" Offset="0"/>
+                            <GradientStop Color="#050510" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <StackPanel Margin="0,16">
+                        <!-- Home Button (Overseer Orb) -->
+                        <Button Style="{StaticResource OverseerCircleButton}" Width="52" Height="52"
+                                Margin="10,0,10,8" Click="HomeButton_Click">
+                            <TextBlock Text="⬡" FontSize="26" Foreground="{StaticResource OverseerPrimaryBrush}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Button>
 
-                        <Separator Background="{StaticResource QuaternaryDarkBrush}"
-                                   Margin="16,4" Height="2"/>
+                        <Border Height="2" Margin="12,8" CornerRadius="1">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="Transparent" Offset="0"/>
+                                    <GradientStop Color="#00FF88" Offset="0.5"/>
+                                    <GradientStop Color="Transparent" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
 
                         <!-- Chat Button -->
-                        <Button Style="{StaticResource IconButton}" Width="48" Height="48"
-                                Margin="0,8,0,0" ToolTip="Chat" Click="ChatButton_Click">
-                            <Border x:Name="ChatButtonBorder" Background="{StaticResource SecondaryDarkBrush}"
-                                    CornerRadius="24" Width="48" Height="48">
-                                <TextBlock Text="💬" FontSize="22"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
+                        <Button Style="{StaticResource OverseerNavItem}" Width="52" Height="52"
+                                Margin="10,6,10,0" ToolTip="Chat" Click="ChatButton_Click">
+                            <TextBlock x:Name="ChatButtonIcon" Text="💬" FontSize="22"/>
                         </Button>
 
                         <!-- Marketplace Button -->
-                        <Button Style="{StaticResource IconButton}" Width="48" Height="48"
-                                Margin="0,8,0,0" ToolTip="Marketplace" Click="MarketplaceButton_Click">
-                            <Border x:Name="MarketButtonBorder" Background="{StaticResource SecondaryDarkBrush}"
-                                    CornerRadius="24" Width="48" Height="48">
-                                <TextBlock Text="🛒" FontSize="22"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
+                        <Button Style="{StaticResource OverseerNavItem}" Width="52" Height="52"
+                                Margin="10,6,10,0" ToolTip="Marketplace" Click="MarketplaceButton_Click">
+                            <TextBlock x:Name="MarketButtonIcon" Text="🛒" FontSize="22"/>
                         </Button>
 
                         <!-- Discover Button -->
-                        <Button Style="{StaticResource IconButton}" Width="48" Height="48"
-                                Margin="0,8,0,0" ToolTip="Discover" Click="DiscoverButton_Click">
-                            <Border x:Name="DiscoverButtonBorder" Background="{StaticResource SecondaryDarkBrush}"
-                                    CornerRadius="24" Width="48" Height="48">
-                                <TextBlock Text="🔍" FontSize="22"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
+                        <Button Style="{StaticResource OverseerNavItem}" Width="52" Height="52"
+                                Margin="10,6,10,0" ToolTip="Discover" Click="DiscoverButton_Click">
+                            <TextBlock x:Name="DiscoverButtonIcon" Text="🔍" FontSize="22"/>
                         </Button>
 
                         <!-- Activity Feed Button -->
-                        <Button Style="{StaticResource IconButton}" Width="48" Height="48"
-                                Margin="0,8,0,0" ToolTip="Activity Feed" Click="ActivityFeedButton_Click">
-                            <Border x:Name="ActivityButtonBorder" Background="{StaticResource SecondaryDarkBrush}"
-                                    CornerRadius="24" Width="48" Height="48">
-                                <TextBlock Text="📰" FontSize="22"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
+                        <Button Style="{StaticResource OverseerNavItem}" Width="52" Height="52"
+                                Margin="10,6,10,0" ToolTip="Activity" Click="ActivityFeedButton_Click">
+                            <TextBlock x:Name="ActivityButtonIcon" Text="📰" FontSize="22"/>
                         </Button>
 
                         <!-- Profile Button -->
-                        <Button Style="{StaticResource IconButton}" Width="48" Height="48"
-                                Margin="0,8,0,0" ToolTip="Profile" Click="ProfileButton_Click">
-                            <Border x:Name="ProfileButtonBorder" Background="{StaticResource SecondaryDarkBrush}"
-                                    CornerRadius="24" Width="48" Height="48">
-                                <TextBlock Text="👤" FontSize="22"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
+                        <Button Style="{StaticResource OverseerNavItem}" Width="52" Height="52"
+                                Margin="10,6,10,0" ToolTip="Profile" Click="ProfileButton_Click">
+                            <TextBlock x:Name="ProfileButtonIcon" Text="👤" FontSize="22"/>
                         </Button>
 
                         <!-- Friends Button -->
-                        <Button Style="{StaticResource IconButton}" Width="48" Height="48"
-                                Margin="0,8,0,0" ToolTip="Friends" Click="FriendsButton_Click">
-                            <Border x:Name="FriendsButtonBorder" Background="{StaticResource SecondaryDarkBrush}"
-                                    CornerRadius="24" Width="48" Height="48">
-                                <TextBlock Text="👥" FontSize="22"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
+                        <Button Style="{StaticResource OverseerNavItem}" Width="52" Height="52"
+                                Margin="10,6,10,0" ToolTip="Friends" Click="FriendsButton_Click">
+                            <TextBlock x:Name="FriendsButtonIcon" Text="👥" FontSize="22"/>
                         </Button>
 
                         <!-- Settings Button -->
-                        <Button Style="{StaticResource IconButton}" Width="48" Height="48"
-                                Margin="0,8,0,0" ToolTip="Settings" Click="SettingsButton_Click">
-                            <Border x:Name="SettingsButtonBorder" Background="{StaticResource SecondaryDarkBrush}"
-                                    CornerRadius="24" Width="48" Height="48">
-                                <TextBlock Text="⚙️" FontSize="22"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
+                        <Button Style="{StaticResource OverseerNavItem}" Width="52" Height="52"
+                                Margin="10,6,10,0" ToolTip="Settings" Click="SettingsButton_Click">
+                            <TextBlock x:Name="SettingsButtonIcon" Text="⚙️" FontSize="22"/>
                         </Button>
 
                         <!-- Add Server Button -->
-                        <Button Style="{StaticResource IconButton}" Width="48" Height="48"
-                                Margin="0,8,0,0" ToolTip="Add Server">
-                            <Border Background="Transparent" CornerRadius="24"
-                                    BorderBrush="{StaticResource AccentGreenBrush}" BorderThickness="2"
-                                    Width="48" Height="48">
-                                <TextBlock Text="+" FontSize="28" Foreground="{StaticResource AccentGreenBrush}"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-4,0,0"/>
-                            </Border>
+                        <Button Style="{StaticResource OverseerCircleButton}" Width="44" Height="44"
+                                Margin="10,12,10,0" ToolTip="Add Server" BorderBrush="{StaticResource OverseerPrimaryBrush}">
+                            <TextBlock Text="+" FontSize="24" Foreground="{StaticResource OverseerPrimaryBrush}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-2,0,0"/>
                         </Button>
                     </StackPanel>
                 </Border>
 
-                <!-- Channel Sidebar -->
-                <Border Grid.Column="1" Background="{StaticResource SecondaryDarkBrush}"
-                        Margin="0,32,0,0">
+                <!-- Channel Sidebar (Rounded) -->
+                <Border Grid.Column="1" Margin="0,32,0,0" CornerRadius="20,0,0,20">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#101020" Offset="0"/>
+                            <GradientStop Color="#0A0A18" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
                     <views:ChannelSidebar x:Name="ChannelSidebar"/>
                 </Border>
 
-                <!-- Main Content Area -->
-                <Border Grid.Column="2" Background="{StaticResource TertiaryDarkBrush}"
-                        Margin="0,32,0,0">
+                <!-- Main Content Area (Rounded with subtle glow) -->
+                <Border Grid.Column="2" Margin="4,36,4,4" CornerRadius="24">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#0C0C1A" Offset="0"/>
+                            <GradientStop Color="#080814" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Border.Effect>
+                        <DropShadowEffect Color="#00FF88" BlurRadius="8" ShadowDepth="0" Opacity="0.1"/>
+                    </Border.Effect>
                     <Grid>
                         <views:ChatView x:Name="ChatViewControl" Visibility="Visible"/>
                         <views:MarketplaceView x:Name="MarketplaceViewControl" Visibility="Collapsed"/>

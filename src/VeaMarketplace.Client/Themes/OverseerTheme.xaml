@@ -275,8 +275,8 @@
         </Setter>
     </Style>
 
-    <!-- Navigation Item Style -->
-    <Style x:Key="OverseerNavItem" TargetType="RadioButton">
+    <!-- Navigation Item Style (RadioButton) -->
+    <Style x:Key="OverseerNavItemRadio" TargetType="RadioButton">
         <Setter Property="Width" Value="56"/>
         <Setter Property="Height" Value="56"/>
         <Setter Property="Background" Value="Transparent"/>
@@ -298,6 +298,40 @@
                             <Setter Property="Foreground" Value="{StaticResource OverseerSecondaryBrush}"/>
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="ring" Property="Opacity" Value="1"/>
+                            <Setter TargetName="ring" Property="Effect" Value="{StaticResource NeonGlowGreen}"/>
+                            <Setter Property="Foreground" Value="{StaticResource OverseerPrimaryBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Navigation Item Style (Button) -->
+    <Style x:Key="OverseerNavItem" TargetType="Button">
+        <Setter Property="Width" Value="56"/>
+        <Setter Property="Height" Value="56"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource OverseerTextDimBrush}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <Ellipse x:Name="bg" Fill="{TemplateBinding Background}" Opacity="0"/>
+                        <Ellipse x:Name="ring" Stroke="{StaticResource OverseerPrimaryBrush}"
+                                 StrokeThickness="2" Opacity="0"/>
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bg" Property="Fill" Value="{StaticResource OverseerSurfaceBrush}"/>
+                            <Setter TargetName="bg" Property="Opacity" Value="0.5"/>
+                            <Setter TargetName="ring" Property="Opacity" Value="0.5"/>
+                            <Setter Property="Foreground" Value="{StaticResource OverseerSecondaryBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="ring" Property="Opacity" Value="1"/>
                             <Setter TargetName="ring" Property="Effect" Value="{StaticResource NeonGlowGreen}"/>
                             <Setter Property="Foreground" Value="{StaticResource OverseerPrimaryBrush}"/>
