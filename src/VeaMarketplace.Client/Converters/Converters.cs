@@ -713,3 +713,82 @@ public class RankToBadgeConverter : IValueConverter
         return Binding.DoNothing;
     }
 }
+
+/// <summary>
+/// Simple slider fill converter for IValueConverter usage
+/// Converts slider value (0-1 or 0-100) to pixel width
+/// ConverterParameter specifies max width (default 200)
+/// </summary>
+public class SliderFillConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        double percentage = 0;
+        double maxWidth = 200;
+
+        if (value is double d)
+            percentage = d > 1 ? d / 100 : d;
+        else if (value is int i)
+            percentage = i > 1 ? i / 100.0 : i;
+        else if (value is decimal dec)
+            percentage = (double)(dec > 1 ? dec / 100 : dec);
+
+        if (parameter is string paramStr && double.TryParse(paramStr, out double parsed))
+            maxWidth = parsed;
+        else if (parameter is double maxW)
+            maxWidth = maxW;
+
+        return Math.Max(0, Math.Min(maxWidth, percentage * maxWidth));
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return Binding.DoNothing;
+    }
+}
+
+/// <summary>
+/// Converts object to string for display
+/// </summary>
+public class ObjectToStringConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return value?.ToString() ?? string.Empty;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return Binding.DoNothing;
+    }
+}
+
+/// <summary>
+/// Returns first non-null value from multiple bindings
+/// </summary>
+public class CoalesceConverter : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (values == null)
+            return null!;
+
+        foreach (var value in values)
+        {
+            if (value != null && value != DependencyProperty.UnsetValue)
+            {
+                if (value is string str && !string.IsNullOrWhiteSpace(str))
+                    return value;
+                if (value is not string)
+                    return value;
+            }
+        }
+
+        return parameter ?? string.Empty;
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}

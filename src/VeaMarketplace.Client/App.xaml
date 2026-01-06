@@ -41,6 +41,9 @@
             <converters:EqualityConverter x:Key="EqualityConverter"/>
             <converters:EqualityMultiConverter x:Key="EqualityMultiConverter"/>
             <converters:GreaterThanOneToVisibilityConverter x:Key="GreaterThanOneToVisibilityConverter"/>
+            <converters:SliderFillConverter x:Key="SliderFillConverter"/>
+            <converters:ObjectToStringConverter x:Key="ObjectToStringConverter"/>
+            <converters:CoalesceConverter x:Key="CoalesceConverter"/>
 
             <!-- Converter Aliases for backward compatibility -->
             <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>

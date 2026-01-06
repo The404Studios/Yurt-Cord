@@ -9,7 +9,7 @@
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
-        <converters:SliderWidthConverter x:Key="SliderWidthConverter"/>
+        <converters:SliderFillConverter x:Key="SliderFillConverter"/>
         <converters:AudioLevelConverter x:Key="AudioLevelConverter"/>
 
         <!-- Slider Style -->
@@ -26,7 +26,7 @@
                             <Border Background="{StaticResource AccentBrush}"
                                     Height="4" CornerRadius="2" VerticalAlignment="Center"
                                     HorizontalAlignment="Left"
-                                    Width="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Value, Converter={StaticResource SliderWidthConverter}}"/>
+                                    Width="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Value, Converter={StaticResource SliderFillConverter}, ConverterParameter=200}"/>
                             <Track x:Name="PART_Track">
                                 <Track.Thumb>
                                     <Thumb>
