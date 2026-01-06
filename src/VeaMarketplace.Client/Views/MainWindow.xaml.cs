@@ -292,28 +292,18 @@ public partial class MainWindow : Window
 
     private void UpdateButtonStates()
     {
-        var activeBrush = (SolidColorBrush)FindResource("AccentBrush");
-        var inactiveBrush = (SolidColorBrush)FindResource("SecondaryDarkBrush");
+        // Use OverseerPrimaryBrush for active items, OverseerTextDimBrush for inactive
+        var activeBrush = (SolidColorBrush)FindResource("OverseerPrimaryBrush");
+        var inactiveBrush = (SolidColorBrush)FindResource("OverseerTextDimBrush");
 
-        ChatButtonBorder.Background = _currentView == "Chat" ? activeBrush : inactiveBrush;
-        MarketButtonBorder.Background = _currentView == "Marketplace" ? activeBrush : inactiveBrush;
-        DiscoverButtonBorder.Background = _currentView == "Discover" ? activeBrush : inactiveBrush;
-        ActivityButtonBorder.Background = _currentView == "Activity" || _currentView == "ActivityFeed" ? activeBrush : inactiveBrush;
-        ProfileButtonBorder.Background = _currentView == "Profile" ? activeBrush : inactiveBrush;
-        FriendsButtonBorder.Background = _currentView == "Friends" ? activeBrush : inactiveBrush;
-        SettingsButtonBorder.Background = _currentView == "Settings" ? activeBrush : inactiveBrush;
-
-        // Animate the corner radius
-        var activeRadius = new CornerRadius(16);
-        var inactiveRadius = new CornerRadius(24);
-
-        ChatButtonBorder.CornerRadius = _currentView == "Chat" ? activeRadius : inactiveRadius;
-        MarketButtonBorder.CornerRadius = _currentView == "Marketplace" ? activeRadius : inactiveRadius;
-        DiscoverButtonBorder.CornerRadius = _currentView == "Discover" ? activeRadius : inactiveRadius;
-        ActivityButtonBorder.CornerRadius = _currentView == "Activity" || _currentView == "ActivityFeed" ? activeRadius : inactiveRadius;
-        ProfileButtonBorder.CornerRadius = _currentView == "Profile" ? activeRadius : inactiveRadius;
-        FriendsButtonBorder.CornerRadius = _currentView == "Friends" ? activeRadius : inactiveRadius;
-        SettingsButtonBorder.CornerRadius = _currentView == "Settings" ? activeRadius : inactiveRadius;
+        // Update icon foregrounds based on current view
+        ChatButtonIcon.Foreground = _currentView == "Chat" || _currentView == "DirectMessage" ? activeBrush : inactiveBrush;
+        MarketButtonIcon.Foreground = _currentView == "Marketplace" || _currentView == "Product" ? activeBrush : inactiveBrush;
+        DiscoverButtonIcon.Foreground = _currentView == "Discover" ? activeBrush : inactiveBrush;
+        ActivityButtonIcon.Foreground = _currentView == "Activity" || _currentView == "ActivityFeed" ? activeBrush : inactiveBrush;
+        ProfileButtonIcon.Foreground = _currentView == "Profile" ? activeBrush : inactiveBrush;
+        FriendsButtonIcon.Foreground = _currentView == "Friends" ? activeBrush : inactiveBrush;
+        SettingsButtonIcon.Foreground = _currentView == "Settings" ? activeBrush : inactiveBrush;
     }
 
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
