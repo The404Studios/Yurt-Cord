@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- O letter with eye -->
+  <text x="256" y="320" font-family="Arial, sans-serif" font-size="280" font-weight="bold"
+        fill="#00FF88" text-anchor="middle">O</text>
+
+  <!-- Eye detail -->
+  <ellipse cx="256" cy="256" rx="50" ry="25" fill="none" stroke="#00CCFF" stroke-width="6"/>
+  <circle cx="256" cy="256" r="12" fill="#FF00FF"/>
+</svg>

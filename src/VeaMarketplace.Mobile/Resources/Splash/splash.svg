@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Overseer Logo -->
+  <circle cx="256" cy="200" r="80" fill="none" stroke="#00FF88" stroke-width="6"/>
+
+  <!-- O with eye -->
+  <text x="256" y="230" font-family="Arial, sans-serif" font-size="100" font-weight="bold"
+        fill="#00FF88" text-anchor="middle">O</text>
+
+  <!-- Eye -->
+  <ellipse cx="256" cy="200" rx="25" ry="12" fill="none" stroke="#00CCFF" stroke-width="3"/>
+  <circle cx="256" cy="200" r="6" fill="#FF00FF"/>
+
+  <!-- OVERSEER text -->
+  <text x="256" y="340" font-family="Arial, sans-serif" font-size="48" font-weight="bold"
+        fill="#00FF88" text-anchor="middle">OVERSEER</text>
+
+  <!-- Tagline -->
+  <text x="256" y="380" font-family="Arial, sans-serif" font-size="16"
+        fill="#8080A0" text-anchor="middle">OBSERVE • CONNECT • CONTROL</text>
+
+  <!-- Decorative lines -->
+  <line x1="100" y1="420" x2="200" y2="420" stroke="#00FF88" stroke-width="2" opacity="0.5"/>
+  <line x1="312" y1="420" x2="412" y2="420" stroke="#00CCFF" stroke-width="2" opacity="0.5"/>
+</svg>

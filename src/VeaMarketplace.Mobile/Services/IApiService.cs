@@ -2,6 +2,70 @@ using VeaMarketplace.Shared.DTOs;
 
 namespace VeaMarketplace.Mobile.Services;
 
+// Type aliases for mobile compatibility
+public class AuthResponseDto
+{
+    public bool Success { get; set; }
+    public string? Token { get; set; }
+    public string? UserId { get; set; }
+    public string? Username { get; set; }
+    public string? Message { get; set; }
+}
+
+public class UserProfileDto
+{
+    public string UserId { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
+    public string? DisplayName { get; set; }
+    public string? Email { get; set; }
+    public string? AvatarUrl { get; set; }
+    public string? StatusMessage { get; set; }
+    public string? Bio { get; set; }
+    public int FriendsCount { get; set; }
+    public int MessageCount { get; set; }
+    public int DaysActive { get; set; }
+    public bool IsOnline { get; set; }
+}
+
+public class UpdateProfileDto
+{
+    public string? DisplayName { get; set; }
+    public string? StatusMessage { get; set; }
+    public string? Bio { get; set; }
+    public string? AvatarUrl { get; set; }
+}
+
+public class MessageDto
+{
+    public string Id { get; set; } = string.Empty;
+    public string ChannelId { get; set; } = string.Empty;
+    public string SenderId { get; set; } = string.Empty;
+    public string SenderUsername { get; set; } = string.Empty;
+    public string? SenderAvatarUrl { get; set; }
+    public string Content { get; set; } = string.Empty;
+    public DateTime Timestamp { get; set; }
+    public bool IsEdited { get; set; }
+}
+
+public class FriendDto
+{
+    public string UserId { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
+    public string? AvatarUrl { get; set; }
+    public string? StatusMessage { get; set; }
+    public bool IsOnline { get; set; }
+    public DateTime? LastSeen { get; set; }
+}
+
+public class ProductListResponseDto
+{
+    public List<ProductDto>? Products { get; set; }
+    public int TotalCount { get; set; }
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+    public bool HasNextPage { get; set; }
+}
+
 public interface IApiService
 {
     string? AuthToken { get; }
