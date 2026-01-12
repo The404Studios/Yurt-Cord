@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VeaMarketplace.Server", "sr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VeaMarketplace.Client", "src\VeaMarketplace.Client\VeaMarketplace.Client.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VeaMarketplace.Mobile", "src\VeaMarketplace.Mobile\VeaMarketplace.Mobile.csproj", "{B2C3D4E5-F6A7-8901-BCDE-F12345678901}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,10 +34,15 @@ Global
 		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F12345678901}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F12345678901}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F12345678901}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F12345678901}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{5D4FBF46-A49E-4DD2-8DEC-BF83868E794F} = {68B2DC07-D18D-4AE6-B068-5837DB097569}
 		{4D99AE79-DF1D-4EE9-9E1D-0A1D18208328} = {68B2DC07-D18D-4AE6-B068-5837DB097569}
 		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890} = {68B2DC07-D18D-4AE6-B068-5837DB097569}
+		{B2C3D4E5-F6A7-8901-BCDE-F12345678901} = {68B2DC07-D18D-4AE6-B068-5837DB097569}
 	EndGlobalSection
 EndGlobal
