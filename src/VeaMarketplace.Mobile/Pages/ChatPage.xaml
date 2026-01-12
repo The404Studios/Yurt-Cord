@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:VeaMarketplace.Mobile.ViewModels"
+             x:Class="VeaMarketplace.Mobile.Pages.ChatPage"
+             x:DataType="vm:ChatViewModel"
+             Title="Chat">
+
+    <Grid RowDefinitions="Auto,*,Auto" BackgroundColor="{StaticResource OverseerBackground}">
+
+        <!-- Channel Header -->
+        <Border Grid.Row="0"
+                BackgroundColor="{StaticResource OverseerSurface}"
+                Padding="16,12">
+            <HorizontalStackLayout Spacing="12">
+                <Label Text="#"
+                       TextColor="{StaticResource OverseerPrimary}"
+                       FontSize="24"
+                       FontAttributes="Bold"
+                       VerticalOptions="Center" />
+                <Label Text="{Binding SelectedChannel.Name, FallbackValue='Select a channel'}"
+                       Style="{StaticResource OverseerSubtitle}"
+                       VerticalOptions="Center" />
+                <!-- Connection Status -->
+                <Border StrokeShape="Ellipse"
+                        WidthRequest="12"
+                        HeightRequest="12"
+                        BackgroundColor="{Binding IsConnected, Converter={StaticResource BoolToColorConverter}}"
+                        VerticalOptions="Center"
+                        HorizontalOptions="EndAndExpand" />
+            </HorizontalStackLayout>
+        </Border>
+
+        <!-- Messages List -->
+        <RefreshView Grid.Row="1"
+                     Command="{Binding RefreshMessagesCommand}"
+                     IsRefreshing="{Binding IsRefreshing}">
+            <CollectionView ItemsSource="{Binding Messages}"
+                           SelectionMode="None"
+                           ItemsUpdatingScrollMode="KeepLastItemInView">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame Style="{StaticResource OverseerMessageBubble}"
+                               Margin="12,4">
+                            <VerticalStackLayout Spacing="4">
+                                <HorizontalStackLayout Spacing="8">
+                                    <Label Text="{Binding SenderUsername}"
+                                           TextColor="{StaticResource OverseerPrimary}"
+                                           FontAttributes="Bold"
+                                           FontSize="13" />
+                                    <Label Text="{Binding Timestamp, StringFormat='{0:HH:mm}'}"
+                                           Style="{StaticResource OverseerCaption}" />
+                                </HorizontalStackLayout>
+                                <Label Text="{Binding Content}"
+                                       TextColor="{StaticResource OverseerText}"
+                                       FontSize="15" />
+                            </VerticalStackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+                <CollectionView.EmptyView>
+                    <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="16">
+                        <Label Text="💬" FontSize="48" HorizontalOptions="Center" />
+                        <Label Text="No messages yet"
+                               Style="{StaticResource OverseerCaption}"
+                               HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </CollectionView.EmptyView>
+            </CollectionView>
+        </RefreshView>
+
+        <!-- Typing Indicator -->
+        <Label Grid.Row="1"
+               Text="{Binding TypingUser, StringFormat='{0} is typing...'}"
+               Style="{StaticResource OverseerCaption}"
+               IsVisible="{Binding TypingUser, Converter={StaticResource IsNotNullConverter}}"
+               Margin="16,0"
+               VerticalOptions="End" />
+
+        <!-- Message Input -->
+        <Border Grid.Row="2"
+                BackgroundColor="{StaticResource OverseerSurface}"
+                Padding="12">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                <Border Stroke="{StaticResource OverseerSecondary}"
+                        StrokeThickness="2"
+                        StrokeShape="RoundRectangle 20"
+                        BackgroundColor="{StaticResource OverseerSurfaceLight}"
+                        Padding="16,8">
+                    <Entry Text="{Binding MessageText}"
+                           Placeholder="Type a message..."
+                           PlaceholderColor="{StaticResource OverseerTextDim}"
+                           TextColor="{StaticResource OverseerText}"
+                           ReturnCommand="{Binding SendMessageCommand}" />
+                </Border>
+
+                <Button Grid.Column="1"
+                        Text="➤"
+                        Style="{StaticResource OverseerButton}"
+                        Command="{Binding SendMessageCommand}"
+                        WidthRequest="50"
+                        HeightRequest="50"
+                        Padding="0"
+                        CornerRadius="25" />
+            </Grid>
+        </Border>
+
+    </Grid>
+
+</ContentPage>

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:VeaMarketplace.Mobile.ViewModels"
+             x:Class="VeaMarketplace.Mobile.Pages.RegisterPage"
+             x:DataType="vm:RegisterViewModel"
+             Shell.NavBarIsVisible="False">
+
+    <Grid BackgroundColor="{StaticResource OverseerBackground}">
+        <ScrollView>
+            <VerticalStackLayout Padding="32" Spacing="24" VerticalOptions="Center">
+
+                <!-- Back Button -->
+                <Button Text="← BACK"
+                        Style="{StaticResource OverseerSecondaryButton}"
+                        Command="{Binding GoBackCommand}"
+                        HorizontalOptions="Start" />
+
+                <!-- Title -->
+                <Label Text="AGENT REGISTRATION"
+                       Style="{StaticResource OverseerTitle}"
+                       HorizontalOptions="Center" />
+
+                <!-- Registration Form -->
+                <Frame Style="{StaticResource OverseerCard}" Padding="24">
+                    <VerticalStackLayout Spacing="16">
+
+                        <!-- Username -->
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="AGENT ID" Style="{StaticResource OverseerCaption}" />
+                            <Border Stroke="{StaticResource OverseerSecondary}"
+                                    StrokeThickness="2"
+                                    StrokeShape="RoundRectangle 12"
+                                    BackgroundColor="{StaticResource OverseerSurfaceLight}"
+                                    Padding="16,12">
+                                <Entry Text="{Binding Username}"
+                                       Placeholder="Choose a username"
+                                       PlaceholderColor="{StaticResource OverseerTextDim}"
+                                       TextColor="{StaticResource OverseerText}" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Email -->
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="CONTACT FREQUENCY" Style="{StaticResource OverseerCaption}" />
+                            <Border Stroke="{StaticResource OverseerSecondary}"
+                                    StrokeThickness="2"
+                                    StrokeShape="RoundRectangle 12"
+                                    BackgroundColor="{StaticResource OverseerSurfaceLight}"
+                                    Padding="16,12">
+                                <Entry Text="{Binding Email}"
+                                       Placeholder="Enter email"
+                                       PlaceholderColor="{StaticResource OverseerTextDim}"
+                                       TextColor="{StaticResource OverseerText}"
+                                       Keyboard="Email" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Password -->
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="ACCESS CODE" Style="{StaticResource OverseerCaption}" />
+                            <Border Stroke="{StaticResource OverseerAccent}"
+                                    StrokeThickness="2"
+                                    StrokeShape="RoundRectangle 12"
+                                    BackgroundColor="{StaticResource OverseerSurfaceLight}"
+                                    Padding="16,12">
+                                <Entry Text="{Binding Password}"
+                                       Placeholder="Create password"
+                                       PlaceholderColor="{StaticResource OverseerTextDim}"
+                                       TextColor="{StaticResource OverseerText}"
+                                       IsPassword="True" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Confirm Password -->
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="CONFIRM CODE" Style="{StaticResource OverseerCaption}" />
+                            <Border Stroke="{StaticResource OverseerAccent}"
+                                    StrokeThickness="2"
+                                    StrokeShape="RoundRectangle 12"
+                                    BackgroundColor="{StaticResource OverseerSurfaceLight}"
+                                    Padding="16,12">
+                                <Entry Text="{Binding ConfirmPassword}"
+                                       Placeholder="Confirm password"
+                                       PlaceholderColor="{StaticResource OverseerTextDim}"
+                                       TextColor="{StaticResource OverseerText}"
+                                       IsPassword="True" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Error Message -->
+                        <Label Text="{Binding ErrorMessage}"
+                               TextColor="{StaticResource OverseerDanger}"
+                               IsVisible="{Binding HasError}"
+                               HorizontalOptions="Center" />
+
+                        <!-- Register Button -->
+                        <Button Text="INITIALIZE AGENT"
+                                Style="{StaticResource OverseerButton}"
+                                Command="{Binding RegisterCommand}" />
+
+                        <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                          IsVisible="{Binding IsLoading}"
+                                          HorizontalOptions="Center" />
+
+                    </VerticalStackLayout>
+                </Frame>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+
+</ContentPage>

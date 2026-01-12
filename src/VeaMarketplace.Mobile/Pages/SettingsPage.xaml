@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:VeaMarketplace.Mobile.ViewModels"
+             x:Class="VeaMarketplace.Mobile.Pages.SettingsPage"
+             x:DataType="vm:SettingsViewModel"
+             Title="Settings">
+
+    <ScrollView BackgroundColor="{StaticResource OverseerBackground}">
+        <VerticalStackLayout Padding="16" Spacing="16">
+
+            <!-- App Settings -->
+            <Frame Style="{StaticResource OverseerCard}">
+                <VerticalStackLayout Spacing="16">
+                    <Label Text="APPLICATION" Style="{StaticResource OverseerSubtitle}" />
+
+                    <!-- Notifications -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <VerticalStackLayout>
+                            <Label Text="Notifications"
+                                   TextColor="{StaticResource OverseerText}" />
+                            <Label Text="Receive push notifications"
+                                   Style="{StaticResource OverseerCaption}" />
+                        </VerticalStackLayout>
+                        <Switch Grid.Column="1"
+                                IsToggled="{Binding NotificationsEnabled}"
+                                OnColor="{StaticResource OverseerPrimary}" />
+                    </Grid>
+
+                    <!-- Dark Mode -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <VerticalStackLayout>
+                            <Label Text="Dark Mode"
+                                   TextColor="{StaticResource OverseerText}" />
+                            <Label Text="Use dark theme"
+                                   Style="{StaticResource OverseerCaption}" />
+                        </VerticalStackLayout>
+                        <Switch Grid.Column="1"
+                                IsToggled="{Binding DarkMode}"
+                                OnColor="{StaticResource OverseerPrimary}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Audio Settings -->
+            <Frame Style="{StaticResource OverseerCard}">
+                <VerticalStackLayout Spacing="16">
+                    <Label Text="AUDIO" Style="{StaticResource OverseerSubtitle}" />
+
+                    <!-- Volume -->
+                    <VerticalStackLayout Spacing="8">
+                        <HorizontalStackLayout>
+                            <Label Text="Master Volume"
+                                   TextColor="{StaticResource OverseerText}" />
+                            <Label Text="{Binding MasterVolume, StringFormat='{0:P0}'}"
+                                   Style="{StaticResource OverseerCaption}"
+                                   Margin="8,0,0,0" />
+                        </HorizontalStackLayout>
+                        <Slider Minimum="0"
+                                Maximum="1"
+                                Value="{Binding MasterVolume}"
+                                MinimumTrackColor="{StaticResource OverseerPrimary}"
+                                MaximumTrackColor="{StaticResource OverseerSurfaceLight}"
+                                ThumbColor="{StaticResource OverseerPrimary}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Data Settings -->
+            <Frame Style="{StaticResource OverseerCard}">
+                <VerticalStackLayout Spacing="16">
+                    <Label Text="DATA" Style="{StaticResource OverseerSubtitle}" />
+
+                    <Button Text="Clear Cache"
+                            Style="{StaticResource OverseerSecondaryButton}"
+                            Command="{Binding ClearCacheCommand}" />
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Account Actions -->
+            <Frame Style="{StaticResource OverseerCard}">
+                <VerticalStackLayout Spacing="16">
+                    <Label Text="ACCOUNT" Style="{StaticResource OverseerSubtitle}" />
+
+                    <Button Text="DISCONNECT"
+                            BackgroundColor="{StaticResource OverseerDanger}"
+                            TextColor="White"
+                            CornerRadius="25"
+                            Padding="24,12"
+                            Command="{Binding LogoutCommand}" />
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Version Info -->
+            <Label Text="OVERSEER Mobile v1.0.0"
+                   Style="{StaticResource OverseerCaption}"
+                   HorizontalOptions="Center"
+                   Margin="0,16" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

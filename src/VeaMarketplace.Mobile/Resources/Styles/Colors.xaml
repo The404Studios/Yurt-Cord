@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?xaml-comp compile="true" ?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- Overseer Color Palette -->
+    <Color x:Key="OverseerPrimary">#00FF88</Color>
+    <Color x:Key="OverseerSecondary">#00CCFF</Color>
+    <Color x:Key="OverseerAccent">#FF00FF</Color>
+    <Color x:Key="OverseerWarning">#FFD700</Color>
+    <Color x:Key="OverseerDanger">#FF4444</Color>
+    <Color x:Key="OverseerBackground">#050510</Color>
+    <Color x:Key="OverseerSurface">#101020</Color>
+    <Color x:Key="OverseerSurfaceLight">#1A1A30</Color>
+    <Color x:Key="OverseerText">#E0E0FF</Color>
+    <Color x:Key="OverseerTextDim">#8080A0</Color>
+
+    <!-- Status Colors -->
+    <Color x:Key="StatusOnline">#22C55E</Color>
+    <Color x:Key="StatusAway">#EAB308</Color>
+    <Color x:Key="StatusBusy">#EF4444</Color>
+    <Color x:Key="StatusOffline">#64748B</Color>
+
+    <!-- Tab Bar Icons (as FontImageSource) -->
+    <FontImageSource x:Key="ChatIcon" Glyph="&#x1F4AC;" Color="{StaticResource OverseerTextDim}" Size="24" />
+    <FontImageSource x:Key="FriendsIcon" Glyph="&#x1F465;" Color="{StaticResource OverseerTextDim}" Size="24" />
+    <FontImageSource x:Key="MarketIcon" Glyph="&#x1F6CD;" Color="{StaticResource OverseerTextDim}" Size="24" />
+    <FontImageSource x:Key="ProfileIcon" Glyph="&#x1F464;" Color="{StaticResource OverseerTextDim}" Size="24" />
+    <FontImageSource x:Key="SettingsIcon" Glyph="&#x2699;" Color="{StaticResource OverseerTextDim}" Size="24" />
+
+    <!-- Gradient Colors for Brushes -->
+    <Color x:Key="GradientStart">#00FF88</Color>
+    <Color x:Key="GradientMiddle">#00CCFF</Color>
+    <Color x:Key="GradientEnd">#FF00FF</Color>
+
+</ResourceDictionary>

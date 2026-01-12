@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:VeaMarketplace.Mobile.ViewModels"
+             x:Class="VeaMarketplace.Mobile.Pages.FriendsPage"
+             x:DataType="vm:FriendsViewModel"
+             Title="Friends">
+
+    <RefreshView Command="{Binding RefreshCommand}"
+                 IsRefreshing="{Binding IsRefreshing}"
+                 BackgroundColor="{StaticResource OverseerBackground}">
+        <ScrollView>
+            <VerticalStackLayout Padding="16" Spacing="16">
+
+                <!-- Pending Requests -->
+                <Frame Style="{StaticResource OverseerCard}"
+                       IsVisible="{Binding PendingRequests.Count, Converter={StaticResource IsNotZeroConverter}}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="PENDING REQUESTS"
+                               Style="{StaticResource OverseerSubtitle}" />
+                        <CollectionView ItemsSource="{Binding PendingRequests}"
+                                       SelectionMode="None">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12" Padding="0,8">
+                                        <Border Style="{StaticResource OverseerAvatar}">
+                                            <Label Text="👤" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center" />
+                                        </Border>
+                                        <Label Grid.Column="1"
+                                               Text="{Binding RequesterUsername}"
+                                               TextColor="{StaticResource OverseerText}"
+                                               VerticalOptions="Center" />
+                                        <Button Grid.Column="2"
+                                                Text="✓"
+                                                Style="{StaticResource OverseerButton}"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:FriendsViewModel}}, Path=AcceptRequestCommand}"
+                                                CommandParameter="{Binding .}"
+                                                WidthRequest="40"
+                                                HeightRequest="40"
+                                                Padding="0" />
+                                        <Button Grid.Column="3"
+                                                Text="✕"
+                                                Style="{StaticResource OverseerSecondaryButton}"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:FriendsViewModel}}, Path=DeclineRequestCommand}"
+                                                CommandParameter="{Binding .}"
+                                                WidthRequest="40"
+                                                HeightRequest="40"
+                                                Padding="0" />
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Online Friends -->
+                <Frame Style="{StaticResource OverseerCard}">
+                    <VerticalStackLayout Spacing="12">
+                        <HorizontalStackLayout Spacing="8">
+                            <Label Text="ONLINE"
+                                   Style="{StaticResource OverseerSubtitle}" />
+                            <Border StrokeShape="RoundRectangle 8"
+                                    BackgroundColor="{StaticResource OverseerPrimary}"
+                                    Padding="8,2">
+                                <Label Text="{Binding OnlineFriends.Count}"
+                                       TextColor="{StaticResource OverseerBackground}"
+                                       FontSize="12"
+                                       FontAttributes="Bold" />
+                            </Border>
+                        </HorizontalStackLayout>
+
+                        <CollectionView ItemsSource="{Binding OnlineFriends}"
+                                       SelectionMode="None">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" Padding="0,8">
+                                        <Border Style="{StaticResource OverseerAvatar}">
+                                            <Grid>
+                                                <Label Text="👤" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center" />
+                                                <Border StrokeShape="Ellipse"
+                                                        WidthRequest="14"
+                                                        HeightRequest="14"
+                                                        BackgroundColor="{StaticResource StatusOnline}"
+                                                        Stroke="{StaticResource OverseerBackground}"
+                                                        StrokeThickness="2"
+                                                        HorizontalOptions="End"
+                                                        VerticalOptions="End" />
+                                            </Grid>
+                                        </Border>
+                                        <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                            <Label Text="{Binding Username}"
+                                                   TextColor="{StaticResource OverseerText}"
+                                                   FontAttributes="Bold" />
+                                            <Label Text="{Binding StatusMessage}"
+                                                   Style="{StaticResource OverseerCaption}" />
+                                        </VerticalStackLayout>
+                                        <Button Grid.Column="2"
+                                                Text="💬"
+                                                Style="{StaticResource OverseerSecondaryButton}"
+                                                WidthRequest="40"
+                                                HeightRequest="40"
+                                                Padding="0" />
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+
+                            <CollectionView.EmptyView>
+                                <Label Text="No friends online"
+                                       Style="{StaticResource OverseerCaption}"
+                                       HorizontalOptions="Center"
+                                       Margin="0,16" />
+                            </CollectionView.EmptyView>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- All Friends -->
+                <Frame Style="{StaticResource OverseerCard}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="ALL AGENTS"
+                               Style="{StaticResource OverseerSubtitle}" />
+                        <CollectionView ItemsSource="{Binding Friends}"
+                                       SelectionMode="None">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" Padding="0,8">
+                                        <Border Style="{StaticResource OverseerAvatar}">
+                                            <Label Text="👤" FontSize="20" HorizontalOptions="Center" VerticalOptions="Center" />
+                                        </Border>
+                                        <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                            <Label Text="{Binding Username}"
+                                                   TextColor="{StaticResource OverseerText}" />
+                                        </VerticalStackLayout>
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </Frame>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </RefreshView>
+
+</ContentPage>

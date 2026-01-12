@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?xaml-comp compile="true" ?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- Page Style -->
+    <Style TargetType="ContentPage" ApplyToDerivedTypes="True">
+        <Setter Property="BackgroundColor" Value="{StaticResource OverseerBackground}" />
+    </Style>
+
+    <Style TargetType="Shell" ApplyToDerivedTypes="True">
+        <Setter Property="Shell.BackgroundColor" Value="{StaticResource OverseerBackground}" />
+        <Setter Property="Shell.ForegroundColor" Value="{StaticResource OverseerText}" />
+        <Setter Property="Shell.TitleColor" Value="{StaticResource OverseerPrimary}" />
+        <Setter Property="Shell.TabBarBackgroundColor" Value="{StaticResource OverseerSurface}" />
+        <Setter Property="Shell.TabBarForegroundColor" Value="{StaticResource OverseerTextDim}" />
+        <Setter Property="Shell.TabBarTitleColor" Value="{StaticResource OverseerPrimary}" />
+        <Setter Property="Shell.TabBarUnselectedColor" Value="{StaticResource OverseerTextDim}" />
+    </Style>
+
+    <!-- Primary Button Style -->
+    <Style x:Key="OverseerButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{StaticResource OverseerPrimary}" />
+        <Setter Property="BorderColor" Value="{StaticResource OverseerPrimary}" />
+        <Setter Property="BorderWidth" Value="2" />
+        <Setter Property="CornerRadius" Value="25" />
+        <Setter Property="Padding" Value="24,12" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="Shadow">
+            <Setter.Value>
+                <Shadow Brush="{StaticResource OverseerPrimary}" Offset="0,0" Radius="15" Opacity="0.5" />
+            </Setter.Value>
+        </Setter>
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="{StaticResource OverseerPrimary}" />
+                            <Setter Property="TextColor" Value="{StaticResource OverseerBackground}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Disabled">
+                        <VisualState.Setters>
+                            <Setter Property="Opacity" Value="0.5" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
+    <!-- Secondary Button Style -->
+    <Style x:Key="OverseerSecondaryButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{StaticResource OverseerSecondary}" />
+        <Setter Property="BorderColor" Value="{StaticResource OverseerSecondary}" />
+        <Setter Property="BorderWidth" Value="2" />
+        <Setter Property="CornerRadius" Value="25" />
+        <Setter Property="Padding" Value="24,12" />
+        <Setter Property="FontSize" Value="14" />
+    </Style>
+
+    <!-- Accent Button Style -->
+    <Style x:Key="OverseerAccentButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource OverseerAccent}" />
+        <Setter Property="TextColor" Value="{StaticResource OverseerBackground}" />
+        <Setter Property="CornerRadius" Value="25" />
+        <Setter Property="Padding" Value="24,12" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="Shadow">
+            <Setter.Value>
+                <Shadow Brush="{StaticResource OverseerAccent}" Offset="0,0" Radius="15" Opacity="0.6" />
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Entry Style (TextBox) -->
+    <Style x:Key="OverseerEntry" TargetType="Entry">
+        <Setter Property="BackgroundColor" Value="{StaticResource OverseerSurface}" />
+        <Setter Property="TextColor" Value="{StaticResource OverseerText}" />
+        <Setter Property="PlaceholderColor" Value="{StaticResource OverseerTextDim}" />
+        <Setter Property="FontSize" Value="16" />
+    </Style>
+
+    <!-- Label Styles -->
+    <Style x:Key="OverseerTitle" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource OverseerPrimary}" />
+        <Setter Property="FontSize" Value="28" />
+        <Setter Property="FontAttributes" Value="Bold" />
+    </Style>
+
+    <Style x:Key="OverseerSubtitle" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource OverseerSecondary}" />
+        <Setter Property="FontSize" Value="18" />
+    </Style>
+
+    <Style x:Key="OverseerBody" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource OverseerText}" />
+        <Setter Property="FontSize" Value="14" />
+    </Style>
+
+    <Style x:Key="OverseerCaption" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource OverseerTextDim}" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+
+    <!-- Card Style -->
+    <Style x:Key="OverseerCard" TargetType="Frame">
+        <Setter Property="BackgroundColor" Value="{StaticResource OverseerSurface}" />
+        <Setter Property="BorderColor" Value="{StaticResource OverseerSecondary}" />
+        <Setter Property="CornerRadius" Value="20" />
+        <Setter Property="Padding" Value="16" />
+        <Setter Property="HasShadow" Value="True" />
+        <Setter Property="Shadow">
+            <Setter.Value>
+                <Shadow Brush="{StaticResource OverseerSecondary}" Offset="0,0" Radius="10" Opacity="0.3" />
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Avatar Style -->
+    <Style x:Key="OverseerAvatar" TargetType="Border">
+        <Setter Property="StrokeShape" Value="Ellipse" />
+        <Setter Property="Stroke" Value="{StaticResource OverseerSecondary}" />
+        <Setter Property="StrokeThickness" Value="2" />
+        <Setter Property="WidthRequest" Value="48" />
+        <Setter Property="HeightRequest" Value="48" />
+        <Setter Property="Shadow">
+            <Setter.Value>
+                <Shadow Brush="{StaticResource OverseerSecondary}" Offset="0,0" Radius="8" Opacity="0.5" />
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Message Bubble Style -->
+    <Style x:Key="OverseerMessageBubble" TargetType="Frame">
+        <Setter Property="BackgroundColor" Value="{StaticResource OverseerSurfaceLight}" />
+        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="HasShadow" Value="False" />
+    </Style>
+
+    <Style x:Key="OverseerMessageBubbleSent" TargetType="Frame">
+        <Setter Property="BackgroundColor" Value="{StaticResource OverseerPrimary}" />
+        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="HasShadow" Value="False" />
+    </Style>
+
+    <!-- Activity Indicator -->
+    <Style TargetType="ActivityIndicator">
+        <Setter Property="Color" Value="{StaticResource OverseerPrimary}" />
+    </Style>
+
+    <!-- RefreshView -->
+    <Style TargetType="RefreshView">
+        <Setter Property="RefreshColor" Value="{StaticResource OverseerPrimary}" />
+    </Style>
+
+</ResourceDictionary>

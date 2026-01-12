@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:VeaMarketplace.Mobile.ViewModels"
+             x:Class="VeaMarketplace.Mobile.Pages.MarketplacePage"
+             x:DataType="vm:MarketplaceViewModel"
+             Title="Marketplace">
+
+    <RefreshView Command="{Binding RefreshCommand}"
+                 IsRefreshing="{Binding IsRefreshing}"
+                 BackgroundColor="{StaticResource OverseerBackground}">
+        <ScrollView>
+            <VerticalStackLayout Padding="16" Spacing="16">
+
+                <!-- Search Bar -->
+                <Border Stroke="{StaticResource OverseerSecondary}"
+                        StrokeThickness="2"
+                        StrokeShape="RoundRectangle 25"
+                        BackgroundColor="{StaticResource OverseerSurface}"
+                        Padding="16,8">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Entry Text="{Binding SearchQuery}"
+                               Placeholder="Search products..."
+                               PlaceholderColor="{StaticResource OverseerTextDim}"
+                               TextColor="{StaticResource OverseerText}"
+                               ReturnCommand="{Binding SearchCommand}" />
+                        <Button Grid.Column="1"
+                                Text="🔍"
+                                Style="{StaticResource OverseerSecondaryButton}"
+                                Command="{Binding SearchCommand}"
+                                Padding="8" />
+                    </Grid>
+                </Border>
+
+                <!-- Featured Products -->
+                <Frame Style="{StaticResource OverseerCard}"
+                       IsVisible="{Binding FeaturedProducts.Count, Converter={StaticResource IsNotZeroConverter}}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="FEATURED" Style="{StaticResource OverseerSubtitle}" />
+                        <CollectionView ItemsSource="{Binding FeaturedProducts}"
+                                       HeightRequest="200"
+                                       ItemsLayout="HorizontalList">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Frame WidthRequest="160"
+                                           Margin="0,0,12,0"
+                                           Style="{StaticResource OverseerCard}"
+                                           Padding="12">
+                                        <Frame.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MarketplaceViewModel}}, Path=ViewProductCommand}"
+                                                                 CommandParameter="{Binding .}" />
+                                        </Frame.GestureRecognizers>
+                                        <VerticalStackLayout Spacing="8">
+                                            <Border StrokeShape="RoundRectangle 8"
+                                                    HeightRequest="80"
+                                                    BackgroundColor="{StaticResource OverseerSurfaceLight}">
+                                                <Label Text="🛍️"
+                                                       FontSize="32"
+                                                       HorizontalOptions="Center"
+                                                       VerticalOptions="Center" />
+                                            </Border>
+                                            <Label Text="{Binding Title}"
+                                                   TextColor="{StaticResource OverseerText}"
+                                                   FontSize="13"
+                                                   LineBreakMode="TailTruncation"
+                                                   MaxLines="2" />
+                                            <Label Text="{Binding Price, StringFormat='${0:F2}'}"
+                                                   TextColor="{StaticResource OverseerPrimary}"
+                                                   FontAttributes="Bold" />
+                                        </VerticalStackLayout>
+                                    </Frame>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- All Products -->
+                <Frame Style="{StaticResource OverseerCard}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="ALL PRODUCTS" Style="{StaticResource OverseerSubtitle}" />
+                        <CollectionView ItemsSource="{Binding Products}"
+                                       SelectionMode="None"
+                                       RemainingItemsThreshold="5"
+                                       RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Frame Style="{StaticResource OverseerCard}"
+                                           Margin="0,0,0,8"
+                                           Padding="12">
+                                        <Frame.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MarketplaceViewModel}}, Path=ViewProductCommand}"
+                                                                 CommandParameter="{Binding .}" />
+                                        </Frame.GestureRecognizers>
+                                        <Grid ColumnDefinitions="80,*" ColumnSpacing="12">
+                                            <Border StrokeShape="RoundRectangle 8"
+                                                    BackgroundColor="{StaticResource OverseerSurfaceLight}">
+                                                <Label Text="🛍️"
+                                                       FontSize="28"
+                                                       HorizontalOptions="Center"
+                                                       VerticalOptions="Center" />
+                                            </Border>
+                                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                                <Label Text="{Binding Title}"
+                                                       TextColor="{StaticResource OverseerText}"
+                                                       FontAttributes="Bold"
+                                                       LineBreakMode="TailTruncation" />
+                                                <Label Text="{Binding Description}"
+                                                       Style="{StaticResource OverseerCaption}"
+                                                       LineBreakMode="TailTruncation"
+                                                       MaxLines="2" />
+                                                <Label Text="{Binding Price, StringFormat='${0:F2}'}"
+                                                       TextColor="{StaticResource OverseerPrimary}"
+                                                       FontAttributes="Bold" />
+                                            </VerticalStackLayout>
+                                        </Grid>
+                                    </Frame>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+
+                            <CollectionView.EmptyView>
+                                <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="16" Padding="32">
+                                    <Label Text="🛒" FontSize="48" HorizontalOptions="Center" />
+                                    <Label Text="No products found"
+                                           Style="{StaticResource OverseerCaption}"
+                                           HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </CollectionView.EmptyView>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                  IsVisible="{Binding IsLoading}"
+                                  HorizontalOptions="Center" />
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </RefreshView>
+
+</ContentPage>

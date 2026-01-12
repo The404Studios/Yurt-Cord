@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:VeaMarketplace.Mobile.ViewModels"
+             x:Class="VeaMarketplace.Mobile.Pages.LoginPage"
+             x:DataType="vm:LoginViewModel"
+             Shell.NavBarIsVisible="False">
+
+    <Grid BackgroundColor="{StaticResource OverseerBackground}">
+        <!-- Background gradient overlay -->
+        <BoxView>
+            <BoxView.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#10FF8800" Offset="0" />
+                    <GradientStop Color="#1000CCFF" Offset="0.5" />
+                    <GradientStop Color="#10FF00FF" Offset="1" />
+                </LinearGradientBrush>
+            </BoxView.Background>
+        </BoxView>
+
+        <ScrollView>
+            <VerticalStackLayout Padding="32" Spacing="24" VerticalOptions="Center">
+
+                <!-- Logo Section -->
+                <Border StrokeShape="Ellipse"
+                        Stroke="{StaticResource OverseerPrimary}"
+                        StrokeThickness="3"
+                        WidthRequest="120"
+                        HeightRequest="120"
+                        HorizontalOptions="Center">
+                    <Border.Shadow>
+                        <Shadow Brush="{StaticResource OverseerPrimary}"
+                                Offset="0,0"
+                                Radius="30"
+                                Opacity="0.6" />
+                    </Border.Shadow>
+                    <Label Text="O"
+                           FontSize="60"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource OverseerPrimary}"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center" />
+                </Border>
+
+                <!-- Title -->
+                <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+                    <Label Text="OVERSEER"
+                           FontSize="36"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center">
+                        <Label.TextColor>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="{StaticResource OverseerPrimary}" Offset="0" />
+                                <GradientStop Color="{StaticResource OverseerSecondary}" Offset="0.5" />
+                                <GradientStop Color="{StaticResource OverseerAccent}" Offset="1" />
+                            </LinearGradientBrush>
+                        </Label.TextColor>
+                    </Label>
+                    <Label Text="OBSERVE • CONNECT • CONTROL"
+                           Style="{StaticResource OverseerCaption}"
+                           HorizontalOptions="Center" />
+                </VerticalStackLayout>
+
+                <!-- Login Form -->
+                <Frame Style="{StaticResource OverseerCard}" Padding="24">
+                    <VerticalStackLayout Spacing="16">
+
+                        <!-- Username -->
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="AGENT ID" Style="{StaticResource OverseerCaption}" />
+                            <Border Stroke="{StaticResource OverseerSecondary}"
+                                    StrokeThickness="2"
+                                    StrokeShape="RoundRectangle 12"
+                                    BackgroundColor="{StaticResource OverseerSurfaceLight}"
+                                    Padding="16,12">
+                                <Entry Text="{Binding Username}"
+                                       Placeholder="Enter username"
+                                       PlaceholderColor="{StaticResource OverseerTextDim}"
+                                       TextColor="{StaticResource OverseerText}"
+                                       FontSize="16"
+                                       Keyboard="Text" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Password -->
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="ACCESS CODE" Style="{StaticResource OverseerCaption}" />
+                            <Border Stroke="{StaticResource OverseerAccent}"
+                                    StrokeThickness="2"
+                                    StrokeShape="RoundRectangle 12"
+                                    BackgroundColor="{StaticResource OverseerSurfaceLight}"
+                                    Padding="16,12">
+                                <Entry Text="{Binding Password}"
+                                       Placeholder="Enter password"
+                                       PlaceholderColor="{StaticResource OverseerTextDim}"
+                                       TextColor="{StaticResource OverseerText}"
+                                       FontSize="16"
+                                       IsPassword="True" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Error Message -->
+                        <Label Text="{Binding ErrorMessage}"
+                               TextColor="{StaticResource OverseerDanger}"
+                               IsVisible="{Binding HasError}"
+                               HorizontalOptions="Center" />
+
+                        <!-- Login Button -->
+                        <Button Text="ACCESS SYSTEM"
+                                Style="{StaticResource OverseerButton}"
+                                Command="{Binding LoginCommand}"
+                                IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}" />
+
+                        <!-- Loading Indicator -->
+                        <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                          IsVisible="{Binding IsLoading}"
+                                          HorizontalOptions="Center" />
+
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Register Link -->
+                <HorizontalStackLayout HorizontalOptions="Center" Spacing="8">
+                    <Label Text="New agent?"
+                           Style="{StaticResource OverseerCaption}"
+                           VerticalOptions="Center" />
+                    <Button Text="REGISTER"
+                            Style="{StaticResource OverseerSecondaryButton}"
+                            Command="{Binding NavigateToRegisterCommand}"
+                            Padding="16,8" />
+                </HorizontalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+
+</ContentPage>

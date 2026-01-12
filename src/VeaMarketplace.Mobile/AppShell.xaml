@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="VeaMarketplace.Mobile.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:pages="clr-namespace:VeaMarketplace.Mobile.Pages"
+    Shell.FlyoutBehavior="Disabled"
+    Shell.NavBarIsVisible="False">
+
+    <!-- Login Flow (no tabs) -->
+    <ShellContent
+        x:Name="LoginShell"
+        Route="login"
+        ContentTemplate="{DataTemplate pages:LoginPage}" />
+
+    <!-- Main App with Tab Navigation -->
+    <TabBar x:Name="MainTabBar" Route="main">
+        <Tab Title="Chat" Icon="{StaticResource ChatIcon}">
+            <ShellContent
+                Route="chat"
+                ContentTemplate="{DataTemplate pages:ChatPage}" />
+        </Tab>
+
+        <Tab Title="Friends" Icon="{StaticResource FriendsIcon}">
+            <ShellContent
+                Route="friends"
+                ContentTemplate="{DataTemplate pages:FriendsPage}" />
+        </Tab>
+
+        <Tab Title="Market" Icon="{StaticResource MarketIcon}">
+            <ShellContent
+                Route="marketplace"
+                ContentTemplate="{DataTemplate pages:MarketplacePage}" />
+        </Tab>
+
+        <Tab Title="Profile" Icon="{StaticResource ProfileIcon}">
+            <ShellContent
+                Route="profile"
+                ContentTemplate="{DataTemplate pages:ProfilePage}" />
+        </Tab>
+
+        <Tab Title="Settings" Icon="{StaticResource SettingsIcon}">
+            <ShellContent
+                Route="settings"
+                ContentTemplate="{DataTemplate pages:SettingsPage}" />
+        </Tab>
+    </TabBar>
+
+</Shell>

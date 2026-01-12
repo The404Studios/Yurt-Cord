@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:VeaMarketplace.Mobile.ViewModels"
+             x:Class="VeaMarketplace.Mobile.Pages.ProfilePage"
+             x:DataType="vm:ProfileViewModel"
+             Title="Profile">
+
+    <ScrollView BackgroundColor="{StaticResource OverseerBackground}">
+        <VerticalStackLayout Padding="24" Spacing="24">
+
+            <!-- Profile Header -->
+            <VerticalStackLayout HorizontalOptions="Center" Spacing="16">
+                <Border StrokeShape="Ellipse"
+                        Stroke="{StaticResource OverseerPrimary}"
+                        StrokeThickness="3"
+                        WidthRequest="120"
+                        HeightRequest="120"
+                        HorizontalOptions="Center">
+                    <Border.Shadow>
+                        <Shadow Brush="{StaticResource OverseerPrimary}"
+                                Offset="0,0"
+                                Radius="25"
+                                Opacity="0.6" />
+                    </Border.Shadow>
+                    <Label Text="👤"
+                           FontSize="60"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center" />
+                </Border>
+
+                <Label Text="{Binding Profile.Username}"
+                       Style="{StaticResource OverseerTitle}"
+                       HorizontalOptions="Center" />
+
+                <Label Text="{Binding Profile.Email}"
+                       Style="{StaticResource OverseerCaption}"
+                       HorizontalOptions="Center" />
+            </VerticalStackLayout>
+
+            <!-- Status Section -->
+            <Frame Style="{StaticResource OverseerCard}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="STATUS MESSAGE" Style="{StaticResource OverseerCaption}" />
+                    <Border Stroke="{StaticResource OverseerSecondary}"
+                            StrokeThickness="2"
+                            StrokeShape="RoundRectangle 12"
+                            BackgroundColor="{StaticResource OverseerSurfaceLight}"
+                            Padding="16,12">
+                        <Entry Text="{Binding StatusMessage}"
+                               Placeholder="What's on your mind?"
+                               PlaceholderColor="{StaticResource OverseerTextDim}"
+                               TextColor="{StaticResource OverseerText}" />
+                    </Border>
+                    <Button Text="UPDATE STATUS"
+                            Style="{StaticResource OverseerSecondaryButton}"
+                            Command="{Binding UpdateStatusCommand}"
+                            HorizontalOptions="End" />
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Stats Section -->
+            <Frame Style="{StaticResource OverseerCard}">
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="16">
+                    <VerticalStackLayout HorizontalOptions="Center">
+                        <Label Text="{Binding Profile.FriendsCount, FallbackValue='0'}"
+                               Style="{StaticResource OverseerTitle}"
+                               HorizontalOptions="Center" />
+                        <Label Text="Friends"
+                               Style="{StaticResource OverseerCaption}"
+                               HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center">
+                        <Label Text="{Binding Profile.MessageCount, FallbackValue='0'}"
+                               Style="{StaticResource OverseerTitle}"
+                               HorizontalOptions="Center" />
+                        <Label Text="Messages"
+                               Style="{StaticResource OverseerCaption}"
+                               HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="2" HorizontalOptions="Center">
+                        <Label Text="{Binding Profile.DaysActive, FallbackValue='0'}"
+                               Style="{StaticResource OverseerTitle}"
+                               HorizontalOptions="Center" />
+                        <Label Text="Days"
+                               Style="{StaticResource OverseerCaption}"
+                               HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Grid>
+            </Frame>
+
+            <ActivityIndicator IsRunning="{Binding IsLoading}"
+                              IsVisible="{Binding IsLoading}"
+                              HorizontalOptions="Center" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

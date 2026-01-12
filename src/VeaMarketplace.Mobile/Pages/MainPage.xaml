@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="VeaMarketplace.Mobile.Pages.MainPage"
+             Title="Overseer">
+
+    <Grid BackgroundColor="{StaticResource OverseerBackground}">
+        <Label Text="Welcome to OVERSEER"
+               Style="{StaticResource OverseerTitle}"
+               HorizontalOptions="Center"
+               VerticalOptions="Center" />
+    </Grid>
+
+</ContentPage>
