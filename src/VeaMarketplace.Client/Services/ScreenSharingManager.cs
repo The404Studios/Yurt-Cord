@@ -333,7 +333,10 @@ public class ScreenSharingManager : IScreenSharingManager
                     Debug.WriteLine("Send task did not complete in time");
                 }
             }
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException)
+            {
+                // Expected when task is cancelled during stop - no action needed
+            }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error waiting for send task: {ex.Message}");
