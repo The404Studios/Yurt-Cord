@@ -106,6 +106,7 @@ public partial class App : Application
         services.AddTransient<DiscoverViewModel>();
         services.AddTransient<SearchViewModel>();
         services.AddTransient<CheckoutViewModel>();
+        services.AddTransient<ProductDetailViewModel>();
 
         ServiceProvider = services.BuildServiceProvider();
 
