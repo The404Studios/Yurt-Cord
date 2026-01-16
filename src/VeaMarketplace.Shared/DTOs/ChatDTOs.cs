@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using VeaMarketplace.Shared.Enums;
 using VeaMarketplace.Shared.Models;
 
@@ -5,8 +6,15 @@ namespace VeaMarketplace.Shared.DTOs;
 
 public class SendMessageRequest
 {
+    [Required(ErrorMessage = "Message content is required")]
+    [StringLength(2000, MinimumLength = 1, ErrorMessage = "Message must be between 1 and 2000 characters")]
     public string Content { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Channel is required")]
+    [StringLength(100, ErrorMessage = "Channel name cannot exceed 100 characters")]
     public string Channel { get; set; } = "general";
+
+    [MaxLength(10, ErrorMessage = "Maximum 10 attachments allowed")]
     public List<string>? AttachmentIds { get; set; }
 }
 

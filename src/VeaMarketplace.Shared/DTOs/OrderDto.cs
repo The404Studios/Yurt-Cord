@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using VeaMarketplace.Shared.Enums;
 
 namespace VeaMarketplace.Shared.DTOs;
@@ -35,15 +36,27 @@ public class OrderDto
 
 public class CreateOrderRequest
 {
+    [Required(ErrorMessage = "Product ID is required")]
     public string ProductId { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Payment method is required")]
     public PaymentMethod PaymentMethod { get; set; }
+
+    [StringLength(50, ErrorMessage = "Coupon code cannot exceed 50 characters")]
     public string? CouponCode { get; set; }
 }
 
 public class DisputeOrderRequest
 {
+    [Required(ErrorMessage = "Order ID is required")]
     public string OrderId { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Reason is required")]
+    [StringLength(200, MinimumLength = 5, ErrorMessage = "Reason must be between 5 and 200 characters")]
     public string Reason { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Description is required")]
+    [StringLength(2000, MinimumLength = 20, ErrorMessage = "Description must be between 20 and 2000 characters")]
     public string Description { get; set; } = string.Empty;
 }
 

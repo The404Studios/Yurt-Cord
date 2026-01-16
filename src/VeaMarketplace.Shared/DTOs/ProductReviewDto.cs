@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace VeaMarketplace.Shared.DTOs;
 
 public class ProductReviewDto
@@ -22,10 +24,22 @@ public class ProductReviewDto
 
 public class CreateReviewRequest
 {
+    [Required(ErrorMessage = "Product ID is required")]
     public string ProductId { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Rating is required")]
+    [Range(1, 5, ErrorMessage = "Rating must be between 1 and 5 stars")]
     public int Rating { get; set; }
+
+    [Required(ErrorMessage = "Review title is required")]
+    [StringLength(100, MinimumLength = 3, ErrorMessage = "Title must be between 3 and 100 characters")]
     public string Title { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Review content is required")]
+    [StringLength(5000, MinimumLength = 10, ErrorMessage = "Content must be between 10 and 5000 characters")]
     public string Content { get; set; } = string.Empty;
+
+    [MaxLength(5, ErrorMessage = "Maximum 5 images allowed")]
     public List<string> ImageUrls { get; set; } = new();
 }
 
