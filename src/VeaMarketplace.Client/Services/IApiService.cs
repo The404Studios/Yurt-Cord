@@ -60,10 +60,10 @@ public interface IApiService
     Task<List<UserBanDto>> GetBannedUsersAsync();
     Task<List<MessageReportDto>> GetPendingReportsAsync();
     Task<bool> BanUserAsync(BanUserRequest request);
-    Task<bool> UnbanUserAsync(string oderId, string reason);
+    Task<bool> UnbanUserAsync(string banId, string reason);
     Task<bool> WarnUserAsync(WarnUserRequest request);
     Task<bool> MuteUserAsync(MuteUserRequest request);
-    Task<bool> UnmuteUserAsync(string oderId, string reason);
+    Task<bool> UnmuteUserAsync(string muteId, string reason);
     Task<bool> DismissReportAsync(string reportId);
     Task<bool> ResolveReportAsync(string reportId, string resolution);
     Task<bool> DeleteMessageAsync(string messageId, string reason);
@@ -550,9 +550,9 @@ public class ApiService : IApiService
         return response.IsSuccessStatusCode;
     }
 
-    public async Task<bool> UnbanUserAsync(string oderId, string reason)
+    public async Task<bool> UnbanUserAsync(string banId, string reason)
     {
-        var response = await _httpClient.PostAsJsonAsync($"/api/moderation/bans/{oderId}/unban", new { Reason = reason }, JsonOptions).ConfigureAwait(false);
+        var response = await _httpClient.PostAsJsonAsync($"/api/moderation/bans/{banId}/unban", new { Reason = reason }, JsonOptions).ConfigureAwait(false);
         return response.IsSuccessStatusCode;
     }
 
@@ -568,9 +568,9 @@ public class ApiService : IApiService
         return response.IsSuccessStatusCode;
     }
 
-    public async Task<bool> UnmuteUserAsync(string oderId, string reason)
+    public async Task<bool> UnmuteUserAsync(string muteId, string reason)
     {
-        var response = await _httpClient.PostAsJsonAsync($"/api/moderation/mutes/{oderId}/unmute", new { Reason = reason }, JsonOptions).ConfigureAwait(false);
+        var response = await _httpClient.PostAsJsonAsync($"/api/moderation/mutes/{muteId}/unmute", new { Reason = reason }, JsonOptions).ConfigureAwait(false);
         return response.IsSuccessStatusCode;
     }
 

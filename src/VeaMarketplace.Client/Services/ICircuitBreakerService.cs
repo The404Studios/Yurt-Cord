@@ -241,9 +241,7 @@ public class CircuitBreakerService : ICircuitBreakerService
 
         private async Task RecordSuccessAsync()
         {
-            await Task.CompletedTask;
-
-            _lock.Wait();
+            await _lock.WaitAsync();
             try
             {
                 _executionHistory.Enqueue((DateTime.UtcNow, true));
@@ -270,9 +268,7 @@ public class CircuitBreakerService : ICircuitBreakerService
 
         private async Task RecordFailureAsync(Exception ex)
         {
-            await Task.CompletedTask;
-
-            _lock.Wait();
+            await _lock.WaitAsync();
             try
             {
                 _executionHistory.Enqueue((DateTime.UtcNow, false));

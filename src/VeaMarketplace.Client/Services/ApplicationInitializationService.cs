@@ -123,7 +123,8 @@ public class ApplicationInitializationService
         _healthCheck.RegisterHealthCheck(new NetworkHealthCheck(serverUrl));
 
         // Disk space health check
-        var appDrive = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)[0].ToString();
+        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var appDrive = !string.IsNullOrEmpty(localAppData) ? localAppData[0].ToString() : "C";
         _healthCheck.RegisterHealthCheck(new DiskSpaceHealthCheck($"{appDrive}:\\", minFreeBytes: 1024 * 1024 * 1024)); // 1GB
     }
 

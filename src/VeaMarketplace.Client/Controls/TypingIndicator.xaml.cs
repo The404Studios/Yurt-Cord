@@ -29,14 +29,14 @@ public partial class TypingIndicator : UserControl
         _typingAnimation?.Stop();
     }
 
-    public void AddTypingUser(string oderId, string username, string? avatarUrl)
+    public void AddTypingUser(string userId, string username, string? avatarUrl)
     {
-        if (_typingUsers.Any(u => u.UserId == oderId))
+        if (_typingUsers.Any(u => u.UserId == userId))
             return;
 
         _typingUsers.Add(new TypingUser
         {
-            UserId = oderId,
+            UserId = userId,
             Username = username,
             AvatarUrl = avatarUrl ?? "/Assets/default-avatar.png"
         });
@@ -44,9 +44,9 @@ public partial class TypingIndicator : UserControl
         UpdateDisplay();
     }
 
-    public void RemoveTypingUser(string oderId)
+    public void RemoveTypingUser(string userId)
     {
-        var user = _typingUsers.FirstOrDefault(u => u.UserId == oderId);
+        var user = _typingUsers.FirstOrDefault(u => u.UserId == userId);
         if (user != null)
         {
             _typingUsers.Remove(user);

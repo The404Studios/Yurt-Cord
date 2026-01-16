@@ -156,7 +156,10 @@ public partial class IncomingCallNotification : UserControl
             GroupAvatar1.ImageSource = new BitmapImage(
                 new Uri(call.CallerAvatarUrl, UriKind.RelativeOrAbsolute));
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to load caller avatar: {ex.Message}");
+        }
 
         // Set second avatar if available
         if (participants.Count > 0)
@@ -166,7 +169,10 @@ public partial class IncomingCallNotification : UserControl
                 GroupAvatar2.ImageSource = new BitmapImage(
                     new Uri(participants[0].AvatarUrl, UriKind.RelativeOrAbsolute));
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to load participant avatar: {ex.Message}");
+            }
         }
 
         // Show +N badge for additional participants

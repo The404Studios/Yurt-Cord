@@ -1,25 +1,41 @@
+using System.ComponentModel.DataAnnotations;
 using VeaMarketplace.Shared.Models;
 
 namespace VeaMarketplace.Shared.DTOs;
 
 public class BanUserRequest
 {
+    [Required(ErrorMessage = "User ID is required")]
     public string UserId { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Reason is required")]
+    [StringLength(1000, MinimumLength = 5, ErrorMessage = "Reason must be between 5 and 1000 characters")]
     public string Reason { get; set; } = string.Empty;
+
     public DateTime? ExpiresAt { get; set; } // null = permanent
 }
 
 public class MuteUserRequest
 {
+    [Required(ErrorMessage = "User ID is required")]
     public string UserId { get; set; } = string.Empty;
+
+    [StringLength(1000, ErrorMessage = "Reason cannot exceed 1000 characters")]
     public string? Reason { get; set; }
+
+    [Required(ErrorMessage = "Expiration date is required")]
     public DateTime ExpiresAt { get; set; }
+
     public List<string> MutedChannels { get; set; } = new(); // empty = all channels
 }
 
 public class WarnUserRequest
 {
+    [Required(ErrorMessage = "User ID is required")]
     public string UserId { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Reason is required")]
+    [StringLength(1000, MinimumLength = 5, ErrorMessage = "Reason must be between 5 and 1000 characters")]
     public string Reason { get; set; } = string.Empty;
 }
 
@@ -70,8 +86,13 @@ public class MessageReportDto
 
 public class ReportMessageRequest
 {
+    [Required(ErrorMessage = "Message ID is required")]
     public string MessageId { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Reason is required")]
     public ReportReason Reason { get; set; }
+
+    [StringLength(1000, ErrorMessage = "Additional info cannot exceed 1000 characters")]
     public string? AdditionalInfo { get; set; }
 }
 
@@ -120,14 +141,32 @@ public class AutoModRuleDto
 
 public class CreateAutoModRuleRequest
 {
+    [Required(ErrorMessage = "Rule name is required")]
+    [StringLength(100, MinimumLength = 1, ErrorMessage = "Rule name must be between 1 and 100 characters")]
     public string Name { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Rule type is required")]
     public AutoModRuleType Type { get; set; }
+
+    [Required(ErrorMessage = "Action is required")]
     public AutoModAction Action { get; set; }
+
+    [MaxLength(1000, ErrorMessage = "Maximum 1000 banned words allowed")]
     public List<string>? BannedWords { get; set; }
+
+    [MaxLength(100, ErrorMessage = "Maximum 100 allowed domains")]
     public List<string>? AllowedDomains { get; set; }
+
+    [Range(1, 50, ErrorMessage = "Max mentions must be between 1 and 50")]
     public int? MaxMentions { get; set; }
+
+    [Range(1, 100, ErrorMessage = "Max emojis must be between 1 and 100")]
     public int? MaxEmojis { get; set; }
+
+    [Range(0, 100, ErrorMessage = "Max capital percent must be between 0 and 100")]
     public int? MaxCapitalPercent { get; set; }
+
+    [StringLength(500, ErrorMessage = "Custom regex cannot exceed 500 characters")]
     public string? CustomRegex { get; set; }
 }
 
@@ -151,7 +190,12 @@ public class ProductReportDto
 
 public class ReportProductRequest
 {
+    [Required(ErrorMessage = "Product ID is required")]
     public string ProductId { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Reason is required")]
     public ProductReportReason Reason { get; set; }
+
+    [StringLength(1000, ErrorMessage = "Additional info cannot exceed 1000 characters")]
     public string? AdditionalInfo { get; set; }
 }

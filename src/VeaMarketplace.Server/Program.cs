@@ -156,6 +156,9 @@ builder.Services.AddSignalR(options =>
 builder.Services.AddSingleton<DatabaseService>();
 
 // Scalability Services (Singleton for high performance)
+// Note: ConnectionStateManager and MessageBatchingService are registered for future
+// horizontal scaling support but not currently injected into hubs (which use inline
+// ConcurrentDictionary management). These can be wired up when scaling requirements increase.
 builder.Services.AddSingleton<ConnectionStateManager>();
 builder.Services.AddSingleton<MessageBatchingService>();
 builder.Services.AddSingleton<ScalabilityConfigurationService>();

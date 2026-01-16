@@ -232,7 +232,10 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler
                         cts.Cancel();
                         cts.Dispose();
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error cancelling task during shutdown: {ex.Message}");
+                    }
                 }
 
                 // Wait for running tasks to complete (with timeout)
@@ -241,7 +244,10 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler
                     var waitTask = Task.WhenAll(_runningTasks.Values);
                     waitTask.Wait(TimeSpan.FromSeconds(10));
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error waiting for tasks during shutdown: {ex.Message}");
+                }
 
                 // Dispose resources
                 _schedulerTimer?.Dispose();

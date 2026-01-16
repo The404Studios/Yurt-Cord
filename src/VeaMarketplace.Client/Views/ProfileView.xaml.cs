@@ -297,7 +297,7 @@ public partial class ProfileView : UserControl
         };
         var iconText = new TextBlock
         {
-            Text = platform[0].ToString(),
+            Text = !string.IsNullOrEmpty(platform) ? platform[0].ToString() : "?",
             FontSize = 14,
             FontWeight = FontWeights.Bold,
             Foreground = Brushes.White,

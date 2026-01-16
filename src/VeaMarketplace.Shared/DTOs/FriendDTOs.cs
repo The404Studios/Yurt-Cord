@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using VeaMarketplace.Shared.Enums;
 using VeaMarketplace.Shared.Models;
 
@@ -70,12 +71,16 @@ public class FriendRequestDto
 
 public class SendFriendRequestDto
 {
+    [Required(ErrorMessage = "Username is required")]
+    [StringLength(32, MinimumLength = 3, ErrorMessage = "Username must be between 3 and 32 characters")]
     public string Username { get; set; } = string.Empty;
 }
 
 public class FriendRequestResponseDto
 {
+    [Required(ErrorMessage = "Request ID is required")]
     public string RequestId { get; set; } = string.Empty;
+
     public bool Accept { get; set; }
 }
 
@@ -109,7 +114,11 @@ public class DirectMessageDto
 
 public class SendDirectMessageDto
 {
+    [Required(ErrorMessage = "Recipient ID is required")]
     public string RecipientId { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Message content is required")]
+    [StringLength(2000, MinimumLength = 1, ErrorMessage = "Message must be between 1 and 2000 characters")]
     public string Content { get; set; } = string.Empty;
 }
 
@@ -176,8 +185,14 @@ public class GroupCallParticipantDto
 
 public class StartGroupCallDto
 {
+    [Required(ErrorMessage = "Call name is required")]
+    [StringLength(100, MinimumLength = 1, ErrorMessage = "Call name must be between 1 and 100 characters")]
     public string Name { get; set; } = string.Empty;
+
+    [MinLength(1, ErrorMessage = "At least one user must be invited")]
+    [MaxLength(9, ErrorMessage = "Maximum 9 users can be invited")]
     public List<string> InvitedUserIds { get; set; } = [];
+
     public bool AllowVideo { get; set; } = true;
     public bool AllowScreenShare { get; set; } = true;
 }
@@ -227,7 +242,10 @@ public class BlockedUserDto
 
 public class BlockUserRequest
 {
+    [Required(ErrorMessage = "User ID is required")]
     public string UserId { get; set; } = string.Empty;
+
+    [StringLength(500, ErrorMessage = "Reason cannot exceed 500 characters")]
     public string? Reason { get; set; }
 }
 
@@ -282,11 +300,21 @@ public class VoiceRoomParticipantDto
 
 public class CreateVoiceRoomDto
 {
+    [Required(ErrorMessage = "Room name is required")]
+    [StringLength(100, MinimumLength = 1, ErrorMessage = "Room name must be between 1 and 100 characters")]
     public string Name { get; set; } = string.Empty;
+
+    [StringLength(500, ErrorMessage = "Description cannot exceed 500 characters")]
     public string Description { get; set; } = string.Empty;
+
     public bool IsPublic { get; set; } = true;
+
+    [StringLength(50, ErrorMessage = "Password cannot exceed 50 characters")]
     public string? Password { get; set; }
+
+    [Range(2, 50, ErrorMessage = "Max participants must be between 2 and 50")]
     public int MaxParticipants { get; set; } = 10;
+
     public VoiceRoomCategory Category { get; set; } = VoiceRoomCategory.General;
     public bool AllowScreenShare { get; set; } = true;
 }
@@ -331,7 +359,13 @@ public enum VoiceRoomCategory
 
 public class CreateGroupChatRequest
 {
+    [Required(ErrorMessage = "Group name is required")]
+    [StringLength(100, MinimumLength = 1, ErrorMessage = "Group name must be between 1 and 100 characters")]
     public string Name { get; set; } = string.Empty;
+
+    [MinLength(1, ErrorMessage = "At least one member is required")]
+    [MaxLength(50, ErrorMessage = "Maximum 50 members allowed")]
     public List<string> MemberIds { get; set; } = [];
+
     public string? IconPath { get; set; }
 }
