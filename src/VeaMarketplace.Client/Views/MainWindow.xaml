@@ -4,8 +4,8 @@
         xmlns:views="clr-namespace:VeaMarketplace.Client.Views"
         xmlns:controls="clr-namespace:VeaMarketplace.Client.Controls"
         Title="Overseer"
-        Height="800" Width="1280"
-        MinHeight="600" MinWidth="900"
+        Height="900" Width="1440"
+        MinHeight="700" MinWidth="1100"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -13,246 +13,497 @@
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <!-- Holographic Gradient for Header -->
+        <LinearGradientBrush x:Key="HeaderGradient" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#00FF9F15" Offset="0"/>
+            <GradientStop Color="#00E5FF10" Offset="0.3"/>
+            <GradientStop Color="#B366FF10" Offset="0.6"/>
+            <GradientStop Color="#FF66B210" Offset="1"/>
+        </LinearGradientBrush>
+
+        <!-- Blade Nav Item Hover Animation -->
+        <Storyboard x:Key="NavItemHover">
+            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                             To="8" Duration="0:0:0.2">
+                <DoubleAnimation.EasingFunction>
+                    <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
     </Window.Resources>
 
-    <Border Background="{StaticResource OverseerBackgroundBrush}" CornerRadius="24">
+    <!-- Main Container with Deep Black Background -->
+    <Border CornerRadius="20" ClipToBounds="True">
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#020408" Offset="0"/>
+                <GradientStop Color="#040810" Offset="0.5"/>
+                <GradientStop Color="#020408" Offset="1"/>
+            </LinearGradientBrush>
+        </Border.Background>
+        <Border.Effect>
+            <DropShadowEffect Color="#000000" BlurRadius="40" ShadowDepth="0" Opacity="0.8"/>
+        </Border.Effect>
+
         <Grid>
-            <!-- Matrix Background Animation -->
-            <controls:MatrixBackground x:Name="MatrixBg" Opacity="0.3"/>
+            <!-- Ambient Particle Background -->
+            <controls:AmbientParticles x:Name="AmbientParticlesBg" ParticleCount="40"
+                                        MinSize="2" MaxSize="6" SpeedFactor="0.8"
+                                        GlowIntensity="0.4" Opacity="0.6"/>
+
+            <!-- Matrix Background (Dimmed) -->
+            <controls:MatrixBackground x:Name="MatrixBg" Opacity="0.15"/>
+
+            <!-- Ambient Glow Overlay -->
+            <Border Opacity="0.3" IsHitTestVisible="False">
+                <Border.Background>
+                    <RadialGradientBrush Center="0.2,0.2" RadiusX="0.8" RadiusY="0.8">
+                        <GradientStop Color="#00FF9F10" Offset="0"/>
+                        <GradientStop Color="#00000000" Offset="1"/>
+                    </RadialGradientBrush>
+                </Border.Background>
+            </Border>
 
             <!-- Login View -->
             <views:LoginView x:Name="LoginView" Visibility="Visible"/>
 
-            <!-- Profile Setup View (shown after registration) -->
+            <!-- Profile Setup View -->
             <views:ProfileSetupView x:Name="ProfileSetupView" Visibility="Collapsed"/>
 
-            <!-- Main App View -->
+            <!-- Main Application View -->
             <Grid x:Name="MainAppGrid" Visibility="Collapsed">
-                <Grid.ColumnDefinitions>
-                    <!-- Server List -->
-                    <ColumnDefinition Width="72"/>
-                    <!-- Channel List -->
-                    <ColumnDefinition Width="240"/>
+                <Grid.RowDefinitions>
+                    <!-- Title Bar -->
+                    <RowDefinition Height="48"/>
                     <!-- Main Content -->
-                    <ColumnDefinition Width="*"/>
-                    <!-- Member List -->
-                    <ColumnDefinition Width="240"/>
-                </Grid.ColumnDefinitions>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-                <!-- Custom Title Bar -->
-                <Border Grid.ColumnSpan="4" Height="32" VerticalAlignment="Top"
-                        Background="{StaticResource PrimaryDarkBrush}"
-                        MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
-                    <Grid>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="80,0,0,0">
-                            <TextBlock Text="OVERSEER" FontWeight="Bold" FontSize="13"
-                                       Foreground="{StaticResource OverseerPrimaryBrush}"
-                                       VerticalAlignment="Center">
-                                <TextBlock.Effect>
-                                    <DropShadowEffect Color="#00FF88" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
-                                </TextBlock.Effect>
-                            </TextBlock>
-                            <TextBlock Text="•" FontWeight="Light" FontSize="13"
-                                       Foreground="{StaticResource OverseerSecondaryBrush}"
-                                       VerticalAlignment="Center" Margin="8,0"/>
-                            <TextBlock Text="Observe • Connect • Control" FontWeight="Normal" FontSize="11"
-                                       Foreground="{StaticResource OverseerTextDimBrush}"
-                                       VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <!-- Activity Panel Button -->
-                            <Button x:Name="ActivityPanelButton" Width="32" Height="32"
-                                    Style="{StaticResource IconButton}"
-                                    ToolTip="Activity" Click="ActivityPanelButton_Click">
-                                <TextBlock Text="⚡" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                            </Button>
-                            <!-- Notifications Button -->
-                            <Button x:Name="NotificationsButton" Width="32" Height="32"
-                                    Style="{StaticResource IconButton}"
-                                    ToolTip="Notifications" Click="NotificationsButton_Click">
-                                <Grid>
-                                    <TextBlock Text="🔔" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                                    <Border x:Name="NotificationBadge" Background="{StaticResource AccentRedBrush}"
-                                            CornerRadius="6" Width="12" Height="12"
-                                            HorizontalAlignment="Right" VerticalAlignment="Top"
-                                            Margin="0,-2,-2,0" Visibility="Collapsed">
-                                        <TextBlock x:Name="NotificationCount" Text="0" FontSize="8" FontWeight="Bold"
-                                                   Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                </Grid>
-                            </Button>
-                            <!-- Cart Button -->
-                            <Button x:Name="CartButton" Width="32" Height="32"
-                                    Style="{StaticResource IconButton}"
-                                    ToolTip="Shopping Cart" Click="CartButton_Click">
-                                <Grid>
-                                    <TextBlock Text="🛍️" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                                    <Border x:Name="CartBadge" Background="{StaticResource AccentGreenBrush}"
-                                            CornerRadius="6" Width="12" Height="12"
-                                            HorizontalAlignment="Right" VerticalAlignment="Top"
-                                            Margin="0,-2,-2,0" Visibility="Collapsed">
-                                        <TextBlock x:Name="CartCount" Text="0" FontSize="8" FontWeight="Bold"
-                                                   Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                </Grid>
-                            </Button>
-                            <Rectangle Width="1" Height="16" Fill="{StaticResource QuaternaryDarkBrush}" Margin="8,0"/>
-                            <Button Content="─" Width="46" Height="32"
-                                    Style="{StaticResource IconButton}"
-                                    Click="MinimizeButton_Click"/>
-                            <Button Content="□" Width="46" Height="32"
-                                    Style="{StaticResource IconButton}"
-                                    Click="MaximizeButton_Click"/>
-                            <Button Content="✕" Width="46" Height="32"
-                                    Style="{StaticResource IconButton}"
-                                    Click="CloseButton_Click"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-
-                <!-- Server Sidebar (Overseer Dark with glow) -->
-                <Border Grid.Column="0" Margin="0,32,0,0" CornerRadius="0,20,20,0">
+                <!-- ═══════════════════════════════════════════════════════════════════
+                     BLADE-STYLE TITLE BAR
+                ═══════════════════════════════════════════════════════════════════ -->
+                <Border Grid.Row="0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <Border.Background>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                            <GradientStop Color="#08081A" Offset="0"/>
-                            <GradientStop Color="#050510" Offset="1"/>
+                            <GradientStop Color="#0C1018" Offset="0"/>
+                            <GradientStop Color="#060810" Offset="1"/>
                         </LinearGradientBrush>
                     </Border.Background>
-                    <StackPanel Margin="0,16">
-                        <!-- Home Button (Overseer Orb) -->
-                        <Button Style="{StaticResource OverseerCircleButton}" Width="52" Height="52"
-                                Margin="10,0,10,8" Click="HomeButton_Click">
-                            <TextBlock Text="⬡" FontSize="26" Foreground="{StaticResource OverseerPrimaryBrush}"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Button>
+                    <!-- Bottom Glow Line -->
+                    <Border VerticalAlignment="Bottom" Height="1">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#00000000" Offset="0"/>
+                                <GradientStop Color="#00FF9F60" Offset="0.3"/>
+                                <GradientStop Color="#00E5FF80" Offset="0.5"/>
+                                <GradientStop Color="#00FF9F60" Offset="0.7"/>
+                                <GradientStop Color="#00000000" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
+                </Border>
 
-                        <Border Height="2" Margin="12,8" CornerRadius="1">
+                <!-- Title Bar Content -->
+                <Grid Grid.Row="0" Margin="16,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Logo and Brand -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Holographic Logo -->
+                        <Border Width="32" Height="32" CornerRadius="16" Margin="0,0,12,0">
                             <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#00FF9F" Offset="0"/>
+                                    <GradientStop Color="#00E5FF" Offset="0.5"/>
+                                    <GradientStop Color="#B366FF" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Border.Effect>
+                                <DropShadowEffect Color="#00FF9F" BlurRadius="15" ShadowDepth="0" Opacity="0.7"/>
+                            </Border.Effect>
+                            <TextBlock Text="◉" FontSize="16" Foreground="#020408"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+
+                        <TextBlock Text="OVERSEER" FontWeight="Black" FontSize="16"
+                                   VerticalAlignment="Center" Margin="0,0,8,0">
+                            <TextBlock.Foreground>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                    <GradientStop Color="Transparent" Offset="0"/>
-                                    <GradientStop Color="#00FF88" Offset="0.5"/>
-                                    <GradientStop Color="Transparent" Offset="1"/>
+                                    <GradientStop Color="#00FF9F" Offset="0"/>
+                                    <GradientStop Color="#00E5FF" Offset="1"/>
+                                </LinearGradientBrush>
+                            </TextBlock.Foreground>
+                            <TextBlock.Effect>
+                                <DropShadowEffect Color="#00FF9F" BlurRadius="12" ShadowDepth="0" Opacity="0.6"/>
+                            </TextBlock.Effect>
+                        </TextBlock>
+
+                        <Border Height="20" Width="1" VerticalAlignment="Center" Margin="8,0">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                    <GradientStop Color="#00000000" Offset="0"/>
+                                    <GradientStop Color="#00FF9F60" Offset="0.5"/>
+                                    <GradientStop Color="#00000000" Offset="1"/>
                                 </LinearGradientBrush>
                             </Border.Background>
                         </Border>
 
-                        <!-- Chat Button -->
-                        <Button Style="{StaticResource OverseerNavItem}" Width="52" Height="52"
-                                Margin="10,6,10,0" ToolTip="Chat" Click="ChatButton_Click">
-                            <TextBlock x:Name="ChatButtonIcon" Text="💬" FontSize="22"/>
+                        <TextBlock Text="OBSERVE • CONNECT • CONTROL" FontSize="10" FontWeight="Medium"
+                                   Foreground="#607090" VerticalAlignment="Center" Opacity="0.8"/>
+                    </StackPanel>
+
+                    <!-- Quick Action Buttons -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+                        <!-- Activity Panel -->
+                        <Button x:Name="ActivityPanelButton" Style="{StaticResource BladeIconButton}"
+                                Width="40" Height="40" ToolTip="Activity" Click="ActivityPanelButton_Click">
+                            <TextBlock Text="⚡" FontSize="16"/>
                         </Button>
 
-                        <!-- Marketplace Button -->
-                        <Button Style="{StaticResource OverseerNavItem}" Width="52" Height="52"
-                                Margin="10,6,10,0" ToolTip="Marketplace" Click="MarketplaceButton_Click">
-                            <TextBlock x:Name="MarketButtonIcon" Text="🛒" FontSize="22"/>
+                        <!-- Notifications -->
+                        <Button x:Name="NotificationsButton" Style="{StaticResource BladeIconButton}"
+                                Width="40" Height="40" ToolTip="Notifications" Click="NotificationsButton_Click">
+                            <Grid>
+                                <TextBlock Text="🔔" FontSize="16"/>
+                                <Border x:Name="NotificationBadge" CornerRadius="8"
+                                        Width="16" Height="16" Margin="0,-4,-4,0"
+                                        HorizontalAlignment="Right" VerticalAlignment="Top"
+                                        Visibility="Collapsed">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                            <GradientStop Color="#FF4466" Offset="0"/>
+                                            <GradientStop Color="#FF66B2" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#FF4466" BlurRadius="8" ShadowDepth="0" Opacity="0.8"/>
+                                    </Border.Effect>
+                                    <TextBlock x:Name="NotificationCount" Text="0" FontSize="9" FontWeight="Bold"
+                                               Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </Grid>
                         </Button>
 
-                        <!-- Discover Button -->
-                        <Button Style="{StaticResource OverseerNavItem}" Width="52" Height="52"
-                                Margin="10,6,10,0" ToolTip="Discover" Click="DiscoverButton_Click">
-                            <TextBlock x:Name="DiscoverButtonIcon" Text="🔍" FontSize="22"/>
-                        </Button>
-
-                        <!-- Activity Feed Button -->
-                        <Button Style="{StaticResource OverseerNavItem}" Width="52" Height="52"
-                                Margin="10,6,10,0" ToolTip="Activity" Click="ActivityFeedButton_Click">
-                            <TextBlock x:Name="ActivityButtonIcon" Text="📰" FontSize="22"/>
-                        </Button>
-
-                        <!-- Profile Button -->
-                        <Button Style="{StaticResource OverseerNavItem}" Width="52" Height="52"
-                                Margin="10,6,10,0" ToolTip="Profile" Click="ProfileButton_Click">
-                            <TextBlock x:Name="ProfileButtonIcon" Text="👤" FontSize="22"/>
-                        </Button>
-
-                        <!-- Friends Button -->
-                        <Button Style="{StaticResource OverseerNavItem}" Width="52" Height="52"
-                                Margin="10,6,10,0" ToolTip="Friends" Click="FriendsButton_Click">
-                            <TextBlock x:Name="FriendsButtonIcon" Text="👥" FontSize="22"/>
-                        </Button>
-
-                        <!-- Settings Button -->
-                        <Button Style="{StaticResource OverseerNavItem}" Width="52" Height="52"
-                                Margin="10,6,10,0" ToolTip="Settings" Click="SettingsButton_Click">
-                            <TextBlock x:Name="SettingsButtonIcon" Text="⚙️" FontSize="22"/>
-                        </Button>
-
-                        <!-- Add Server Button -->
-                        <Button Style="{StaticResource OverseerCircleButton}" Width="44" Height="44"
-                                Margin="10,12,10,0" ToolTip="Add Server" BorderBrush="{StaticResource OverseerPrimaryBrush}">
-                            <TextBlock Text="+" FontSize="24" Foreground="{StaticResource OverseerPrimaryBrush}"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-2,0,0"/>
+                        <!-- Cart -->
+                        <Button x:Name="CartButton" Style="{StaticResource BladeIconButton}"
+                                Width="40" Height="40" ToolTip="Cart" Click="CartButton_Click">
+                            <Grid>
+                                <TextBlock Text="🛍️" FontSize="16"/>
+                                <Border x:Name="CartBadge" CornerRadius="8"
+                                        Width="16" Height="16" Margin="0,-4,-4,0"
+                                        HorizontalAlignment="Right" VerticalAlignment="Top"
+                                        Visibility="Collapsed">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                            <GradientStop Color="#00FF9F" Offset="0"/>
+                                            <GradientStop Color="#00E5FF" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#00FF9F" BlurRadius="8" ShadowDepth="0" Opacity="0.8"/>
+                                    </Border.Effect>
+                                    <TextBlock x:Name="CartCount" Text="0" FontSize="9" FontWeight="Bold"
+                                               Foreground="#020408" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </Grid>
                         </Button>
                     </StackPanel>
-                </Border>
 
-                <!-- Channel Sidebar (Rounded) -->
-                <Border Grid.Column="1" Margin="0,32,0,0" CornerRadius="20,0,0,20">
-                    <Border.Background>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                            <GradientStop Color="#101020" Offset="0"/>
-                            <GradientStop Color="#0A0A18" Offset="1"/>
-                        </LinearGradientBrush>
-                    </Border.Background>
-                    <views:ChannelSidebar x:Name="ChannelSidebar"/>
-                </Border>
+                    <!-- Window Controls -->
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Width="1" Height="24" Margin="0,0,12,0">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                    <GradientStop Color="#00000000" Offset="0"/>
+                                    <GradientStop Color="#303848" Offset="0.5"/>
+                                    <GradientStop Color="#00000000" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
 
-                <!-- Main Content Area (Rounded with subtle glow) -->
-                <Border Grid.Column="2" Margin="4,36,4,4" CornerRadius="24">
-                    <Border.Background>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                            <GradientStop Color="#0C0C1A" Offset="0"/>
-                            <GradientStop Color="#080814" Offset="1"/>
-                        </LinearGradientBrush>
-                    </Border.Background>
-                    <Border.Effect>
-                        <DropShadowEffect Color="#00FF88" BlurRadius="8" ShadowDepth="0" Opacity="0.1"/>
-                    </Border.Effect>
-                    <Grid>
-                        <views:ChatView x:Name="ChatViewControl" Visibility="Visible"/>
-                        <views:MarketplaceView x:Name="MarketplaceViewControl" Visibility="Collapsed"/>
-                        <views:ProfileView x:Name="ProfileViewControl" Visibility="Collapsed"/>
-                        <views:SettingsView x:Name="SettingsViewControl" Visibility="Collapsed"/>
-                        <views:FriendsView x:Name="FriendsViewControl" Visibility="Collapsed"/>
-                        <views:VoiceCallDashboard x:Name="VoiceCallDashboardControl" Visibility="Collapsed"/>
-                        <views:GroupCallView x:Name="GroupCallViewControl" Visibility="Collapsed"/>
-                        <views:CartView x:Name="CartViewControl" Visibility="Collapsed"/>
-                        <views:WishlistView x:Name="WishlistViewControl" Visibility="Collapsed"/>
-                        <views:OrderHistoryView x:Name="OrderHistoryViewControl" Visibility="Collapsed"/>
-                        <views:NotificationCenterView x:Name="NotificationCenterViewControl" Visibility="Collapsed"/>
-                        <views:ModerationPanelView x:Name="ModerationPanelViewControl" Visibility="Collapsed"/>
-                        <views:ServerBrowserView x:Name="ServerBrowserViewControl" Visibility="Collapsed"/>
-                        <views:ActivityFeedView x:Name="ActivityFeedViewControl" Visibility="Collapsed"/>
-                        <views:BlockedUsersView x:Name="BlockedUsersViewControl" Visibility="Collapsed"/>
-                        <views:PrivacySettingsView x:Name="PrivacySettingsViewControl" Visibility="Collapsed"/>
-                        <views:DiscoverView x:Name="DiscoverViewControl" Visibility="Collapsed"/>
-                        <views:LeaderboardView x:Name="LeaderboardViewControl" Visibility="Collapsed"/>
-                    </Grid>
-                </Border>
+                        <Button Content="─" Width="44" Height="36" Style="{StaticResource BladeIconButton}"
+                                Click="MinimizeButton_Click" FontSize="14"/>
+                        <Button Content="□" Width="44" Height="36" Style="{StaticResource BladeIconButton}"
+                                Click="MaximizeButton_Click" FontSize="14"/>
+                        <Button x:Name="CloseBtn" Content="✕" Width="44" Height="36" FontSize="14"
+                                Click="CloseButton_Click">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource BladeIconButton}">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Foreground" Value="#FF4466"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                </Grid>
 
-                <!-- Member List Sidebar -->
-                <Border Grid.Column="3" Background="{StaticResource SecondaryDarkBrush}"
-                        Margin="0,32,0,0">
-                    <views:MemberSidebar x:Name="MemberSidebar"/>
-                </Border>
+                <!-- ═══════════════════════════════════════════════════════════════════
+                     MAIN CONTENT AREA WITH BLADE NAVIGATION
+                ═══════════════════════════════════════════════════════════════════ -->
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <!-- Blade Navigation Rail -->
+                        <ColumnDefinition Width="80"/>
+                        <!-- Secondary Panel (Channels/Servers) -->
+                        <ColumnDefinition Width="280"/>
+                        <!-- Main Content -->
+                        <ColumnDefinition Width="*"/>
+                        <!-- Contextual Panel (Members/Details) -->
+                        <ColumnDefinition Width="280"/>
+                    </Grid.ColumnDefinitions>
 
-                <!-- Toast Notification Container -->
-                <StackPanel x:Name="ToastContainer" Grid.Column="2" Grid.ColumnSpan="2"
-                            HorizontalAlignment="Right" VerticalAlignment="Top"
-                            Margin="0,48,16,0" Width="350"/>
+                    <!-- ═══════════════════════════════════════════════════════════════
+                         BLADE NAVIGATION RAIL (Xbox 360 Guide Style)
+                    ═══════════════════════════════════════════════════════════════ -->
+                    <Border Grid.Column="0" Margin="8,8,0,8">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#0A0C12" Offset="0"/>
+                                <GradientStop Color="#080A10" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Border CornerRadius="16" ClipToBounds="True">
+                            <Grid>
+                                <!-- Side Glow -->
+                                <Border Width="2" HorizontalAlignment="Right" CornerRadius="1" Margin="0,20">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Color="#00000000" Offset="0"/>
+                                            <GradientStop Color="#00FF9F40" Offset="0.3"/>
+                                            <GradientStop Color="#00E5FF60" Offset="0.5"/>
+                                            <GradientStop Color="#00FF9F40" Offset="0.7"/>
+                                            <GradientStop Color="#00000000" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                </Border>
 
-                <!-- Social Activity Panel Overlay -->
-                <Border x:Name="ActivityPanelOverlay" Grid.Column="2" Grid.ColumnSpan="2"
-                        Visibility="Collapsed" HorizontalAlignment="Right"
-                        VerticalAlignment="Stretch" Margin="0,32,260,0">
-                    <controls:SocialActivityPanel x:Name="SocialActivityPanelControl"
-                                                   StartGroupCallRequested="SocialActivity_StartGroupCall"
-                                                   CreateGroupChatRequested="SocialActivity_CreateGroupChat"
-                                                   ShareStatusRequested="SocialActivity_ShareStatus"
-                                                   FindFriendsRequested="SocialActivity_FindFriends"
-                                                   OnlineFriendClicked="SocialActivity_OnlineFriendClicked"/>
-                </Border>
+                                <ScrollViewer VerticalScrollBarVisibility="Hidden" Margin="0,12">
+                                    <StackPanel>
+                                        <!-- Home/Hub Button -->
+                                        <Button x:Name="HomeNavBtn" Style="{StaticResource BladeIconButton}"
+                                                Width="56" Height="56" Margin="8,4" ToolTip="Hub"
+                                                Click="HomeButton_Click">
+                                            <Grid>
+                                                <Ellipse Width="44" Height="44" StrokeThickness="2">
+                                                    <Ellipse.Stroke>
+                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                            <GradientStop Color="#00FF9F" Offset="0"/>
+                                                            <GradientStop Color="#00E5FF" Offset="1"/>
+                                                        </LinearGradientBrush>
+                                                    </Ellipse.Stroke>
+                                                    <Ellipse.Effect>
+                                                        <DropShadowEffect Color="#00FF9F" BlurRadius="12" ShadowDepth="0" Opacity="0.5"/>
+                                                    </Ellipse.Effect>
+                                                </Ellipse>
+                                                <TextBlock Text="◉" FontSize="20" Foreground="#00FF9F"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Button>
+
+                                        <!-- Divider -->
+                                        <Border Height="2" Margin="16,12" CornerRadius="1">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                    <GradientStop Color="#00000000" Offset="0"/>
+                                                    <GradientStop Color="#00FF9F60" Offset="0.5"/>
+                                                    <GradientStop Color="#00000000" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                        </Border>
+
+                                        <!-- Chat -->
+                                        <Button x:Name="ChatNavBtn" Style="{StaticResource BladeIconButton}"
+                                                Width="56" Height="56" Margin="8,4" ToolTip="Chat"
+                                                Click="ChatButton_Click">
+                                            <TextBlock x:Name="ChatButtonIcon" Text="💬" FontSize="24"/>
+                                        </Button>
+
+                                        <!-- Marketplace -->
+                                        <Button x:Name="MarketNavBtn" Style="{StaticResource BladeIconButton}"
+                                                Width="56" Height="56" Margin="8,4" ToolTip="Marketplace"
+                                                Click="MarketplaceButton_Click">
+                                            <TextBlock x:Name="MarketButtonIcon" Text="🛒" FontSize="24"/>
+                                        </Button>
+
+                                        <!-- Discover -->
+                                        <Button x:Name="DiscoverNavBtn" Style="{StaticResource BladeIconButton}"
+                                                Width="56" Height="56" Margin="8,4" ToolTip="Discover"
+                                                Click="DiscoverButton_Click">
+                                            <TextBlock x:Name="DiscoverButtonIcon" Text="🔍" FontSize="24"/>
+                                        </Button>
+
+                                        <!-- Activity -->
+                                        <Button x:Name="ActivityNavBtn" Style="{StaticResource BladeIconButton}"
+                                                Width="56" Height="56" Margin="8,4" ToolTip="Activity"
+                                                Click="ActivityFeedButton_Click">
+                                            <TextBlock x:Name="ActivityButtonIcon" Text="📰" FontSize="24"/>
+                                        </Button>
+
+                                        <!-- Profile -->
+                                        <Button x:Name="ProfileNavBtn" Style="{StaticResource BladeIconButton}"
+                                                Width="56" Height="56" Margin="8,4" ToolTip="Profile"
+                                                Click="ProfileButton_Click">
+                                            <TextBlock x:Name="ProfileButtonIcon" Text="👤" FontSize="24"/>
+                                        </Button>
+
+                                        <!-- Friends -->
+                                        <Button x:Name="FriendsNavBtn" Style="{StaticResource BladeIconButton}"
+                                                Width="56" Height="56" Margin="8,4" ToolTip="Friends"
+                                                Click="FriendsButton_Click">
+                                            <TextBlock x:Name="FriendsButtonIcon" Text="👥" FontSize="24"/>
+                                        </Button>
+
+                                        <!-- Spacer -->
+                                        <Border Height="20"/>
+
+                                        <!-- Settings (Bottom) -->
+                                        <Button x:Name="SettingsNavBtn" Style="{StaticResource BladeIconButton}"
+                                                Width="56" Height="56" Margin="8,4" ToolTip="Settings"
+                                                Click="SettingsButton_Click">
+                                            <TextBlock x:Name="SettingsButtonIcon" Text="⚙️" FontSize="24"/>
+                                        </Button>
+
+                                        <!-- Add Server -->
+                                        <Button Style="{StaticResource BladeIconButton}"
+                                                Width="48" Height="48" Margin="8,8" ToolTip="Add Server">
+                                            <Border Width="36" Height="36" CornerRadius="18"
+                                                    BorderThickness="2" BorderBrush="#00FF9F40">
+                                                <TextBlock Text="+" FontSize="20" Foreground="#00FF9F"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           Margin="0,-2,0,0"/>
+                                            </Border>
+                                        </Button>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </Grid>
+                        </Border>
+                    </Border>
+
+                    <!-- ═══════════════════════════════════════════════════════════════
+                         SECONDARY PANEL (Channels/Servers Blade)
+                    ═══════════════════════════════════════════════════════════════ -->
+                    <Border Grid.Column="1" Margin="4,8,4,8" Style="{StaticResource BladePanel}">
+                        <Grid>
+                            <!-- Panel Header Glow -->
+                            <Border Height="60" VerticalAlignment="Top" CornerRadius="0,20,0,0">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                        <GradientStop Color="#00FF9F15" Offset="0"/>
+                                        <GradientStop Color="#00000000" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                            </Border>
+
+                            <views:ChannelSidebar x:Name="ChannelSidebar"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- ═══════════════════════════════════════════════════════════════
+                         MAIN CONTENT AREA (Pop-Out Container)
+                    ═══════════════════════════════════════════════════════════════ -->
+                    <Border Grid.Column="2" Margin="4,8" Style="{StaticResource OrigamiCard}">
+                        <Border.Effect>
+                            <DropShadowEffect Color="#00FF9F" BlurRadius="20" ShadowDepth="0" Opacity="0.15"/>
+                        </Border.Effect>
+
+                        <Grid ClipToBounds="True">
+                            <!-- Content Views Container -->
+                            <Grid x:Name="ContentContainer">
+                                <views:ChatView x:Name="ChatViewControl" Visibility="Visible"/>
+                                <views:MarketplaceView x:Name="MarketplaceViewControl" Visibility="Collapsed"/>
+                                <views:ProfileView x:Name="ProfileViewControl" Visibility="Collapsed"/>
+                                <views:SettingsView x:Name="SettingsViewControl" Visibility="Collapsed"/>
+                                <views:FriendsView x:Name="FriendsViewControl" Visibility="Collapsed"/>
+                                <views:VoiceCallDashboard x:Name="VoiceCallDashboardControl" Visibility="Collapsed"/>
+                                <views:GroupCallView x:Name="GroupCallViewControl" Visibility="Collapsed"/>
+                                <views:CartView x:Name="CartViewControl" Visibility="Collapsed"/>
+                                <views:WishlistView x:Name="WishlistViewControl" Visibility="Collapsed"/>
+                                <views:OrderHistoryView x:Name="OrderHistoryViewControl" Visibility="Collapsed"/>
+                                <views:NotificationCenterView x:Name="NotificationCenterViewControl" Visibility="Collapsed"/>
+                                <views:ModerationPanelView x:Name="ModerationPanelViewControl" Visibility="Collapsed"/>
+                                <views:ServerBrowserView x:Name="ServerBrowserViewControl" Visibility="Collapsed"/>
+                                <views:ActivityFeedView x:Name="ActivityFeedViewControl" Visibility="Collapsed"/>
+                                <views:BlockedUsersView x:Name="BlockedUsersViewControl" Visibility="Collapsed"/>
+                                <views:PrivacySettingsView x:Name="PrivacySettingsViewControl" Visibility="Collapsed"/>
+                                <views:DiscoverView x:Name="DiscoverViewControl" Visibility="Collapsed"/>
+                                <views:LeaderboardView x:Name="LeaderboardViewControl" Visibility="Collapsed"/>
+                            </Grid>
+
+                            <!-- Corner Accents -->
+                            <Path Data="M0,20 L0,0 L20,0" Stroke="#00FF9F40" StrokeThickness="2"
+                                  HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8,8"/>
+                            <Path Data="M20,0 L0,0 L0,20" Stroke="#00E5FF40" StrokeThickness="2"
+                                  HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8,8"/>
+                            <Path Data="M0,0 L0,20 L20,20" Stroke="#B366FF40" StrokeThickness="2"
+                                  HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="8,8"/>
+                            <Path Data="M20,20 L0,20 L0,0" Stroke="#FF66B240" StrokeThickness="2"
+                                  HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="8,8"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- ═══════════════════════════════════════════════════════════════
+                         CONTEXTUAL PANEL (Members/Details Blade)
+                    ═══════════════════════════════════════════════════════════════ -->
+                    <Border Grid.Column="3" Margin="0,8,8,8">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="1,0" EndPoint="0,0">
+                                <GradientStop Color="#0A0C12" Offset="0"/>
+                                <GradientStop Color="#060810" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Border CornerRadius="20,0,0,20" ClipToBounds="True">
+                            <Grid>
+                                <!-- Left Glow Edge -->
+                                <Border Width="2" HorizontalAlignment="Left" CornerRadius="1" Margin="0,20">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Color="#00000000" Offset="0"/>
+                                            <GradientStop Color="#00E5FF40" Offset="0.3"/>
+                                            <GradientStop Color="#B366FF60" Offset="0.5"/>
+                                            <GradientStop Color="#00E5FF40" Offset="0.7"/>
+                                            <GradientStop Color="#00000000" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                </Border>
+
+                                <views:MemberSidebar x:Name="MemberSidebar"/>
+                            </Grid>
+                        </Border>
+                    </Border>
+
+                    <!-- ═══════════════════════════════════════════════════════════════
+                         OVERLAY PANELS
+                    ═══════════════════════════════════════════════════════════════ -->
+
+                    <!-- Toast Container -->
+                    <StackPanel x:Name="ToastContainer" Grid.Column="2" Grid.ColumnSpan="2"
+                                HorizontalAlignment="Right" VerticalAlignment="Top"
+                                Margin="0,16,16,0" Width="380"/>
+
+                    <!-- Social Activity Panel Overlay -->
+                    <Border x:Name="ActivityPanelOverlay" Grid.Column="2" Grid.ColumnSpan="2"
+                            Visibility="Collapsed" HorizontalAlignment="Right"
+                            VerticalAlignment="Stretch" Margin="0,0,300,0">
+                        <Border.Effect>
+                            <DropShadowEffect Color="#000000" BlurRadius="30" ShadowDepth="0" Opacity="0.6"/>
+                        </Border.Effect>
+                        <controls:SocialActivityPanel x:Name="SocialActivityPanelControl"
+                                                       StartGroupCallRequested="SocialActivity_StartGroupCall"
+                                                       CreateGroupChatRequested="SocialActivity_CreateGroupChat"
+                                                       ShareStatusRequested="SocialActivity_ShareStatus"
+                                                       FindFriendsRequested="SocialActivity_FindFriends"
+                                                       OnlineFriendClicked="SocialActivity_OnlineFriendClicked"/>
+                    </Border>
+                </Grid>
             </Grid>
         </Grid>
     </Border>
