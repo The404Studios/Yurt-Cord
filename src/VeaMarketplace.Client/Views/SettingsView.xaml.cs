@@ -210,24 +210,41 @@ public partial class SettingsView : UserControl
 
     private void LoadQoLData()
     {
-        // Try to get QoL service
+        // Try to get QoL service - these controls may not exist in simplified XAML
         var qolService = App.ServiceProvider.GetService(typeof(IQoLService)) as IQoLService;
-        if (qolService != null)
-        {
-            // Load message templates
-            TemplatesListControl.ItemsSource = qolService.Templates;
+        if (qolService == null) return;
 
-            // Load scheduled messages
-            ScheduledMessagesControl.ItemsSource = qolService.ScheduledMessages;
-            NoScheduledMessages.Visibility = qolService.ScheduledMessages.Count == 0
+        // Load message templates (control may not exist in simplified layout)
+        var templatesControl = FindName("TemplatesListControl") as ItemsControl;
+        if (templatesControl != null)
+        {
+            templatesControl.ItemsSource = qolService.Templates;
+        }
+
+        // Load scheduled messages (control may not exist in simplified layout)
+        var scheduledControl = FindName("ScheduledMessagesControl") as ItemsControl;
+        var noScheduledMsg = FindName("NoScheduledMessages") as FrameworkElement;
+        if (scheduledControl != null)
+        {
+            scheduledControl.ItemsSource = qolService.ScheduledMessages;
+        }
+        if (noScheduledMsg != null)
+        {
+            noScheduledMsg.Visibility = qolService.ScheduledMessages.Count == 0
                 ? Visibility.Visible
                 : Visibility.Collapsed;
+        }
 
-            // Load activity insights
+        // Load activity insights (controls may not exist in simplified layout)
+        var todayMsgCount = FindName("TodayMessagesCount") as TextBlock;
+        var todayVoiceMin = FindName("TodayVoiceMinutes") as TextBlock;
+        var todayFriends = FindName("TodayFriendsCount") as TextBlock;
+        if (todayMsgCount != null || todayVoiceMin != null || todayFriends != null)
+        {
             var todayInsight = qolService.GetTodayInsight();
-            TodayMessagesCount.Text = todayInsight.MessagesSent.ToString();
-            TodayVoiceMinutes.Text = todayInsight.VoiceMinutes.ToString();
-            TodayFriendsCount.Text = todayInsight.FriendsInteractedWith.ToString();
+            if (todayMsgCount != null) todayMsgCount.Text = todayInsight.MessagesSent.ToString();
+            if (todayVoiceMin != null) todayVoiceMin.Text = todayInsight.VoiceMinutes.ToString();
+            if (todayFriends != null) todayFriends.Text = todayInsight.FriendsInteractedWith.ToString();
         }
     }
 

@@ -429,7 +429,7 @@
             </Border>
 
             <!-- Main Input Blade -->
-            <Border x:Name="InputBlade" Grid.Row="1" CornerRadius="20" Padding="6"
+            <Border x:Name="InputBorder" Grid.Row="1" CornerRadius="20" Padding="6"
                     BorderThickness="2" ClipToBounds="False">
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">

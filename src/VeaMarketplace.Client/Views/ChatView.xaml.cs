@@ -508,4 +508,15 @@ public partial class ChatView : UserControl
     }
 
     #endregion
+
+    #region New Message Indicator
+
+    private void NewMessageIndicator_Click(object sender, MouseButtonEventArgs e)
+    {
+        // Scroll to bottom of messages
+        MessagesScrollViewer.ScrollToEnd();
+        NewMessageIndicator.Visibility = Visibility.Collapsed;
+    }
+
+    #endregion
 }
