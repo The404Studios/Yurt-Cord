@@ -106,7 +106,10 @@ public partial class GroupCallInviteNotification : Window
         {
             SystemSounds.Hand.Play();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to play ring sound: {ex.Message}");
+        }
     }
 
     private void Accept_Click(object sender, RoutedEventArgs e)

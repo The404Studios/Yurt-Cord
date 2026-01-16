@@ -159,7 +159,10 @@ public partial class GroupCallView : UserControl
                 {
                     SelfAvatarBrush.ImageSource = new BitmapImage(new Uri(user.AvatarUrl));
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to load avatar: {ex.Message}");
+                }
             }
         }
     }
@@ -238,7 +241,10 @@ public partial class GroupCallView : UserControl
                 _friends.Add(friend);
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to load friends: {ex.Message}");
+        }
     }
 
     private void InviteSearch_TextChanged(object sender, TextChangedEventArgs e)
