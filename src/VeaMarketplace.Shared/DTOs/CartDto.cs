@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace VeaMarketplace.Shared.DTOs;
 
 public class CartDto
@@ -28,20 +30,31 @@ public class CartItemDto
 
 public class AddToCartRequest
 {
+    [Required(ErrorMessage = "Product ID is required")]
     public string ProductId { get; set; } = string.Empty;
+
+    [Range(1, 100, ErrorMessage = "Quantity must be between 1 and 100")]
     public int Quantity { get; set; } = 1;
 }
 
 public class UpdateCartItemRequest
 {
+    [Required(ErrorMessage = "Item ID is required")]
     public string ItemId { get; set; } = string.Empty;
+
+    [Range(0, 100, ErrorMessage = "Quantity must be between 0 and 100")]
     public int Quantity { get; set; }
 }
 
 public class CheckoutRequest
 {
+    [Required(ErrorMessage = "Payment method is required")]
     public string PaymentMethod { get; set; } = string.Empty;
+
+    [StringLength(50, ErrorMessage = "Coupon code cannot exceed 50 characters")]
     public string? CouponCode { get; set; }
+
+    [StringLength(500, ErrorMessage = "Notes cannot exceed 500 characters")]
     public string? Notes { get; set; }
 }
 
@@ -55,6 +68,8 @@ public class CheckoutResultDto
 
 public class ApplyCouponRequest
 {
+    [Required(ErrorMessage = "Coupon code is required")]
+    [StringLength(50, ErrorMessage = "Coupon code cannot exceed 50 characters")]
     public string CouponCode { get; set; } = string.Empty;
 }
 

@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using VeaMarketplace.Shared.Enums;
 using VeaMarketplace.Shared.Models;
 
@@ -5,14 +6,29 @@ namespace VeaMarketplace.Shared.DTOs;
 
 public class LoginRequest
 {
+    [Required(ErrorMessage = "Username is required")]
+    [StringLength(32, MinimumLength = 3, ErrorMessage = "Username must be between 3 and 32 characters")]
     public string Username { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Password is required")]
+    [StringLength(100, MinimumLength = 8, ErrorMessage = "Password must be at least 8 characters")]
     public string Password { get; set; } = string.Empty;
 }
 
 public class RegisterRequest
 {
+    [Required(ErrorMessage = "Username is required")]
+    [StringLength(32, MinimumLength = 3, ErrorMessage = "Username must be between 3 and 32 characters")]
+    [RegularExpression(@"^[a-zA-Z0-9_]+$", ErrorMessage = "Username can only contain letters, numbers, and underscores")]
     public string Username { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Email is required")]
+    [EmailAddress(ErrorMessage = "Invalid email address")]
+    [StringLength(254, ErrorMessage = "Email cannot exceed 254 characters")]
     public string Email { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Password is required")]
+    [StringLength(100, MinimumLength = 8, ErrorMessage = "Password must be at least 8 characters")]
     public string Password { get; set; } = string.Empty;
 }
 
@@ -68,20 +84,45 @@ public class UserDto
 
 public class UpdateProfileRequest
 {
+    [StringLength(32, MinimumLength = 3, ErrorMessage = "Username must be between 3 and 32 characters")]
+    [RegularExpression(@"^[a-zA-Z0-9_]+$", ErrorMessage = "Username can only contain letters, numbers, and underscores")]
     public string? Username { get; set; }
+
+    [StringLength(64, ErrorMessage = "Display name cannot exceed 64 characters")]
     public string? DisplayName { get; set; }
+
+    [StringLength(500, ErrorMessage = "Bio cannot exceed 500 characters")]
     public string? Bio { get; set; }
+
+    [StringLength(2000, ErrorMessage = "Description cannot exceed 2000 characters")]
     public string? Description { get; set; }
+
+    [StringLength(128, ErrorMessage = "Status message cannot exceed 128 characters")]
     public string? StatusMessage { get; set; }
+
+    [Url(ErrorMessage = "Invalid avatar URL")]
     public string? AvatarUrl { get; set; }
+
+    [Url(ErrorMessage = "Invalid banner URL")]
     public string? BannerUrl { get; set; }
+
+    [RegularExpression(@"^#[0-9A-Fa-f]{6}$", ErrorMessage = "Accent color must be a valid hex color (e.g., #00B4D8)")]
     public string? AccentColor { get; set; }
+
     public ProfileVisibility? ProfileVisibility { get; set; }
 
     // Social Links
+    [StringLength(32, ErrorMessage = "Discord username cannot exceed 32 characters")]
     public string? DiscordUsername { get; set; }
+
+    [StringLength(15, ErrorMessage = "Twitter handle cannot exceed 15 characters")]
+    [RegularExpression(@"^@?[a-zA-Z0-9_]+$", ErrorMessage = "Invalid Twitter handle format")]
     public string? TwitterHandle { get; set; }
+
+    [StringLength(32, ErrorMessage = "Telegram username cannot exceed 32 characters")]
     public string? TelegramUsername { get; set; }
+
+    [Url(ErrorMessage = "Invalid website URL")]
     public string? WebsiteUrl { get; set; }
 }
 
