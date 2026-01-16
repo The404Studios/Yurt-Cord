@@ -221,6 +221,11 @@ public interface IVoiceService
     event Action<string, string>? OnVoiceRoomKicked; // roomId, reason
     event Action<VoiceRoomParticipantDto>? OnVoiceRoomModeratorAdded;
 
+    // Kick-related events for voice channels
+    event Action<string, string>? OnKickedFromChannel; // channelId, reason
+    event Action<string, string, string>? OnUserKickedFromRoom; // roomId, userId, reason
+    event Action<string>? OnKickSuccess; // userId that was kicked
+
     Task GetPublicVoiceRoomsAsync(VoiceRoomCategory? category = null, string? query = null, int page = 1, int pageSize = 20);
     Task CreateVoiceRoomAsync(CreateVoiceRoomDto dto);
     Task JoinVoiceRoomAsync(string roomId, string? password = null);
@@ -541,6 +546,9 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     public event Action<string, string>? OnVoiceRoomClosed;
     public event Action<string, string>? OnVoiceRoomKicked;
     public event Action<VoiceRoomParticipantDto>? OnVoiceRoomModeratorAdded;
+    public event Action<string, string>? OnKickedFromChannel;
+    public event Action<string, string, string>? OnUserKickedFromRoom;
+    public event Action<string>? OnKickSuccess;
 
     // WebRTC signaling events
     public event Action<string, string>? OnReceiveOffer;
@@ -2180,6 +2188,48 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             {
                 OnVoiceRoomModeratorAdded?.Invoke(participant);
             });
+        });
+
+        // Kick-related handlers
+        _connection.On<JsonElement>("KickedFromRoom", data =>
+        {
+            var roomId = data.TryGetProperty("RoomId", out var rid) ? rid.GetString() ?? "" : "";
+            var reason = data.TryGetProperty("Reason", out var r) ? r.GetString() ?? "Kicked" : "Kicked";
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnVoiceRoomKicked?.Invoke(roomId, reason);
+            });
+            _ = LeaveVoiceChannelAsync();
+        });
+
+        _connection.On<JsonElement>("UserKicked", data =>
+        {
+            var roomId = data.TryGetProperty("RoomId", out var rid) ? rid.GetString() ?? "" : "";
+            var userId = data.TryGetProperty("UserId", out var uid) ? uid.GetString() ?? "" : "";
+            var reason = data.TryGetProperty("Reason", out var r) ? r.GetString() ?? "" : "";
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnUserKickedFromRoom?.Invoke(roomId, userId, reason);
+            });
+        });
+
+        _connection.On<string>("KickSuccess", userId =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnKickSuccess?.Invoke(userId);
+            });
+        });
+
+        _connection.On<JsonElement>("KickedFromChannel", data =>
+        {
+            var channelId = data.TryGetProperty("ChannelId", out var cid) ? cid.GetString() ?? "" : "";
+            var reason = data.TryGetProperty("Reason", out var r) ? r.GetString() ?? "Kicked" : "Kicked";
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                OnKickedFromChannel?.Invoke(channelId, reason);
+            });
+            _ = LeaveVoiceChannelAsync();
         });
 
         // WebRTC signaling handlers

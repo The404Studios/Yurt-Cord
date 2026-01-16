@@ -78,6 +78,13 @@ public class ProfileService : IProfileService, IAsyncDisposable
             }
         };
 
+        // Handle connection closed
+        _connection.Closed += (exception) =>
+        {
+            System.Diagnostics.Debug.WriteLine($"ProfileService: Connection closed. Exception: {exception?.Message}");
+            return Task.CompletedTask;
+        };
+
         RegisterHandlers();
         await _connection.StartAsync().ConfigureAwait(false);
         await _connection.InvokeAsync("Authenticate", token).ConfigureAwait(false);
