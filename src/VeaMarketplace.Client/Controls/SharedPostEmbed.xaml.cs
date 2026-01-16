@@ -274,7 +274,10 @@ public partial class SharedPostEmbed : UserControl
                 ContentType = _content.Type
             });
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to copy link to clipboard: {ex.Message}");
+        }
     }
 
     private void ShareButton_Click(object sender, RoutedEventArgs e)
