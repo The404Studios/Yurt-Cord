@@ -1,0 +1,1398 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════════════
+         BLADE UI - Xbox 360 Guide Menu Inspired Theme with Origami Pop-Out Effects
+         A premium, futuristic interface with layered depth and dramatic animations
+    ═══════════════════════════════════════════════════════════════════════════════════ -->
+
+    <!-- ══════════════════════════════════════════════════════════════════════════════
+         BLADE COLOR PALETTE - Holographic Neon with Deep Blacks
+    ══════════════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Core Blade Colors -->
+    <Color x:Key="BladeBlack">#020408</Color>
+    <Color x:Key="BladeDeep">#040810</Color>
+    <Color x:Key="BladeDark">#081018</Color>
+    <Color x:Key="BladeSurface">#0C1420</Color>
+    <Color x:Key="BladePanel">#101828</Color>
+    <Color x:Key="BladeElevated">#182030</Color>
+    <Color x:Key="BladeHighlight">#202840</Color>
+
+    <!-- Neon Accent Colors -->
+    <Color x:Key="BladeNeonGreen">#00FF9F</Color>
+    <Color x:Key="BladeNeonCyan">#00E5FF</Color>
+    <Color x:Key="BladeNeonBlue">#4D9FFF</Color>
+    <Color x:Key="BladeNeonPurple">#B366FF</Color>
+    <Color x:Key="BladeNeonPink">#FF66B2</Color>
+    <Color x:Key="BladeNeonOrange">#FF9933</Color>
+    <Color x:Key="BladeNeonRed">#FF4466</Color>
+    <Color x:Key="BladeNeonYellow">#FFDD33</Color>
+
+    <!-- Text Colors -->
+    <Color x:Key="BladeTextBright">#FFFFFF</Color>
+    <Color x:Key="BladeTextPrimary">#E8F0FF</Color>
+    <Color x:Key="BladeTextSecondary">#A0B0C8</Color>
+    <Color x:Key="BladeTextDim">#607090</Color>
+    <Color x:Key="BladeTextMuted">#405070</Color>
+
+    <!-- Xbox Guide Blade Colors -->
+    <Color x:Key="XboxGreen">#107C10</Color>
+    <Color x:Key="XboxGreenLight">#5DC21E</Color>
+    <Color x:Key="GuideBlade1">#1A4D1A</Color>
+    <Color x:Key="GuideBlade2">#264D26</Color>
+    <Color x:Key="GuideBlade3">#336633</Color>
+    <Color x:Key="GuideBlade4">#408040</Color>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════════
+         SOLID COLOR BRUSHES
+    ══════════════════════════════════════════════════════════════════════════════ -->
+
+    <SolidColorBrush x:Key="BladeBlackBrush" Color="{StaticResource BladeBlack}"/>
+    <SolidColorBrush x:Key="BladeDeepBrush" Color="{StaticResource BladeDeep}"/>
+    <SolidColorBrush x:Key="BladeDarkBrush" Color="{StaticResource BladeDark}"/>
+    <SolidColorBrush x:Key="BladeSurfaceBrush" Color="{StaticResource BladeSurface}"/>
+    <SolidColorBrush x:Key="BladePanelBrush" Color="{StaticResource BladePanel}"/>
+    <SolidColorBrush x:Key="BladeElevatedBrush" Color="{StaticResource BladeElevated}"/>
+    <SolidColorBrush x:Key="BladeHighlightBrush" Color="{StaticResource BladeHighlight}"/>
+
+    <SolidColorBrush x:Key="BladeNeonGreenBrush" Color="{StaticResource BladeNeonGreen}"/>
+    <SolidColorBrush x:Key="BladeNeonCyanBrush" Color="{StaticResource BladeNeonCyan}"/>
+    <SolidColorBrush x:Key="BladeNeonBlueBrush" Color="{StaticResource BladeNeonBlue}"/>
+    <SolidColorBrush x:Key="BladeNeonPurpleBrush" Color="{StaticResource BladeNeonPurple}"/>
+    <SolidColorBrush x:Key="BladeNeonPinkBrush" Color="{StaticResource BladeNeonPink}"/>
+    <SolidColorBrush x:Key="BladeNeonOrangeBrush" Color="{StaticResource BladeNeonOrange}"/>
+    <SolidColorBrush x:Key="BladeNeonRedBrush" Color="{StaticResource BladeNeonRed}"/>
+
+    <SolidColorBrush x:Key="BladeTextBrightBrush" Color="{StaticResource BladeTextBright}"/>
+    <SolidColorBrush x:Key="BladeTextPrimaryBrush" Color="{StaticResource BladeTextPrimary}"/>
+    <SolidColorBrush x:Key="BladeTextSecondaryBrush" Color="{StaticResource BladeTextSecondary}"/>
+    <SolidColorBrush x:Key="BladeTextDimBrush" Color="{StaticResource BladeTextDim}"/>
+    <SolidColorBrush x:Key="BladeTextMutedBrush" Color="{StaticResource BladeTextMuted}"/>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════════
+         GRADIENT BRUSHES - Holographic and Blade Effects
+    ══════════════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Holographic Rainbow Gradient -->
+    <LinearGradientBrush x:Key="HolographicGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#00FF9F" Offset="0"/>
+        <GradientStop Color="#00E5FF" Offset="0.25"/>
+        <GradientStop Color="#B366FF" Offset="0.5"/>
+        <GradientStop Color="#FF66B2" Offset="0.75"/>
+        <GradientStop Color="#FF9933" Offset="1"/>
+    </LinearGradientBrush>
+
+    <!-- Blade Panel Gradient (Xbox 360 Guide inspired) -->
+    <LinearGradientBrush x:Key="BladePanelGradient" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#15202D" Offset="0"/>
+        <GradientStop Color="#1A2838" Offset="0.5"/>
+        <GradientStop Color="#0F1820" Offset="1"/>
+    </LinearGradientBrush>
+
+    <!-- Blade Active Gradient -->
+    <LinearGradientBrush x:Key="BladeActiveGradient" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#00FF9F20" Offset="0"/>
+        <GradientStop Color="#00E5FF40" Offset="0.5"/>
+        <GradientStop Color="#00FF9F20" Offset="1"/>
+    </LinearGradientBrush>
+
+    <!-- Origami Fold Gradient (3D depth effect) -->
+    <LinearGradientBrush x:Key="OrigamiFoldGradient" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#25303D" Offset="0"/>
+        <GradientStop Color="#15202D" Offset="0.3"/>
+        <GradientStop Color="#0A1520" Offset="1"/>
+    </LinearGradientBrush>
+
+    <!-- Pop-Out Card Gradient -->
+    <LinearGradientBrush x:Key="PopOutCardGradient" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#202D3D" Offset="0"/>
+        <GradientStop Color="#152028" Offset="0.6"/>
+        <GradientStop Color="#101820" Offset="1"/>
+    </LinearGradientBrush>
+
+    <!-- Depth Shadow Gradient -->
+    <LinearGradientBrush x:Key="DepthShadowGradient" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#00000080" Offset="0"/>
+        <GradientStop Color="#00000000" Offset="1"/>
+    </LinearGradientBrush>
+
+    <!-- Neon Edge Gradient -->
+    <LinearGradientBrush x:Key="NeonEdgeGradient" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#00FF9F00" Offset="0"/>
+        <GradientStop Color="#00FF9F" Offset="0.5"/>
+        <GradientStop Color="#00FF9F00" Offset="1"/>
+    </LinearGradientBrush>
+
+    <!-- Selection Glow Gradient -->
+    <RadialGradientBrush x:Key="SelectionGlowGradient" Center="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
+        <GradientStop Color="#00E5FF60" Offset="0"/>
+        <GradientStop Color="#00E5FF30" Offset="0.5"/>
+        <GradientStop Color="#00E5FF00" Offset="1"/>
+    </RadialGradientBrush>
+
+    <!-- Ambient Glow Background -->
+    <RadialGradientBrush x:Key="AmbientGlowBrush" Center="0.3,0.3" RadiusX="0.8" RadiusY="0.8">
+        <GradientStop Color="#00FF9F10" Offset="0"/>
+        <GradientStop Color="#00E5FF08" Offset="0.3"/>
+        <GradientStop Color="#B366FF05" Offset="0.6"/>
+        <GradientStop Color="#00000000" Offset="1"/>
+    </RadialGradientBrush>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════════
+         DROP SHADOW EFFECTS - Neon Glow and Depth
+    ══════════════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Primary Neon Glow -->
+    <DropShadowEffect x:Key="NeonGlow" Color="#00FF9F" BlurRadius="25" ShadowDepth="0" Opacity="0.8"/>
+    <DropShadowEffect x:Key="NeonGlowSubtle" Color="#00FF9F" BlurRadius="15" ShadowDepth="0" Opacity="0.5"/>
+    <DropShadowEffect x:Key="NeonGlowIntense" Color="#00FF9F" BlurRadius="40" ShadowDepth="0" Opacity="1"/>
+
+    <!-- Cyan Neon Glow -->
+    <DropShadowEffect x:Key="CyanGlow" Color="#00E5FF" BlurRadius="25" ShadowDepth="0" Opacity="0.8"/>
+    <DropShadowEffect x:Key="CyanGlowSubtle" Color="#00E5FF" BlurRadius="15" ShadowDepth="0" Opacity="0.5"/>
+    <DropShadowEffect x:Key="CyanGlowIntense" Color="#00E5FF" BlurRadius="40" ShadowDepth="0" Opacity="1"/>
+
+    <!-- Purple Neon Glow -->
+    <DropShadowEffect x:Key="PurpleGlow" Color="#B366FF" BlurRadius="25" ShadowDepth="0" Opacity="0.8"/>
+    <DropShadowEffect x:Key="PurpleGlowSubtle" Color="#B366FF" BlurRadius="15" ShadowDepth="0" Opacity="0.5"/>
+
+    <!-- Pink Neon Glow -->
+    <DropShadowEffect x:Key="PinkGlow" Color="#FF66B2" BlurRadius="25" ShadowDepth="0" Opacity="0.8"/>
+
+    <!-- Depth Shadow (for pop-out effect) -->
+    <DropShadowEffect x:Key="PopOutShadow" Color="#000000" BlurRadius="30" ShadowDepth="15" Opacity="0.7" Direction="270"/>
+    <DropShadowEffect x:Key="PopOutShadowSmall" Color="#000000" BlurRadius="20" ShadowDepth="8" Opacity="0.6" Direction="270"/>
+    <DropShadowEffect x:Key="PopOutShadowLarge" Color="#000000" BlurRadius="50" ShadowDepth="25" Opacity="0.8" Direction="270"/>
+
+    <!-- Card Elevation Shadows -->
+    <DropShadowEffect x:Key="CardShadow1" Color="#000000" BlurRadius="10" ShadowDepth="4" Opacity="0.4" Direction="270"/>
+    <DropShadowEffect x:Key="CardShadow2" Color="#000000" BlurRadius="20" ShadowDepth="8" Opacity="0.5" Direction="270"/>
+    <DropShadowEffect x:Key="CardShadow3" Color="#000000" BlurRadius="35" ShadowDepth="15" Opacity="0.6" Direction="270"/>
+
+    <!-- Inner Shadow Effect (simulated) -->
+    <DropShadowEffect x:Key="InnerShadow" Color="#000000" BlurRadius="15" ShadowDepth="2" Opacity="0.5" Direction="90"/>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════════
+         BLADE PANEL STYLE - Xbox 360 Guide Menu Inspired
+    ══════════════════════════════════════════════════════════════════════════════ -->
+
+    <Style x:Key="BladePanel" TargetType="Border">
+        <Setter Property="CornerRadius" Value="0,20,20,0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Background" Value="{StaticResource BladePanelGradient}"/>
+        <Setter Property="BorderThickness" Value="0,1,2,1"/>
+        <Setter Property="BorderBrush">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#00FF9F40" Offset="0"/>
+                    <GradientStop Color="#00E5FF30" Offset="0.5"/>
+                    <GradientStop Color="#00FF9F40" Offset="1"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Effect" Value="{StaticResource PopOutShadow}"/>
+        <Setter Property="RenderTransformOrigin" Value="0,0.5"/>
+    </Style>
+
+    <!-- Blade Panel Active State -->
+    <Style x:Key="BladePanelActive" TargetType="Border" BasedOn="{StaticResource BladePanel}">
+        <Setter Property="BorderBrush">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#00FF9F" Offset="0"/>
+                    <GradientStop Color="#00E5FF" Offset="0.5"/>
+                    <GradientStop Color="#00FF9F" Offset="1"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect Color="#00FF9F" BlurRadius="35" ShadowDepth="0" Opacity="0.6"/>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════════
+         ORIGAMI POP-OUT CARD STYLE
+    ══════════════════════════════════════════════════════════════════════════════ -->
+
+    <Style x:Key="OrigamiCard" TargetType="Border">
+        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="Padding" Value="16"/>
+        <Setter Property="Background" Value="{StaticResource PopOutCardGradient}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#00FF9F50" Offset="0"/>
+                    <GradientStop Color="#00E5FF30" Offset="0.5"/>
+                    <GradientStop Color="#B366FF50" Offset="1"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Effect" Value="{StaticResource PopOutShadowSmall}"/>
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+        <Setter Property="RenderTransform">
+            <Setter.Value>
+                <TransformGroup>
+                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                    <TranslateTransform X="0" Y="0"/>
+                </TransformGroup>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Origami Card Elevated (hover state) -->
+    <Style x:Key="OrigamiCardElevated" TargetType="Border" BasedOn="{StaticResource OrigamiCard}">
+        <Setter Property="Effect" Value="{StaticResource PopOutShadow}"/>
+        <Setter Property="BorderBrush">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#00FF9F" Offset="0"/>
+                    <GradientStop Color="#00E5FF" Offset="0.5"/>
+                    <GradientStop Color="#B366FF" Offset="1"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════════
+         BLADE NAVIGATION BUTTON STYLE
+    ══════════════════════════════════════════════════════════════════════════════ -->
+
+    <Style x:Key="BladeNavButton" TargetType="Button">
+        <Setter Property="Height" Value="56"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource BladeTextSecondaryBrush}"/>
+        <Setter Property="Padding" Value="20,12"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <!-- Selection Indicator -->
+                        <Border x:Name="SelectionIndicator" Width="4" HorizontalAlignment="Left"
+                                Background="{StaticResource BladeNeonGreenBrush}"
+                                CornerRadius="0,2,2,0" Opacity="0"/>
+
+                        <!-- Main Content Area -->
+                        <Border x:Name="ContentBorder" Background="{TemplateBinding Background}"
+                                CornerRadius="0,12,12,0" Margin="4,0,0,0"
+                                Padding="{TemplateBinding Padding}"
+                                RenderTransformOrigin="0,0.5">
+                            <Border.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform x:Name="ContentScale" ScaleX="1" ScaleY="1"/>
+                                    <TranslateTransform x:Name="ContentSlide" X="0"/>
+                                </TransformGroup>
+                            </Border.RenderTransform>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Icon -->
+                                <ContentPresenter Grid.Column="0" x:Name="IconPresenter"
+                                                  Content="{TemplateBinding Tag}"
+                                                  VerticalAlignment="Center"
+                                                  Margin="0,0,16,0"/>
+
+                                <!-- Text -->
+                                <ContentPresenter Grid.Column="1" VerticalAlignment="Center"
+                                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+
+                                <!-- Arrow Indicator -->
+                                <TextBlock Grid.Column="2" x:Name="Arrow" Text=">" FontSize="16"
+                                           Foreground="{StaticResource BladeNeonGreenBrush}"
+                                           VerticalAlignment="Center" Opacity="0" Margin="8,0,0,0">
+                                    <TextBlock.RenderTransform>
+                                        <TranslateTransform x:Name="ArrowSlide" X="-10"/>
+                                    </TextBlock.RenderTransform>
+                                </TextBlock>
+                            </Grid>
+                        </Border>
+
+                        <!-- Glow Effect Layer -->
+                        <Border x:Name="GlowLayer" CornerRadius="0,12,12,0" Margin="4,0,0,0"
+                                Opacity="0" IsHitTestVisible="False">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="#00FF9F20" Offset="0"/>
+                                    <GradientStop Color="#00FF9F00" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="{StaticResource BladeTextPrimaryBrush}"/>
+                            <Setter TargetName="ContentBorder" Property="Background">
+                                <Setter.Value>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#20303D" Offset="0"/>
+                                        <GradientStop Color="#15202D" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Setter.Value>
+                            </Setter>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ContentSlide"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="8" Duration="0:0:0.2">
+                                            <DoubleAnimation.EasingFunction>
+                                                <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="Arrow"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="ArrowSlide"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="0" Duration="0:0:0.2">
+                                            <DoubleAnimation.EasingFunction>
+                                                <BackEase EasingMode="EaseOut" Amplitude="0.5"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="SelectionIndicator"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0.6" Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="GlowLayer"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.2"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ContentSlide"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="0" Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="Arrow"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.1"/>
+                                        <DoubleAnimation Storyboard.TargetName="ArrowSlide"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="-10" Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="SelectionIndicator"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.1"/>
+                                        <DoubleAnimation Storyboard.TargetName="GlowLayer"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Foreground" Value="{StaticResource BladeNeonGreenBrush}"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ContentScale"
+                                                         Storyboard.TargetProperty="ScaleX"
+                                                         To="0.98" Duration="0:0:0.08"/>
+                                        <DoubleAnimation Storyboard.TargetName="ContentScale"
+                                                         Storyboard.TargetProperty="ScaleY"
+                                                         To="0.98" Duration="0:0:0.08"/>
+                                        <DoubleAnimation Storyboard.TargetName="SelectionIndicator"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.05"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ContentScale"
+                                                         Storyboard.TargetProperty="ScaleX"
+                                                         To="1" Duration="0:0:0.15">
+                                            <DoubleAnimation.EasingFunction>
+                                                <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="ContentScale"
+                                                         Storyboard.TargetProperty="ScaleY"
+                                                         To="1" Duration="0:0:0.15">
+                                            <DoubleAnimation.EasingFunction>
+                                                <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════════
+         BLADE TAB BUTTON STYLE (Xbox 360 Guide Blade Tabs)
+    ══════════════════════════════════════════════════════════════════════════════ -->
+
+    <Style x:Key="BladeTabButton" TargetType="RadioButton">
+        <Setter Property="Width" Value="80"/>
+        <Setter Property="Height" Value="48"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource BladeTextDimBrush}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Grid>
+                        <!-- Tab Shape (Blade-like) -->
+                        <Border x:Name="TabBorder" CornerRadius="8,8,0,0"
+                                RenderTransformOrigin="0.5,1"
+                                Background="{TemplateBinding Background}">
+                            <Border.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform x:Name="TabScale" ScaleX="1" ScaleY="1"/>
+                                    <TranslateTransform x:Name="TabSlide" Y="0"/>
+                                </TransformGroup>
+                            </Border.RenderTransform>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+
+                        <!-- Active Indicator Line -->
+                        <Border x:Name="ActiveLine" Height="3" VerticalAlignment="Bottom"
+                                CornerRadius="1.5,1.5,0,0" Opacity="0"
+                                Background="{StaticResource BladeNeonGreenBrush}">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#00FF9F" BlurRadius="10" ShadowDepth="0" Opacity="0.8"/>
+                            </Border.Effect>
+                        </Border>
+
+                        <!-- Glow Overlay -->
+                        <Border x:Name="GlowOverlay" CornerRadius="8,8,0,0" Opacity="0"
+                                IsHitTestVisible="False">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0.5,1" EndPoint="0.5,0">
+                                    <GradientStop Color="#00FF9F30" Offset="0"/>
+                                    <GradientStop Color="#00FF9F00" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="{StaticResource BladeTextSecondaryBrush}"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="TabSlide"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="-4" Duration="0:0:0.15">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="TabSlide"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="0" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter Property="Foreground" Value="{StaticResource BladeNeonGreenBrush}"/>
+                            <Setter TargetName="TabBorder" Property="Background">
+                                <Setter.Value>
+                                    <LinearGradientBrush StartPoint="0.5,1" EndPoint="0.5,0">
+                                        <GradientStop Color="#15202D" Offset="0"/>
+                                        <GradientStop Color="#10181F" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Setter.Value>
+                            </Setter>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ActiveLine"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.2"/>
+                                        <DoubleAnimation Storyboard.TargetName="GlowOverlay"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.2"/>
+                                        <DoubleAnimation Storyboard.TargetName="TabSlide"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="-6" Duration="0:0:0.25">
+                                            <DoubleAnimation.EasingFunction>
+                                                <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ActiveLine"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="GlowOverlay"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="TabSlide"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="0" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════════
+         POP-OUT BUTTON STYLE (Origami Fold Effect)
+    ══════════════════════════════════════════════════════════════════════════════ -->
+
+    <Style x:Key="PopOutButton" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource BladePanelBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource BladeTextPrimaryBrush}"/>
+        <Setter Property="Padding" Value="24,14"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#00FF9F40"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform x:Name="ButtonScale" ScaleX="1" ScaleY="1"/>
+                                <TranslateTransform x:Name="ButtonTranslate" X="0" Y="0"/>
+                            </TransformGroup>
+                        </Grid.RenderTransform>
+
+                        <!-- Shadow Layer (creates depth) -->
+                        <Border x:Name="ShadowLayer" CornerRadius="12" Margin="0,4,0,0"
+                                Background="#00000060" Opacity="0.5">
+                            <Border.Effect>
+                                <BlurEffect Radius="8"/>
+                            </Border.Effect>
+                        </Border>
+
+                        <!-- Main Button -->
+                        <Border x:Name="MainBorder" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="12" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+
+                        <!-- Neon Edge Effect -->
+                        <Border x:Name="NeonEdge" CornerRadius="12" Opacity="0"
+                                BorderThickness="2" IsHitTestVisible="False"
+                                BorderBrush="{StaticResource BladeNeonGreenBrush}">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#00FF9F" BlurRadius="15" ShadowDepth="0" Opacity="0.6"/>
+                            </Border.Effect>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="{StaticResource BladeNeonGreenBrush}"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <!-- Pop forward -->
+                                        <DoubleAnimation Storyboard.TargetName="ButtonTranslate"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="-6" Duration="0:0:0.2">
+                                            <DoubleAnimation.EasingFunction>
+                                                <BackEase EasingMode="EaseOut" Amplitude="0.4"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="ButtonScale"
+                                                         Storyboard.TargetProperty="ScaleX"
+                                                         To="1.03" Duration="0:0:0.2">
+                                            <DoubleAnimation.EasingFunction>
+                                                <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="ButtonScale"
+                                                         Storyboard.TargetProperty="ScaleY"
+                                                         To="1.03" Duration="0:0:0.2">
+                                            <DoubleAnimation.EasingFunction>
+                                                <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <!-- Shadow deepens -->
+                                        <DoubleAnimation Storyboard.TargetName="ShadowLayer"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.2"/>
+                                        <!-- Neon edge appears -->
+                                        <DoubleAnimation Storyboard.TargetName="NeonEdge"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ButtonTranslate"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="0" Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="ButtonScale"
+                                                         Storyboard.TargetProperty="ScaleX"
+                                                         To="1" Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="ButtonScale"
+                                                         Storyboard.TargetProperty="ScaleY"
+                                                         To="1" Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="ShadowLayer"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0.5" Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="NeonEdge"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.1"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ButtonTranslate"
+                                                         Storyboard.TargetProperty="Y"
+                                                         To="2" Duration="0:0:0.06"/>
+                                        <DoubleAnimation Storyboard.TargetName="ButtonScale"
+                                                         Storyboard.TargetProperty="ScaleX"
+                                                         To="0.97" Duration="0:0:0.06"/>
+                                        <DoubleAnimation Storyboard.TargetName="ButtonScale"
+                                                         Storyboard.TargetProperty="ScaleY"
+                                                         To="0.97" Duration="0:0:0.06"/>
+                                        <DoubleAnimation Storyboard.TargetName="ShadowLayer"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0.3" Duration="0:0:0.06"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Pop-Out Button Accent (Neon Green) -->
+    <Style x:Key="PopOutButtonAccent" TargetType="Button" BasedOn="{StaticResource PopOutButton}">
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#00FF9F" Offset="0"/>
+                    <GradientStop Color="#00E5FF" Offset="1"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Foreground" Value="#020408"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="BorderBrush" Value="#00FF9F"/>
+    </Style>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════════
+         BLADE ICON BUTTON
+    ══════════════════════════════════════════════════════════════════════════════ -->
+
+    <Style x:Key="BladeIconButton" TargetType="Button">
+        <Setter Property="Width" Value="48"/>
+        <Setter Property="Height" Value="48"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource BladeTextSecondaryBrush}"/>
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform x:Name="IconScale" ScaleX="1" ScaleY="1"/>
+                                <RotateTransform x:Name="IconRotate" Angle="0"/>
+                            </TransformGroup>
+                        </Grid.RenderTransform>
+
+                        <!-- Background Circle -->
+                        <Ellipse x:Name="BgCircle" Fill="{TemplateBinding Background}" Opacity="0"/>
+
+                        <!-- Glow Ring -->
+                        <Ellipse x:Name="GlowRing" Stroke="{StaticResource BladeNeonGreenBrush}"
+                                 StrokeThickness="2" Opacity="0">
+                            <Ellipse.Effect>
+                                <DropShadowEffect Color="#00FF9F" BlurRadius="15" ShadowDepth="0" Opacity="0.8"/>
+                            </Ellipse.Effect>
+                        </Ellipse>
+
+                        <!-- Icon Content -->
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="{StaticResource BladeNeonGreenBrush}"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="IconScale"
+                                                         Storyboard.TargetProperty="ScaleX"
+                                                         To="1.15" Duration="0:0:0.15">
+                                            <DoubleAnimation.EasingFunction>
+                                                <BackEase EasingMode="EaseOut" Amplitude="0.5"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="IconScale"
+                                                         Storyboard.TargetProperty="ScaleY"
+                                                         To="1.15" Duration="0:0:0.15">
+                                            <DoubleAnimation.EasingFunction>
+                                                <BackEase EasingMode="EaseOut" Amplitude="0.5"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="BgCircle"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0.15" Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="GlowRing"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0.6" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="IconScale"
+                                                         Storyboard.TargetProperty="ScaleX"
+                                                         To="1" Duration="0:0:0.1"/>
+                                        <DoubleAnimation Storyboard.TargetName="IconScale"
+                                                         Storyboard.TargetProperty="ScaleY"
+                                                         To="1" Duration="0:0:0.1"/>
+                                        <DoubleAnimation Storyboard.TargetName="BgCircle"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.1"/>
+                                        <DoubleAnimation Storyboard.TargetName="GlowRing"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.1"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="IconScale"
+                                                         Storyboard.TargetProperty="ScaleX"
+                                                         To="0.9" Duration="0:0:0.05"/>
+                                        <DoubleAnimation Storyboard.TargetName="IconScale"
+                                                         Storyboard.TargetProperty="ScaleY"
+                                                         To="0.9" Duration="0:0:0.05"/>
+                                        <DoubleAnimation Storyboard.TargetName="GlowRing"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.05"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="IconScale"
+                                                         Storyboard.TargetProperty="ScaleX"
+                                                         To="1.15" Duration="0:0:0.12">
+                                            <DoubleAnimation.EasingFunction>
+                                                <BackEase EasingMode="EaseOut" Amplitude="0.4"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="IconScale"
+                                                         Storyboard.TargetProperty="ScaleY"
+                                                         To="1.15" Duration="0:0:0.12">
+                                            <DoubleAnimation.EasingFunction>
+                                                <BackEase EasingMode="EaseOut" Amplitude="0.4"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════════
+         BLADE TEXT INPUT STYLE
+    ══════════════════════════════════════════════════════════════════════════════ -->
+
+    <Style x:Key="BladeTextBox" TargetType="TextBox">
+        <Setter Property="Background" Value="{StaticResource BladeDeepBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource BladeTextPrimaryBrush}"/>
+        <Setter Property="CaretBrush" Value="{StaticResource BladeNeonGreenBrush}"/>
+        <Setter Property="SelectionBrush" Value="#00FF9F60"/>
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="BorderBrush" Value="#00FF9F40"/>
+        <Setter Property="Padding" Value="16,14"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Grid>
+                        <!-- Shadow Layer -->
+                        <Border x:Name="ShadowBorder" CornerRadius="14" Margin="0,2,0,0"
+                                Background="#00000040" Opacity="0.5">
+                            <Border.Effect>
+                                <BlurEffect Radius="6"/>
+                            </Border.Effect>
+                        </Border>
+
+                        <!-- Main Border -->
+                        <Border x:Name="MainBorder" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="14">
+                            <Grid>
+                                <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
+                                <TextBlock x:Name="Placeholder" Text="{TemplateBinding Tag}"
+                                           Foreground="{StaticResource BladeTextMutedBrush}"
+                                           Margin="{TemplateBinding Padding}"
+                                           VerticalAlignment="Center"
+                                           Visibility="Collapsed" IsHitTestVisible="False"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Neon Glow Border -->
+                        <Border x:Name="GlowBorder" CornerRadius="14" Opacity="0"
+                                BorderThickness="2" BorderBrush="{StaticResource BladeNeonGreenBrush}"
+                                IsHitTestVisible="False">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#00FF9F" BlurRadius="15" ShadowDepth="0" Opacity="0.6"/>
+                            </Border.Effect>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Text" Value="">
+                            <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="MainBorder" Property="BorderBrush" Value="{StaticResource BladeNeonGreenBrush}"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="GlowBorder"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.2"/>
+                                        <DoubleAnimation Storyboard.TargetName="ShadowBorder"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0.8" Duration="0:0:0.2"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="GlowBorder"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="ShadowBorder"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0.5" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════════
+         FLOATING CARD STYLE (Message Bubbles)
+    ══════════════════════════════════════════════════════════════════════════════ -->
+
+    <Style x:Key="FloatingMessageCard" TargetType="Border">
+        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="Padding" Value="16,12"/>
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#182030" Offset="0"/>
+                    <GradientStop Color="#101820" Offset="1"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#00FF9F30"/>
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+        <Setter Property="RenderTransform">
+            <Setter.Value>
+                <TransformGroup>
+                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                    <TranslateTransform X="0" Y="0"/>
+                </TransformGroup>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect Color="#000000" BlurRadius="15" ShadowDepth="6" Opacity="0.4" Direction="270"/>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Message Card Own (sent by user) -->
+    <Style x:Key="FloatingMessageCardOwn" TargetType="Border" BasedOn="{StaticResource FloatingMessageCard}">
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#00FF9F20" Offset="0"/>
+                    <GradientStop Color="#00E5FF15" Offset="1"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="BorderBrush" Value="#00FF9F60"/>
+    </Style>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════════
+         BLADE SCROLLBAR STYLE
+    ══════════════════════════════════════════════════════════════════════════════ -->
+
+    <Style x:Key="BladeScrollBar" TargetType="ScrollBar">
+        <Setter Property="Width" Value="10"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollBar">
+                    <Border Background="#00FF9F10" CornerRadius="5" Padding="2">
+                        <Track x:Name="PART_Track" IsDirectionReversed="True">
+                            <Track.Thumb>
+                                <Thumb>
+                                    <Thumb.Template>
+                                        <ControlTemplate TargetType="Thumb">
+                                            <Border x:Name="ThumbBorder" CornerRadius="3"
+                                                    MinHeight="30">
+                                                <Border.Background>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                        <GradientStop Color="#00FF9F60" Offset="0"/>
+                                                        <GradientStop Color="#00E5FF60" Offset="1"/>
+                                                    </LinearGradientBrush>
+                                                </Border.Background>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="ThumbBorder" Property="Background">
+                                                        <Setter.Value>
+                                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                                <GradientStop Color="#00FF9F" Offset="0"/>
+                                                                <GradientStop Color="#00E5FF" Offset="1"/>
+                                                            </LinearGradientBrush>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Setter TargetName="ThumbBorder" Property="Effect">
+                                                        <Setter.Value>
+                                                            <DropShadowEffect Color="#00FF9F" BlurRadius="8" ShadowDepth="0" Opacity="0.5"/>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Thumb.Template>
+                                </Thumb>
+                            </Track.Thumb>
+                        </Track>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="BladeScrollViewer" TargetType="ScrollViewer">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollViewer">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ScrollContentPresenter Grid.Column="0"/>
+                        <ScrollBar x:Name="PART_VerticalScrollBar" Grid.Column="1"
+                                   Style="{StaticResource BladeScrollBar}"
+                                   Value="{TemplateBinding VerticalOffset}"
+                                   Maximum="{TemplateBinding ScrollableHeight}"
+                                   ViewportSize="{TemplateBinding ViewportHeight}"
+                                   Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════════
+         STATUS INDICATOR STYLES
+    ══════════════════════════════════════════════════════════════════════════════ -->
+
+    <Style x:Key="StatusIndicatorOnline" TargetType="Ellipse">
+        <Setter Property="Width" Value="12"/>
+        <Setter Property="Height" Value="12"/>
+        <Setter Property="Fill" Value="{StaticResource BladeNeonGreenBrush}"/>
+        <Setter Property="Stroke" Value="#020408"/>
+        <Setter Property="StrokeThickness" Value="2"/>
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect Color="#00FF9F" BlurRadius="8" ShadowDepth="0" Opacity="1"/>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="StatusIndicatorAway" TargetType="Ellipse" BasedOn="{StaticResource StatusIndicatorOnline}">
+        <Setter Property="Fill" Value="{StaticResource BladeNeonYellow}"/>
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect Color="#FFDD33" BlurRadius="8" ShadowDepth="0" Opacity="1"/>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="StatusIndicatorDND" TargetType="Ellipse" BasedOn="{StaticResource StatusIndicatorOnline}">
+        <Setter Property="Fill" Value="{StaticResource BladeNeonRedBrush}"/>
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect Color="#FF4466" BlurRadius="8" ShadowDepth="0" Opacity="1"/>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="StatusIndicatorOffline" TargetType="Ellipse" BasedOn="{StaticResource StatusIndicatorOnline}">
+        <Setter Property="Fill" Value="{StaticResource BladeTextMutedBrush}"/>
+        <Setter Property="Effect" Value="{x:Null}"/>
+    </Style>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════════
+         BLADE AVATAR STYLE
+    ══════════════════════════════════════════════════════════════════════════════ -->
+
+    <Style x:Key="BladeAvatar" TargetType="Border">
+        <Setter Property="CornerRadius" Value="100"/>
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="BorderBrush">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#00FF9F" Offset="0"/>
+                    <GradientStop Color="#00E5FF" Offset="1"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect Color="#00FF9F" BlurRadius="10" ShadowDepth="0" Opacity="0.5"/>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="BladeAvatarSmall" TargetType="Border" BasedOn="{StaticResource BladeAvatar}">
+        <Setter Property="Width" Value="32"/>
+        <Setter Property="Height" Value="32"/>
+        <Setter Property="BorderThickness" Value="1.5"/>
+    </Style>
+
+    <Style x:Key="BladeAvatarMedium" TargetType="Border" BasedOn="{StaticResource BladeAvatar}">
+        <Setter Property="Width" Value="48"/>
+        <Setter Property="Height" Value="48"/>
+    </Style>
+
+    <Style x:Key="BladeAvatarLarge" TargetType="Border" BasedOn="{StaticResource BladeAvatar}">
+        <Setter Property="Width" Value="80"/>
+        <Setter Property="Height" Value="80"/>
+        <Setter Property="BorderThickness" Value="3"/>
+    </Style>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════════
+         BLADE TOGGLE SWITCH
+    ══════════════════════════════════════════════════════════════════════════════ -->
+
+    <Style x:Key="BladeToggle" TargetType="ToggleButton">
+        <Setter Property="Width" Value="52"/>
+        <Setter Property="Height" Value="28"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Grid>
+                        <!-- Track -->
+                        <Border x:Name="Track" CornerRadius="14"
+                                Background="#101820" BorderThickness="2" BorderBrush="#303848">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#000000" BlurRadius="6" ShadowDepth="2" Opacity="0.4" Direction="90"/>
+                            </Border.Effect>
+                        </Border>
+
+                        <!-- Glow Track (visible when on) -->
+                        <Border x:Name="GlowTrack" CornerRadius="14" Opacity="0"
+                                BorderThickness="2" BorderBrush="{StaticResource BladeNeonGreenBrush}"
+                                IsHitTestVisible="False">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="#00FF9F40" Offset="0"/>
+                                    <GradientStop Color="#00E5FF30" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Border.Effect>
+                                <DropShadowEffect Color="#00FF9F" BlurRadius="12" ShadowDepth="0" Opacity="0.6"/>
+                            </Border.Effect>
+                        </Border>
+
+                        <!-- Thumb -->
+                        <Border x:Name="Thumb" Width="22" Height="22" CornerRadius="11"
+                                HorizontalAlignment="Left" Margin="3,0,0,0"
+                                Background="#E8F0FF"
+                                RenderTransformOrigin="0.5,0.5">
+                            <Border.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform x:Name="ThumbScale" ScaleX="1" ScaleY="1"/>
+                                    <TranslateTransform x:Name="ThumbTranslate" X="0"/>
+                                </TransformGroup>
+                            </Border.RenderTransform>
+                            <Border.Effect>
+                                <DropShadowEffect Color="#000000" BlurRadius="6" ShadowDepth="1" Opacity="0.3"/>
+                            </Border.Effect>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Thumb" Property="Background">
+                                <Setter.Value>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#00FF9F" Offset="0"/>
+                                        <GradientStop Color="#00E5FF" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter TargetName="Thumb" Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect Color="#00FF9F" BlurRadius="10" ShadowDepth="0" Opacity="0.8"/>
+                                </Setter.Value>
+                            </Setter>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ThumbTranslate"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="24" Duration="0:0:0.2">
+                                            <DoubleAnimation.EasingFunction>
+                                                <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="ThumbScale"
+                                                         Storyboard.TargetProperty="ScaleX"
+                                                         To="1.1" Duration="0:0:0.1" AutoReverse="True"/>
+                                        <DoubleAnimation Storyboard.TargetName="ThumbScale"
+                                                         Storyboard.TargetProperty="ScaleY"
+                                                         To="1.1" Duration="0:0:0.1" AutoReverse="True"/>
+                                        <DoubleAnimation Storyboard.TargetName="GlowTrack"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.2"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ThumbTranslate"
+                                                         Storyboard.TargetProperty="X"
+                                                         To="0" Duration="0:0:0.2">
+                                            <DoubleAnimation.EasingFunction>
+                                                <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="ThumbScale"
+                                                         Storyboard.TargetProperty="ScaleX"
+                                                         To="1.1" Duration="0:0:0.1" AutoReverse="True"/>
+                                        <DoubleAnimation Storyboard.TargetName="ThumbScale"
+                                                         Storyboard.TargetProperty="ScaleY"
+                                                         To="1.1" Duration="0:0:0.1" AutoReverse="True"/>
+                                        <DoubleAnimation Storyboard.TargetName="GlowTrack"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ThumbScale"
+                                                         Storyboard.TargetProperty="ScaleX"
+                                                         To="1.08" Duration="0:0:0.1"/>
+                                        <DoubleAnimation Storyboard.TargetName="ThumbScale"
+                                                         Storyboard.TargetProperty="ScaleY"
+                                                         To="1.08" Duration="0:0:0.1"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ThumbScale"
+                                                         Storyboard.TargetProperty="ScaleX"
+                                                         To="1" Duration="0:0:0.1"/>
+                                        <DoubleAnimation Storyboard.TargetName="ThumbScale"
+                                                         Storyboard.TargetProperty="ScaleY"
+                                                         To="1" Duration="0:0:0.1"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════════
+         BLADE SLIDER STYLE
+    ══════════════════════════════════════════════════════════════════════════════ -->
+
+    <Style x:Key="BladeSlider" TargetType="Slider">
+        <Setter Property="Height" Value="24"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Slider">
+                    <Grid VerticalAlignment="Center">
+                        <!-- Track Background -->
+                        <Border x:Name="TrackBackground" Height="6" CornerRadius="3"
+                                Background="#101820" VerticalAlignment="Center">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#000000" BlurRadius="4" ShadowDepth="1" Opacity="0.3" Direction="90"/>
+                            </Border.Effect>
+                        </Border>
+
+                        <!-- Track Fill -->
+                        <Border x:Name="TrackFill" Height="6" CornerRadius="3"
+                                HorizontalAlignment="Left" VerticalAlignment="Center">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="#00FF9F" Offset="0"/>
+                                    <GradientStop Color="#00E5FF" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Border.Effect>
+                                <DropShadowEffect Color="#00FF9F" BlurRadius="8" ShadowDepth="0" Opacity="0.5"/>
+                            </Border.Effect>
+                        </Border>
+
+                        <!-- Slider Track -->
+                        <Track x:Name="PART_Track">
+                            <Track.Thumb>
+                                <Thumb>
+                                    <Thumb.Template>
+                                        <ControlTemplate TargetType="Thumb">
+                                            <Grid RenderTransformOrigin="0.5,0.5">
+                                                <Grid.RenderTransform>
+                                                    <ScaleTransform x:Name="ThumbScale" ScaleX="1" ScaleY="1"/>
+                                                </Grid.RenderTransform>
+
+                                                <!-- Glow Ring -->
+                                                <Ellipse x:Name="GlowRing" Width="24" Height="24" Opacity="0">
+                                                    <Ellipse.Fill>
+                                                        <RadialGradientBrush>
+                                                            <GradientStop Color="#00FF9F60" Offset="0"/>
+                                                            <GradientStop Color="#00FF9F00" Offset="1"/>
+                                                        </RadialGradientBrush>
+                                                    </Ellipse.Fill>
+                                                </Ellipse>
+
+                                                <!-- Thumb Circle -->
+                                                <Ellipse x:Name="ThumbCircle" Width="18" Height="18">
+                                                    <Ellipse.Fill>
+                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                            <GradientStop Color="#00FF9F" Offset="0"/>
+                                                            <GradientStop Color="#00E5FF" Offset="1"/>
+                                                        </LinearGradientBrush>
+                                                    </Ellipse.Fill>
+                                                    <Ellipse.Effect>
+                                                        <DropShadowEffect Color="#00FF9F" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
+                                                    </Ellipse.Effect>
+                                                </Ellipse>
+
+                                                <!-- Center Dot -->
+                                                <Ellipse Width="6" Height="6" Fill="#020408"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Trigger.EnterActions>
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetName="ThumbScale"
+                                                                                 Storyboard.TargetProperty="ScaleX"
+                                                                                 To="1.2" Duration="0:0:0.15">
+                                                                    <DoubleAnimation.EasingFunction>
+                                                                        <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                                                                    </DoubleAnimation.EasingFunction>
+                                                                </DoubleAnimation>
+                                                                <DoubleAnimation Storyboard.TargetName="ThumbScale"
+                                                                                 Storyboard.TargetProperty="ScaleY"
+                                                                                 To="1.2" Duration="0:0:0.15">
+                                                                    <DoubleAnimation.EasingFunction>
+                                                                        <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                                                                    </DoubleAnimation.EasingFunction>
+                                                                </DoubleAnimation>
+                                                                <DoubleAnimation Storyboard.TargetName="GlowRing"
+                                                                                 Storyboard.TargetProperty="Opacity"
+                                                                                 To="1" Duration="0:0:0.15"/>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </Trigger.EnterActions>
+                                                    <Trigger.ExitActions>
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetName="ThumbScale"
+                                                                                 Storyboard.TargetProperty="ScaleX"
+                                                                                 To="1" Duration="0:0:0.1"/>
+                                                                <DoubleAnimation Storyboard.TargetName="ThumbScale"
+                                                                                 Storyboard.TargetProperty="ScaleY"
+                                                                                 To="1" Duration="0:0:0.1"/>
+                                                                <DoubleAnimation Storyboard.TargetName="GlowRing"
+                                                                                 Storyboard.TargetProperty="Opacity"
+                                                                                 To="0" Duration="0:0:0.1"/>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </Trigger.ExitActions>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Thumb.Template>
+                                </Thumb>
+                            </Track.Thumb>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

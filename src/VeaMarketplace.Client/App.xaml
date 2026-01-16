@@ -9,8 +9,10 @@
                 <ResourceDictionary Source="Styles/Buttons.xaml"/>
                 <ResourceDictionary Source="Styles/TextStyles.xaml"/>
                 <ResourceDictionary Source="Styles/Animations.xaml"/>
+                <ResourceDictionary Source="Styles/BladeAnimations.xaml"/>
                 <ResourceDictionary Source="Styles/Controls.xaml"/>
                 <ResourceDictionary Source="Themes/OverseerTheme.xaml"/>
+                <ResourceDictionary Source="Themes/BladeUI.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
             <!-- Converters -->
