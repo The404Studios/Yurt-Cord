@@ -263,7 +263,7 @@
                         <!-- User Settings Section -->
                         <Border Padding="10,6" Margin="0,0,0,8" CornerRadius="6" Background="#10101828">
                             <TextBlock Text="USER SETTINGS" FontSize="10" FontWeight="Bold"
-                                       Foreground="#6080A0" CharacterSpacing="50"/>
+                                       Foreground="#6080A0"/>
                         </Border>
 
                         <Button x:Name="AccountNavButton" Content="👤  My Account"

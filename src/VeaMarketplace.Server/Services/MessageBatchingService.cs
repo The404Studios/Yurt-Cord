@@ -198,7 +198,7 @@ public class MessageBatch
 public class QueuedMessage
 {
     public required string Method { get; set; }
-    public required object Data { get; set; }
+    public object? Data { get; set; }
     public DateTime QueuedAt { get; set; }
 }
 

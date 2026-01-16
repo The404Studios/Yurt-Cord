@@ -161,8 +161,7 @@
                             <TextBlock Text="👥" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <TextBlock Text="MEMBERS" FontSize="12" FontWeight="Bold"
-                                   Foreground="#8090B0" VerticalAlignment="Center"
-                                   CharacterSpacing="50"/>
+                                   Foreground="#8090B0" VerticalAlignment="Center"/>
                     </StackPanel>
 
                     <Button x:Name="GroupCallButton" Style="{StaticResource BladeIconButton}"
