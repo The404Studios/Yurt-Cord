@@ -29,6 +29,9 @@ public interface IChatService
     event Action<string, string, string>? OnReactionRemoved; // MessageId, UserId, Emoji
     event Action<GroupChatCreatedEvent>? OnGroupChatCreated;
     event Action<string>? OnGroupChatError;
+    event Action<string, string>? OnUserStoppedTyping; // Username, Channel
+    event Action<string, string>? OnMessageEdited; // MessageId, NewContent
+    event Action<string>? OnEditError;
 
     Task ConnectAsync(string token);
     Task DisconnectAsync();
@@ -43,6 +46,8 @@ public interface IChatService
     Task AddReactionAsync(string messageId, string emoji);
     Task RemoveReactionAsync(string messageId, string emoji);
     Task AcknowledgeMessageAsync(string messageId);
+    Task EditMessageAsync(string messageId, string newContent, string channel = "general");
+    Task StopTypingAsync(string channel);
 }
 
 public class ChatService : IChatService, IAsyncDisposable
@@ -79,6 +84,9 @@ public class ChatService : IChatService, IAsyncDisposable
     public event Action<string, string, string>? OnReactionRemoved;
     public event Action<GroupChatCreatedEvent>? OnGroupChatCreated;
     public event Action<string>? OnGroupChatError;
+    public event Action<string, string>? OnUserStoppedTyping;
+    public event Action<string, string>? OnMessageEdited;
+    public event Action<string>? OnEditError;
 
     public async Task ConnectAsync(string token)
     {
@@ -374,6 +382,18 @@ public class ChatService : IChatService, IAsyncDisposable
 
         _connection.On<string>("GroupChatError", error =>
             OnGroupChatError?.Invoke(error));
+
+        // Typing stopped handler
+        _connection.On<string, string>("UserStoppedTyping", (username, channel) =>
+            OnUserStoppedTyping?.Invoke(username, channel));
+
+        // Message edited handler
+        _connection.On<string, string>("MessageEdited", (messageId, newContent) =>
+            OnMessageEdited?.Invoke(messageId, newContent));
+
+        // Edit error handler
+        _connection.On<string>("EditError", error =>
+            OnEditError?.Invoke(error));
     }
 
     public async Task DisconnectAsync()
@@ -508,6 +528,22 @@ public class ChatService : IChatService, IAsyncDisposable
             {
                 Debug.WriteLine($"ChatService: Failed to acknowledge message {messageId}: {ex.Message}");
             }
+        }
+    }
+
+    public async Task EditMessageAsync(string messageId, string newContent, string channel = "general")
+    {
+        if (_connection != null && IsConnected)
+        {
+            await _connection.InvokeAsync("EditMessage", messageId, newContent, channel).ConfigureAwait(false);
+        }
+    }
+
+    public async Task StopTypingAsync(string channel)
+    {
+        if (_connection != null && IsConnected)
+        {
+            await _connection.InvokeAsync("StopTyping", channel).ConfigureAwait(false);
         }
     }
 

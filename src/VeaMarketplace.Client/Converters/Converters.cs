@@ -547,7 +547,8 @@ public class EqualityMultiConverter : IMultiValueConverter
 
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
     {
-        throw new NotImplementedException();
+        // Multi-value converters typically don't support ConvertBack
+        return Array.Empty<object>();
     }
 }
 
@@ -586,7 +587,8 @@ public class AudioLevelConverter : IMultiValueConverter
 
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
     {
-        throw new NotImplementedException();
+        // Multi-value converters typically don't support ConvertBack
+        return Array.Empty<object>();
     }
 }
 
@@ -650,7 +652,8 @@ public class SliderWidthConverter : IMultiValueConverter
 
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
     {
-        throw new NotImplementedException();
+        // Multi-value converters typically don't support ConvertBack
+        return Array.Empty<object>();
     }
 }
 
@@ -789,6 +792,7 @@ public class CoalesceConverter : IMultiValueConverter
 
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
     {
-        throw new NotImplementedException();
+        // Multi-value converters typically don't support ConvertBack
+        return Array.Empty<object>();
     }
 }
