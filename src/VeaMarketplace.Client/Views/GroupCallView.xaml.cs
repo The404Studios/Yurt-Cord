@@ -102,11 +102,11 @@ public partial class GroupCallView : UserControl
         });
     }
 
-    private void OnGroupCallParticipantLeft(string callId, string oderId)
+    private void OnGroupCallParticipantLeft(string callId, string userId)
     {
         Dispatcher.Invoke(() =>
         {
-            var participant = _participants.FirstOrDefault(p => p.UserId == oderId);
+            var participant = _participants.FirstOrDefault(p => p.UserId == userId);
             if (participant != null)
             {
                 _participants.Remove(participant);

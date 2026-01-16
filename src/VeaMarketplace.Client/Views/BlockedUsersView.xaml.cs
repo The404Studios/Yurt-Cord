@@ -101,11 +101,11 @@ public partial class BlockedUsersView : UserControl
         });
     }
 
-    private void OnUserUnblocked(string oderId)
+    private void OnUserUnblocked(string userId)
     {
         Dispatcher.Invoke(() =>
         {
-            var user = _blockedUsers.FirstOrDefault(u => u.UserId == oderId);
+            var user = _blockedUsers.FirstOrDefault(u => u.UserId == userId);
             if (user != null)
             {
                 _blockedUsers.Remove(user);
@@ -124,7 +124,7 @@ public partial class BlockedUsersView : UserControl
 
     private async void UnblockButton_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button button && button.Tag is string oderId && _friendService != null)
+        if (sender is Button button && button.Tag is string userId && _friendService != null)
         {
             var result = MessageBox.Show(
                 "Are you sure you want to unblock this user? They will be able to send you messages and friend requests again.",
@@ -136,7 +136,7 @@ public partial class BlockedUsersView : UserControl
             {
                 try
                 {
-                    await _friendService.UnblockUserAsync(oderId);
+                    await _friendService.UnblockUserAsync(userId);
                 }
                 catch
                 {
