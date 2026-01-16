@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using VeaMarketplace.Shared.Models;
 
 namespace VeaMarketplace.Shared.DTOs;
@@ -30,12 +31,18 @@ public class NotificationSettingsDto
     public bool EnableSystemNotifications { get; set; } = true;
     public bool DoNotDisturb { get; set; } = false;
     public DateTime? DoNotDisturbUntil { get; set; }
+
+    [MaxLength(100, ErrorMessage = "Maximum 100 muted users allowed")]
     public List<string> MutedUsers { get; set; } = new();
+
+    [MaxLength(50, ErrorMessage = "Maximum 50 muted channels allowed")]
     public List<string> MutedChannels { get; set; } = new();
+
     public string? CustomSoundPath { get; set; }
 }
 
 public class MarkNotificationReadRequest
 {
+    [Required(ErrorMessage = "Notification ID is required")]
     public string NotificationId { get; set; } = string.Empty;
 }
