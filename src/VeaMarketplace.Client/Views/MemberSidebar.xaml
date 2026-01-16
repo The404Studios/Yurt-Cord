@@ -200,7 +200,7 @@
                         </Ellipse>
                         <TextBlock x:Name="OnlineHeaderText" Text="ONLINE — 0"
                                    FontSize="11" FontWeight="SemiBold"
-                                   Foreground="#6080A0" CharacterSpacing="30"/>
+                                   Foreground="#6080A0"/>
                     </StackPanel>
                 </Border>
 
@@ -377,7 +377,7 @@
                             </Border.Effect>
                         </Border>
                         <TextBlock Text="STAFF" FontSize="11" FontWeight="SemiBold"
-                                   Foreground="#FFD700" CharacterSpacing="50">
+                                   Foreground="#FFD700">
                             <TextBlock.Effect>
                                 <DropShadowEffect Color="#FFD700" BlurRadius="6" ShadowDepth="0" Opacity="0.5"/>
                             </TextBlock.Effect>
@@ -501,7 +501,7 @@
                         <Ellipse Width="8" Height="8" Fill="#506080" Margin="0,0,10,0"/>
                         <TextBlock x:Name="OfflineHeaderText" Text="OFFLINE — 0"
                                    FontSize="11" FontWeight="SemiBold"
-                                   Foreground="#506080" CharacterSpacing="30"/>
+                                   Foreground="#506080"/>
                     </StackPanel>
                 </Border>
 
@@ -649,7 +649,7 @@
                                 Background="#15101828" BorderThickness="1" BorderBrush="#2000FF9F">
                             <StackPanel>
                                 <TextBlock Text="STATUS" FontSize="10" FontWeight="Bold"
-                                           Foreground="#6080A0" Margin="0,0,0,6" CharacterSpacing="50"/>
+                                           Foreground="#6080A0" Margin="0,0,0,6"/>
                                 <TextBlock x:Name="PopupStatusText" FontSize="13" Foreground="#C0C8E0"
                                            TextWrapping="Wrap"/>
                             </StackPanel>
@@ -661,7 +661,7 @@
                                 Background="#15101828" BorderThickness="1" BorderBrush="#2000E5FF">
                             <StackPanel>
                                 <TextBlock Text="ABOUT ME" FontSize="10" FontWeight="Bold"
-                                           Foreground="#6080A0" Margin="0,0,0,6" CharacterSpacing="50"/>
+                                           Foreground="#6080A0" Margin="0,0,0,6"/>
                                 <TextBlock x:Name="PopupBioText" FontSize="12" Foreground="#A0A8C0"
                                            TextWrapping="Wrap"/>
                             </StackPanel>
@@ -672,7 +672,7 @@
                                 Background="#15101828" BorderThickness="1" BorderBrush="#20B366FF">
                             <StackPanel>
                                 <TextBlock Text="MEMBER SINCE" FontSize="10" FontWeight="Bold"
-                                           Foreground="#6080A0" Margin="0,0,0,6" CharacterSpacing="50"/>
+                                           Foreground="#6080A0" Margin="0,0,0,6"/>
                                 <TextBlock x:Name="PopupMemberSinceText" FontSize="12" Foreground="#A0A8C0"/>
                             </StackPanel>
                         </Border>
