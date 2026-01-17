@@ -13,7 +13,7 @@ public partial class SettingsViewModel : BaseViewModel
     private readonly IVoiceService _voiceService;
 
     // Store event handler for proper unsubscription
-    private readonly Action<float> _onLocalAudioLevel;
+    private readonly Action<double> _onLocalAudioLevel;
 
     [ObservableProperty]
     private ObservableCollection<AudioDeviceItem> _inputDevices = new();

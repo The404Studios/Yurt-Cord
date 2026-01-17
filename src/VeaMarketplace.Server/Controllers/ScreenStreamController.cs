@@ -281,8 +281,9 @@ public class ScreenStreamController : ControllerBase
         public string Username { get; set; } = "";
         public DateTime StartedAt { get; set; }
         public DateTime LastFrameAt { get; set; }
-        public long FrameCount { get; set; }
-        public long TotalBytes { get; set; }
+        // Use fields instead of properties for Interlocked operations
+        public long FrameCount;
+        public long TotalBytes;
     }
 }
 

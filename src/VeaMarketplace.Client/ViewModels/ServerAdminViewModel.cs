@@ -415,12 +415,6 @@ public partial class ServerAdminViewModel : BaseViewModel
         MemoryUsageMb = process.WorkingSet64 / 1024 / 1024;
         SetStatus("Garbage collection completed");
     }
-
-    public void Cleanup()
-    {
-        _refreshTimer.Stop();
-        _refreshTimer.Tick -= OnRefreshTimerTick;
-    }
 }
 
 public class AdminOnlineUserDto

@@ -80,7 +80,6 @@ public class AuthController : ControllerBase
 
         return Ok(_authService.MapToDto(user));
     }
-}
 
     /// <summary>
     /// Validates email format using MailAddress class
