@@ -5,6 +5,7 @@ using VeaMarketplace.Shared.DTOs;
 using VeaMarketplace.Shared.Models;
 using System.Security.Cryptography;
 using System.Runtime.Versioning;
+using Microsoft.Extensions.Logging;
 
 namespace VeaMarketplace.Server.Services;
 
@@ -16,6 +17,7 @@ public class FileService
 {
     private readonly DatabaseService _db;
     private readonly ILiteCollection<StoredFile> _files;
+    private readonly ILogger<FileService> _logger;
     private readonly string _uploadPath;
     private readonly string _baseUrl;
 
@@ -52,10 +54,11 @@ public class FileService
         "text/plain", "text/csv", "application/json"
     };
 
-    public FileService(DatabaseService db, IConfiguration configuration)
+    public FileService(DatabaseService db, IConfiguration configuration, ILogger<FileService> logger)
     {
         _db = db;
         _files = _db.StoredFiles;
+        _logger = logger;
 
         // Get configuration for file storage, using ServerPaths as default
         var configuredPath = configuration.GetValue<string>("FileStorage:UploadPath");
@@ -79,7 +82,14 @@ public class FileService
             _uploadPath = ServerPaths.UploadDirectory;
         }
 
-        _baseUrl = configuration.GetValue<string>("FileStorage:BaseUrl") ?? "http://162.248.94.149:5000/api/files";
+        // Get base URL from configuration (required for production)
+        var configuredBaseUrl = configuration.GetValue<string>("FileStorage:BaseUrl");
+        if (string.IsNullOrEmpty(configuredBaseUrl))
+        {
+            // Use environment variable or derive from server address
+            configuredBaseUrl = Environment.GetEnvironmentVariable("VEA_FILE_BASE_URL");
+        }
+        _baseUrl = configuredBaseUrl ?? "/api/files"; // Use relative URL as fallback
 
         // Ensure upload directories exist
         EnsureDirectoriesExist();
@@ -370,8 +380,9 @@ public class FileService
             using var image = System.Drawing.Image.FromStream(ms);
             return (image.Width, image.Height);
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogWarning(ex, "Failed to get image dimensions from {Size} bytes of data", imageData.Length);
             return (null, null);
         }
     }
@@ -399,8 +410,9 @@ public class FileService
 
             return await Task.FromResult($"{_baseUrl}/thumbnails/{thumbnailFileName}");
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogWarning(ex, "Failed to generate thumbnail for file {FileId}", fileId);
             return null;
         }
     }

@@ -124,7 +124,28 @@ public partial class ServerAdminViewModel : BaseViewModel
         _refreshTimer.Tick += OnRefreshTimerTick;
         _refreshTimer.Start();
 
-        _ = LoadDashboardAsync();
+        _ = SafeLoadDashboardAsync();
+    }
+
+    private async Task SafeLoadDashboardAsync()
+    {
+        try
+        {
+            await LoadDashboardAsync();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"ServerAdminViewModel: Load failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Stops the timer and cleans up resources to prevent memory leaks
+    /// </summary>
+    public void Cleanup()
+    {
+        _refreshTimer.Stop();
+        _refreshTimer.Tick -= OnRefreshTimerTick;
     }
 
     private async void OnRefreshTimerTick(object? sender, EventArgs e)
@@ -393,12 +414,6 @@ public partial class ServerAdminViewModel : BaseViewModel
         var process = Process.GetCurrentProcess();
         MemoryUsageMb = process.WorkingSet64 / 1024 / 1024;
         SetStatus("Garbage collection completed");
-    }
-
-    public void Cleanup()
-    {
-        _refreshTimer.Stop();
-        _refreshTimer.Tick -= OnRefreshTimerTick;
     }
 }
 

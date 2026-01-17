@@ -156,6 +156,7 @@ public partial class MemberSidebar : UserControl
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"Failed to parse accent color '{user.AccentColor}': {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Failed to parse accent color: {ex.Message}");
             }
         }
@@ -276,7 +277,7 @@ public partial class MemberSidebar : UserControl
         try
         {
             // Get current voice channel
-            var currentChannel = _voiceService.CurrentChannel;
+            var currentChannel = _voiceService.CurrentChannelId;
             if (string.IsNullOrEmpty(currentChannel))
             {
                 _toastService?.ShowWarning("Not in Voice", "You must be in a voice channel to invite someone");
@@ -301,7 +302,7 @@ public partial class MemberSidebar : UserControl
         try
         {
             // Mute user in current voice channel
-            var currentChannel = _voiceService.CurrentChannel;
+            var currentChannel = _voiceService.CurrentChannelId;
             if (string.IsNullOrEmpty(currentChannel))
             {
                 _toastService?.ShowWarning("Not in Voice", "You must be in a voice channel to mute someone");

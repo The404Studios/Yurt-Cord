@@ -103,8 +103,8 @@ public class ScreenStreamController : ControllerBase
         if (frameData.Length == 0)
             return BadRequest(new { error = "Empty frame" });
 
-        // Store frame
-        var frameNumber = stream.FrameCount++;
+        // Store frame with atomic increment to prevent race conditions
+        var frameNumber = Interlocked.Increment(ref stream.FrameCount) - 1;
         _frames[streamId] = new StreamFrame
         {
             Data = frameData,
@@ -115,7 +115,7 @@ public class ScreenStreamController : ControllerBase
         };
 
         stream.LastFrameAt = DateTime.UtcNow;
-        stream.TotalBytes += frameData.Length;
+        Interlocked.Add(ref stream.TotalBytes, frameData.Length);
 
         // Send lightweight notification via SignalR (just frame number, not data)
         // Viewers can then fetch the frame via HTTP if they want it
@@ -127,10 +127,19 @@ public class ScreenStreamController : ControllerBase
 
     /// <summary>
     /// Get the latest frame from a stream (viewers call this)
+    /// Requires authentication to prevent unauthorized viewing
     /// </summary>
     [HttpGet("{streamId}/frame")]
-    public IActionResult GetFrame(string streamId, [FromQuery] long? since = null)
+    public IActionResult GetFrame(
+        string streamId,
+        [FromHeader(Name = "Authorization")] string? authorization,
+        [FromQuery] long? since = null)
     {
+        // Require authentication to view streams
+        var userId = ValidateToken(authorization);
+        if (userId == null)
+            return Unauthorized(new { error = "Authentication required" });
+
         if (!_frames.TryGetValue(streamId, out var frame))
             return NotFound(new { error = "No frame available" });
 
@@ -148,10 +157,18 @@ public class ScreenStreamController : ControllerBase
 
     /// <summary>
     /// Get stream info
+    /// Requires authentication to prevent information disclosure
     /// </summary>
     [HttpGet("{streamId}/info")]
-    public IActionResult GetStreamInfo(string streamId)
+    public IActionResult GetStreamInfo(
+        string streamId,
+        [FromHeader(Name = "Authorization")] string? authorization)
     {
+        // Require authentication
+        var userId = ValidateToken(authorization);
+        if (userId == null)
+            return Unauthorized(new { error = "Authentication required" });
+
         if (!_streams.TryGetValue(streamId, out var stream))
             return NotFound(new { error = "Stream not found" });
 
@@ -194,10 +211,18 @@ public class ScreenStreamController : ControllerBase
 
     /// <summary>
     /// List active streams in a channel
+    /// Requires authentication to prevent enumeration attacks
     /// </summary>
     [HttpGet("channel/{channelId}")]
-    public IActionResult GetChannelStreams(string channelId)
+    public IActionResult GetChannelStreams(
+        string channelId,
+        [FromHeader(Name = "Authorization")] string? authorization)
     {
+        // Require authentication
+        var userId = ValidateToken(authorization);
+        if (userId == null)
+            return Unauthorized(new { error = "Authentication required" });
+
         var streams = _streams.Values
             .Where(s => s.ChannelId == channelId)
             .Select(s => new
@@ -256,8 +281,9 @@ public class ScreenStreamController : ControllerBase
         public string Username { get; set; } = "";
         public DateTime StartedAt { get; set; }
         public DateTime LastFrameAt { get; set; }
-        public long FrameCount { get; set; }
-        public long TotalBytes { get; set; }
+        // Use fields instead of properties for Interlocked operations
+        public long FrameCount;
+        public long TotalBytes;
     }
 }
 

@@ -36,7 +36,19 @@ public partial class NotificationCenterViewModel : BaseViewModel
     {
         _apiService = apiService;
         _navigationService = navigationService;
-        _ = LoadNotificationsAsync();
+        _ = SafeLoadNotificationsAsync();
+    }
+
+    private async Task SafeLoadNotificationsAsync()
+    {
+        try
+        {
+            await LoadNotificationsAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"NotificationCenterViewModel: Load failed: {ex.Message}");
+        }
     }
 
     /// <summary>

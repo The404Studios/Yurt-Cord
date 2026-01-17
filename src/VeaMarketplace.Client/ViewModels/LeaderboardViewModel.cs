@@ -10,6 +10,10 @@ public partial class LeaderboardViewModel : BaseViewModel
     private readonly ILeaderboardService _leaderboardService;
     private readonly IFriendService _friendService;
 
+    // Store event handlers for proper unsubscription
+    private readonly Action<UserStats> _onStatsUpdated;
+    private readonly Action<LeaderboardEntry> _onLeaderboardUpdated;
+
     [ObservableProperty]
     private string _currentCategory = "TopSellers";
 
@@ -52,8 +56,8 @@ public partial class LeaderboardViewModel : BaseViewModel
         _leaderboardService = leaderboardService;
         _friendService = friendService;
 
-        // Subscribe to events
-        _leaderboardService.OnStatsUpdated += stats =>
+        // Create and store event handlers for proper cleanup
+        _onStatsUpdated = stats =>
         {
             System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
@@ -62,7 +66,7 @@ public partial class LeaderboardViewModel : BaseViewModel
             });
         };
 
-        _leaderboardService.OnLeaderboardUpdated += entry =>
+        _onLeaderboardUpdated = entry =>
         {
             System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
             {
@@ -71,8 +75,33 @@ public partial class LeaderboardViewModel : BaseViewModel
             });
         };
 
-        // Load initial data
-        _ = LoadAsync();
+        // Subscribe to events
+        _leaderboardService.OnStatsUpdated += _onStatsUpdated;
+        _leaderboardService.OnLeaderboardUpdated += _onLeaderboardUpdated;
+
+        // Load initial data with error handling
+        _ = SafeLoadAsync();
+    }
+
+    private async Task SafeLoadAsync()
+    {
+        try
+        {
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"LeaderboardViewModel: Load failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Unsubscribes from all events to prevent memory leaks
+    /// </summary>
+    public void Cleanup()
+    {
+        _leaderboardService.OnStatsUpdated -= _onStatsUpdated;
+        _leaderboardService.OnLeaderboardUpdated -= _onLeaderboardUpdated;
     }
 
     private async Task LoadAsync()

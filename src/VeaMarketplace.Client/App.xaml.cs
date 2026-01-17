@@ -114,12 +114,12 @@ public partial class App : Application
         var appInit = ServiceProvider.GetRequiredService<ApplicationInitializationService>();
         await appInit.InitializeAsync();
 
-        // Initialize services that need async startup
+        // Initialize services that need async startup (with error handling)
         var socialService = ServiceProvider.GetRequiredService<ISocialService>();
-        _ = socialService.LoadAsync(); // Fire and forget - load in background
+        _ = SafeFireAndForgetAsync(socialService.LoadAsync(), "SocialService.LoadAsync");
 
         var leaderboardService = ServiceProvider.GetRequiredService<ILeaderboardService>();
-        _ = leaderboardService.LoadAsync(); // Fire and forget - load in background
+        _ = SafeFireAndForgetAsync(leaderboardService.LoadAsync(), "LeaderboardService.LoadAsync");
 
         // Wire up cross-service event handlers for social activity tracking
         WireUpSocialActivityTracking();
@@ -304,6 +304,22 @@ public partial class App : Application
         catch
         {
             // If we can't log, don't throw another exception
+        }
+    }
+
+    /// <summary>
+    /// Safely executes a task in fire-and-forget fashion with proper exception handling.
+    /// </summary>
+    private static async Task SafeFireAndForgetAsync(Task task, string operationName)
+    {
+        try
+        {
+            await task;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[{operationName}] Background task failed: {ex.Message}");
+            LogException($"Background task '{operationName}' failed:\n{ex}");
         }
     }
 

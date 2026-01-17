@@ -12,6 +12,10 @@ public partial class MainViewModel : BaseViewModel
     private readonly IVoiceService _voiceService;
     private readonly INavigationService _navigationService;
 
+    // Store event handlers for proper unsubscription
+    private readonly Action<string> _onNavigate;
+    private readonly Action<UserDto> _onAuthenticated;
+
     [ObservableProperty]
     private UserDto? _currentUser;
 
@@ -46,22 +50,41 @@ public partial class MainViewModel : BaseViewModel
 
         CurrentUser = _apiService.CurrentUser;
 
-        _navigationService.OnNavigate += view =>
+        // Create and store event handlers for proper cleanup
+        _onNavigate = view =>
         {
             CurrentView = view;
         };
 
-        _chatService.OnAuthenticated += user =>
+        _onAuthenticated = user =>
         {
             CurrentUser = user;
             IsConnected = true;
             ConnectionStatus = "Connected";
         };
 
-        // Initialize child view models
-        ChatViewModel = App.ServiceProvider.GetService(typeof(ChatViewModel)) as ChatViewModel;
-        MarketplaceViewModel = App.ServiceProvider.GetService(typeof(MarketplaceViewModel)) as MarketplaceViewModel;
-        ProfileViewModel = App.ServiceProvider.GetService(typeof(ProfileViewModel)) as ProfileViewModel;
+        // Subscribe to events
+        _navigationService.OnNavigate += _onNavigate;
+        _chatService.OnAuthenticated += _onAuthenticated;
+
+        // Initialize child view models (with null safety)
+        ChatViewModel = App.ServiceProvider?.GetService(typeof(ChatViewModel)) as ChatViewModel;
+        MarketplaceViewModel = App.ServiceProvider?.GetService(typeof(MarketplaceViewModel)) as MarketplaceViewModel;
+        ProfileViewModel = App.ServiceProvider?.GetService(typeof(ProfileViewModel)) as ProfileViewModel;
+    }
+
+    /// <summary>
+    /// Unsubscribes from all events to prevent memory leaks
+    /// </summary>
+    public void Cleanup()
+    {
+        _navigationService.OnNavigate -= _onNavigate;
+        _chatService.OnAuthenticated -= _onAuthenticated;
+
+        // Cleanup child view models if they support it
+        (ChatViewModel as ChatViewModel)?.Cleanup();
+        (MarketplaceViewModel as MarketplaceViewModel)?.Cleanup();
+        (ProfileViewModel as ProfileViewModel)?.Cleanup();
     }
 
     [RelayCommand]

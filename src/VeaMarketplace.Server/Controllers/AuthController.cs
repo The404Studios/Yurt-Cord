@@ -47,7 +47,8 @@ public class AuthController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Password) || request.Password.Length < 6)
             return BadRequest(new AuthResponse { Success = false, Message = "Password must be at least 6 characters", AuthMode = _authService.AuthenticationMode });
 
-        if (!request.Email.Contains('@'))
+        // Validate email format properly
+        if (!IsValidEmail(request.Email))
             return BadRequest(new AuthResponse { Success = false, Message = "Invalid email address", AuthMode = _authService.AuthenticationMode });
 
         var response = _authService.Register(request);
@@ -78,6 +79,26 @@ public class AuthController : ControllerBase
             return Unauthorized();
 
         return Ok(_authService.MapToDto(user));
+    }
+
+    /// <summary>
+    /// Validates email format using MailAddress class
+    /// </summary>
+    private static bool IsValidEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            // Ensure the address matches what was provided (catches edge cases)
+            return addr.Address == email && email.Contains('.') && !email.EndsWith(".");
+        }
+        catch
+        {
+            return false;
+        }
     }
 }
 

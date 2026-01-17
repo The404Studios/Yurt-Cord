@@ -7,7 +7,7 @@ using VeaMarketplace.Shared.Enums;
 
 namespace VeaMarketplace.Client.Services;
 
-public interface IApiService
+public interface IApiService : IDisposable
 {
     string? AuthToken { get; }
     UserDto? CurrentUser { get; }
@@ -116,6 +116,7 @@ public class ApiService : IApiService
 {
     private readonly HttpClient _httpClient;
     private static readonly string BaseUrl = AppConstants.DefaultServerUrl;
+    private bool _disposed;
 
     // Shared JSON options for consistent enum serialization with server
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -844,6 +845,27 @@ public class ApiService : IApiService
         var response = await _httpClient.GetAsync($"/api/discovery/similar/{productId}?limit={count}").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return [];
         return await response.Content.ReadFromJsonAsync<List<ProductDto>>(JsonOptions).ConfigureAwait(false) ?? [];
+    }
+
+    /// <summary>
+    /// Disposes the HttpClient to release network resources
+    /// </summary>
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                _httpClient.Dispose();
+            }
+            _disposed = true;
+        }
     }
 }
 

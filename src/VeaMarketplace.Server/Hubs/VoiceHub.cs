@@ -884,7 +884,7 @@ public class VoiceHub : Hub
     /// <summary>
     /// Kick a user from a voice room. Only host or moderators can kick users.
     /// </summary>
-    public async Task KickUser(string roomId, string targetUserId, string? reason = null)
+    public async Task KickUserFromRoom(string roomId, string targetUserId, string? reason = null)
     {
         if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var callerId))
         {

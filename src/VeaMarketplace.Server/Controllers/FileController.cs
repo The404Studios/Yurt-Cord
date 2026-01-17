@@ -178,10 +178,33 @@ public class FileController : ControllerBase
     {
         var uploadBasePath = _fileService.GetUploadBasePath();
 
+        // Security: Validate category and fileName to prevent path traversal attacks
+        // Only allow alphanumeric, dash, underscore, and dot (for extensions)
+        if (!IsValidPathSegment(category) || !IsValidPathSegment(fileName))
+        {
+            return BadRequest(new { error = "Invalid file path" });
+        }
+
+        // Security: Ensure fileName doesn't contain path separators
+        if (fileName.Contains("..") || fileName.Contains('/') || fileName.Contains('\\'))
+        {
+            return BadRequest(new { error = "Invalid file name" });
+        }
+
         // For thumbnails, serve directly from disk (they're not stored in DB)
         if (category == "thumbnails")
         {
             var thumbnailPath = Path.Combine(uploadBasePath, "thumbnails", fileName);
+
+            // Security: Verify the resolved path is within the upload directory
+            var fullThumbnailPath = Path.GetFullPath(thumbnailPath);
+            var allowedBasePath = Path.GetFullPath(Path.Combine(uploadBasePath, "thumbnails"));
+            if (!fullThumbnailPath.StartsWith(allowedBasePath + Path.DirectorySeparatorChar) &&
+                fullThumbnailPath != allowedBasePath)
+            {
+                return BadRequest(new { error = "Invalid file path" });
+            }
+
             if (!System.IO.File.Exists(thumbnailPath))
                 return NotFound();
 
@@ -197,6 +220,16 @@ public class FileController : ControllerBase
         {
             // Fallback: try to serve file directly from disk if not found in DB
             var directPath = Path.Combine(uploadBasePath, category, fileName);
+
+            // Security: Verify the resolved path is within the upload directory
+            var fullDirectPath = Path.GetFullPath(directPath);
+            var allowedCategoryPath = Path.GetFullPath(Path.Combine(uploadBasePath, category));
+            if (!fullDirectPath.StartsWith(allowedCategoryPath + Path.DirectorySeparatorChar) &&
+                fullDirectPath != allowedCategoryPath)
+            {
+                return BadRequest(new { error = "Invalid file path" });
+            }
+
             if (System.IO.File.Exists(directPath))
             {
                 var directStream = System.IO.File.OpenRead(directPath);
@@ -217,6 +250,28 @@ public class FileController : ControllerBase
         }
 
         return File(stream2, mimeType, originalFileName);
+    }
+
+    /// <summary>
+    /// Validates that a path segment is safe (no path traversal characters)
+    /// </summary>
+    private static bool IsValidPathSegment(string segment)
+    {
+        if (string.IsNullOrWhiteSpace(segment))
+            return false;
+
+        // Only allow alphanumeric, dash, underscore, dot (for extensions)
+        foreach (var c in segment)
+        {
+            if (!char.IsLetterOrDigit(c) && c != '-' && c != '_' && c != '.')
+                return false;
+        }
+
+        // Don't allow segments that are just dots (., ..)
+        if (segment.All(c => c == '.'))
+            return false;
+
+        return true;
     }
 
     private static string GetMimeType(string fileName)

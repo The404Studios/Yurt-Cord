@@ -164,6 +164,8 @@ public interface IVoiceService
     Task MoveUserToChannelAsync(string connectionId, string targetChannelId);
     Task KickUserAsync(string userId, string reason);
     Task BanUserAsync(string userId, string reason, TimeSpan? duration);
+    Task InviteToChannelAsync(string userId, string channelId);
+    Task MuteUserAsync(string userId, string channelId);
 
     // DM Call functionality
     bool IsInCall { get; }
@@ -1510,6 +1512,32 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         catch
         {
             // Ignore errors
+        }
+    }
+
+    public async Task InviteToChannelAsync(string userId, string channelId)
+    {
+        if (_connection == null || !IsConnected) return;
+        try
+        {
+            await _connection.InvokeAsync("InviteToChannel", userId, channelId);
+        }
+        catch
+        {
+            // Ignore errors - server may not support this
+        }
+    }
+
+    public async Task MuteUserAsync(string userId, string channelId)
+    {
+        if (_connection == null || !IsConnected) return;
+        try
+        {
+            await _connection.InvokeAsync("MuteUser", userId, channelId);
+        }
+        catch
+        {
+            // Ignore errors - server may not support this
         }
     }
 

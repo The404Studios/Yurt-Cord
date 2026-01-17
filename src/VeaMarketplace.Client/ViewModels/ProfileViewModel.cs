@@ -4,7 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using VeaMarketplace.Client.Controls;
 using VeaMarketplace.Client.Services;
 using VeaMarketplace.Shared.DTOs;
-using DtoActivityType = VeaMarketplace.Shared.DTOs.ActivityType;
+using DtoActivityType = VeaMarketplace.Shared.DTOs.PresenceActivityType;
 
 namespace VeaMarketplace.Client.ViewModels;
 

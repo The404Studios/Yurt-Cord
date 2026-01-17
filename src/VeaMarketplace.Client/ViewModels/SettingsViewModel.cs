@@ -12,6 +12,9 @@ public partial class SettingsViewModel : BaseViewModel
     private readonly IAudioDeviceService _audioDeviceService;
     private readonly IVoiceService _voiceService;
 
+    // Store event handler for proper unsubscription
+    private readonly Action<double> _onLocalAudioLevel;
+
     [ObservableProperty]
     private ObservableCollection<AudioDeviceItem> _inputDevices = new();
 
@@ -117,11 +120,22 @@ public partial class SettingsViewModel : BaseViewModel
         LoadSettings();
         RefreshDevices();
 
-        // Subscribe to local audio level for testing
-        _voiceService.OnLocalAudioLevel += level =>
+        // Create and store event handler for proper cleanup
+        _onLocalAudioLevel = level =>
         {
             TestAudioLevel = level;
         };
+
+        // Subscribe to local audio level for testing
+        _voiceService.OnLocalAudioLevel += _onLocalAudioLevel;
+    }
+
+    /// <summary>
+    /// Unsubscribes from all events to prevent memory leaks
+    /// </summary>
+    public void Cleanup()
+    {
+        _voiceService.OnLocalAudioLevel -= _onLocalAudioLevel;
     }
 
     private void LoadSettings()
