@@ -762,6 +762,7 @@
                 <StackPanel Grid.Row="0" Grid.Column="0">
                     <TextBlock Text="VOICE CONNECTED" FontSize="10" FontWeight="Bold"
                               >
+                    <TextBlock Text="VOICE CONNECTED" FontSize="10" FontWeight="Bold">
                         <TextBlock.Foreground>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                                 <GradientStop Color="#00FF9F" Offset="0"/>

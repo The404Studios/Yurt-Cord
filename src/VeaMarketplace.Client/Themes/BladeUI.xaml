@@ -15,7 +15,7 @@
     <Color x:Key="BladeDeep">#040810</Color>
     <Color x:Key="BladeDark">#081018</Color>
     <Color x:Key="BladeSurface">#0C1420</Color>
-    <Color x:Key="BladePanel">#101828</Color>
+    <Color x:Key="BladePanelColor">#101828</Color>
     <Color x:Key="BladeElevated">#182030</Color>
     <Color x:Key="BladeHighlight">#202840</Color>
 
@@ -52,7 +52,7 @@
     <SolidColorBrush x:Key="BladeDeepBrush" Color="{StaticResource BladeDeep}"/>
     <SolidColorBrush x:Key="BladeDarkBrush" Color="{StaticResource BladeDark}"/>
     <SolidColorBrush x:Key="BladeSurfaceBrush" Color="{StaticResource BladeSurface}"/>
-    <SolidColorBrush x:Key="BladePanelBrush" Color="{StaticResource BladePanel}"/>
+    <SolidColorBrush x:Key="BladePanelBrush" Color="{StaticResource BladePanelColor}"/>
     <SolidColorBrush x:Key="BladeElevatedBrush" Color="{StaticResource BladeElevated}"/>
     <SolidColorBrush x:Key="BladeHighlightBrush" Color="{StaticResource BladeHighlight}"/>
 
