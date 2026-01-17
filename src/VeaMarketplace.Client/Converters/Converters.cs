@@ -622,7 +622,7 @@ public class AudioLevelToHeightConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return Binding.DoNothing;
+        return System.Windows.Data.Binding.DoNothing;
     }
 }
 
@@ -687,7 +687,7 @@ public class RoleToColorConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return Binding.DoNothing;
+        return System.Windows.Data.Binding.DoNothing;
     }
 }
 
@@ -713,7 +713,7 @@ public class RankToBadgeConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return Binding.DoNothing;
+        return System.Windows.Data.Binding.DoNothing;
     }
 }
 
@@ -746,7 +746,7 @@ public class SliderFillConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return Binding.DoNothing;
+        return System.Windows.Data.Binding.DoNothing;
     }
 }
 
@@ -762,7 +762,7 @@ public class ObjectToStringConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return Binding.DoNothing;
+        return System.Windows.Data.Binding.DoNothing;
     }
 }
 

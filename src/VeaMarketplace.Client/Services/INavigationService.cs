@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace VeaMarketplace.Client.Services;
 
 public interface INavigationService
@@ -29,11 +31,14 @@ public interface INavigationService
     void NavigateToModeration();
     void NavigateToLeaderboard();
     void NavigateToActivityFeed();
+    void NavigateBack();
     void RequestLogout();
 }
 
 public class NavigationService : INavigationService
 {
+    private readonly Stack<string> _navigationHistory = new();
+
     public event Action<string>? OnNavigate;
     public event Action<string?>? OnViewUserProfile;
     public event Action? OnLogoutRequested;
@@ -42,6 +47,10 @@ public class NavigationService : INavigationService
 
     public void NavigateTo(string viewName)
     {
+        if (!string.IsNullOrEmpty(CurrentView) && CurrentView != viewName)
+        {
+            _navigationHistory.Push(CurrentView);
+        }
         CurrentView = viewName;
         OnNavigate?.Invoke(viewName);
     }
@@ -112,6 +121,16 @@ public class NavigationService : INavigationService
     public void NavigateToLeaderboard() => NavigateTo("Leaderboard");
 
     public void NavigateToActivityFeed() => NavigateTo("ActivityFeed");
+
+    public void NavigateBack()
+    {
+        if (_navigationHistory.Count > 0)
+        {
+            var previousView = _navigationHistory.Pop();
+            CurrentView = previousView;
+            OnNavigate?.Invoke(previousView);
+        }
+    }
 
     public void RequestLogout()
     {
