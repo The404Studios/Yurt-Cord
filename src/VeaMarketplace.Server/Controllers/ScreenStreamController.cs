@@ -103,8 +103,8 @@ public class ScreenStreamController : ControllerBase
         if (frameData.Length == 0)
             return BadRequest(new { error = "Empty frame" });
 
-        // Store frame
-        var frameNumber = stream.FrameCount++;
+        // Store frame with atomic increment to prevent race conditions
+        var frameNumber = Interlocked.Increment(ref stream.FrameCount) - 1;
         _frames[streamId] = new StreamFrame
         {
             Data = frameData,
@@ -115,7 +115,7 @@ public class ScreenStreamController : ControllerBase
         };
 
         stream.LastFrameAt = DateTime.UtcNow;
-        stream.TotalBytes += frameData.Length;
+        Interlocked.Add(ref stream.TotalBytes, frameData.Length);
 
         // Send lightweight notification via SignalR (just frame number, not data)
         // Viewers can then fetch the frame via HTTP if they want it

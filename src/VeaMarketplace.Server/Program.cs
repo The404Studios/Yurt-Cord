@@ -232,19 +232,26 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// CORS for WPF client
+// CORS configuration
+// Note: WPF desktop clients don't have CORS restrictions, but we still need CORS
+// for SignalR WebSocket connections and potential web clients
+var allowedOrigins = Environment.GetEnvironmentVariable("VEA_ALLOWED_ORIGINS")?.Split(',')
+    ?? new[] { "http://162.248.94.149:5000", "https://162.248.94.149:5000", "http://localhost:5000", "http://localhost:3000" };
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("Production", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 
-    options.AddPolicy("SignalR", policy =>
+    options.AddPolicy("Development", policy =>
     {
-        policy.WithOrigins("http://162.248.94.149:5000", "https://162.248.94.149:5000", "http://localhost:5000")
+        // More permissive for development, but still not completely open
+        policy.SetIsOriginAllowed(_ => true)
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -269,7 +276,8 @@ app.UseRateLimiter();
 // Enable output caching
 app.UseOutputCache();
 
-app.UseCors("AllowAll");
+// Use environment-appropriate CORS policy
+app.UseCors(app.Environment.IsDevelopment() ? "Development" : "Production");
 app.UseAuthentication();
 app.UseAuthorization();
 

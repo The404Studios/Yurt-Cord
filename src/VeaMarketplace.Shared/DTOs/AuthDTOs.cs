@@ -151,7 +151,10 @@ public class OnlineUserDto
     public DateTime? LastUpdated { get; set; }
 }
 
-public enum ActivityType
+/// <summary>
+/// Activity type for rich presence (not to be confused with Models.ActivityType for user activities)
+/// </summary>
+public enum PresenceActivityType
 {
     None,
     Playing,
@@ -173,7 +176,7 @@ public enum UserPresenceStatus
 
 public class RichPresenceDto
 {
-    public ActivityType ActivityType { get; set; } = ActivityType.None;
+    public PresenceActivityType ActivityType { get; set; } = PresenceActivityType.None;
     public string? ActivityName { get; set; }
     public string? ActivityDetails { get; set; }
     public string? ActivityState { get; set; }

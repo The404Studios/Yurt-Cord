@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using VeaMarketplace.Shared.Models;
 
 namespace VeaMarketplace.Shared.DTOs;
@@ -71,9 +72,16 @@ public class RoomMemberDto
 
 public class CreateRoomRequest
 {
+    [Required(ErrorMessage = "Room name is required")]
+    [StringLength(100, MinimumLength = 2, ErrorMessage = "Room name must be between 2 and 100 characters")]
     public string Name { get; set; } = string.Empty;
+
+    [StringLength(500, ErrorMessage = "Description cannot exceed 500 characters")]
     public string? Description { get; set; }
+
+    [Url(ErrorMessage = "Invalid icon URL")]
     public string? IconUrl { get; set; }
+
     public bool IsPublic { get; set; } = true;
     public bool AllowMarketplace { get; set; } = true;
     public bool AllowVoice { get; set; } = true;
@@ -83,38 +91,68 @@ public class CreateRoomRequest
 
 public class UpdateRoomRequest
 {
+    [StringLength(100, MinimumLength = 2, ErrorMessage = "Room name must be between 2 and 100 characters")]
     public string? Name { get; set; }
+
+    [StringLength(500, ErrorMessage = "Description cannot exceed 500 characters")]
     public string? Description { get; set; }
+
+    [Url(ErrorMessage = "Invalid icon URL")]
     public string? IconUrl { get; set; }
+
+    [Url(ErrorMessage = "Invalid banner URL")]
     public string? BannerUrl { get; set; }
+
     public bool? IsPublic { get; set; }
     public bool? AllowMarketplace { get; set; }
     public bool? AllowVoice { get; set; }
     public bool? AllowVideo { get; set; }
     public bool? AllowScreenShare { get; set; }
+
+    [Range(1, 10000, ErrorMessage = "Max members must be between 1 and 10,000")]
     public int? MaxMembers { get; set; }
+
+    [Range(1, 50, ErrorMessage = "Max concurrent streams must be between 1 and 50")]
     public int? MaxConcurrentStreams { get; set; }
+
     public StreamingTier? StreamingTier { get; set; }
+
+    [Range(0, 100, ErrorMessage = "Marketplace fee percent must be between 0 and 100")]
     public decimal? MarketplaceFeePercent { get; set; }
 }
 
 public class CreateChannelRequest
 {
+    [Required(ErrorMessage = "Channel name is required")]
+    [StringLength(100, MinimumLength = 1, ErrorMessage = "Channel name must be between 1 and 100 characters")]
     public string Name { get; set; } = string.Empty;
+
+    [StringLength(500, ErrorMessage = "Description cannot exceed 500 characters")]
     public string? Description { get; set; }
+
     public RoomChannelType Type { get; set; }
     public string? ParentId { get; set; }
     public bool IsPrivate { get; set; }
+
+    [Range(1, 99, ErrorMessage = "Max users must be between 1 and 99")]
     public int? MaxUsers { get; set; }
+
+    [Range(8000, 384000, ErrorMessage = "Bitrate must be between 8,000 and 384,000")]
     public int? Bitrate { get; set; }
+
     public bool? VideoEnabled { get; set; }
     public bool? ScreenShareEnabled { get; set; }
 }
 
 public class CreateRoleRequest
 {
+    [Required(ErrorMessage = "Role name is required")]
+    [StringLength(100, MinimumLength = 1, ErrorMessage = "Role name must be between 1 and 100 characters")]
     public string Name { get; set; } = string.Empty;
+
+    [RegularExpression(@"^#[0-9A-Fa-f]{6}$", ErrorMessage = "Color must be a valid hex color (e.g., #99AAB5)")]
     public string Color { get; set; } = "#99AAB5";
+
     public RoomPermissions Permissions { get; set; }
 }
 

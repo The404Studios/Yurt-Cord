@@ -216,9 +216,14 @@ public class AuthService
             }, out SecurityToken validatedToken);
 
             var jwtToken = (JwtSecurityToken)validatedToken;
-            var userId = jwtToken.Claims.First(x => x.Type == "id").Value;
+            var userIdClaim = jwtToken.Claims.FirstOrDefault(x => x.Type == "id");
+            if (userIdClaim == null)
+            {
+                _logger.LogDebug("Token validation failed: missing 'id' claim");
+                return null;
+            }
 
-            return GetUserById(userId);
+            return GetUserById(userIdClaim.Value);
         }
         catch (SecurityTokenExpiredException ex)
         {

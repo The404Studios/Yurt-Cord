@@ -197,7 +197,10 @@ public partial class ChannelSidebar : UserControl
                 {
                     UserAvatarBrush.ImageSource = new BitmapImage(new Uri(user.AvatarUrl));
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to load avatar image: {ex.Message}");
+                }
             }
         }
     }
