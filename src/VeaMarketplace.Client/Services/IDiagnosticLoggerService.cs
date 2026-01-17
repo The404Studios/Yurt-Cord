@@ -313,7 +313,10 @@ public class DiagnosticLoggerService : IDiagnosticLoggerService
                 {
                     FlushLogsAsync().Wait(TimeSpan.FromSeconds(5));
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error flushing logs during dispose: {ex.Message}");
+                }
 
                 // Dispose resources
                 _cts?.Dispose();

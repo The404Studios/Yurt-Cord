@@ -1139,7 +1139,7 @@ public class VoiceHub : Hub
             catch (Exception ex)
             {
                 // Ignore errors during disconnect cleanup but log for debugging
-                _logger.LogDebug(ex, "Error during screen share cleanup on disconnect for {ConnectionId}", Context.ConnectionId);
+                _logger?.LogDebug(ex, "Error during screen share cleanup on disconnect for {ConnectionId}", Context.ConnectionId);
             }
         }
 
@@ -1163,7 +1163,7 @@ public class VoiceHub : Hub
         catch (Exception ex)
         {
             // Ignore errors during disconnect cleanup but log for debugging
-            _logger.LogDebug(ex, "Error during voice channel leave on disconnect for {ConnectionId}", Context.ConnectionId);
+            _logger?.LogDebug(ex, "Error during voice channel leave on disconnect for {ConnectionId}", Context.ConnectionId);
             // Force cleanup the voice user state
             if (_voiceUsers.TryRemove(Context.ConnectionId, out var userState))
             {
@@ -1218,7 +1218,7 @@ public class VoiceHub : Hub
                 catch (Exception ex)
                 {
                     // Ignore errors during disconnect cleanup but log for debugging
-                    _logger.LogDebug(ex, "Error during voice room participant cleanup on disconnect for {ConnectionId}", Context.ConnectionId);
+                    _logger?.LogDebug(ex, "Error during voice room participant cleanup on disconnect for {ConnectionId}", Context.ConnectionId);
                 }
             }
         }
@@ -1271,7 +1271,7 @@ public class VoiceHub : Hub
                 catch (Exception ex)
                 {
                     // Ignore call cleanup errors during disconnect but log for debugging
-                    _logger.LogDebug(ex, "Error during call cleanup on disconnect for {ConnectionId}", Context.ConnectionId);
+                    _logger?.LogDebug(ex, "Error during call cleanup on disconnect for {ConnectionId}", Context.ConnectionId);
                 }
             }
         }

@@ -154,7 +154,10 @@ public partial class MemberSidebar : UserControl
                     (byte)Math.Min(255, color.G + 40),
                     (byte)Math.Min(255, color.B + 40));
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to parse accent color: {ex.Message}");
+            }
         }
 
         // Show popup

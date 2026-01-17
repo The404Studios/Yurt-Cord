@@ -171,7 +171,8 @@ public class SmartCompressor : IDisposable
     {
         foreach (var param in _qualityParams.Values)
         {
-            try { param.Dispose(); } catch { }
+            try { param.Dispose(); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error disposing encoder param: {ex.Message}"); }
         }
         _qualityParams.Clear();
         _encodeStream.Dispose();

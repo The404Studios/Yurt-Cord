@@ -304,13 +304,15 @@ public class FrameBufferPool : IDisposable
         // Dispose bitmaps
         while (_bitmapPool.TryTake(out var pooled))
         {
-            try { pooled.Bitmap.Dispose(); } catch { }
+            try { pooled.Bitmap.Dispose(); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error disposing bitmap: {ex.Message}"); }
         }
 
         // Dispose streams
         while (_streamPool.TryTake(out var stream))
         {
-            try { stream.Dispose(); } catch { }
+            try { stream.Dispose(); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error disposing stream: {ex.Message}"); }
         }
 
         GC.SuppressFinalize(this);
