@@ -503,7 +503,7 @@
                         </Border>
                         <TextBlock Text="TEXT CHANNELS" FontSize="10" FontWeight="Bold"
                                    Foreground="{StaticResource BladeTextDimBrush}"
-                                   VerticalAlignment="Center" LetterSpacing="1"/>
+                                   VerticalAlignment="Center"/>
                     </StackPanel>
                     <Button Style="{StaticResource BladeIconButton}" Width="24" Height="24"
                             HorizontalAlignment="Right" ToolTip="Create Channel">
@@ -546,7 +546,7 @@
                         </Border>
                         <TextBlock Text="VOICE CHANNELS" FontSize="10" FontWeight="Bold"
                                    Foreground="{StaticResource BladeTextDimBrush}"
-                                   VerticalAlignment="Center" LetterSpacing="1"/>
+                                   VerticalAlignment="Center"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Style="{StaticResource BladeIconButton}" Width="24" Height="24"
@@ -760,8 +760,7 @@
 
                 <!-- Voice Status -->
                 <StackPanel Grid.Row="0" Grid.Column="0">
-                    <TextBlock Text="VOICE CONNECTED" FontSize="10" FontWeight="Bold"
-                               LetterSpacing="1">
+                    <TextBlock Text="VOICE CONNECTED" FontSize="10" FontWeight="Bold">
                         <TextBlock.Foreground>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                                 <GradientStop Color="#00FF9F" Offset="0"/>
