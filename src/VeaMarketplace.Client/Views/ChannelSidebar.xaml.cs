@@ -191,18 +191,43 @@ public partial class ChannelSidebar : UserControl
         if (user != null)
         {
             UserNameText.Text = user.Username;
+
+            // Try to load user avatar, fallback to default
+            bool avatarLoaded = false;
             if (!string.IsNullOrEmpty(user.AvatarUrl))
             {
                 try
                 {
-                    UserAvatarBrush.ImageSource = new BitmapImage(new Uri(user.AvatarUrl));
+                    var bitmap = new BitmapImage();
+                    bitmap.BeginInit();
+                    bitmap.UriSource = new Uri(user.AvatarUrl);
+                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmap.EndInit();
+                    UserAvatarBrush.ImageSource = bitmap;
+                    avatarLoaded = true;
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Failed to load avatar image: {ex.Message}");
                     System.Diagnostics.Debug.WriteLine($"Failed to load user avatar: {ex.Message}");
                 }
             }
+
+            // Set default avatar if none loaded
+            if (!avatarLoaded)
+            {
+                try
+                {
+                    UserAvatarBrush.ImageSource = new BitmapImage(new Uri(AppConstants.DefaultAvatarPath));
+                }
+                catch
+                {
+                    // If default avatar fails, leave it empty
+                }
+            }
+        }
+        else
+        {
+            UserNameText.Text = "Guest";
         }
     }
 
