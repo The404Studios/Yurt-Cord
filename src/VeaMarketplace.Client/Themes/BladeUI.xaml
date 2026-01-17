@@ -141,38 +141,39 @@
     </RadialGradientBrush>
 
     <!-- ══════════════════════════════════════════════════════════════════════════════
-         DROP SHADOW EFFECTS - Neon Glow and Depth
+         DROP SHADOW EFFECTS - Optimized for 60fps Performance
+         BlurRadius kept under 20 for smooth rendering, use CacheMode on containers
     ══════════════════════════════════════════════════════════════════════════════ -->
 
-    <!-- Primary Neon Glow -->
-    <DropShadowEffect x:Key="NeonGlow" Color="#00FF9F" BlurRadius="25" ShadowDepth="0" Opacity="0.8"/>
-    <DropShadowEffect x:Key="NeonGlowSubtle" Color="#00FF9F" BlurRadius="15" ShadowDepth="0" Opacity="0.5"/>
-    <DropShadowEffect x:Key="NeonGlowIntense" Color="#00FF9F" BlurRadius="40" ShadowDepth="0" Opacity="1"/>
+    <!-- Primary Neon Glow - Optimized -->
+    <DropShadowEffect x:Key="NeonGlow" Color="#00FF9F" BlurRadius="16" ShadowDepth="0" Opacity="0.7" RenderingBias="Performance"/>
+    <DropShadowEffect x:Key="NeonGlowSubtle" Color="#00FF9F" BlurRadius="10" ShadowDepth="0" Opacity="0.4" RenderingBias="Performance"/>
+    <DropShadowEffect x:Key="NeonGlowIntense" Color="#00FF9F" BlurRadius="20" ShadowDepth="0" Opacity="0.9" RenderingBias="Performance"/>
 
-    <!-- Cyan Neon Glow -->
-    <DropShadowEffect x:Key="CyanGlow" Color="#00E5FF" BlurRadius="25" ShadowDepth="0" Opacity="0.8"/>
-    <DropShadowEffect x:Key="CyanGlowSubtle" Color="#00E5FF" BlurRadius="15" ShadowDepth="0" Opacity="0.5"/>
-    <DropShadowEffect x:Key="CyanGlowIntense" Color="#00E5FF" BlurRadius="40" ShadowDepth="0" Opacity="1"/>
+    <!-- Cyan Neon Glow - Optimized -->
+    <DropShadowEffect x:Key="CyanGlow" Color="#00E5FF" BlurRadius="16" ShadowDepth="0" Opacity="0.7" RenderingBias="Performance"/>
+    <DropShadowEffect x:Key="CyanGlowSubtle" Color="#00E5FF" BlurRadius="10" ShadowDepth="0" Opacity="0.4" RenderingBias="Performance"/>
+    <DropShadowEffect x:Key="CyanGlowIntense" Color="#00E5FF" BlurRadius="20" ShadowDepth="0" Opacity="0.9" RenderingBias="Performance"/>
 
-    <!-- Purple Neon Glow -->
-    <DropShadowEffect x:Key="PurpleGlow" Color="#B366FF" BlurRadius="25" ShadowDepth="0" Opacity="0.8"/>
-    <DropShadowEffect x:Key="PurpleGlowSubtle" Color="#B366FF" BlurRadius="15" ShadowDepth="0" Opacity="0.5"/>
+    <!-- Purple Neon Glow - Optimized -->
+    <DropShadowEffect x:Key="PurpleGlow" Color="#B366FF" BlurRadius="16" ShadowDepth="0" Opacity="0.7" RenderingBias="Performance"/>
+    <DropShadowEffect x:Key="PurpleGlowSubtle" Color="#B366FF" BlurRadius="10" ShadowDepth="0" Opacity="0.4" RenderingBias="Performance"/>
 
-    <!-- Pink Neon Glow -->
-    <DropShadowEffect x:Key="PinkGlow" Color="#FF66B2" BlurRadius="25" ShadowDepth="0" Opacity="0.8"/>
+    <!-- Pink Neon Glow - Optimized -->
+    <DropShadowEffect x:Key="PinkGlow" Color="#FF66B2" BlurRadius="16" ShadowDepth="0" Opacity="0.7" RenderingBias="Performance"/>
 
-    <!-- Depth Shadow (for pop-out effect) -->
-    <DropShadowEffect x:Key="PopOutShadow" Color="#000000" BlurRadius="30" ShadowDepth="15" Opacity="0.7" Direction="270"/>
-    <DropShadowEffect x:Key="PopOutShadowSmall" Color="#000000" BlurRadius="20" ShadowDepth="8" Opacity="0.6" Direction="270"/>
-    <DropShadowEffect x:Key="PopOutShadowLarge" Color="#000000" BlurRadius="50" ShadowDepth="25" Opacity="0.8" Direction="270"/>
+    <!-- Depth Shadow (for pop-out effect) - Optimized -->
+    <DropShadowEffect x:Key="PopOutShadow" Color="#000000" BlurRadius="18" ShadowDepth="10" Opacity="0.6" Direction="270" RenderingBias="Performance"/>
+    <DropShadowEffect x:Key="PopOutShadowSmall" Color="#000000" BlurRadius="12" ShadowDepth="5" Opacity="0.5" Direction="270" RenderingBias="Performance"/>
+    <DropShadowEffect x:Key="PopOutShadowLarge" Color="#000000" BlurRadius="25" ShadowDepth="15" Opacity="0.7" Direction="270" RenderingBias="Performance"/>
 
-    <!-- Card Elevation Shadows -->
-    <DropShadowEffect x:Key="CardShadow1" Color="#000000" BlurRadius="10" ShadowDepth="4" Opacity="0.4" Direction="270"/>
-    <DropShadowEffect x:Key="CardShadow2" Color="#000000" BlurRadius="20" ShadowDepth="8" Opacity="0.5" Direction="270"/>
-    <DropShadowEffect x:Key="CardShadow3" Color="#000000" BlurRadius="35" ShadowDepth="15" Opacity="0.6" Direction="270"/>
+    <!-- Card Elevation Shadows - Optimized -->
+    <DropShadowEffect x:Key="CardShadow1" Color="#000000" BlurRadius="8" ShadowDepth="3" Opacity="0.35" Direction="270" RenderingBias="Performance"/>
+    <DropShadowEffect x:Key="CardShadow2" Color="#000000" BlurRadius="12" ShadowDepth="5" Opacity="0.4" Direction="270" RenderingBias="Performance"/>
+    <DropShadowEffect x:Key="CardShadow3" Color="#000000" BlurRadius="18" ShadowDepth="10" Opacity="0.5" Direction="270" RenderingBias="Performance"/>
 
-    <!-- Inner Shadow Effect (simulated) -->
-    <DropShadowEffect x:Key="InnerShadow" Color="#000000" BlurRadius="15" ShadowDepth="2" Opacity="0.5" Direction="90"/>
+    <!-- Inner Shadow Effect (simulated) - Optimized -->
+    <DropShadowEffect x:Key="InnerShadow" Color="#000000" BlurRadius="10" ShadowDepth="2" Opacity="0.4" Direction="90" RenderingBias="Performance"/>
 
     <!-- ══════════════════════════════════════════════════════════════════════════════
          BLADE PANEL STYLE - Xbox 360 Guide Menu Inspired
@@ -194,6 +195,12 @@
         </Setter>
         <Setter Property="Effect" Value="{StaticResource PopOutShadow}"/>
         <Setter Property="RenderTransformOrigin" Value="0,0.5"/>
+        <!-- Performance: Cache the rendered bitmap for GPU acceleration -->
+        <Setter Property="CacheMode">
+            <Setter.Value>
+                <BitmapCache EnableClearType="False" RenderAtScale="1"/>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <!-- Blade Panel Active State -->

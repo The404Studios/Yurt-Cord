@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -7,9 +9,29 @@ using VeaMarketplace.Shared.DTOs;
 
 namespace VeaMarketplace.Client.Views;
 
-public class SelectableFriend : FriendDto
+public class SelectableFriend : FriendDto, INotifyPropertyChanged
 {
-    public bool IsSelected { get; set; }
+    private bool _isSelected;
+
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set
+        {
+            if (_isSelected != value)
+            {
+                _isSelected = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
 }
 
 public partial class StartGroupCallDialog : Window
@@ -106,16 +128,8 @@ public partial class StartGroupCallDialog : Window
     {
         if (sender is Border border && border.Tag is SelectableFriend friend)
         {
+            // INotifyPropertyChanged handles UI refresh automatically
             friend.IsSelected = !friend.IsSelected;
-
-            // Refresh the item in the list
-            var index = _friends.IndexOf(friend);
-            if (index >= 0)
-            {
-                _friends.RemoveAt(index);
-                _friends.Insert(index, friend);
-            }
-
             UpdateSelectedCount();
         }
     }
