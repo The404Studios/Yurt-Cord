@@ -1,11 +1,9 @@
-using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
-using Cursors = System.Windows.Input.Cursors;
 
 namespace VeaMarketplace.Client.Controls
 {

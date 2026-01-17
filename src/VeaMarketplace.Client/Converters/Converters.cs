@@ -109,7 +109,7 @@ public class TimeAgoConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return System.Windows.Data.Binding.DoNothing;
+        return Binding.DoNothing;
     }
 }
 
@@ -131,7 +131,7 @@ public class NullToVisibilityConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return System.Windows.Data.Binding.DoNothing;
+        return Binding.DoNothing;
     }
 }
 
@@ -153,7 +153,7 @@ public class NullToVisibilityInverseConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return System.Windows.Data.Binding.DoNothing;
+        return Binding.DoNothing;
     }
 }
 
@@ -184,7 +184,7 @@ public class StringToVisibilityConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return System.Windows.Data.Binding.DoNothing;
+        return Binding.DoNothing;
     }
 }
 
@@ -209,7 +209,7 @@ public class EqualityToVisibilityConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return System.Windows.Data.Binding.DoNothing;
+        return Binding.DoNothing;
     }
 }
 
@@ -229,7 +229,7 @@ public class BanTypeConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return System.Windows.Data.Binding.DoNothing;
+        return Binding.DoNothing;
     }
 }
 
@@ -252,7 +252,7 @@ public class TimestampConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return System.Windows.Data.Binding.DoNothing;
+        return Binding.DoNothing;
     }
 }
 
@@ -272,7 +272,7 @@ public class DefaultAvatarConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return System.Windows.Data.Binding.DoNothing;
+        return Binding.DoNothing;
     }
 }
 
@@ -292,7 +292,7 @@ public class ZeroToVisibilityConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return System.Windows.Data.Binding.DoNothing;
+        return Binding.DoNothing;
     }
 }
 
@@ -316,7 +316,7 @@ public class CountToVisibilityConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return System.Windows.Data.Binding.DoNothing;
+        return Binding.DoNothing;
     }
 }
 
@@ -340,7 +340,7 @@ public class CountToVisibilityInverseConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return System.Windows.Data.Binding.DoNothing;
+        return Binding.DoNothing;
     }
 }
 
@@ -362,7 +362,7 @@ public class PositiveToVisibilityConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return System.Windows.Data.Binding.DoNothing;
+        return Binding.DoNothing;
     }
 }
 
@@ -384,7 +384,7 @@ public class PositiveToBoolConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return System.Windows.Data.Binding.DoNothing;
+        return Binding.DoNothing;
     }
 }
 
@@ -409,7 +409,7 @@ public class BoolToTextConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return System.Windows.Data.Binding.DoNothing;
+        return Binding.DoNothing;
     }
 }
 
@@ -446,7 +446,7 @@ public class BoolToColorConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return System.Windows.Data.Binding.DoNothing;
+        return Binding.DoNothing;
     }
 }
 
@@ -478,7 +478,7 @@ public class PercentageToWidthConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return System.Windows.Data.Binding.DoNothing;
+        return Binding.DoNothing;
     }
 }
 
@@ -499,7 +499,7 @@ public class EqualityConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return System.Windows.Data.Binding.DoNothing;
+        return Binding.DoNothing;
     }
 }
 
@@ -519,7 +519,7 @@ public class GreaterThanOneToVisibilityConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return System.Windows.Data.Binding.DoNothing;
+        return Binding.DoNothing;
     }
 }
 
@@ -622,7 +622,7 @@ public class AudioLevelToHeightConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return System.Windows.Data.Binding.DoNothing;
+        return Binding.DoNothing;
     }
 }
 
@@ -687,7 +687,7 @@ public class RoleToColorConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return System.Windows.Data.Binding.DoNothing;
+        return Binding.DoNothing;
     }
 }
 
@@ -713,7 +713,7 @@ public class RankToBadgeConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return System.Windows.Data.Binding.DoNothing;
+        return Binding.DoNothing;
     }
 }
 
@@ -746,7 +746,7 @@ public class SliderFillConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return System.Windows.Data.Binding.DoNothing;
+        return Binding.DoNothing;
     }
 }
 
@@ -762,7 +762,7 @@ public class ObjectToStringConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return System.Windows.Data.Binding.DoNothing;
+        return Binding.DoNothing;
     }
 }
 

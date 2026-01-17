@@ -1,4 +1,3 @@
-using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -10,8 +9,6 @@ using System.Windows.Shapes;
 using VeaMarketplace.Client.Services;
 using VeaMarketplace.Shared.DTOs;
 using VeaMarketplace.Shared.Enums;
-using HorizontalAlignment = System.Windows.HorizontalAlignment;
-using Cursors = System.Windows.Input.Cursors;
 
 namespace VeaMarketplace.Client.Controls;
 
