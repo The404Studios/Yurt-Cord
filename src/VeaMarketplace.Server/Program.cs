@@ -314,7 +314,7 @@ Console.WriteLine(@"
 ║                                                               ║
 ║            YURT CORD - Your Community, Your Way              ║
 ║                  Marketplace & Chat Server                    ║
-║                   Server: 162.248.94.23:5000                  ║
+║                  Server: 162.248.94.149:5000                  ║
 ║                                                               ║
 ║         Type 'help' for admin console commands                ║
 ║                                                               ║
