@@ -563,8 +563,11 @@ public class StreamingOrchestrator : IDisposable
 
         _cts.Cancel();
 
-        try { _memoryThread.Join(1000); } catch { }
-        try { _networkThread.Join(1000); } catch { }
+        try { _memoryThread.Join(1000); }
+        catch (Exception ex) { Debug.WriteLine($"Error joining memory thread: {ex.Message}"); }
+
+        try { _networkThread.Join(1000); }
+        catch (Exception ex) { Debug.WriteLine($"Error joining network thread: {ex.Message}"); }
 
         _cts.Dispose();
 

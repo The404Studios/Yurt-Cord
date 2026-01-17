@@ -157,6 +157,7 @@ public partial class MemberSidebar : UserControl
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Failed to parse accent color '{user.AccentColor}': {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Failed to parse accent color: {ex.Message}");
             }
         }
 

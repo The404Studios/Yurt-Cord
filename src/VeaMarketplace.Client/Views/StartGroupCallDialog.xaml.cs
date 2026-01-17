@@ -65,7 +65,10 @@ public partial class StartGroupCallDialog : Window
             // Sort online friends first
             SortFriends();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to load friends for group call: {ex.Message}");
+        }
     }
 
     private void SortFriends()

@@ -200,6 +200,7 @@ public partial class ChannelSidebar : UserControl
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Failed to load avatar image: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"Failed to load user avatar: {ex.Message}");
                 }
             }
         }

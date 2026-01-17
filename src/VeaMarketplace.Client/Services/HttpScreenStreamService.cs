@@ -253,7 +253,10 @@ public class HttpScreenStreamService : IDisposable
                 _ = StopStreamAsync();
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error stopping stream during dispose: {ex.Message}");
+        }
 
         _httpClient.Dispose();
         GC.SuppressFinalize(this);
