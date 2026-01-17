@@ -702,20 +702,239 @@
                             </Border>
                         </StackPanel>
 
+                        <!-- Profile Panel -->
                         <StackPanel x:Name="ProfilePanel" Visibility="Collapsed">
-                            <TextBlock Text="Profile customization coming soon..." Foreground="#6080A0"/>
+                            <Border Padding="12,8" Margin="0,0,0,16" CornerRadius="8" HorizontalAlignment="Left">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#2000FF9F" Offset="0"/>
+                                        <GradientStop Color="#10101828" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <TextBlock Text="PROFILE" FontSize="11" FontWeight="Bold" Foreground="#00FF9F"/>
+                            </Border>
+                            <Border Style="{StaticResource BladeSettingsCard}">
+                                <StackPanel>
+                                    <TextBlock Text="Profile settings will be available in a future update"
+                                               FontSize="14" Foreground="#8090B0" Margin="0,0,0,12"/>
+                                    <TextBlock Text="• Change your avatar and banner" FontSize="13" Foreground="#6080A0" Margin="0,4"/>
+                                    <TextBlock Text="• Update your bio and about me" FontSize="13" Foreground="#6080A0" Margin="0,4"/>
+                                    <TextBlock Text="• Set custom status" FontSize="13" Foreground="#6080A0" Margin="0,4"/>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
+
+                        <!-- Privacy Panel -->
                         <StackPanel x:Name="PrivacyPanel" Visibility="Collapsed">
-                            <TextBlock Text="Privacy settings coming soon..." Foreground="#6080A0"/>
+                            <Border Padding="12,8" Margin="0,0,0,16" CornerRadius="8" HorizontalAlignment="Left">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#2000FF9F" Offset="0"/>
+                                        <GradientStop Color="#10101828" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <TextBlock Text="PRIVACY &amp; SAFETY" FontSize="11" FontWeight="Bold" Foreground="#00FF9F"/>
+                            </Border>
+                            <Border Style="{StaticResource BladeSettingsCard}">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Allow Friend Requests" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Allow others to send you friend requests" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <CheckBox Grid.Column="1" Style="{StaticResource BladeToggleSwitch}"
+                                                  IsChecked="{Binding AllowFriendRequests, Mode=TwoWay}" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <Grid Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Allow Direct Messages" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Allow members to send you direct messages" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <CheckBox Grid.Column="1" Style="{StaticResource BladeToggleSwitch}"
+                                                  IsChecked="{Binding AllowDirectMessages, Mode=TwoWay}" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <Grid Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Show Online Status" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Show when you're online to others" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <CheckBox Grid.Column="1" Style="{StaticResource BladeToggleSwitch}"
+                                                  IsChecked="{Binding ShowOnlineStatus, Mode=TwoWay}" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Show Activity Status" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Show what you're currently doing" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <CheckBox Grid.Column="1" Style="{StaticResource BladeToggleSwitch}"
+                                                  IsChecked="{Binding ShowActivityStatus, Mode=TwoWay}" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
+
+                        <!-- Appearance Panel -->
                         <StackPanel x:Name="AppearancePanel" Visibility="Collapsed">
-                            <TextBlock Text="Appearance settings coming soon..." Foreground="#6080A0"/>
+                            <Border Padding="12,8" Margin="0,0,0,16" CornerRadius="8" HorizontalAlignment="Left">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#2000E5FF" Offset="0"/>
+                                        <GradientStop Color="#10101828" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <TextBlock Text="APPEARANCE" FontSize="11" FontWeight="Bold" Foreground="#00E5FF"/>
+                            </Border>
+                            <Border Style="{StaticResource BladeSettingsCard}">
+                                <StackPanel>
+                                    <TextBlock Text="Theme" FontSize="14" Foreground="#E0E8FF" Margin="0,0,0,8"/>
+                                    <ComboBox Style="{StaticResource BladeComboBox}" SelectedItem="{Binding Theme, Mode=TwoWay}">
+                                        <ComboBoxItem Content="Dark"/>
+                                        <ComboBoxItem Content="Light"/>
+                                        <ComboBoxItem Content="OLED"/>
+                                    </ComboBox>
+
+                                    <Grid Margin="0,20,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Compact Mode" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Reduce spacing for more content" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <CheckBox Grid.Column="1" Style="{StaticResource BladeToggleSwitch}"
+                                                  IsChecked="{Binding CompactMode, Mode=TwoWay}" VerticalAlignment="Center"/>
+                                    </Grid>
+
+                                    <Grid Margin="0,16,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Enable Animations" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Show UI animations and effects" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <CheckBox Grid.Column="1" Style="{StaticResource BladeToggleSwitch}"
+                                                  IsChecked="{Binding AnimationsEnabled, Mode=TwoWay}" VerticalAlignment="Center"/>
+                                    </Grid>
+
+                                    <TextBlock Text="Font Scale" FontSize="14" Foreground="#E0E8FF" Margin="0,20,0,8"/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="60"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Slider Minimum="0.8" Maximum="1.4" Value="{Binding FontScale, Mode=TwoWay}"
+                                                Style="{StaticResource BladeSlider}" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding FontScale, StringFormat='{}{0:P0}'}"
+                                                   Foreground="#6080A0" FontSize="13" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
+
+                        <!-- Notifications Panel -->
                         <StackPanel x:Name="NotificationsPanel" Visibility="Collapsed">
-                            <TextBlock Text="Notification settings coming soon..." Foreground="#6080A0"/>
+                            <Border Padding="12,8" Margin="0,0,0,16" CornerRadius="8" HorizontalAlignment="Left">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#20FF9F00" Offset="0"/>
+                                        <GradientStop Color="#10101828" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <TextBlock Text="NOTIFICATIONS" FontSize="11" FontWeight="Bold" Foreground="#FF9F00"/>
+                            </Border>
+                            <Border Style="{StaticResource BladeSettingsCard}">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Desktop Notifications" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Show popup notifications on your desktop" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <CheckBox Grid.Column="1" Style="{StaticResource BladeToggleSwitch}"
+                                                  IsChecked="{Binding DesktopNotifications, Mode=TwoWay}" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <Grid Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Sound Notifications" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Play sounds for notifications" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <CheckBox Grid.Column="1" Style="{StaticResource BladeToggleSwitch}"
+                                                  IsChecked="{Binding SoundNotifications, Mode=TwoWay}" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <Grid Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Mention Notifications" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Get notified when you're mentioned" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <CheckBox Grid.Column="1" Style="{StaticResource BladeToggleSwitch}"
+                                                  IsChecked="{Binding MentionNotifications, Mode=TwoWay}" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="DM Notifications" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Get notified for direct messages" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <CheckBox Grid.Column="1" Style="{StaticResource BladeToggleSwitch}"
+                                                  IsChecked="{Binding DmNotifications, Mode=TwoWay}" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
+
+                        <!-- Keybinds Panel -->
                         <StackPanel x:Name="KeybindsPanel" Visibility="Collapsed">
-                            <TextBlock Text="Keybind settings coming soon..." Foreground="#6080A0"/>
+                            <Border Padding="12,8" Margin="0,0,0,16" CornerRadius="8" HorizontalAlignment="Left">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#20B366FF" Offset="0"/>
+                                        <GradientStop Color="#10101828" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <TextBlock Text="KEYBINDS" FontSize="11" FontWeight="Bold" Foreground="#B366FF"/>
+                            </Border>
+                            <Border Style="{StaticResource BladeSettingsCard}">
+                                <StackPanel>
+                                    <TextBlock Text="Keyboard shortcuts will be available in a future update"
+                                               FontSize="14" Foreground="#8090B0" Margin="0,0,0,12"/>
+                                    <TextBlock Text="• Push to Talk key binding" FontSize="13" Foreground="#6080A0" Margin="0,4"/>
+                                    <TextBlock Text="• Mute/Deafen shortcuts" FontSize="13" Foreground="#6080A0" Margin="0,4"/>
+                                    <TextBlock Text="• Navigation shortcuts" FontSize="13" Foreground="#6080A0" Margin="0,4"/>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
                         <StackPanel x:Name="TemplatesPanel" Visibility="Collapsed">
                             <TextBlock Text="Message templates coming soon..." Foreground="#6080A0"/>
