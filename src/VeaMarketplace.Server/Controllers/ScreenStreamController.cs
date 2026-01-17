@@ -127,10 +127,19 @@ public class ScreenStreamController : ControllerBase
 
     /// <summary>
     /// Get the latest frame from a stream (viewers call this)
+    /// Requires authentication to prevent unauthorized viewing
     /// </summary>
     [HttpGet("{streamId}/frame")]
-    public IActionResult GetFrame(string streamId, [FromQuery] long? since = null)
+    public IActionResult GetFrame(
+        string streamId,
+        [FromHeader(Name = "Authorization")] string? authorization,
+        [FromQuery] long? since = null)
     {
+        // Require authentication to view streams
+        var userId = ValidateToken(authorization);
+        if (userId == null)
+            return Unauthorized(new { error = "Authentication required" });
+
         if (!_frames.TryGetValue(streamId, out var frame))
             return NotFound(new { error = "No frame available" });
 
@@ -148,10 +157,18 @@ public class ScreenStreamController : ControllerBase
 
     /// <summary>
     /// Get stream info
+    /// Requires authentication to prevent information disclosure
     /// </summary>
     [HttpGet("{streamId}/info")]
-    public IActionResult GetStreamInfo(string streamId)
+    public IActionResult GetStreamInfo(
+        string streamId,
+        [FromHeader(Name = "Authorization")] string? authorization)
     {
+        // Require authentication
+        var userId = ValidateToken(authorization);
+        if (userId == null)
+            return Unauthorized(new { error = "Authentication required" });
+
         if (!_streams.TryGetValue(streamId, out var stream))
             return NotFound(new { error = "Stream not found" });
 
@@ -194,10 +211,18 @@ public class ScreenStreamController : ControllerBase
 
     /// <summary>
     /// List active streams in a channel
+    /// Requires authentication to prevent enumeration attacks
     /// </summary>
     [HttpGet("channel/{channelId}")]
-    public IActionResult GetChannelStreams(string channelId)
+    public IActionResult GetChannelStreams(
+        string channelId,
+        [FromHeader(Name = "Authorization")] string? authorization)
     {
+        // Require authentication
+        var userId = ValidateToken(authorization);
+        if (userId == null)
+            return Unauthorized(new { error = "Authentication required" });
+
         var streams = _streams.Values
             .Where(s => s.ChannelId == channelId)
             .Select(s => new
