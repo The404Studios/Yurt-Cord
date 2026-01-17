@@ -9,7 +9,7 @@ namespace VeaMarketplace.Client.Services;
 /// <summary>
 /// Service for uploading files to the server
 /// </summary>
-public interface IFileUploadService
+public interface IFileUploadService : IDisposable
 {
     Task<FileUploadResponse> UploadAttachmentAsync(string filePath, string token);
     Task<ProfileImageUploadResponse> UploadAvatarAsync(string filePath, string token);
@@ -20,6 +20,7 @@ public class FileUploadService : IFileUploadService
 {
     private readonly HttpClient _httpClient;
     private static readonly string BaseUrl = AppConstants.Api.GetFilesUrl();
+    private bool _disposed;
 
     // Shared JSON options for consistent serialization
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -34,6 +35,27 @@ public class FileUploadService : IFileUploadService
         {
             Timeout = TimeSpan.FromMinutes(5) // 5 minutes for large files
         };
+    }
+
+    /// <summary>
+    /// Disposes the HttpClient to release network resources
+    /// </summary>
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                _httpClient.Dispose();
+            }
+            _disposed = true;
+        }
     }
 
     /// <summary>

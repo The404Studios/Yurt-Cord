@@ -27,7 +27,7 @@ public class DiscoveryService
     public List<ProductDto> GetFeaturedProducts(int limit = 10)
     {
         var cacheKey = $"featured_products_{limit}";
-        return _cache.GetOrCreate(cacheKey, entry =>
+        return GetOrCreateCached(cacheKey, entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = DefaultCacheDuration;
             entry.SetSize(limit * 1024); // Estimate ~1KB per product
@@ -45,7 +45,7 @@ public class DiscoveryService
     public List<ProductDto> GetTrendingProducts(int limit = 20)
     {
         var cacheKey = $"trending_products_{limit}";
-        return _cache.GetOrCreate(cacheKey, entry =>
+        return GetOrCreateCached(cacheKey, entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = ShortCacheDuration;
             entry.SetSize(limit * 1024);
@@ -64,7 +64,7 @@ public class DiscoveryService
     public List<ProductDto> GetNewArrivals(int limit = 20)
     {
         var cacheKey = $"new_arrivals_{limit}";
-        return _cache.GetOrCreate(cacheKey, entry =>
+        return GetOrCreateCached(cacheKey, entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = ShortCacheDuration;
             entry.SetSize(limit * 1024);
@@ -82,7 +82,7 @@ public class DiscoveryService
     public List<ProductDto> GetTopRated(int limit = 20)
     {
         var cacheKey = $"top_rated_{limit}";
-        return _cache.GetOrCreate(cacheKey, entry =>
+        return GetOrCreateCached(cacheKey, entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = DefaultCacheDuration;
             entry.SetSize(limit * 1024);
@@ -101,7 +101,7 @@ public class DiscoveryService
     public List<ProductDto> GetBestSellers(ProductCategory? category = null, int limit = 20)
     {
         var cacheKey = $"best_sellers_{category?.ToString() ?? "all"}_{limit}";
-        return _cache.GetOrCreate(cacheKey, entry =>
+        return GetOrCreateCached(cacheKey, entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = DefaultCacheDuration;
             entry.SetSize(limit * 1024);
@@ -134,7 +134,7 @@ public class DiscoveryService
     public List<SellerProfileDto> GetTopSellers(int limit = 10)
     {
         var cacheKey = $"top_sellers_{limit}";
-        return _cache.GetOrCreate(cacheKey, entry =>
+        return GetOrCreateCached(cacheKey, entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = DefaultCacheDuration;
             entry.SetSize(limit * 2048); // Seller profiles are larger
@@ -241,7 +241,7 @@ public class DiscoveryService
     public List<ProductDto> GetProductsByCategory(ProductCategory category, int page = 1, int pageSize = 20)
     {
         var cacheKey = $"products_category_{category}_{page}_{pageSize}";
-        return _cache.GetOrCreate(cacheKey, entry =>
+        return GetOrCreateCached(cacheKey, entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = ShortCacheDuration;
             entry.SetSize(pageSize * 1024);
@@ -262,7 +262,7 @@ public class DiscoveryService
     public Dictionary<ProductCategory, int> GetCategoryCounts()
     {
         var cacheKey = "category_counts";
-        return _cache.GetOrCreate(cacheKey, entry =>
+        return GetOrCreateCached(cacheKey, entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = DefaultCacheDuration;
             entry.SetSize(1024);
