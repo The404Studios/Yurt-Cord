@@ -640,8 +640,8 @@
                                 Command="{Binding PromoteUserCommand}" Padding="12,14" Margin="4,4,0,0"/>
                     </UniformGrid>
 
-                    <!-- Role Selection for Promote -->
-                    <TextBlock Text="Role (for promotion)" FontSize="13" Foreground="{StaticResource TextMuted}" Margin="0,0,0,8"/>
+                    <!-- Rank Selection for Promote -->
+                    <TextBlock Text="Rank (for promotion)" FontSize="13" Foreground="{StaticResource TextMuted}" Margin="0,0,0,8"/>
                     <ComboBox ItemsSource="{Binding AvailableRoles}" SelectedItem="{Binding SelectedRole}"
                               Background="{StaticResource TertiaryDark}" Foreground="White"
                               Padding="12,10" Margin="0,0,0,20"/>

@@ -650,4 +650,80 @@ public partial class ChannelSidebar : UserControl
     }
 
     #endregion
+
+    #region Channel Creation
+
+    private async void CreateTextChannel_Click(object sender, RoutedEventArgs e)
+    {
+        var channelName = InputDialog.Show(
+            "Create Text Channel",
+            "Enter channel name:",
+            "new-channel");
+
+        if (string.IsNullOrWhiteSpace(channelName))
+            return;
+
+        // Sanitize channel name (lowercase, replace spaces with dashes)
+        channelName = channelName.ToLower().Replace(" ", "-");
+
+        try
+        {
+            // Add channel to the ViewModel's channels list
+            if (_viewModel != null)
+            {
+                var newChannel = new ChannelDto
+                {
+                    Name = channelName,
+                    Icon = "#",
+                    Description = $"Text channel: {channelName}"
+                };
+
+                // Add to channels collection
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    _viewModel.Channels.Add(newChannel);
+                });
+
+                _toastService?.ShowSuccess("Channel Created", $"Created #{channelName}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _toastService?.ShowError("Error", $"Failed to create channel: {ex.Message}");
+        }
+    }
+
+    private async void CreateVoiceChannel_Click(object sender, RoutedEventArgs e)
+    {
+        var channelName = InputDialog.Show(
+            "Create Voice Channel",
+            "Enter voice channel name:",
+            "Voice Chat");
+
+        if (string.IsNullOrWhiteSpace(channelName))
+            return;
+
+        try
+        {
+            // Add voice channel to available channels
+            if (_viewModel != null)
+            {
+                var channelId = channelName.ToLower().Replace(" ", "-") + "-voice";
+
+                // Add to the display mapping
+                if (!ChannelDisplayNames.ContainsKey(channelId))
+                {
+                    ChannelDisplayNames[channelId] = channelName;
+                }
+
+                _toastService?.ShowSuccess("Voice Channel Created", $"Created {channelName}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _toastService?.ShowError("Error", $"Failed to create voice channel: {ex.Message}");
+        }
+    }
+
+    #endregion
 }
