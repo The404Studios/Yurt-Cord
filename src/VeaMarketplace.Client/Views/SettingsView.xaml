@@ -713,15 +713,107 @@
                                 </Border.Background>
                                 <TextBlock Text="PROFILE" FontSize="11" FontWeight="Bold" Foreground="#00FF9F"/>
                             </Border>
+
+                            <!-- Display Name Card -->
                             <Border Style="{StaticResource BladeSettingsCard}">
                                 <StackPanel>
-                                    <TextBlock Text="Profile settings will be available in a future update"
-                                               FontSize="14" Foreground="#8090B0" Margin="0,0,0,12"/>
-                                    <TextBlock Text="• Change your avatar and banner" FontSize="13" Foreground="#6080A0" Margin="0,4"/>
-                                    <TextBlock Text="• Update your bio and about me" FontSize="13" Foreground="#6080A0" Margin="0,4"/>
-                                    <TextBlock Text="• Set custom status" FontSize="13" Foreground="#6080A0" Margin="0,4"/>
+                                    <TextBlock Text="Display Name" FontSize="15" FontWeight="SemiBold"
+                                               Foreground="#E0E8FF" Margin="0,0,0,8"/>
+                                    <TextBlock Text="This is how others see you across Yurt Cord"
+                                               FontSize="12" Foreground="#6080A0" Margin="0,0,0,12"/>
+                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000FF9F" Padding="12,10">
+                                        <TextBox x:Name="ProfileDisplayNameBox" Background="Transparent" BorderThickness="0"
+                                                 Foreground="#E0E8FF" FontSize="14" CaretBrush="#00FF9F"
+                                                 Text="{Binding DisplayName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </Border>
                                 </StackPanel>
                             </Border>
+
+                            <!-- Bio Card -->
+                            <Border Style="{StaticResource BladeSettingsCard}">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,8">
+                                        <TextBlock Text="Bio" FontSize="15" FontWeight="SemiBold" Foreground="#E0E8FF"/>
+                                        <TextBlock x:Name="BioCharCount" Text="0/150" FontSize="12" Foreground="#6080A0" HorizontalAlignment="Right"/>
+                                    </Grid>
+                                    <TextBlock Text="Tell others a bit about yourself"
+                                               FontSize="12" Foreground="#6080A0" Margin="0,0,0,12"/>
+                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000FF9F" Padding="12,10">
+                                        <TextBox x:Name="ProfileBioBox" Background="Transparent" BorderThickness="0"
+                                                 Foreground="#E0E8FF" FontSize="14" CaretBrush="#00FF9F"
+                                                 TextWrapping="Wrap" AcceptsReturn="True" Height="80"
+                                                 VerticalScrollBarVisibility="Auto" MaxLength="150"
+                                                 Text="{Binding Bio, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 TextChanged="ProfileBio_TextChanged"/>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Custom Status Card -->
+                            <Border Style="{StaticResource BladeSettingsCard}">
+                                <StackPanel>
+                                    <TextBlock Text="Custom Status" FontSize="15" FontWeight="SemiBold"
+                                               Foreground="#E0E8FF" Margin="0,0,0,8"/>
+                                    <TextBlock Text="Set a custom status message visible to others"
+                                               FontSize="12" Foreground="#6080A0" Margin="0,0,0,12"/>
+                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000FF9F" Padding="12,10">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="💭" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                            <TextBox Grid.Column="1" x:Name="ProfileStatusBox" Background="Transparent" BorderThickness="0"
+                                                     Foreground="#E0E8FF" FontSize="14" CaretBrush="#00FF9F" MaxLength="100"
+                                                     Text="{Binding StatusMessage, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                        </Grid>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Avatar URL Card -->
+                            <Border Style="{StaticResource BladeSettingsCard}">
+                                <StackPanel>
+                                    <TextBlock Text="Avatar URL" FontSize="15" FontWeight="SemiBold"
+                                               Foreground="#E0E8FF" Margin="0,0,0,8"/>
+                                    <TextBlock Text="Enter a URL to use as your profile picture"
+                                               FontSize="12" Foreground="#6080A0" Margin="0,0,0,12"/>
+                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000FF9F" Padding="12,10">
+                                        <TextBox x:Name="ProfileAvatarBox" Background="Transparent" BorderThickness="0"
+                                                 Foreground="#E0E8FF" FontSize="14" CaretBrush="#00FF9F"
+                                                 Text="{Binding AvatarUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Accent Color Card -->
+                            <Border Style="{StaticResource BladeSettingsCard}">
+                                <StackPanel>
+                                    <TextBlock Text="Accent Color" FontSize="15" FontWeight="SemiBold"
+                                               Foreground="#E0E8FF" Margin="0,0,0,8"/>
+                                    <TextBlock Text="Choose a color for your profile accents"
+                                               FontSize="12" Foreground="#6080A0" Margin="0,0,0,12"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border x:Name="AccentColorPreview" Width="40" Height="40" CornerRadius="8"
+                                                Background="#00FF9F" Margin="0,0,12,0">
+                                            <Border.Effect>
+                                                <DropShadowEffect Color="#00FF9F" BlurRadius="10" ShadowDepth="0" Opacity="0.5"/>
+                                            </Border.Effect>
+                                        </Border>
+                                        <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000FF9F" Padding="12,10" VerticalAlignment="Center">
+                                            <TextBox x:Name="AccentColorBox" Background="Transparent" BorderThickness="0"
+                                                     Foreground="#E0E8FF" FontSize="14" CaretBrush="#00FF9F" Width="100"
+                                                     Text="{Binding AccentColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                     TextChanged="AccentColor_TextChanged"/>
+                                        </Border>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Save Button -->
+                            <Button Content="💾 Save Profile Changes" Style="{StaticResource BladeNavButton}"
+                                    HorizontalAlignment="Left" Margin="0,8,0,0" Foreground="#00FF9F"
+                                    Click="SaveProfile_Click"/>
                         </StackPanel>
 
                         <!-- Privacy Panel -->
@@ -926,33 +1018,567 @@
                                 </Border.Background>
                                 <TextBlock Text="KEYBINDS" FontSize="11" FontWeight="Bold" Foreground="#B366FF"/>
                             </Border>
+
+                            <!-- Voice Keybinds Card -->
                             <Border Style="{StaticResource BladeSettingsCard}">
                                 <StackPanel>
-                                    <TextBlock Text="Keyboard shortcuts will be available in a future update"
-                                               FontSize="14" Foreground="#8090B0" Margin="0,0,0,12"/>
-                                    <TextBlock Text="• Push to Talk key binding" FontSize="13" Foreground="#6080A0" Margin="0,4"/>
-                                    <TextBlock Text="• Mute/Deafen shortcuts" FontSize="13" Foreground="#6080A0" Margin="0,4"/>
-                                    <TextBlock Text="• Navigation shortcuts" FontSize="13" Foreground="#6080A0" Margin="0,4"/>
+                                    <TextBlock Text="Voice Controls" FontSize="15" FontWeight="SemiBold"
+                                               Foreground="#E0E8FF" Margin="0,0,0,16"/>
+
+                                    <!-- Toggle Mute -->
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="150"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Toggle Mute" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Mute/unmute your microphone" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" x:Name="MuteKeyButton" Click="KeybindButton_Click" Tag="ToggleMute"
+                                                Style="{StaticResource BladeNavButton}" HorizontalAlignment="Right">
+                                            <TextBlock x:Name="MuteKeyText" Text="Ctrl+M" Foreground="#B366FF" FontWeight="SemiBold"/>
+                                        </Button>
+                                    </Grid>
+
+                                    <!-- Toggle Deafen -->
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="150"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Toggle Deafen" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Deafen/undeafen audio" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" x:Name="DeafenKeyButton" Click="KeybindButton_Click" Tag="ToggleDeafen"
+                                                Style="{StaticResource BladeNavButton}" HorizontalAlignment="Right">
+                                            <TextBlock x:Name="DeafenKeyText" Text="Ctrl+D" Foreground="#B366FF" FontWeight="SemiBold"/>
+                                        </Button>
+                                    </Grid>
+
+                                    <!-- Push to Talk -->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="150"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Push to Talk" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Hold to transmit voice" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" x:Name="PttKeyBindButton" Click="KeybindButton_Click" Tag="PushToTalk"
+                                                Style="{StaticResource BladeNavButton}" HorizontalAlignment="Right">
+                                            <TextBlock x:Name="PttKeyBindText" Text="{Binding PushToTalkKeyDisplay}" Foreground="#B366FF" FontWeight="SemiBold"/>
+                                        </Button>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Navigation Keybinds Card -->
+                            <Border Style="{StaticResource BladeSettingsCard}">
+                                <StackPanel>
+                                    <TextBlock Text="Navigation" FontSize="15" FontWeight="SemiBold"
+                                               Foreground="#E0E8FF" Margin="0,0,0,16"/>
+
+                                    <!-- Quick Switcher -->
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="150"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Quick Switcher" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Open quick channel/DM search" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" x:Name="QuickSwitchKeyButton" Click="KeybindButton_Click" Tag="QuickSwitch"
+                                                Style="{StaticResource BladeNavButton}" HorizontalAlignment="Right">
+                                            <TextBlock x:Name="QuickSwitchKeyText" Text="Ctrl+K" Foreground="#B366FF" FontWeight="SemiBold"/>
+                                        </Button>
+                                    </Grid>
+
+                                    <!-- Settings -->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="150"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Open Settings" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Open settings menu" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" x:Name="SettingsKeyButton" Click="KeybindButton_Click" Tag="Settings"
+                                                Style="{StaticResource BladeNavButton}" HorizontalAlignment="Right">
+                                            <TextBlock x:Name="SettingsKeyText" Text="Ctrl+," Foreground="#B366FF" FontWeight="SemiBold"/>
+                                        </Button>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <TextBlock Text="Click a keybind button, then press a new key combination to change it"
+                                       FontSize="12" Foreground="#506080" Margin="0,8,0,0"/>
+                        </StackPanel>
+                        <!-- Message Templates Panel -->
+                        <StackPanel x:Name="TemplatesPanel" Visibility="Collapsed">
+                            <Border Padding="12,8" Margin="0,0,0,16" CornerRadius="8" HorizontalAlignment="Left">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#2000FF9F" Offset="0"/>
+                                        <GradientStop Color="#10101828" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <TextBlock Text="MESSAGE TEMPLATES" FontSize="11" FontWeight="Bold" Foreground="#00FF9F"/>
+                            </Border>
+
+                            <!-- Create Template Card -->
+                            <Border Style="{StaticResource BladeSettingsCard}">
+                                <StackPanel>
+                                    <TextBlock Text="Create New Template" FontSize="15" FontWeight="SemiBold"
+                                               Foreground="#E0E8FF" Margin="0,0,0,12"/>
+                                    <TextBlock Text="Template Name" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
+                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000FF9F" Padding="12,10" Margin="0,0,0,12">
+                                        <TextBox x:Name="TemplateNameBox" Background="Transparent" BorderThickness="0"
+                                                 Foreground="#E0E8FF" FontSize="14" CaretBrush="#00FF9F"/>
+                                    </Border>
+                                    <TextBlock Text="Template Content" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
+                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000FF9F" Padding="12,10">
+                                        <TextBox x:Name="TemplateContentBox" Background="Transparent" BorderThickness="0"
+                                                 Foreground="#E0E8FF" FontSize="14" CaretBrush="#00FF9F"
+                                                 TextWrapping="Wrap" AcceptsReturn="True" Height="80" VerticalScrollBarVisibility="Auto"/>
+                                    </Border>
+                                    <Button Content="➕ Add Template" Style="{StaticResource BladeNavButton}"
+                                            HorizontalAlignment="Left" Margin="0,12,0,0" Foreground="#00FF9F"
+                                            Click="AddTemplate_Click"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Saved Templates Card -->
+                            <Border Style="{StaticResource BladeSettingsCard}">
+                                <StackPanel>
+                                    <TextBlock Text="Saved Templates" FontSize="15" FontWeight="SemiBold"
+                                               Foreground="#E0E8FF" Margin="0,0,0,12"/>
+                                    <ItemsControl x:Name="TemplatesList">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="#10101828" CornerRadius="8" Padding="12" Margin="0,0,0,8">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel>
+                                                            <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" Foreground="#E0E8FF"/>
+                                                            <TextBlock Text="{Binding Content}" FontSize="12" Foreground="#6080A0"
+                                                                       TextTrimming="CharacterEllipsis" MaxWidth="400"/>
+                                                        </StackPanel>
+                                                        <Button Grid.Column="1" Content="🗑️" Style="{StaticResource BladeNavButton}"
+                                                                Click="DeleteTemplate_Click" Tag="{Binding Id}" Foreground="#FF6680"/>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <TextBlock x:Name="NoTemplatesText" Text="No templates saved yet" FontSize="13" Foreground="#506080"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
-                        <StackPanel x:Name="TemplatesPanel" Visibility="Collapsed">
-                            <TextBlock Text="Message templates coming soon..." Foreground="#6080A0"/>
-                        </StackPanel>
+
+                        <!-- Scheduled Messages Panel -->
                         <StackPanel x:Name="ScheduledPanel" Visibility="Collapsed">
-                            <TextBlock Text="Scheduled messages coming soon..." Foreground="#6080A0"/>
+                            <Border Padding="12,8" Margin="0,0,0,16" CornerRadius="8" HorizontalAlignment="Left">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#2000E5FF" Offset="0"/>
+                                        <GradientStop Color="#10101828" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <TextBlock Text="SCHEDULED MESSAGES" FontSize="11" FontWeight="Bold" Foreground="#00E5FF"/>
+                            </Border>
+
+                            <!-- Schedule New Message Card -->
+                            <Border Style="{StaticResource BladeSettingsCard}">
+                                <StackPanel>
+                                    <TextBlock Text="Schedule New Message" FontSize="15" FontWeight="SemiBold"
+                                               Foreground="#E0E8FF" Margin="0,0,0,12"/>
+
+                                    <TextBlock Text="Channel/User" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
+                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000E5FF" Padding="12,10" Margin="0,0,0,12">
+                                        <TextBox x:Name="ScheduleTargetBox" Background="Transparent" BorderThickness="0"
+                                                 Foreground="#E0E8FF" FontSize="14" CaretBrush="#00E5FF"/>
+                                    </Border>
+
+                                    <TextBlock Text="Message" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
+                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000E5FF" Padding="12,10" Margin="0,0,0,12">
+                                        <TextBox x:Name="ScheduleMessageBox" Background="Transparent" BorderThickness="0"
+                                                 Foreground="#E0E8FF" FontSize="14" CaretBrush="#00E5FF"
+                                                 TextWrapping="Wrap" AcceptsReturn="True" Height="60"/>
+                                    </Border>
+
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,8,0">
+                                            <TextBlock Text="Date" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
+                                            <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000E5FF" Padding="12,10">
+                                                <TextBox x:Name="ScheduleDateBox" Background="Transparent" BorderThickness="0"
+                                                         Foreground="#E0E8FF" FontSize="14" CaretBrush="#00E5FF" Text="YYYY-MM-DD"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                            <TextBlock Text="Time" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
+                                            <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000E5FF" Padding="12,10">
+                                                <TextBox x:Name="ScheduleTimeBox" Background="Transparent" BorderThickness="0"
+                                                         Foreground="#E0E8FF" FontSize="14" CaretBrush="#00E5FF" Text="HH:MM"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Button Content="📅 Schedule Message" Style="{StaticResource BladeNavButton}"
+                                            HorizontalAlignment="Left" Foreground="#00E5FF" Click="ScheduleMessage_Click"/>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
+
+                        <!-- Status Scheduler Panel -->
                         <StackPanel x:Name="StatusSchedulerPanel" Visibility="Collapsed">
-                            <TextBlock Text="Status scheduler coming soon..." Foreground="#6080A0"/>
+                            <Border Padding="12,8" Margin="0,0,0,16" CornerRadius="8" HorizontalAlignment="Left">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#20FF9F00" Offset="0"/>
+                                        <GradientStop Color="#10101828" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <TextBlock Text="STATUS SCHEDULER" FontSize="11" FontWeight="Bold" Foreground="#FF9F00"/>
+                            </Border>
+
+                            <!-- Status Rules Card -->
+                            <Border Style="{StaticResource BladeSettingsCard}">
+                                <StackPanel>
+                                    <TextBlock Text="Automatic Status Rules" FontSize="15" FontWeight="SemiBold"
+                                               Foreground="#E0E8FF" Margin="0,0,0,16"/>
+
+                                    <Grid Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Away when Idle" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Set status to 'Away' after inactivity" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <CheckBox Grid.Column="1" Style="{StaticResource BladeToggleSwitch}"
+                                                  x:Name="AutoAwayToggle" VerticalAlignment="Center"/>
+                                    </Grid>
+
+                                    <StackPanel x:Name="IdleTimeoutPanel">
+                                        <TextBlock Text="Idle Timeout (minutes)" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="60"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Slider x:Name="IdleTimeoutSlider" Minimum="1" Maximum="60" Value="5"
+                                                    Style="{StaticResource BladeSlider}" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding ElementName=IdleTimeoutSlider, Path=Value, StringFormat='{}{0:0} min'}"
+                                                       Foreground="#6080A0" FontSize="13" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Scheduled Statuses Card -->
+                            <Border Style="{StaticResource BladeSettingsCard}">
+                                <StackPanel>
+                                    <TextBlock Text="Scheduled Status Changes" FontSize="15" FontWeight="SemiBold"
+                                               Foreground="#E0E8FF" Margin="0,0,0,12"/>
+                                    <TextBlock Text="Schedule custom statuses for specific times"
+                                               FontSize="12" Foreground="#6080A0" Margin="0,0,0,12"/>
+
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,8,0">
+                                            <TextBlock Text="Start Time" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
+                                            <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#30FF9F00" Padding="12,10">
+                                                <TextBox x:Name="StatusStartTimeBox" Background="Transparent" BorderThickness="0"
+                                                         Foreground="#E0E8FF" FontSize="14" CaretBrush="#FF9F00" Text="09:00"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                            <TextBlock Text="End Time" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
+                                            <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#30FF9F00" Padding="12,10">
+                                                <TextBox x:Name="StatusEndTimeBox" Background="Transparent" BorderThickness="0"
+                                                         Foreground="#E0E8FF" FontSize="14" CaretBrush="#FF9F00" Text="17:00"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <TextBlock Text="Status Text" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
+                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#30FF9F00" Padding="12,10" Margin="0,0,0,12">
+                                        <TextBox x:Name="ScheduledStatusTextBox" Background="Transparent" BorderThickness="0"
+                                                 Foreground="#E0E8FF" FontSize="14" CaretBrush="#FF9F00" Text="At work"/>
+                                    </Border>
+
+                                    <Button Content="➕ Add Scheduled Status" Style="{StaticResource BladeNavButton}"
+                                            HorizontalAlignment="Left" Foreground="#FF9F00" Click="AddScheduledStatus_Click"/>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
+
+                        <!-- Smart DND Panel -->
                         <StackPanel x:Name="SmartDNDPanel" Visibility="Collapsed">
-                            <TextBlock Text="Smart DND coming soon..." Foreground="#6080A0"/>
+                            <Border Padding="12,8" Margin="0,0,0,16" CornerRadius="8" HorizontalAlignment="Left">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#20FF6680" Offset="0"/>
+                                        <GradientStop Color="#10101828" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <TextBlock Text="SMART DO NOT DISTURB" FontSize="11" FontWeight="Bold" Foreground="#FF6680"/>
+                            </Border>
+
+                            <!-- DND Settings Card -->
+                            <Border Style="{StaticResource BladeSettingsCard}">
+                                <StackPanel>
+                                    <TextBlock Text="DND Triggers" FontSize="15" FontWeight="SemiBold"
+                                               Foreground="#E0E8FF" Margin="0,0,0,16"/>
+
+                                    <Grid Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="DND when Full Screen" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Automatically enable DND when in fullscreen apps" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <CheckBox Grid.Column="1" Style="{StaticResource BladeToggleSwitch}"
+                                                  x:Name="DndFullscreenToggle" IsChecked="True" VerticalAlignment="Center"/>
+                                    </Grid>
+
+                                    <Grid Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="DND when Gaming" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Automatically enable DND when games are detected" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <CheckBox Grid.Column="1" Style="{StaticResource BladeToggleSwitch}"
+                                                  x:Name="DndGamingToggle" IsChecked="True" VerticalAlignment="Center"/>
+                                    </Grid>
+
+                                    <Grid Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="DND when Presenting" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Automatically enable DND when screen sharing" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <CheckBox Grid.Column="1" Style="{StaticResource BladeToggleSwitch}"
+                                                  x:Name="DndPresentingToggle" IsChecked="True" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Scheduled DND Card -->
+                            <Border Style="{StaticResource BladeSettingsCard}">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Scheduled DND" FontSize="15" FontWeight="SemiBold" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Automatically enable DND during set hours" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <CheckBox Grid.Column="1" Style="{StaticResource BladeToggleSwitch}"
+                                                  x:Name="ScheduledDndToggle" VerticalAlignment="Center"/>
+                                    </Grid>
+
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,8,0">
+                                            <TextBlock Text="Start Time" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
+                                            <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#30FF6680" Padding="12,10">
+                                                <TextBox x:Name="DndStartTimeBox" Background="Transparent" BorderThickness="0"
+                                                         Foreground="#E0E8FF" FontSize="14" CaretBrush="#FF6680" Text="22:00"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                            <TextBlock Text="End Time" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
+                                            <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#30FF6680" Padding="12,10">
+                                                <TextBox x:Name="DndEndTimeBox" Background="Transparent" BorderThickness="0"
+                                                         Foreground="#E0E8FF" FontSize="14" CaretBrush="#FF6680" Text="08:00"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
+
+                        <!-- Quick Actions Panel -->
                         <StackPanel x:Name="QuickActionsPanel" Visibility="Collapsed">
-                            <TextBlock Text="Quick actions coming soon..." Foreground="#6080A0"/>
+                            <Border Padding="12,8" Margin="0,0,0,16" CornerRadius="8" HorizontalAlignment="Left">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#20FFD700" Offset="0"/>
+                                        <GradientStop Color="#10101828" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <TextBlock Text="QUICK ACTIONS" FontSize="11" FontWeight="Bold" Foreground="#FFD700"/>
+                            </Border>
+
+                            <!-- Quick Actions Card -->
+                            <Border Style="{StaticResource BladeSettingsCard}">
+                                <StackPanel>
+                                    <TextBlock Text="Configure Quick Actions" FontSize="15" FontWeight="SemiBold"
+                                               Foreground="#E0E8FF" Margin="0,0,0,12"/>
+                                    <TextBlock Text="Quick actions appear in your user panel for fast access"
+                                               FontSize="12" Foreground="#6080A0" Margin="0,0,0,16"/>
+
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Quick Mute" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Show mute button in quick actions" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <CheckBox Grid.Column="1" Style="{StaticResource BladeToggleSwitch}"
+                                                  x:Name="QuickMuteToggle" IsChecked="True" VerticalAlignment="Center"/>
+                                    </Grid>
+
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Quick Deafen" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Show deafen button in quick actions" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <CheckBox Grid.Column="1" Style="{StaticResource BladeToggleSwitch}"
+                                                  x:Name="QuickDeafenToggle" IsChecked="True" VerticalAlignment="Center"/>
+                                    </Grid>
+
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Quick Status" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Show status toggle in quick actions" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <CheckBox Grid.Column="1" Style="{StaticResource BladeToggleSwitch}"
+                                                  x:Name="QuickStatusToggle" IsChecked="True" VerticalAlignment="Center"/>
+                                    </Grid>
+
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Quick DND" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Show DND toggle in quick actions" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <CheckBox Grid.Column="1" Style="{StaticResource BladeToggleSwitch}"
+                                                  x:Name="QuickDndToggle" IsChecked="True" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
+
+                        <!-- Activity Insights Panel -->
                         <StackPanel x:Name="InsightsPanel" Visibility="Collapsed">
-                            <TextBlock Text="Activity insights coming soon..." Foreground="#6080A0"/>
+                            <Border Padding="12,8" Margin="0,0,0,16" CornerRadius="8" HorizontalAlignment="Left">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#20B366FF" Offset="0"/>
+                                        <GradientStop Color="#10101828" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <TextBlock Text="ACTIVITY INSIGHTS" FontSize="11" FontWeight="Bold" Foreground="#B366FF"/>
+                            </Border>
+
+                            <!-- Stats Overview Card -->
+                            <Border Style="{StaticResource BladeSettingsCard}">
+                                <StackPanel>
+                                    <TextBlock Text="Your Activity Statistics" FontSize="15" FontWeight="SemiBold"
+                                               Foreground="#E0E8FF" Margin="0,0,0,16"/>
+
+                                    <Grid Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel HorizontalAlignment="Center">
+                                            <TextBlock x:Name="MessagesSentCount" Text="0" FontSize="28" FontWeight="Bold" Foreground="#00FF9F" HorizontalAlignment="Center"/>
+                                            <TextBlock Text="Messages Sent" FontSize="12" Foreground="#6080A0" HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                                            <TextBlock x:Name="VoiceMinutesCount" Text="0" FontSize="28" FontWeight="Bold" Foreground="#00E5FF" HorizontalAlignment="Center"/>
+                                            <TextBlock Text="Voice Minutes" FontSize="12" Foreground="#6080A0" HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                                            <TextBlock x:Name="DaysActiveCount" Text="0" FontSize="28" FontWeight="Bold" Foreground="#B366FF" HorizontalAlignment="Center"/>
+                                            <TextBlock Text="Days Active" FontSize="12" Foreground="#6080A0" HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Tracking Settings Card -->
+                            <Border Style="{StaticResource BladeSettingsCard}">
+                                <StackPanel>
+                                    <TextBlock Text="Tracking Settings" FontSize="15" FontWeight="SemiBold"
+                                               Foreground="#E0E8FF" Margin="0,0,0,16"/>
+
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Track Message Activity" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Count messages you send" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <CheckBox Grid.Column="1" Style="{StaticResource BladeToggleSwitch}"
+                                                  x:Name="TrackMessagesToggle" IsChecked="True" VerticalAlignment="Center"/>
+                                    </Grid>
+
+                                    <Grid Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Track Voice Activity" FontSize="14" Foreground="#E0E8FF"/>
+                                            <TextBlock Text="Track time spent in voice channels" FontSize="12" Foreground="#6080A0"/>
+                                        </StackPanel>
+                                        <CheckBox Grid.Column="1" Style="{StaticResource BladeToggleSwitch}"
+                                                  x:Name="TrackVoiceToggle" IsChecked="True" VerticalAlignment="Center"/>
+                                    </Grid>
+
+                                    <Button Content="🔄 Reset Statistics" Style="{StaticResource BladeNavButton}"
+                                            HorizontalAlignment="Left" Foreground="#FF6680" Click="ResetInsights_Click"/>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
                     </Grid>
                 </ScrollViewer>

@@ -89,6 +89,19 @@ public partial class SettingsViewModel : BaseViewModel
     [ObservableProperty]
     private bool _animationsEnabled = true;
 
+    // Profile Settings
+    [ObservableProperty]
+    private string _displayName = "";
+
+    [ObservableProperty]
+    private string _bio = "";
+
+    [ObservableProperty]
+    private string _statusMessage = "";
+
+    [ObservableProperty]
+    private string _avatarUrl = "";
+
     // Notification Settings
     [ObservableProperty]
     private bool _desktopNotifications = true;
