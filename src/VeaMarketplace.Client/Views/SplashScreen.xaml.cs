@@ -26,30 +26,38 @@ public partial class SplashScreen : Window
 
     private async void StartLoadingAnimation()
     {
-        var duration = 3000; // Total splash duration in ms
-        var steps = _loadingSteps.Length;
-        var stepDuration = duration / steps;
-        var progressBarWidth = 420.0; // Match XAML width
-
-        for (int i = 0; i < steps; i++)
+        try
         {
-            var step = _loadingSteps[i];
+            var duration = 3000; // Total splash duration in ms
+            var steps = _loadingSteps.Length;
+            var stepDuration = duration / steps;
+            var progressBarWidth = 420.0; // Match XAML width
 
-            // Update loading text with fade effect
-            await AnimateTextChange(step.Message + "...", step.Detail);
-
-            // Animate progress bar with easing
-            var targetWidth = ((i + 1) / (double)steps) * progressBarWidth;
-            var currentWidth = LoadingProgress.Width;
-            if (double.IsNaN(currentWidth)) currentWidth = 0;
-
-            var animation = new DoubleAnimation(currentWidth, targetWidth, TimeSpan.FromMilliseconds(stepDuration - 100))
+            for (int i = 0; i < steps; i++)
             {
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            };
-            LoadingProgress.BeginAnimation(WidthProperty, animation);
+                var step = _loadingSteps[i];
 
-            await Task.Delay(stepDuration);
+                // Update loading text with fade effect
+                await AnimateTextChange(step.Message + "...", step.Detail);
+
+                // Animate progress bar with easing
+                var targetWidth = ((i + 1) / (double)steps) * progressBarWidth;
+                var currentWidth = LoadingProgress.Width;
+                if (double.IsNaN(currentWidth)) currentWidth = 0;
+
+                var animation = new DoubleAnimation(currentWidth, targetWidth, TimeSpan.FromMilliseconds(stepDuration - 100))
+                {
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                };
+                LoadingProgress.BeginAnimation(WidthProperty, animation);
+
+                await Task.Delay(stepDuration);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Splash screen animation error: {ex.Message}");
+            // Don't crash - splash screen animation is non-critical
         }
     }
 

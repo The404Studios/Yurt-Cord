@@ -105,29 +105,38 @@ public class PerformanceMonitorService : IPerformanceMonitorService
         _lock.EnterReadLock();
         try
         {
-            if (!_metrics.ContainsKey(metricName) || _metrics[metricName].Count == 0)
-            {
-                return new PerformanceStats();
-            }
-
-            var values = _metrics[metricName].ToList();
-            var sorted = values.OrderBy(v => v).ToList();
-
-            return new PerformanceStats
-            {
-                Average = values.Average(),
-                Min = values.Min(),
-                Max = values.Max(),
-                Count = values.Count,
-                P50 = GetPercentile(sorted, 0.50),
-                P95 = GetPercentile(sorted, 0.95),
-                P99 = GetPercentile(sorted, 0.99)
-            };
+            return ComputeStats(metricName);
         }
         finally
         {
             _lock.ExitReadLock();
         }
+    }
+
+    /// <summary>
+    /// Computes stats for a metric without acquiring a lock.
+    /// Caller must hold the read lock.
+    /// </summary>
+    private PerformanceStats ComputeStats(string metricName)
+    {
+        if (!_metrics.ContainsKey(metricName) || _metrics[metricName].Count == 0)
+        {
+            return new PerformanceStats();
+        }
+
+        var values = _metrics[metricName].ToList();
+        var sorted = values.OrderBy(v => v).ToList();
+
+        return new PerformanceStats
+        {
+            Average = values.Average(),
+            Min = values.Min(),
+            Max = values.Max(),
+            Count = values.Count,
+            P50 = GetPercentile(sorted, 0.50),
+            P95 = GetPercentile(sorted, 0.95),
+            P99 = GetPercentile(sorted, 0.99)
+        };
     }
 
     public Dictionary<string, PerformanceStats> GetAllStats()
@@ -139,7 +148,7 @@ public class PerformanceMonitorService : IPerformanceMonitorService
 
             foreach (var metric in _metrics.Keys)
             {
-                result[metric] = GetStats(metric);
+                result[metric] = ComputeStats(metric);
             }
 
             return result;

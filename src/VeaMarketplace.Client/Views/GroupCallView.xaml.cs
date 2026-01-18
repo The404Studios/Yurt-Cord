@@ -306,8 +306,15 @@ public partial class GroupCallView : UserControl
             var callId = _voiceService.CurrentGroupCallId;
             if (callId != null)
             {
-                await _voiceService.InviteToGroupCallAsync(callId, friend.UserId);
-                _friends.Remove(friend);
+                try
+                {
+                    await _voiceService.InviteToGroupCallAsync(callId, friend.UserId);
+                    _friends.Remove(friend);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to invite friend to call: {ex.Message}");
+                }
             }
         }
     }
@@ -412,12 +419,22 @@ public partial class GroupCallView : UserControl
 
     private async void Leave_Click(object sender, RoutedEventArgs e)
     {
-        var callId = _voiceService.CurrentGroupCallId;
-        if (callId != null)
+        try
         {
-            await _voiceService.LeaveGroupCallAsync(callId);
+            var callId = _voiceService.CurrentGroupCallId;
+            if (callId != null)
+            {
+                await _voiceService.LeaveGroupCallAsync(callId);
+            }
         }
-        _durationTimer.Stop();
-        OnCallLeft?.Invoke();
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error leaving group call: {ex.Message}");
+        }
+        finally
+        {
+            _durationTimer.Stop();
+            OnCallLeft?.Invoke();
+        }
     }
 }

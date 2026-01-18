@@ -149,56 +149,64 @@ public partial class ProfileViewModel : BaseViewModel
 
     private async void OnViewUserProfile(string? userId)
     {
-        if (string.IsNullOrEmpty(userId))
+        try
         {
-            // View own profile
-            IsOwnProfile = true;
-            User = _apiService.CurrentUser;
-            userId = _apiService.CurrentUser?.Id;
-        }
-        else
-        {
-            // View another user's profile
-            IsOwnProfile = userId == _apiService.CurrentUser?.Id;
-
-            if (!IsOwnProfile)
+            if (string.IsNullOrEmpty(userId))
             {
-                IsLoading = true;
-                try
-                {
-                    var userProfile = await _apiService.GetUserProfileAsync(userId);
-                    if (userProfile != null)
-                    {
-                        User = userProfile;
-                    }
-                    else
-                    {
-                        // Fallback to basic user info
-                        User = await _apiService.GetUserAsync(userId);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    SetError($"Failed to load profile: {ex.Message}");
-                }
-                finally
-                {
-                    IsLoading = false;
-                }
+                // View own profile
+                IsOwnProfile = true;
+                User = _apiService.CurrentUser;
+                userId = _apiService.CurrentUser?.Id;
             }
             else
             {
-                User = _apiService.CurrentUser;
+                // View another user's profile
+                IsOwnProfile = userId == _apiService.CurrentUser?.Id;
+
+                if (!IsOwnProfile)
+                {
+                    IsLoading = true;
+                    try
+                    {
+                        var userProfile = await _apiService.GetUserProfileAsync(userId);
+                        if (userProfile != null)
+                        {
+                            User = userProfile;
+                        }
+                        else
+                        {
+                            // Fallback to basic user info
+                            User = await _apiService.GetUserAsync(userId);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        SetError($"Failed to load profile: {ex.Message}");
+                    }
+                    finally
+                    {
+                        IsLoading = false;
+                    }
+                }
+                else
+                {
+                    User = _apiService.CurrentUser;
+                }
+            }
+
+            IsEditing = false;
+
+            // Load profile posts and stats
+            if (!string.IsNullOrEmpty(userId))
+            {
+                await LoadProfilePostsAsync(userId);
+                await LoadProfileStatsAsync(userId);
             }
         }
-
-        IsEditing = false;
-
-        // Load profile posts and stats
-        if (!string.IsNullOrEmpty(userId))
+        catch (Exception ex)
         {
-            await LoadProfilePostsAsync(userId);
-            await LoadProfileStatsAsync(userId);
+            System.Diagnostics.Debug.WriteLine($"Error viewing user profile: {ex.Message}");
+            SetError("Failed to load profile. Please try again.");
         }
     }
 

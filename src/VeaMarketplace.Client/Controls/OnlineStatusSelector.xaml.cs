@@ -83,9 +83,9 @@ public partial class OnlineStatusSelector : UserControl
                     Status = presenceStatus
                 });
             }
-            catch
+            catch (Exception ex)
             {
-                // Handle error silently
+                System.Diagnostics.Debug.WriteLine($"Failed to update status: {ex.Message}");
             }
         }
 

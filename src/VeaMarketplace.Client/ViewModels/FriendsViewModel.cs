@@ -1104,7 +1104,16 @@ public partial class FriendsViewModel : BaseViewModel
     private async void OnUsernameSearchDebounceTick(object? sender, EventArgs e)
     {
         _usernameSearchDebounce?.Stop();
-        await _friendService.SearchUserAsync(FriendRequestUsername);
+        try
+        {
+            await _friendService.SearchUserAsync(FriendRequestUsername);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error searching for user: {ex.Message}");
+            UserSearchMessage = "Search failed. Please try again.";
+            IsSearchingUser = false;
+        }
     }
 
     public bool CanSendFriendRequest => SearchedUser != null && !SearchedUser.IsFriend && UserSearchCompleted;

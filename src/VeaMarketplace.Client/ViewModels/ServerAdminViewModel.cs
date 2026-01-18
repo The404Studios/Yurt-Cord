@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VeaMarketplace.Client.Services;
 using VeaMarketplace.Shared.DTOs;
 using VeaMarketplace.Shared.Enums;
 
@@ -10,7 +11,9 @@ namespace VeaMarketplace.Client.ViewModels;
 
 public partial class ServerAdminViewModel : BaseViewModel
 {
-    private readonly Services.IApiService _apiService;
+    private readonly IApiService _apiService;
+    private readonly IVoiceService? _voiceService;
+    private readonly IChatService? _chatService;
     private readonly DispatcherTimer _refreshTimer;
 
     [ObservableProperty]
@@ -113,9 +116,11 @@ public partial class ServerAdminViewModel : BaseViewModel
         "Admin"
     };
 
-    public ServerAdminViewModel(Services.IApiService apiService)
+    public ServerAdminViewModel(IApiService apiService, IVoiceService? voiceService = null, IChatService? chatService = null)
     {
         _apiService = apiService;
+        _voiceService = voiceService;
+        _chatService = chatService;
 
         _refreshTimer = new DispatcherTimer
         {
@@ -124,7 +129,53 @@ public partial class ServerAdminViewModel : BaseViewModel
         _refreshTimer.Tick += OnRefreshTimerTick;
         _refreshTimer.Start();
 
+        // Subscribe to online users events
+        if (_chatService != null)
+        {
+            _chatService.OnOnlineUsersReceived += OnOnlineUsersReceived;
+            _chatService.OnUserJoined += OnUserJoined;
+            _chatService.OnUserLeft += OnUserLeft;
+        }
+
         _ = SafeLoadDashboardAsync();
+    }
+
+    private void OnOnlineUsersReceived(List<OnlineUserDto> users)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            OnlineUsersList.Clear();
+            foreach (var user in users)
+            {
+                OnlineUsersList.Add(user);
+            }
+            OnlineUsers = users.Count;
+        });
+    }
+
+    private void OnUserJoined(OnlineUserDto user)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            if (!OnlineUsersList.Any(u => u.Id == user.Id))
+            {
+                OnlineUsersList.Add(user);
+                OnlineUsers = OnlineUsersList.Count;
+            }
+        });
+    }
+
+    private void OnUserLeft(OnlineUserDto user)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            var existingUser = OnlineUsersList.FirstOrDefault(u => u.Id == user.Id);
+            if (existingUser != null)
+            {
+                OnlineUsersList.Remove(existingUser);
+                OnlineUsers = OnlineUsersList.Count;
+            }
+        });
     }
 
     private async Task SafeLoadDashboardAsync()
@@ -146,13 +197,29 @@ public partial class ServerAdminViewModel : BaseViewModel
     {
         _refreshTimer.Stop();
         _refreshTimer.Tick -= OnRefreshTimerTick;
+
+        // Unsubscribe from chat service events
+        if (_chatService != null)
+        {
+            _chatService.OnOnlineUsersReceived -= OnOnlineUsersReceived;
+            _chatService.OnUserJoined -= OnUserJoined;
+            _chatService.OnUserLeft -= OnUserLeft;
+        }
     }
 
     private async void OnRefreshTimerTick(object? sender, EventArgs e)
     {
         if (AutoRefreshEnabled)
         {
-            await RefreshDashboardAsync();
+            try
+            {
+                await RefreshDashboardAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error refreshing admin dashboard: {ex.Message}");
+                // Don't show error to user for background refresh - just log it
+            }
         }
     }
 
@@ -160,28 +227,48 @@ public partial class ServerAdminViewModel : BaseViewModel
     {
         await ExecuteAsync(async () =>
         {
-            // Load moderation dashboard for stats
-            var dashboard = await _apiService.GetModerationDashboardAsync();
+            // Try to load admin stats from the server
+            var adminStats = await _apiService.GetAdminServerStatsAsync();
 
-            ActiveBans = dashboard.ActiveBans;
-            ActiveMutes = dashboard.ActiveMutes;
-            PendingReports = dashboard.PendingReports;
+            if (adminStats != null)
+            {
+                // Use real server stats
+                TotalUsers = adminStats.TotalUsers;
+                OnlineUsers = adminStats.OnlineUsers;
+                TotalProducts = adminStats.TotalProducts;
+                TotalMessages = adminStats.TotalMessages;
+                TotalRooms = adminStats.TotalRooms;
+                TotalOrders = adminStats.TotalOrders;
+                ActiveBans = adminStats.ActiveBans;
+                ActiveMutes = adminStats.ActiveMutes;
+                PendingReports = adminStats.PendingReports;
 
-            // Get process stats for server metrics simulation
+                // Format server uptime
+                var uptimeSeconds = adminStats.ServerUptime;
+                var uptimeSpan = TimeSpan.FromSeconds(uptimeSeconds);
+                ServerUptime = $"{uptimeSpan.Days}d {uptimeSpan.Hours}h {uptimeSpan.Minutes}m";
+            }
+            else
+            {
+                // Fallback to moderation dashboard for stats
+                var dashboard = await _apiService.GetModerationDashboardAsync();
+                ActiveBans = dashboard.ActiveBans;
+                ActiveMutes = dashboard.ActiveMutes;
+                PendingReports = dashboard.PendingReports;
+
+                // Placeholder stats when admin API is not available
+                TotalUsers = dashboard.TotalModActions > 0 ? dashboard.TotalModActions * 10 : 150;
+                OnlineUsers = Math.Max(1, TotalUsers / 10);
+                TotalProducts = TotalUsers * 3;
+                TotalMessages = TotalUsers * 50;
+                TotalRooms = Math.Max(5, TotalUsers / 20);
+                TotalOrders = TotalUsers * 2;
+            }
+
+            // Get local process stats for client-side metrics
             var process = Process.GetCurrentProcess();
             MemoryUsageMb = process.WorkingSet64 / 1024 / 1024;
             ThreadCount = process.Threads.Count;
-
-            var uptime = DateTime.Now - process.StartTime;
-            ServerUptime = $"{uptime.Days}d {uptime.Hours}h {uptime.Minutes}m";
-
-            // Placeholder stats - these would come from a real admin API
-            TotalUsers = dashboard.TotalModActions > 0 ? dashboard.TotalModActions * 10 : 150;
-            OnlineUsers = Math.Max(1, TotalUsers / 10);
-            TotalProducts = TotalUsers * 3;
-            TotalMessages = TotalUsers * 50;
-            TotalRooms = Math.Max(5, TotalUsers / 20);
-            TotalOrders = TotalUsers * 2;
 
             LastRefreshTime = DateTime.Now;
         }, "Failed to load dashboard");
@@ -192,17 +279,38 @@ public partial class ServerAdminViewModel : BaseViewModel
         // Silent refresh without loading indicator
         try
         {
-            var dashboard = await _apiService.GetModerationDashboardAsync();
-            ActiveBans = dashboard.ActiveBans;
-            ActiveMutes = dashboard.ActiveMutes;
-            PendingReports = dashboard.PendingReports;
+            // Try admin API first
+            var adminStats = await _apiService.GetAdminServerStatsAsync();
 
+            if (adminStats != null)
+            {
+                TotalUsers = adminStats.TotalUsers;
+                OnlineUsers = adminStats.OnlineUsers;
+                TotalProducts = adminStats.TotalProducts;
+                TotalMessages = adminStats.TotalMessages;
+                TotalRooms = adminStats.TotalRooms;
+                TotalOrders = adminStats.TotalOrders;
+                ActiveBans = adminStats.ActiveBans;
+                ActiveMutes = adminStats.ActiveMutes;
+                PendingReports = adminStats.PendingReports;
+
+                var uptimeSeconds = adminStats.ServerUptime;
+                var uptimeSpan = TimeSpan.FromSeconds(uptimeSeconds);
+                ServerUptime = $"{uptimeSpan.Days}d {uptimeSpan.Hours}h {uptimeSpan.Minutes}m";
+            }
+            else
+            {
+                // Fallback to moderation dashboard
+                var dashboard = await _apiService.GetModerationDashboardAsync();
+                ActiveBans = dashboard.ActiveBans;
+                ActiveMutes = dashboard.ActiveMutes;
+                PendingReports = dashboard.PendingReports;
+            }
+
+            // Local process stats
             var process = Process.GetCurrentProcess();
             MemoryUsageMb = process.WorkingSet64 / 1024 / 1024;
             ThreadCount = process.Threads.Count;
-
-            var uptime = DateTime.Now - process.StartTime;
-            ServerUptime = $"{uptime.Days}d {uptime.Hours}h {uptime.Minutes}m";
 
             LastRefreshTime = DateTime.Now;
         }
@@ -257,9 +365,27 @@ public partial class ServerAdminViewModel : BaseViewModel
     {
         await ExecuteAsync(async () =>
         {
-            // This would come from a real-time connection or admin API
             OnlineUsersList.Clear();
-            // Placeholder - in a real implementation, this would get actual online users
+
+            // Try to get online users from active chat connections
+            // The OnOnlineUsersReceived event will populate the list
+            if (_chatService != null && _chatService.IsConnected)
+            {
+                // Request online users - the result comes via OnOnlineUsersReceived event
+                // For now, we'll also search for recently active users as a fallback
+                var recentUsers = await _apiService.SearchUsersAsync("");
+                foreach (var user in recentUsers.Take(20))
+                {
+                    OnlineUsersList.Add(new OnlineUserDto
+                    {
+                        Id = user.UserId,
+                        Username = user.Username,
+                        AvatarUrl = user.AvatarUrl,
+                        // Mark as potentially online - real status comes from events
+                    });
+                }
+                OnlineUsers = OnlineUsersList.Count;
+            }
         }, "Failed to load online users");
     }
 
@@ -304,9 +430,30 @@ public partial class ServerAdminViewModel : BaseViewModel
     {
         if (SelectedUser == null) return;
 
-        // In a real implementation, this would send a kick command through SignalR
-        SetStatus($"Kick command sent for {SelectedUser.Username}");
-        CloseUserActionDialog();
+        await ExecuteAsync(async () =>
+        {
+            var reason = string.IsNullOrEmpty(ActionReason) ? "Kicked by administrator" : ActionReason;
+
+            // Try admin API first
+            var success = await _apiService.AdminKickUserAsync(SelectedUser.Id, reason);
+
+            if (success)
+            {
+                SetStatus($"User {SelectedUser.Username} has been kicked");
+            }
+            else if (_voiceService != null)
+            {
+                // Fallback to voice service if admin API fails
+                await _voiceService.KickUserAsync(SelectedUser.Id, reason);
+                SetStatus($"User {SelectedUser.Username} has been kicked from voice");
+            }
+            else
+            {
+                SetError("Failed to kick user - no admin access");
+            }
+
+            CloseUserActionDialog();
+        }, "Failed to kick user");
     }
 
     [RelayCommand]
@@ -342,9 +489,39 @@ public partial class ServerAdminViewModel : BaseViewModel
     {
         if (SelectedUser == null) return;
 
-        // This would require an admin API endpoint to change user roles
-        SetStatus($"Role change to {SelectedRole} requested for {SelectedUser.Username}");
-        CloseUserActionDialog();
+        await ExecuteAsync(async () =>
+        {
+            // Map role string to UserRole enum
+            var newRole = SelectedRole switch
+            {
+                "Admin" => UserRole.Admin,
+                "Moderator" => UserRole.Moderator,
+                "VIP" => UserRole.VIP,
+                "Verified" => UserRole.Verified,
+                _ => UserRole.User
+            };
+
+            bool success;
+            if (newRole > SelectedUser.Role)
+            {
+                success = await _apiService.AdminPromoteUserAsync(SelectedUser.Id, newRole);
+            }
+            else
+            {
+                success = await _apiService.AdminDemoteUserAsync(SelectedUser.Id, newRole);
+            }
+
+            if (success)
+            {
+                SetStatus($"User {SelectedUser.Username} role changed to {SelectedRole}");
+            }
+            else
+            {
+                SetError("Failed to change user role - insufficient permissions");
+            }
+
+            CloseUserActionDialog();
+        }, "Failed to change user role");
     }
 
     [RelayCommand]
@@ -382,13 +559,42 @@ public partial class ServerAdminViewModel : BaseViewModel
             return;
         }
 
-        // In a real implementation, this would send a system notification to all users
-        IsBroadcastSent = true;
-        SetStatus($"Broadcast sent: {BroadcastMessage}");
-        BroadcastMessage = string.Empty;
+        await ExecuteAsync(async () =>
+        {
+            // Try admin API first for server-wide broadcast
+            var success = await _apiService.AdminSendBroadcastAsync(BroadcastMessage);
 
-        await Task.Delay(3000);
-        IsBroadcastSent = false;
+            if (success)
+            {
+                IsBroadcastSent = true;
+                SetStatus("Broadcast sent successfully to all users");
+            }
+            else if (_chatService != null && _chatService.IsConnected)
+            {
+                // Fallback to chat service if admin API fails
+                var announcementMessage = $"📢 **System Announcement**: {BroadcastMessage}";
+                await _chatService.SendMessageAsync(announcementMessage, "announcements");
+                IsBroadcastSent = true;
+                SetStatus("Broadcast sent to announcements channel");
+            }
+            else
+            {
+                SetError("Failed to send broadcast - insufficient permissions");
+                return;
+            }
+
+            BroadcastMessage = string.Empty;
+
+            // Reset the broadcast sent indicator after a delay
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(3000);
+                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    IsBroadcastSent = false;
+                });
+            });
+        }, "Failed to send broadcast");
     }
 
     [RelayCommand]

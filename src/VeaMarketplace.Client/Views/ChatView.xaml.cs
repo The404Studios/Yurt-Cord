@@ -229,12 +229,20 @@ public partial class ChatView : UserControl
     {
         if (_chatService == null || _viewModel == null) return;
 
-        // Send typing indicator (throttled)
-        if (!string.IsNullOrEmpty(MessageTextBox.Text) &&
-            (DateTime.Now - _lastTypingSent).TotalSeconds > 2)
+        try
         {
-            _lastTypingSent = DateTime.Now;
-            await _chatService.SendTypingAsync(_viewModel.CurrentChannel);
+            // Send typing indicator (throttled)
+            if (!string.IsNullOrEmpty(MessageTextBox.Text) &&
+                (DateTime.Now - _lastTypingSent).TotalSeconds > 2)
+            {
+                _lastTypingSent = DateTime.Now;
+                await _chatService.SendTypingAsync(_viewModel.CurrentChannel);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Silently ignore typing indicator failures - not critical
+            System.Diagnostics.Debug.WriteLine($"Typing indicator failed: {ex.Message}");
         }
     }
 
@@ -255,19 +263,30 @@ public partial class ChatView : UserControl
 
         MessageTextBox.Text = string.Empty;
 
-        // Upload attachments if any
-        if (hasAttachments)
+        try
         {
-            var uploadedAttachments = await UploadPendingAttachmentsAsync();
-            if (uploadedAttachments.Count > 0)
+            // Upload attachments if any
+            if (hasAttachments)
             {
-                await _chatService.SendMessageWithAttachmentsAsync(message, _viewModel.CurrentChannel, uploadedAttachments);
+                var uploadedAttachments = await UploadPendingAttachmentsAsync();
+                if (uploadedAttachments.Count > 0)
+                {
+                    await _chatService.SendMessageWithAttachmentsAsync(message, _viewModel.CurrentChannel, uploadedAttachments);
+                }
+                _pendingAttachments.Clear();
             }
-            _pendingAttachments.Clear();
+            else
+            {
+                await _chatService.SendMessageAsync(message, _viewModel.CurrentChannel);
+            }
         }
-        else
+        catch (Exception ex)
         {
-            await _chatService.SendMessageAsync(message, _viewModel.CurrentChannel);
+            System.Diagnostics.Debug.WriteLine($"Failed to send message: {ex.Message}");
+            var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+            toastService?.ShowError("Send Failed", "Failed to send message. Please try again.");
+            // Restore the message text so user doesn't lose it
+            MessageTextBox.Text = message;
         }
 
         MessageTextBox.Focus();

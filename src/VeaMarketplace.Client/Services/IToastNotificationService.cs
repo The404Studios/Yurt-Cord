@@ -35,11 +35,13 @@ public class ToastNotificationService : IToastNotificationService
         {
             if (_container == null) return;
 
-            // Remove oldest if at max
+            // Remove oldest if at max - remove from list first to avoid infinite loop
             while (_activeNotifications.Count >= MaxNotifications)
             {
                 var oldest = _activeNotifications[0];
-                oldest.Close();
+                _activeNotifications.RemoveAt(0);
+                _container?.Children.Remove(oldest);
+                oldest.Closed -= OnToastClosed; // Unsubscribe since we handled removal
             }
 
             var toast = new NotificationToast

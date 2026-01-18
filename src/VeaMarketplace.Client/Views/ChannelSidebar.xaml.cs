@@ -246,22 +246,38 @@ public partial class ChannelSidebar : UserControl
     private async void ChannelButton_Click(object sender, RoutedEventArgs e)
     {
         if (_viewModel == null) return;
-        var button = (Button)sender;
-        var channelName = button.Tag?.ToString();
-        if (!string.IsNullOrEmpty(channelName))
+        try
         {
-            await _viewModel.SwitchChannelCommand.ExecuteAsync(channelName);
+            var button = (Button)sender;
+            var channelName = button.Tag?.ToString();
+            if (!string.IsNullOrEmpty(channelName))
+            {
+                await _viewModel.SwitchChannelCommand.ExecuteAsync(channelName);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error switching channel: {ex.Message}");
+            _toastService?.ShowError("Channel Error", "Failed to switch channel");
         }
     }
 
     private async void VoiceChannel_Click(object sender, RoutedEventArgs e)
     {
         if (_viewModel == null) return;
-        var button = (Button)sender;
-        var channelId = button.Tag?.ToString();
-        if (!string.IsNullOrEmpty(channelId))
+        try
         {
-            await _viewModel.JoinVoiceChannelCommand.ExecuteAsync(channelId);
+            var button = (Button)sender;
+            var channelId = button.Tag?.ToString();
+            if (!string.IsNullOrEmpty(channelId))
+            {
+                await _viewModel.JoinVoiceChannelCommand.ExecuteAsync(channelId);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error joining voice channel: {ex.Message}");
+            _toastService?.ShowError("Voice Error", "Failed to join voice channel");
         }
     }
 
@@ -304,7 +320,15 @@ public partial class ChannelSidebar : UserControl
     private async void DisconnectVoice_Click(object sender, RoutedEventArgs e)
     {
         if (_viewModel == null) return;
-        await _viewModel.LeaveVoiceChannelCommand.ExecuteAsync(null);
+        try
+        {
+            await _viewModel.LeaveVoiceChannelCommand.ExecuteAsync(null);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error disconnecting from voice: {ex.Message}");
+            _toastService?.ShowError("Voice Error", "Failed to disconnect from voice channel");
+        }
     }
 
     private async void ScreenShare_Click(object sender, RoutedEventArgs e)
@@ -440,14 +464,22 @@ public partial class ChannelSidebar : UserControl
         var user = GetVoiceUserFromSender(sender);
         if (user == null || _voiceService == null) return;
 
-        var menuItem = sender as MenuItem;
-        var channelId = menuItem?.Tag?.ToString();
-
-        if (!string.IsNullOrEmpty(channelId))
+        try
         {
-            await _voiceService.MoveUserToChannelAsync(user.ConnectionId, channelId);
-            var channelName = ChannelDisplayNames.TryGetValue(channelId, out var name) ? name : channelId;
-            _toastService?.ShowInfo("User Moved", $"Moved {user.Username} to {channelName}");
+            var menuItem = sender as MenuItem;
+            var channelId = menuItem?.Tag?.ToString();
+
+            if (!string.IsNullOrEmpty(channelId))
+            {
+                await _voiceService.MoveUserToChannelAsync(user.ConnectionId, channelId);
+                var channelName = ChannelDisplayNames.TryGetValue(channelId, out var name) ? name : channelId;
+                _toastService?.ShowInfo("User Moved", $"Moved {user.Username} to {channelName}");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error moving user to channel: {ex.Message}");
+            _toastService?.ShowError("Move Failed", $"Failed to move {user.Username}");
         }
     }
 
@@ -456,15 +488,24 @@ public partial class ChannelSidebar : UserControl
         var user = GetVoiceUserFromSender(sender);
         if (user == null || _voiceService == null) return;
 
-        var result = MessageBox.Show(
-            $"Disconnect {user.Username} from voice?",
-            "Disconnect User",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Warning);
-
-        if (result == MessageBoxResult.Yes)
+        try
         {
-            await _voiceService.DisconnectUserAsync(user.ConnectionId);
+            var result = MessageBox.Show(
+                $"Disconnect {user.Username} from voice?",
+                "Disconnect User",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                await _voiceService.DisconnectUserAsync(user.ConnectionId);
+                _toastService?.ShowInfo("User Disconnected", $"Disconnected {user.Username} from voice");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error disconnecting user: {ex.Message}");
+            _toastService?.ShowError("Disconnect Failed", $"Failed to disconnect {user.Username}");
         }
     }
 
@@ -473,24 +514,32 @@ public partial class ChannelSidebar : UserControl
         var user = GetVoiceUserFromSender(sender);
         if (user == null || _voiceService == null) return;
 
-        var reason = InputDialog.Show(
-            "Kick User",
-            $"Enter reason for kicking {user.Username}:",
-            "Violation of rules");
-
-        if (!string.IsNullOrEmpty(reason))
+        try
         {
-            var result = MessageBox.Show(
-                $"Kick {user.Username} from the server?\nReason: {reason}",
-                "Confirm Kick",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
+            var reason = InputDialog.Show(
+                "Kick User",
+                $"Enter reason for kicking {user.Username}:",
+                "Violation of rules");
 
-            if (result == MessageBoxResult.Yes)
+            if (!string.IsNullOrEmpty(reason))
             {
-                await _voiceService.KickUserAsync(user.UserId, reason);
-                _toastService?.ShowSuccess("User Kicked", $"Kicked {user.Username}");
+                var result = MessageBox.Show(
+                    $"Kick {user.Username} from the server?\nReason: {reason}",
+                    "Confirm Kick",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    await _voiceService.KickUserAsync(user.UserId, reason);
+                    _toastService?.ShowSuccess("User Kicked", $"Kicked {user.Username}");
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error kicking user: {ex.Message}");
+            _toastService?.ShowError("Kick Failed", $"Failed to kick {user.Username}");
         }
     }
 
@@ -499,36 +548,44 @@ public partial class ChannelSidebar : UserControl
         var user = GetVoiceUserFromSender(sender);
         if (user == null || _voiceService == null) return;
 
-        var reason = InputDialog.Show(
-            "Ban User",
-            $"Enter reason for banning {user.Username}:",
-            "Violation of rules");
-
-        if (!string.IsNullOrEmpty(reason))
+        try
         {
-            var durationInput = InputDialog.Show(
-                "Ban Duration",
-                "Enter ban duration in minutes (leave empty for permanent):",
-                "");
+            var reason = InputDialog.Show(
+                "Ban User",
+                $"Enter reason for banning {user.Username}:",
+                "Violation of rules");
 
-            TimeSpan? duration = null;
-            if (!string.IsNullOrEmpty(durationInput) && double.TryParse(durationInput, out var minutes))
+            if (!string.IsNullOrEmpty(reason))
             {
-                duration = TimeSpan.FromMinutes(minutes);
-            }
+                var durationInput = InputDialog.Show(
+                    "Ban Duration",
+                    "Enter ban duration in minutes (leave empty for permanent):",
+                    "");
 
-            var durationText = duration.HasValue ? $" for {duration.Value.TotalMinutes} minutes" : " permanently";
-            var result = MessageBox.Show(
-                $"Ban {user.Username}{durationText}?\nReason: {reason}",
-                "Confirm Ban",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
+                TimeSpan? duration = null;
+                if (!string.IsNullOrEmpty(durationInput) && double.TryParse(durationInput, out var minutes))
+                {
+                    duration = TimeSpan.FromMinutes(minutes);
+                }
 
-            if (result == MessageBoxResult.Yes)
-            {
-                await _voiceService.BanUserAsync(user.UserId, reason, duration);
-                _toastService?.ShowSuccess("User Banned", $"Banned {user.Username}");
+                var durationText = duration.HasValue ? $" for {duration.Value.TotalMinutes} minutes" : " permanently";
+                var result = MessageBox.Show(
+                    $"Ban {user.Username}{durationText}?\nReason: {reason}",
+                    "Confirm Ban",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    await _voiceService.BanUserAsync(user.UserId, reason, duration);
+                    _toastService?.ShowSuccess("User Banned", $"Banned {user.Username}");
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error banning user: {ex.Message}");
+            _toastService?.ShowError("Ban Failed", $"Failed to ban {user.Username}");
         }
     }
 

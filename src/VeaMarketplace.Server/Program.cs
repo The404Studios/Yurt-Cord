@@ -182,6 +182,7 @@ builder.Services.AddScoped<ModerationService>();
 builder.Services.AddScoped<DiscoveryService>();
 builder.Services.AddScoped<ActivityService>();
 builder.Services.AddSingleton<RoleConfigurationService>();
+builder.Services.AddSingleton<AdminService>();
 
 // Background Services for multi-threaded operations
 builder.Services.AddHostedService<CleanupBackgroundService>();

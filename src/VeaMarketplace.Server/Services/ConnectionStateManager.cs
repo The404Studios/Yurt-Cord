@@ -146,6 +146,11 @@ public class ConnectionStateManager
     }
 
     /// <summary>
+    /// Get count of online users (property shorthand)
+    /// </summary>
+    public int OnlineUserCount => GetOnlineUserCount();
+
+    /// <summary>
     /// Get total number of active connections
     /// </summary>
     public long GetTotalConnections()
@@ -193,6 +198,65 @@ public class ConnectionStateManager
             .ToList();
     }
 
+    /// <summary>
+    /// Get all online users with their connection details
+    /// </summary>
+    public List<OnlineUserInfo> GetAllOnlineUsers()
+    {
+        lock (_setLock)
+        {
+            var result = new List<OnlineUserInfo>();
+            foreach (var kvp in _userIdToConnections)
+            {
+                var userId = kvp.Key;
+                var connectionIds = kvp.Value.ToList();
+
+                // Get the first connection's details for this user
+                if (connectionIds.Count > 0 && _userConnections.TryGetValue(connectionIds[0], out var state))
+                {
+                    result.Add(new OnlineUserInfo
+                    {
+                        UserId = userId,
+                        ConnectionCount = connectionIds.Count,
+                        ConnectedAt = state.ConnectedAt,
+                        LastActivityAt = state.LastActivityAt,
+                        ActiveHubs = connectionIds
+                            .Select(id => _userConnections.TryGetValue(id, out var s) ? s.HubName : null)
+                            .Where(h => h != null)
+                            .Distinct()
+                            .ToList()!
+                    });
+                }
+            }
+            return result;
+        }
+    }
+
+    /// <summary>
+    /// Force disconnect a user from all connections
+    /// </summary>
+    public List<string> DisconnectUser(string userId)
+    {
+        var disconnectedConnections = new List<string>();
+
+        lock (_setLock)
+        {
+            if (_userIdToConnections.TryGetValue(userId, out var connections))
+            {
+                disconnectedConnections = connections.ToList();
+            }
+        }
+
+        // Remove all connections for this user
+        foreach (var connectionId in disconnectedConnections)
+        {
+            RemoveConnection(connectionId);
+        }
+
+        Debug.WriteLine($"[ConnectionState] Force disconnected user {userId}, removed {disconnectedConnections.Count} connections");
+        return disconnectedConnections;
+    }
+
     private void UpdatePeakConnections(long currentCount)
     {
         long currentPeak;
@@ -230,4 +294,16 @@ public class UserConnectionState
     public required string HubName { get; set; }
     public DateTime ConnectedAt { get; set; }
     public DateTime LastActivityAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>
+/// Information about an online user
+/// </summary>
+public class OnlineUserInfo
+{
+    public required string UserId { get; set; }
+    public int ConnectionCount { get; set; }
+    public DateTime ConnectedAt { get; set; }
+    public DateTime LastActivityAt { get; set; }
+    public List<string> ActiveHubs { get; set; } = new();
 }
