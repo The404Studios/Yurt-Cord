@@ -1249,7 +1249,7 @@ public partial class ChatMessageControl : UserControl
             ResizeMode = ResizeMode.NoResize
         };
 
-        var listBox = new ListBox
+        var listBox = new System.Windows.Controls.ListBox
         {
             Background = Brushes.Transparent,
             BorderThickness = new Thickness(0),
@@ -1259,7 +1259,7 @@ public partial class ChatMessageControl : UserControl
 
         foreach (var lang in languages)
         {
-            var item = new ListBoxItem
+            var item = new System.Windows.Controls.ListBoxItem
             {
                 Content = $"{lang.Name} ({lang.NativeName})",
                 Tag = lang.Code,

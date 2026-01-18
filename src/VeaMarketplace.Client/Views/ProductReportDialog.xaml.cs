@@ -33,11 +33,12 @@ public partial class ProductReportDialog : Window
         ProductSeller.Text = $"by {_product.SellerUsername}";
 
         // Load product image
-        if (!string.IsNullOrEmpty(_product.ImageUrl))
+        var imageUrl = _product.ImageUrls?.FirstOrDefault();
+        if (!string.IsNullOrEmpty(imageUrl))
         {
             try
             {
-                ProductImage.Source = new BitmapImage(new Uri(_product.ImageUrl));
+                ProductImage.Source = new BitmapImage(new Uri(imageUrl));
             }
             catch
             {
