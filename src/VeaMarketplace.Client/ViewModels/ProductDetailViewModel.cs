@@ -284,8 +284,24 @@ public partial class ProductDetailViewModel : BaseViewModel
     [RelayCommand]
     private void ReportProduct()
     {
-        // Open report dialog
-        SetStatus("Report functionality coming soon");
+        if (Product == null) return;
+
+        try
+        {
+            var dialog = new Views.ProductReportDialog(Product);
+            dialog.Owner = System.Windows.Application.Current.MainWindow;
+            var result = dialog.ShowDialog();
+
+            if (result == true && dialog.ReportSubmitted)
+            {
+                SetStatus("Report submitted successfully");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error opening report dialog: {ex.Message}");
+            SetStatus("Could not open report dialog");
+        }
     }
 
     [RelayCommand]

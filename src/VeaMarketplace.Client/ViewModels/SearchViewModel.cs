@@ -12,6 +12,8 @@ public partial class SearchViewModel : BaseViewModel
 {
     private readonly IApiService _apiService;
     private readonly INavigationService _navigationService;
+    private readonly ISettingsService _settingsService;
+    private const string RecentSearchesKey = "RecentSearches";
 
     [ObservableProperty]
     private string _searchQuery = string.Empty;
@@ -82,10 +84,11 @@ public partial class SearchViewModel : BaseViewModel
         "popular"
     };
 
-    public SearchViewModel(IApiService apiService, INavigationService navigationService)
+    public SearchViewModel(IApiService apiService, INavigationService navigationService, ISettingsService settingsService)
     {
         _apiService = apiService;
         _navigationService = navigationService;
+        _settingsService = settingsService;
     }
 
     public async Task InitializeAsync()
@@ -287,8 +290,33 @@ public partial class SearchViewModel : BaseViewModel
 
     private void LoadRecentSearches()
     {
-        // Load from settings/storage if implemented
-        // For now, use an in-memory list
+        try
+        {
+            RecentSearches.Clear();
+
+            if (_settingsService.Settings.ExtraSettings.TryGetValue(RecentSearchesKey, out var stored))
+            {
+                // Handle both List<object> (from JSON) and string list
+                if (stored is System.Collections.IEnumerable enumerable)
+                {
+                    foreach (var item in enumerable)
+                    {
+                        if (item is string s)
+                        {
+                            RecentSearches.Add(s);
+                        }
+                        else if (item != null)
+                        {
+                            RecentSearches.Add(item.ToString() ?? string.Empty);
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error loading recent searches: {ex.Message}");
+        }
     }
 
     private void AddToRecentSearches(string query)
@@ -311,7 +339,15 @@ public partial class SearchViewModel : BaseViewModel
 
     private void SaveRecentSearches()
     {
-        // Save to settings/storage if implemented
+        try
+        {
+            _settingsService.Settings.ExtraSettings[RecentSearchesKey] = RecentSearches.ToList();
+            _settingsService.SaveSettings();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error saving recent searches: {ex.Message}");
+        }
     }
 
     partial void OnSortByChanged(string value)

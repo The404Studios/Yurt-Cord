@@ -118,6 +118,9 @@ public interface IApiService : IDisposable
     Task<bool> AdminKickUserAsync(string userId, string reason);
     Task<bool> AdminPromoteUserAsync(string userId, UserRole newRole);
     Task<bool> AdminDemoteUserAsync(string userId, UserRole newRole);
+
+    // Reporting API
+    Task<ProductReportDto?> ReportProductAsync(string productId, ProductReportReason reason, string? details = null);
 }
 
 public class ApiService : IApiService
@@ -896,6 +899,20 @@ public class ApiService : IApiService
         var request = new { UserId = userId, NewRole = newRole };
         var response = await _httpClient.PostAsJsonAsync("/api/admin/demote", request, JsonOptions).ConfigureAwait(false);
         return response.IsSuccessStatusCode;
+    }
+
+    // Reporting API
+    public async Task<ProductReportDto?> ReportProductAsync(string productId, ProductReportReason reason, string? details = null)
+    {
+        var request = new ReportProductRequest
+        {
+            ProductId = productId,
+            Reason = reason,
+            Details = details ?? string.Empty
+        };
+        var response = await _httpClient.PostAsJsonAsync($"/api/products/{productId}/report", request, JsonOptions).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadFromJsonAsync<ProductReportDto>(JsonOptions).ConfigureAwait(false);
     }
 
     /// <summary>
