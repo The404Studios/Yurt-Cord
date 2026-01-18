@@ -851,13 +851,27 @@ public partial class ChatMessageControl : UserControl
     private async void Avatar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         e.Handled = true;
-        await ShowUserProfilePopup();
+        try
+        {
+            await ShowUserProfilePopup();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error showing user profile: {ex.Message}");
+        }
     }
 
     private async void Username_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         e.Handled = true;
-        await ShowUserProfilePopup();
+        try
+        {
+            await ShowUserProfilePopup();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error showing user profile: {ex.Message}");
+        }
     }
 
     private async Task ShowUserProfilePopup()
@@ -1064,10 +1078,19 @@ public partial class ChatMessageControl : UserControl
 
         if (result == MessageBoxResult.Yes)
         {
-            var chatService = (IChatService?)App.ServiceProvider.GetService(typeof(IChatService));
-            if (chatService != null)
+            try
             {
-                await chatService.DeleteMessageAsync(_currentMessage.Id, _currentMessage.Channel);
+                var chatService = (IChatService?)App.ServiceProvider.GetService(typeof(IChatService));
+                if (chatService != null)
+                {
+                    await chatService.DeleteMessageAsync(_currentMessage.Id, _currentMessage.Channel);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error deleting message: {ex.Message}");
+                var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+                toastService?.ShowError("Delete Failed", "Failed to delete message");
             }
         }
     }

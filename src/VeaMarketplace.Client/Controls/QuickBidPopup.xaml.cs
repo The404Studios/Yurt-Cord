@@ -159,23 +159,33 @@ public partial class QuickBidPopup : UserControl
             return;
         }
 
-        // Disable button and show loading
-        PlaceBidButton.IsEnabled = false;
-        PlaceBidButton.Content = "Placing bid...";
-
-        // Simulate API call delay
-        await Task.Delay(500);
-
-        BidPlaced?.Invoke(this, new BidPlacedEventArgs
+        try
         {
-            ItemId = _itemId,
-            BidAmount = _bidAmount
-        });
+            // Disable button and show loading
+            PlaceBidButton.IsEnabled = false;
+            PlaceBidButton.Content = "Placing bid...";
 
-        // Show success animation
-        await ShowSuccessAnimation();
+            // Simulate API call delay
+            await Task.Delay(500);
 
-        AnimateClose();
+            BidPlaced?.Invoke(this, new BidPlacedEventArgs
+            {
+                ItemId = _itemId,
+                BidAmount = _bidAmount
+            });
+
+            // Show success animation
+            await ShowSuccessAnimation();
+
+            AnimateClose();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to place bid: {ex.Message}");
+            ShowError("Failed to place bid. Please try again.");
+            PlaceBidButton.IsEnabled = true;
+            PlaceBidButton.Content = "Place Bid";
+        }
     }
 
     private async Task ShowSuccessAnimation()

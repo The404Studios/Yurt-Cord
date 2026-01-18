@@ -362,9 +362,11 @@ public partial class UserProfilePopup : UserControl
 
             UpdateFriendActionButton();
         }
-        catch
+        catch (Exception ex)
         {
-            // Handle error
+            System.Diagnostics.Debug.WriteLine($"Friend action failed: {ex.Message}");
+            var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+            toastService?.ShowError("Action Failed", "Failed to complete friend action");
         }
     }
 
@@ -388,8 +390,15 @@ public partial class UserProfilePopup : UserControl
         }
         else if (NoteTextBox.Text != _noteText && _user != null && _friendService != null)
         {
-            _noteText = NoteTextBox.Text;
-            await _friendService.SetUserNoteAsync(_user.Id, _noteText);
+            try
+            {
+                _noteText = NoteTextBox.Text;
+                await _friendService.SetUserNoteAsync(_user.Id, _noteText);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to save note: {ex.Message}");
+            }
         }
     }
 }
