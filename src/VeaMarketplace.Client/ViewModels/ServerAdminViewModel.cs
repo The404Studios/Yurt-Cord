@@ -498,7 +498,7 @@ public partial class ServerAdminViewModel : BaseViewModel
                 "Moderator" => UserRole.Moderator,
                 "VIP" => UserRole.VIP,
                 "Verified" => UserRole.Verified,
-                _ => UserRole.User
+                _ => UserRole.Member
             };
 
             bool success;
