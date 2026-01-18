@@ -228,9 +228,9 @@ public partial class ProductDetailViewModel : BaseViewModel
     [RelayCommand]
     private void ViewSellerProfile()
     {
-        if (Product != null)
+        if (Product != null && !string.IsNullOrEmpty(Product.SellerId))
         {
-            _navigationService.NavigateToProfile(Product.SellerUsername);
+            _navigationService.NavigateToProfile(Product.SellerId);
         }
     }
 

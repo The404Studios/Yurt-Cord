@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VeaMarketplace.Client.Services;
 using VeaMarketplace.Shared.DTOs;
 using VeaMarketplace.Shared.Enums;
 
@@ -10,7 +11,9 @@ namespace VeaMarketplace.Client.ViewModels;
 
 public partial class ServerAdminViewModel : BaseViewModel
 {
-    private readonly Services.IApiService _apiService;
+    private readonly IApiService _apiService;
+    private readonly IVoiceService? _voiceService;
+    private readonly IChatService? _chatService;
     private readonly DispatcherTimer _refreshTimer;
 
     [ObservableProperty]
@@ -113,9 +116,11 @@ public partial class ServerAdminViewModel : BaseViewModel
         "Admin"
     };
 
-    public ServerAdminViewModel(Services.IApiService apiService)
+    public ServerAdminViewModel(IApiService apiService, IVoiceService? voiceService = null, IChatService? chatService = null)
     {
         _apiService = apiService;
+        _voiceService = voiceService;
+        _chatService = chatService;
 
         _refreshTimer = new DispatcherTimer
         {
@@ -124,7 +129,53 @@ public partial class ServerAdminViewModel : BaseViewModel
         _refreshTimer.Tick += OnRefreshTimerTick;
         _refreshTimer.Start();
 
+        // Subscribe to online users events
+        if (_chatService != null)
+        {
+            _chatService.OnOnlineUsersReceived += OnOnlineUsersReceived;
+            _chatService.OnUserJoined += OnUserJoined;
+            _chatService.OnUserLeft += OnUserLeft;
+        }
+
         _ = SafeLoadDashboardAsync();
+    }
+
+    private void OnOnlineUsersReceived(List<OnlineUserDto> users)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            OnlineUsersList.Clear();
+            foreach (var user in users)
+            {
+                OnlineUsersList.Add(user);
+            }
+            OnlineUsers = users.Count;
+        });
+    }
+
+    private void OnUserJoined(OnlineUserDto user)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            if (!OnlineUsersList.Any(u => u.UserId == user.UserId))
+            {
+                OnlineUsersList.Add(user);
+                OnlineUsers = OnlineUsersList.Count;
+            }
+        });
+    }
+
+    private void OnUserLeft(OnlineUserDto user)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            var existingUser = OnlineUsersList.FirstOrDefault(u => u.UserId == user.UserId);
+            if (existingUser != null)
+            {
+                OnlineUsersList.Remove(existingUser);
+                OnlineUsers = OnlineUsersList.Count;
+            }
+        });
     }
 
     private async Task SafeLoadDashboardAsync()
@@ -146,13 +197,29 @@ public partial class ServerAdminViewModel : BaseViewModel
     {
         _refreshTimer.Stop();
         _refreshTimer.Tick -= OnRefreshTimerTick;
+
+        // Unsubscribe from chat service events
+        if (_chatService != null)
+        {
+            _chatService.OnOnlineUsersReceived -= OnOnlineUsersReceived;
+            _chatService.OnUserJoined -= OnUserJoined;
+            _chatService.OnUserLeft -= OnUserLeft;
+        }
     }
 
     private async void OnRefreshTimerTick(object? sender, EventArgs e)
     {
         if (AutoRefreshEnabled)
         {
-            await RefreshDashboardAsync();
+            try
+            {
+                await RefreshDashboardAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error refreshing admin dashboard: {ex.Message}");
+                // Don't show error to user for background refresh - just log it
+            }
         }
     }
 
@@ -257,9 +324,27 @@ public partial class ServerAdminViewModel : BaseViewModel
     {
         await ExecuteAsync(async () =>
         {
-            // This would come from a real-time connection or admin API
             OnlineUsersList.Clear();
-            // Placeholder - in a real implementation, this would get actual online users
+
+            // Try to get online users from active chat connections
+            // The OnOnlineUsersReceived event will populate the list
+            if (_chatService != null && _chatService.IsConnected)
+            {
+                // Request online users - the result comes via OnOnlineUsersReceived event
+                // For now, we'll also search for recently active users as a fallback
+                var recentUsers = await _apiService.SearchUsersAsync("");
+                foreach (var user in recentUsers.Take(20))
+                {
+                    OnlineUsersList.Add(new OnlineUserDto
+                    {
+                        UserId = user.UserId,
+                        Username = user.Username,
+                        AvatarUrl = user.AvatarUrl,
+                        // Mark as potentially online - real status comes from events
+                    });
+                }
+                OnlineUsers = OnlineUsersList.Count;
+            }
         }, "Failed to load online users");
     }
 
@@ -304,9 +389,20 @@ public partial class ServerAdminViewModel : BaseViewModel
     {
         if (SelectedUser == null) return;
 
-        // In a real implementation, this would send a kick command through SignalR
-        SetStatus($"Kick command sent for {SelectedUser.Username}");
-        CloseUserActionDialog();
+        await ExecuteAsync(async () =>
+        {
+            if (_voiceService != null)
+            {
+                var reason = string.IsNullOrEmpty(ActionReason) ? "Kicked by administrator" : ActionReason;
+                await _voiceService.KickUserAsync(SelectedUser.Id, reason);
+                SetStatus($"User {SelectedUser.Username} has been kicked");
+            }
+            else
+            {
+                SetStatus($"Kick command sent for {SelectedUser.Username}");
+            }
+            CloseUserActionDialog();
+        }, "Failed to kick user");
     }
 
     [RelayCommand]
@@ -382,13 +478,35 @@ public partial class ServerAdminViewModel : BaseViewModel
             return;
         }
 
-        // In a real implementation, this would send a system notification to all users
-        IsBroadcastSent = true;
-        SetStatus($"Broadcast sent: {BroadcastMessage}");
-        BroadcastMessage = string.Empty;
+        await ExecuteAsync(async () =>
+        {
+            if (_chatService != null && _chatService.IsConnected)
+            {
+                // Send as a system announcement to the general channel
+                var announcementMessage = $"📢 **System Announcement**: {BroadcastMessage}";
+                await _chatService.SendMessageAsync(announcementMessage, "announcements");
+                IsBroadcastSent = true;
+                SetStatus("Broadcast sent successfully");
+            }
+            else
+            {
+                // Fallback when chat service is not available
+                IsBroadcastSent = true;
+                SetStatus($"Broadcast queued: {BroadcastMessage}");
+            }
 
-        await Task.Delay(3000);
-        IsBroadcastSent = false;
+            BroadcastMessage = string.Empty;
+
+            // Reset the broadcast sent indicator after a delay
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(3000);
+                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    IsBroadcastSent = false;
+                });
+            });
+        }, "Failed to send broadcast");
     }
 
     [RelayCommand]

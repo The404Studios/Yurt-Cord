@@ -262,7 +262,10 @@ public partial class SearchViewModel : BaseViewModel
     [RelayCommand]
     private void ViewSeller(SellerProfileDto seller)
     {
-        _navigationService.NavigateToProfile(seller.Username);
+        if (!string.IsNullOrEmpty(seller.UserId))
+        {
+            _navigationService.NavigateToProfile(seller.UserId);
+        }
     }
 
     private async Task LoadTrendingProductsAsync()
