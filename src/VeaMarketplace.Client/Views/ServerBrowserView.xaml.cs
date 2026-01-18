@@ -134,6 +134,11 @@ public partial class ServerBrowserView : UserControl
             await Task.Delay(100); // Small delay to let hub response come back
             UpdateRoomDisplay();
         }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to load rooms: {ex.Message}");
+            _toastService.ShowError("Error", "Failed to load voice rooms. Please try again.");
+        }
         finally
         {
             LoadingOverlay.Visibility = Visibility.Collapsed;
