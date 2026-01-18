@@ -110,6 +110,14 @@ public interface IApiService : IDisposable
     Task<List<ProductDto>> GetNewArrivalsAsync(int count = 20);
     Task<List<ProductDto>> GetRecommendedProductsAsync(int count = 20);
     Task<List<ProductDto>> GetSimilarProductsAsync(string productId, int count = 10);
+
+    // Admin API
+    Task<AdminServerStatsDto?> GetAdminServerStatsAsync();
+    Task<int> GetAdminOnlineCountAsync();
+    Task<bool> AdminSendBroadcastAsync(string message, string? channel = null);
+    Task<bool> AdminKickUserAsync(string userId, string reason);
+    Task<bool> AdminPromoteUserAsync(string userId, UserRole newRole);
+    Task<bool> AdminDemoteUserAsync(string userId, UserRole newRole);
 }
 
 public class ApiService : IApiService
@@ -845,6 +853,49 @@ public class ApiService : IApiService
         var response = await _httpClient.GetAsync($"/api/discovery/similar/{productId}?limit={count}").ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return [];
         return await response.Content.ReadFromJsonAsync<List<ProductDto>>(JsonOptions).ConfigureAwait(false) ?? [];
+    }
+
+    // Admin API
+    public async Task<AdminServerStatsDto?> GetAdminServerStatsAsync()
+    {
+        var response = await _httpClient.GetAsync("/api/admin/stats").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadFromJsonAsync<AdminServerStatsDto>(JsonOptions).ConfigureAwait(false);
+    }
+
+    public async Task<int> GetAdminOnlineCountAsync()
+    {
+        var response = await _httpClient.GetAsync("/api/admin/online-count").ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return 0;
+        return await response.Content.ReadFromJsonAsync<int>(JsonOptions).ConfigureAwait(false);
+    }
+
+    public async Task<bool> AdminSendBroadcastAsync(string message, string? channel = null)
+    {
+        var request = new { Message = message, Channel = channel };
+        var response = await _httpClient.PostAsJsonAsync("/api/admin/broadcast", request, JsonOptions).ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> AdminKickUserAsync(string userId, string reason)
+    {
+        var request = new { UserId = userId, Reason = reason };
+        var response = await _httpClient.PostAsJsonAsync("/api/admin/kick", request, JsonOptions).ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> AdminPromoteUserAsync(string userId, UserRole newRole)
+    {
+        var request = new { UserId = userId, NewRole = newRole };
+        var response = await _httpClient.PostAsJsonAsync("/api/admin/promote", request, JsonOptions).ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> AdminDemoteUserAsync(string userId, UserRole newRole)
+    {
+        var request = new { UserId = userId, NewRole = newRole };
+        var response = await _httpClient.PostAsJsonAsync("/api/admin/demote", request, JsonOptions).ConfigureAwait(false);
+        return response.IsSuccessStatusCode;
     }
 
     /// <summary>

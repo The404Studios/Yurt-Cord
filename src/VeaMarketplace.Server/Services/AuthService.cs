@@ -15,6 +15,7 @@ public class AuthService
     private readonly DatabaseService _db;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AuthService> _logger;
+    private readonly AdminService _adminService;
     private readonly byte[] _jwtKey;
 
     // Minimum password requirements
@@ -28,11 +29,12 @@ public class AuthService
     /// </summary>
     public AuthenticationMode AuthenticationMode => _authenticationMode;
 
-    public AuthService(DatabaseService db, IConfiguration configuration, ILogger<AuthService> logger)
+    public AuthService(DatabaseService db, IConfiguration configuration, ILogger<AuthService> logger, AdminService adminService)
     {
         _db = db;
         _configuration = configuration;
         _logger = logger;
+        _adminService = adminService;
 
         // Get authentication mode from configuration (default: Session)
         var authModeString = Environment.GetEnvironmentVariable("VEA_AUTH_MODE")
@@ -89,6 +91,9 @@ public class AuthService
 
         _logger.LogInformation("Registering new user: {Username} (Mode: {AuthMode})", request.Username, _authenticationMode);
 
+        // Check if user is a configured superuser
+        var superuserRole = _adminService.GetSuperuserRole(request.Username, request.Email);
+
         var user = new User
         {
             Username = request.Username,
@@ -96,8 +101,14 @@ public class AuthService
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             AvatarUrl = $"https://api.dicebear.com/7.x/avataaars/svg?seed={request.Username}",
             CreatedAt = DateTime.UtcNow,
-            LastSeenAt = DateTime.UtcNow
+            LastSeenAt = DateTime.UtcNow,
+            Role = superuserRole ?? UserRole.User // Assign superuser role if configured
         };
+
+        if (superuserRole.HasValue)
+        {
+            _logger.LogInformation("User {Username} registered as superuser with role: {Role}", request.Username, superuserRole.Value);
+        }
 
         _db.Users.Insert(user);
 

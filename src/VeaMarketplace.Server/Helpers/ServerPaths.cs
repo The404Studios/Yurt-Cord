@@ -71,6 +71,17 @@ public static class ServerPaths
     public static string RolesConfigPath => Path.Combine(DataDirectory, "roles-config.json");
 
     /// <summary>
+    /// Gets the path for the superusers configuration file.
+    /// Defines users who should have Admin role by default.
+    /// </summary>
+    public static string SuperusersConfigPath => Path.Combine(DataDirectory, "superusers.json");
+
+    /// <summary>
+    /// Gets the path for the server configuration file.
+    /// </summary>
+    public static string ServerConfigPath => Path.Combine(DataDirectory, "server-config.json");
+
+    /// <summary>
     /// Gets the avatars upload directory.
     /// </summary>
     public static string AvatarsDirectory => Path.Combine(UploadDirectory, "avatars");
