@@ -136,9 +136,9 @@ public partial class LoginViewModel : BaseViewModel
             return;
         }
 
-        if (Password.Length < 6)
+        if (Password.Length < AppConstants.MinPasswordLength)
         {
-            SetError("Password must be at least 6 characters");
+            SetError($"Password must be at least {AppConstants.MinPasswordLength} characters");
             return;
         }
 
