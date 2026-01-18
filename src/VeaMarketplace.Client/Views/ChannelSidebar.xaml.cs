@@ -191,43 +191,55 @@ public partial class ChannelSidebar : UserControl
         if (user != null)
         {
             UserNameText.Text = user.Username;
-
-            // Try to load user avatar, fallback to default
-            bool avatarLoaded = false;
-            if (!string.IsNullOrEmpty(user.AvatarUrl))
-            {
-                try
-                {
-                    var bitmap = new BitmapImage();
-                    bitmap.BeginInit();
-                    bitmap.UriSource = new Uri(user.AvatarUrl);
-                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmap.EndInit();
-                    UserAvatarBrush.ImageSource = bitmap;
-                    avatarLoaded = true;
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Failed to load user avatar: {ex.Message}");
-                }
-            }
-
-            // Set default avatar if none loaded
-            if (!avatarLoaded)
-            {
-                try
-                {
-                    UserAvatarBrush.ImageSource = new BitmapImage(new Uri(AppConstants.DefaultAvatarPath));
-                }
-                catch
-                {
-                    // If default avatar fails, leave it empty
-                }
-            }
+            SetUserAvatar(user.AvatarUrl);
         }
         else
         {
             UserNameText.Text = "Guest";
+            LoadDefaultAvatar();
+        }
+    }
+
+    /// <summary>
+    /// Sets the user avatar with proper handling for special formats.
+    /// </summary>
+    private void SetUserAvatar(string? avatarUrl)
+    {
+        // Check if it's a special format (emoji gradient) or empty - use default
+        if (string.IsNullOrWhiteSpace(avatarUrl) ||
+            avatarUrl.StartsWith("emoji:") ||
+            avatarUrl.StartsWith("gradient:"))
+        {
+            LoadDefaultAvatar();
+            return;
+        }
+
+        // Try to load the URL as an image
+        try
+        {
+            var bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.UriSource = new Uri(avatarUrl);
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.EndInit();
+            UserAvatarBrush.ImageSource = bitmap;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to load user avatar: {ex.Message}");
+            LoadDefaultAvatar();
+        }
+    }
+
+    private void LoadDefaultAvatar()
+    {
+        try
+        {
+            UserAvatarBrush.ImageSource = new BitmapImage(new Uri(AppConstants.DefaultAvatarPath));
+        }
+        catch
+        {
+            // If default avatar fails, leave it empty
         }
     }
 

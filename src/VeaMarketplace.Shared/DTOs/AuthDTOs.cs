@@ -100,10 +100,18 @@ public class UpdateProfileRequest
     [StringLength(128, ErrorMessage = "Status message cannot exceed 128 characters")]
     public string? StatusMessage { get; set; }
 
-    [Url(ErrorMessage = "Invalid avatar URL")]
+    /// <summary>
+    /// Avatar URL or special format string. Supports:
+    /// - Regular URLs (http:// or https://)
+    /// - Emoji gradient format: "emoji:😊,#RRGGBB,#RRGGBB"
+    /// </summary>
     public string? AvatarUrl { get; set; }
 
-    [Url(ErrorMessage = "Invalid banner URL")]
+    /// <summary>
+    /// Banner URL or special format string. Supports:
+    /// - Regular URLs (http:// or https://)
+    /// - Gradient format: "gradient:#RRGGBB,#RRGGBB"
+    /// </summary>
     public string? BannerUrl { get; set; }
 
     [RegularExpression(@"^#[0-9A-Fa-f]{6}$", ErrorMessage = "Accent color must be a valid hex color (e.g., #00B4D8)")]

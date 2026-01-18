@@ -302,7 +302,9 @@ public partial class ChatViewModel : BaseViewModel
         if (user != null)
         {
             await _voiceService.ConnectAsync();
-            await _voiceService.JoinVoiceChannelAsync(channelId, user.Id, user.Username, user.AvatarUrl);
+            // Use default avatar if AvatarUrl is empty or a special format
+            var avatarUrl = GetDisplayableAvatarUrl(user.AvatarUrl);
+            await _voiceService.JoinVoiceChannelAsync(channelId, user.Id, user.Username, avatarUrl);
             IsInVoiceChannel = true;
             CurrentVoiceChannel = channelId;
 
@@ -350,5 +352,20 @@ public partial class ChatViewModel : BaseViewModel
             _lastTypingSent = DateTime.UtcNow;
             _ = _chatService.SendTypingAsync(CurrentChannel);
         }
+    }
+
+    /// <summary>
+    /// Returns a displayable avatar URL, converting special formats to default avatar.
+    /// </summary>
+    private static string GetDisplayableAvatarUrl(string? avatarUrl)
+    {
+        // If empty or special format, use default avatar
+        if (string.IsNullOrWhiteSpace(avatarUrl) ||
+            avatarUrl.StartsWith("emoji:") ||
+            avatarUrl.StartsWith("gradient:"))
+        {
+            return AppConstants.DefaultAvatarPath;
+        }
+        return avatarUrl;
     }
 }
