@@ -8,8 +8,7 @@
         Topmost="True"
         ShowInTaskbar="False"
         ShowActivated="False"
-        ResizeMode="NoResize"
-        WindowState="Maximized">
+        ResizeMode="NoResize">
 
     <Window.Resources>
         <!-- Flying Message Animation -->
