@@ -106,7 +106,7 @@ public partial class MarketplaceView : UserControl
         _ = _viewModel.FilterByCategoryCommand.ExecuteAsync(category);
     }
 
-    private async void ProductCard_Click(object sender, RoutedEventArgs e)
+    private void ProductCard_Click(object sender, RoutedEventArgs e)
     {
         var card = (FrameworkElement)sender;
         if (card.DataContext is ProductDto product)
@@ -118,10 +118,18 @@ public partial class MarketplaceView : UserControl
 
     private async void ProductCard_ShareClick(object sender, RoutedEventArgs e)
     {
-        var card = (FrameworkElement)sender;
-        if (card.DataContext is ProductDto product)
+        try
         {
-            await ShareProductToChat(product);
+            var card = (FrameworkElement)sender;
+            if (card.DataContext is ProductDto product)
+            {
+                await ShareProductToChat(product);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Share failed: {ex.Message}");
+            ShowToast("Failed to share product");
         }
     }
 
@@ -227,8 +235,16 @@ public partial class MarketplaceView : UserControl
     {
         if (_selectedProduct == null || _viewModel == null) return;
 
-        await _viewModel.PurchaseProductCommand.ExecuteAsync(null);
-        ProductDetailModal.Visibility = Visibility.Collapsed;
+        try
+        {
+            await _viewModel.PurchaseProductCommand.ExecuteAsync(null);
+            ProductDetailModal.Visibility = Visibility.Collapsed;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Purchase failed: {ex.Message}");
+            ShowToast("Purchase failed. Please try again.");
+        }
     }
 
     private void CreateListingButton_Click(object sender, RoutedEventArgs e)
@@ -266,26 +282,34 @@ public partial class MarketplaceView : UserControl
             return;
         }
 
-        var categoryItem = NewCategoryBox.SelectedItem as ComboBoxItem;
-        var categoryStr = categoryItem?.Tag?.ToString() ?? "Other";
-        var category = Enum.Parse<ProductCategory>(categoryStr);
-
-        _viewModel.NewTitle = title;
-        _viewModel.NewDescription = description ?? "";
-        _viewModel.NewPrice = priceText;
-        _viewModel.NewCategory = category;
-        _viewModel.NewTags = tags ?? "";
-        _viewModel.NewImageUrl = imageUrl ?? "";
-
-        await _viewModel.CreateListingCommand.ExecuteAsync(null);
-
-        if (!_viewModel.HasError)
+        try
         {
-            CreateListingModal.Visibility = Visibility.Collapsed;
+            var categoryItem = NewCategoryBox.SelectedItem as ComboBoxItem;
+            var categoryStr = categoryItem?.Tag?.ToString() ?? "Other";
+            var category = Enum.Parse<ProductCategory>(categoryStr);
+
+            _viewModel.NewTitle = title;
+            _viewModel.NewDescription = description ?? "";
+            _viewModel.NewPrice = priceText;
+            _viewModel.NewCategory = category;
+            _viewModel.NewTags = tags ?? "";
+            _viewModel.NewImageUrl = imageUrl ?? "";
+
+            await _viewModel.CreateListingCommand.ExecuteAsync(null);
+
+            if (!_viewModel.HasError)
+            {
+                CreateListingModal.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                ShowCreateError(_viewModel.ErrorMessage ?? "Failed to create listing");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            ShowCreateError(_viewModel.ErrorMessage ?? "Failed to create listing");
+            System.Diagnostics.Debug.WriteLine($"Create listing failed: {ex.Message}");
+            ShowCreateError("Failed to create listing. Please try again.");
         }
     }
 
@@ -424,11 +448,19 @@ public partial class MarketplaceView : UserControl
     {
         if (_viewModel == null) return;
 
-        await _viewModel.LoadMyProductsCommand.ExecuteAsync(null);
-        MyListingsItemsControl.ItemsSource = _viewModel.MyProducts;
-        MyListingsCountText.Text = $"{_viewModel.MyProducts.Count} active listing{(_viewModel.MyProducts.Count == 1 ? "" : "s")}";
-        NoListingsPanel.Visibility = _viewModel.MyProducts.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        MyListingsPanel.Visibility = Visibility.Visible;
+        try
+        {
+            await _viewModel.LoadMyProductsCommand.ExecuteAsync(null);
+            MyListingsItemsControl.ItemsSource = _viewModel.MyProducts;
+            MyListingsCountText.Text = $"{_viewModel.MyProducts.Count} active listing{(_viewModel.MyProducts.Count == 1 ? "" : "s")}";
+            NoListingsPanel.Visibility = _viewModel.MyProducts.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            MyListingsPanel.Visibility = Visibility.Visible;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Load my listings failed: {ex.Message}");
+            ShowToast("Failed to load your listings");
+        }
     }
 
     private void CloseMyListings_Click(object sender, RoutedEventArgs e)
@@ -494,16 +526,24 @@ public partial class MarketplaceView : UserControl
 
             if (result == MessageBoxResult.Yes)
             {
-                _viewModel.ShowDeleteConfirmCommand.Execute(product);
-                await _viewModel.ConfirmDeleteCommand.ExecuteAsync(null);
+                try
+                {
+                    _viewModel.ShowDeleteConfirmCommand.Execute(product);
+                    await _viewModel.ConfirmDeleteCommand.ExecuteAsync(null);
 
-                // Refresh listings
-                await _viewModel.LoadMyProductsCommand.ExecuteAsync(null);
-                MyListingsItemsControl.ItemsSource = _viewModel.MyProducts;
-                MyListingsCountText.Text = $"{_viewModel.MyProducts.Count} active listing{(_viewModel.MyProducts.Count == 1 ? "" : "s")}";
-                NoListingsPanel.Visibility = _viewModel.MyProducts.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+                    // Refresh listings
+                    await _viewModel.LoadMyProductsCommand.ExecuteAsync(null);
+                    MyListingsItemsControl.ItemsSource = _viewModel.MyProducts;
+                    MyListingsCountText.Text = $"{_viewModel.MyProducts.Count} active listing{(_viewModel.MyProducts.Count == 1 ? "" : "s")}";
+                    NoListingsPanel.Visibility = _viewModel.MyProducts.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
-                ShowToast("Listing deleted successfully");
+                    ShowToast("Listing deleted successfully");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Delete listing failed: {ex.Message}");
+                    ShowToast("Failed to delete listing");
+                }
             }
         }
     }
@@ -548,8 +588,16 @@ public partial class MarketplaceView : UserControl
     private async void QuickActions_RefreshRequested(object sender, RoutedEventArgs e)
     {
         if (_viewModel == null) return;
-        await _viewModel.LoadProductsCommand.ExecuteAsync(null);
-        ShowToast("Products refreshed!");
+        try
+        {
+            await _viewModel.LoadProductsCommand.ExecuteAsync(null);
+            ShowToast("Products refreshed!");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Refresh products failed: {ex.Message}");
+            ShowToast("Failed to refresh products");
+        }
     }
 
     private void QuickActions_FilterRequested(object sender, RoutedEventArgs e)
