@@ -356,7 +356,6 @@ public class AdminService
             Channel = channel,
             SenderId = "SYSTEM",
             SenderUsername = "System",
-            SenderAvatarUrl = "",
             SenderRole = UserRole.Admin,
             Timestamp = DateTime.UtcNow,
             IsSystemMessage = true
@@ -372,7 +371,6 @@ public class AdminService
             chatMessage.Channel,
             chatMessage.SenderId,
             chatMessage.SenderUsername,
-            chatMessage.SenderAvatarUrl,
             chatMessage.Timestamp,
             chatMessage.IsSystemMessage,
             IsAnnouncement = true

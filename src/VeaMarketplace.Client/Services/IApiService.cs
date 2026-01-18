@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using VeaMarketplace.Shared.DTOs;
 using VeaMarketplace.Shared.Enums;
+using VeaMarketplace.Shared.Models;
 
 namespace VeaMarketplace.Client.Services;
 

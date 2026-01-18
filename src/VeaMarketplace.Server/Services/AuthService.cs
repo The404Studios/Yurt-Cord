@@ -102,7 +102,7 @@ public class AuthService
             AvatarUrl = $"https://api.dicebear.com/7.x/avataaars/svg?seed={request.Username}",
             CreatedAt = DateTime.UtcNow,
             LastSeenAt = DateTime.UtcNow,
-            Role = superuserRole ?? UserRole.User // Assign superuser role if configured
+            Role = superuserRole ?? UserRole.Member // Assign superuser role if configured
         };
 
         if (superuserRole.HasValue)
