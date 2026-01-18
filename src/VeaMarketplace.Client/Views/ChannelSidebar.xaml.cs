@@ -191,18 +191,55 @@ public partial class ChannelSidebar : UserControl
         if (user != null)
         {
             UserNameText.Text = user.Username;
-            if (!string.IsNullOrEmpty(user.AvatarUrl))
-            {
-                try
-                {
-                    UserAvatarBrush.ImageSource = new BitmapImage(new Uri(user.AvatarUrl));
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Failed to load avatar image: {ex.Message}");
-                    System.Diagnostics.Debug.WriteLine($"Failed to load user avatar: {ex.Message}");
-                }
-            }
+            SetUserAvatar(user.AvatarUrl);
+        }
+        else
+        {
+            UserNameText.Text = "Guest";
+            LoadDefaultAvatar();
+        }
+    }
+
+    /// <summary>
+    /// Sets the user avatar with proper handling for special formats.
+    /// </summary>
+    private void SetUserAvatar(string? avatarUrl)
+    {
+        // Check if it's a special format (emoji gradient) or empty - use default
+        if (string.IsNullOrWhiteSpace(avatarUrl) ||
+            avatarUrl.StartsWith("emoji:") ||
+            avatarUrl.StartsWith("gradient:"))
+        {
+            LoadDefaultAvatar();
+            return;
+        }
+
+        // Try to load the URL as an image
+        try
+        {
+            var bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.UriSource = new Uri(avatarUrl);
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.EndInit();
+            UserAvatarBrush.ImageSource = bitmap;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to load user avatar: {ex.Message}");
+            LoadDefaultAvatar();
+        }
+    }
+
+    private void LoadDefaultAvatar()
+    {
+        try
+        {
+            UserAvatarBrush.ImageSource = new BitmapImage(new Uri(AppConstants.DefaultAvatarPath));
+        }
+        catch
+        {
+            // If default avatar fails, leave it empty
         }
     }
 
@@ -646,6 +683,82 @@ public partial class ChannelSidebar : UserControl
             Debug.WriteLine($"Reconnection failed: {ex.Message}");
             UpdateConnectionStatus(ConnectionState.Disconnected);
             _toastService?.ShowError("Connection Failed", "Unable to reconnect. Please try again.");
+        }
+    }
+
+    #endregion
+
+    #region Channel Creation
+
+    private async void CreateTextChannel_Click(object sender, RoutedEventArgs e)
+    {
+        var channelName = InputDialog.Show(
+            "Create Text Channel",
+            "Enter channel name:",
+            "new-channel");
+
+        if (string.IsNullOrWhiteSpace(channelName))
+            return;
+
+        // Sanitize channel name (lowercase, replace spaces with dashes)
+        channelName = channelName.ToLower().Replace(" ", "-");
+
+        try
+        {
+            // Add channel to the ViewModel's channels list
+            if (_viewModel != null)
+            {
+                var newChannel = new ChannelDto
+                {
+                    Name = channelName,
+                    Icon = "#",
+                    Description = $"Text channel: {channelName}"
+                };
+
+                // Add to channels collection
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    _viewModel.Channels.Add(newChannel);
+                });
+
+                _toastService?.ShowSuccess("Channel Created", $"Created #{channelName}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _toastService?.ShowError("Error", $"Failed to create channel: {ex.Message}");
+        }
+    }
+
+    private async void CreateVoiceChannel_Click(object sender, RoutedEventArgs e)
+    {
+        var channelName = InputDialog.Show(
+            "Create Voice Channel",
+            "Enter voice channel name:",
+            "Voice Chat");
+
+        if (string.IsNullOrWhiteSpace(channelName))
+            return;
+
+        try
+        {
+            // Add voice channel to available channels
+            if (_viewModel != null)
+            {
+                var channelId = channelName.ToLower().Replace(" ", "-") + "-voice";
+
+                // Add to the display mapping
+                if (!ChannelDisplayNames.ContainsKey(channelId))
+                {
+                    ChannelDisplayNames[channelId] = channelName;
+                }
+
+                _toastService?.ShowSuccess("Voice Channel Created", $"Created {channelName}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _toastService?.ShowError("Error", $"Failed to create voice channel: {ex.Message}");
         }
     }
 

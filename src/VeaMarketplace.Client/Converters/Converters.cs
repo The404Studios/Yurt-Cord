@@ -257,7 +257,8 @@ public class TimestampConverter : IValueConverter
 }
 
 /// <summary>
-/// Returns a default avatar URL if the provided URL is null or empty
+/// Returns a default avatar URL if the provided URL is null, empty, or a special format.
+/// Special formats like "emoji:..." and "gradient:..." are converted to default avatar.
 /// </summary>
 public class DefaultAvatarConverter : IValueConverter
 {
@@ -265,6 +266,11 @@ public class DefaultAvatarConverter : IValueConverter
     {
         if (value is string url && !string.IsNullOrWhiteSpace(url))
         {
+            // Check for special formats that aren't displayable URLs
+            if (url.StartsWith("emoji:") || url.StartsWith("gradient:"))
+            {
+                return parameter as string ?? AppConstants.DefaultAvatarPath;
+            }
             return url;
         }
         return parameter as string ?? AppConstants.DefaultAvatarPath;

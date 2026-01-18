@@ -39,7 +39,11 @@ public partial class ServerBrowserView : UserControl
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
-        // Unsubscribe from events to prevent memory leaks
+        // Unsubscribe from UI events
+        NewRoomVisibilityBox.SelectionChanged -= OnRoomVisibilityChanged;
+        SearchBox.TextChanged -= OnSearchTextChanged;
+
+        // Unsubscribe from voice service events to prevent memory leaks
         _voiceService.OnPublicVoiceRoomsReceived -= OnPublicVoiceRoomsReceived;
         _voiceService.OnVoiceRoomAdded -= OnVoiceRoomAdded;
         _voiceService.OnVoiceRoomUpdated -= OnVoiceRoomUpdated;
@@ -99,22 +103,25 @@ public partial class ServerBrowserView : UserControl
 
     private void SetupEventHandlers()
     {
-        NewRoomVisibilityBox.SelectionChanged += (s, e) =>
-        {
-            if (NewRoomVisibilityBox.SelectedItem is ComboBoxItem item)
-            {
-                PasswordSection.Visibility = item.Tag?.ToString() == "Private"
-                    ? Visibility.Visible
-                    : Visibility.Collapsed;
-            }
-        };
+        NewRoomVisibilityBox.SelectionChanged += OnRoomVisibilityChanged;
+        SearchBox.TextChanged += OnSearchTextChanged;
+    }
 
-        SearchBox.TextChanged += (s, e) =>
+    private void OnRoomVisibilityChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (NewRoomVisibilityBox.SelectedItem is ComboBoxItem item)
         {
-            SearchPlaceholder.Visibility = string.IsNullOrEmpty(SearchBox.Text)
+            PasswordSection.Visibility = item.Tag?.ToString() == "Private"
                 ? Visibility.Visible
                 : Visibility.Collapsed;
-        };
+        }
+    }
+
+    private void OnSearchTextChanged(object sender, TextChangedEventArgs e)
+    {
+        SearchPlaceholder.Visibility = string.IsNullOrEmpty(SearchBox.Text)
+            ? Visibility.Visible
+            : Visibility.Collapsed;
     }
 
     private async void LoadRooms()

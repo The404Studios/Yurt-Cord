@@ -37,7 +37,32 @@ public partial class MemberSidebar : UserControl
         // Update online count
         _viewModel.OnlineUsers.CollectionChanged += OnOnlineUsersChanged;
 
+        Loaded += OnLoaded;
         Unloaded += OnUnloaded;
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        // Initialize the online count with current users
+        if (_viewModel != null)
+        {
+            OnlineHeaderText.Text = $"ONLINE — {_viewModel.OnlineUsers.Count}";
+
+            // Also add current user if authenticated and not already in list
+            var apiService = (IApiService?)App.ServiceProvider.GetService(typeof(IApiService));
+            if (apiService?.CurrentUser != null && !_viewModel.OnlineUsers.Any(u => u.Id == apiService.CurrentUser.Id))
+            {
+                var currentUser = new OnlineUserDto
+                {
+                    Id = apiService.CurrentUser.Id,
+                    Username = apiService.CurrentUser.Username,
+                    AvatarUrl = apiService.CurrentUser.AvatarUrl,
+                    Role = apiService.CurrentUser.Role,
+                    StatusMessage = "Online"
+                };
+                _viewModel.OnlineUsers.Add(currentUser);
+            }
+        }
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)

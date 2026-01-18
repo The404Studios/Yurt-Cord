@@ -507,7 +507,8 @@
                                    VerticalAlignment="Center"/>
                     </StackPanel>
                     <Button Style="{StaticResource BladeIconButton}" Width="24" Height="24"
-                            HorizontalAlignment="Right" ToolTip="Create Channel">
+                            HorizontalAlignment="Right" ToolTip="Create Text Channel"
+                            Click="CreateTextChannel_Click">
                         <TextBlock Text="+" FontSize="14" Foreground="{StaticResource BladeNeonGreenBrush}"/>
                     </Button>
                 </Grid>
@@ -555,7 +556,7 @@
                             <TextBlock Text="🌐" FontSize="12"/>
                         </Button>
                         <Button Style="{StaticResource BladeIconButton}" Width="24" Height="24"
-                                ToolTip="Create Voice Channel">
+                                ToolTip="Create Voice Channel" Click="CreateVoiceChannel_Click">
                             <TextBlock Text="+" FontSize="14" Foreground="{StaticResource BladeNeonCyanBrush}"/>
                         </Button>
                     </StackPanel>

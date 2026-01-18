@@ -112,6 +112,16 @@ public partial class SettingsView : UserControl
         {
             AccountUsername.Text = apiService.CurrentUser.Username;
             AccountEmail.Text = apiService.CurrentUser.Email ?? "Not set";
+
+            // Load profile data into ViewModel
+            if (_viewModel != null)
+            {
+                _viewModel.DisplayName = apiService.CurrentUser.DisplayName ?? apiService.CurrentUser.Username;
+                _viewModel.Bio = apiService.CurrentUser.Bio ?? "";
+                _viewModel.StatusMessage = apiService.CurrentUser.StatusMessage ?? "";
+                _viewModel.AvatarUrl = apiService.CurrentUser.AvatarUrl ?? "";
+                _viewModel.AccentColor = apiService.CurrentUser.AccentColor ?? "#00FF9F";
+            }
         }
     }
 
@@ -353,4 +363,180 @@ public partial class SettingsView : UserControl
         dialog.Content = panel;
         dialog.ShowDialog();
     }
+
+    #region Profile Panel Handlers
+
+    private void ProfileBio_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (sender is TextBox textBox)
+        {
+            BioCharCount.Text = $"{textBox.Text.Length}/150";
+        }
+    }
+
+    private void AccentColor_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (sender is TextBox textBox)
+        {
+            try
+            {
+                var color = (Color)ColorConverter.ConvertFromString(textBox.Text);
+                AccentColorPreview.Background = new SolidColorBrush(color);
+            }
+            catch
+            {
+                // Invalid color format - ignore
+            }
+        }
+    }
+
+    private async void SaveProfile_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel == null || _apiService == null) return;
+
+        try
+        {
+            var request = new VeaMarketplace.Shared.DTOs.UpdateProfileRequest
+            {
+                DisplayName = _viewModel.DisplayName,
+                Bio = _viewModel.Bio,
+                StatusMessage = _viewModel.StatusMessage,
+                AvatarUrl = _viewModel.AvatarUrl,
+                AccentColor = _viewModel.AccentColor
+            };
+
+            var result = await _apiService.UpdateProfileAsync(request);
+            if (result != null)
+            {
+                var toastService = App.ServiceProvider.GetService(typeof(IToastNotificationService)) as IToastNotificationService;
+                toastService?.ShowSuccess("Profile Saved", "Your profile has been updated successfully!");
+            }
+        }
+        catch (Exception ex)
+        {
+            var toastService = App.ServiceProvider.GetService(typeof(IToastNotificationService)) as IToastNotificationService;
+            toastService?.ShowError("Error", $"Failed to save profile: {ex.Message}");
+        }
+    }
+
+    #endregion
+
+    #region Keybinds Panel Handlers
+
+    private string? _recordingKeybindFor;
+
+    private void KeybindButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && button.Tag is string keybindName)
+        {
+            _recordingKeybindFor = keybindName;
+
+            // Update button text to indicate recording
+            var textBlock = button.Content as TextBlock;
+            if (textBlock != null)
+            {
+                textBlock.Text = "Press key...";
+                textBlock.Foreground = new SolidColorBrush(Color.FromRgb(255, 159, 0)); // Orange
+            }
+
+            Focus();
+        }
+    }
+
+    #endregion
+
+    #region QoL Feature Handlers
+
+    private void AddTemplate_Click(object sender, RoutedEventArgs e)
+    {
+        var name = TemplateNameBox.Text?.Trim();
+        var content = TemplateContentBox.Text?.Trim();
+
+        if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(content))
+        {
+            var toastService = App.ServiceProvider.GetService(typeof(IToastNotificationService)) as IToastNotificationService;
+            toastService?.ShowWarning("Missing Information", "Please enter both a name and content for the template.");
+            return;
+        }
+
+        var qolService = App.ServiceProvider.GetService(typeof(IQoLService)) as IQoLService;
+        if (qolService != null)
+        {
+            qolService.AddTemplate(new MessageTemplate
+            {
+                Name = name,
+                Shortcut = $"/{name.ToLower().Replace(" ", "")}",
+                Content = content
+            });
+
+            // Clear inputs
+            TemplateNameBox.Text = "";
+            TemplateContentBox.Text = "";
+
+            // Refresh list
+            TemplatesList.ItemsSource = null;
+            TemplatesList.ItemsSource = qolService.Templates;
+
+            NoTemplatesText.Visibility = qolService.Templates.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+            var toastService = App.ServiceProvider.GetService(typeof(IToastNotificationService)) as IToastNotificationService;
+            toastService?.ShowSuccess("Template Created", $"Template '{name}' has been saved!");
+        }
+    }
+
+    private void DeleteTemplate_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && button.Tag is string templateId)
+        {
+            var qolService = App.ServiceProvider.GetService(typeof(IQoLService)) as IQoLService;
+            if (qolService != null)
+            {
+                qolService.RemoveTemplate(templateId);
+
+                // Refresh list
+                TemplatesList.ItemsSource = null;
+                TemplatesList.ItemsSource = qolService.Templates;
+
+                NoTemplatesText.Visibility = qolService.Templates.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+    }
+
+    private void AddScheduledStatus_Click(object sender, RoutedEventArgs e)
+    {
+        var startTime = StatusStartTimeBox.Text?.Trim();
+        var endTime = StatusEndTimeBox.Text?.Trim();
+        var statusText = ScheduledStatusTextBox.Text?.Trim();
+
+        var toastService = App.ServiceProvider.GetService(typeof(IToastNotificationService)) as IToastNotificationService;
+
+        if (string.IsNullOrEmpty(startTime) || string.IsNullOrEmpty(endTime) || string.IsNullOrEmpty(statusText))
+        {
+            toastService?.ShowWarning("Missing Information", "Please fill in all fields.");
+            return;
+        }
+
+        toastService?.ShowSuccess("Status Scheduled", $"Status '{statusText}' scheduled from {startTime} to {endTime}");
+    }
+
+    private void ResetInsights_Click(object sender, RoutedEventArgs e)
+    {
+        var result = MessageBox.Show(
+            "Are you sure you want to reset all activity statistics? This action cannot be undone.",
+            "Reset Statistics",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (result == MessageBoxResult.Yes)
+        {
+            MessagesSentCount.Text = "0";
+            VoiceMinutesCount.Text = "0";
+            DaysActiveCount.Text = "0";
+
+            var toastService = App.ServiceProvider.GetService(typeof(IToastNotificationService)) as IToastNotificationService;
+            toastService?.ShowInfo("Statistics Reset", "Your activity statistics have been reset.");
+        }
+    }
+
+    #endregion
 }

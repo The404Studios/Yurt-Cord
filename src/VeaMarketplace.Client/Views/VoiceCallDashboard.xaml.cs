@@ -463,16 +463,47 @@ public partial class VoiceCallDashboard : UserControl
         if (user != null)
         {
             SelfUsernameText.Text = user.Username;
-            if (!string.IsNullOrEmpty(user.AvatarUrl))
+            SetSelfAvatar(user.AvatarUrl);
+        }
+    }
+
+    /// <summary>
+    /// Sets the self avatar with proper fallback handling for special formats.
+    /// </summary>
+    private void SetSelfAvatar(string? avatarUrl)
+    {
+        // Check if it's a special format (emoji gradient) or empty - use default
+        if (string.IsNullOrWhiteSpace(avatarUrl) ||
+            avatarUrl.StartsWith("emoji:") ||
+            avatarUrl.StartsWith("gradient:"))
+        {
+            try
             {
-                try
-                {
-                    SelfAvatarBrush.ImageSource = new BitmapImage(new Uri(user.AvatarUrl));
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Failed to load avatar: {ex.Message}");
-                }
+                SelfAvatarBrush.ImageSource = new BitmapImage(new Uri(AppConstants.DefaultAvatarPath));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to load default avatar: {ex.Message}");
+            }
+            return;
+        }
+
+        // Try to load the URL as an image
+        try
+        {
+            SelfAvatarBrush.ImageSource = new BitmapImage(new Uri(avatarUrl));
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to load avatar: {ex.Message}");
+            // Use default avatar as fallback
+            try
+            {
+                SelfAvatarBrush.ImageSource = new BitmapImage(new Uri(AppConstants.DefaultAvatarPath));
+            }
+            catch
+            {
+                // Fallback also failed
             }
         }
     }

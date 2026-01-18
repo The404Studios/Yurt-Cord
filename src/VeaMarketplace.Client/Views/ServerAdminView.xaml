@@ -148,6 +148,8 @@
                                  Command="{Binding NavigateCommand}" CommandParameter="Dashboard"/>
                     <RadioButton Content="User Management" Style="{StaticResource AdminNavButton}"
                                  Command="{Binding NavigateCommand}" CommandParameter="Users"/>
+                    <RadioButton Content="Ranks" Style="{StaticResource AdminNavButton}"
+                                 Command="{Binding NavigateCommand}" CommandParameter="Ranks"/>
                     <RadioButton Content="Online Users" Style="{StaticResource AdminNavButton}"
                                  Command="{Binding NavigateCommand}" CommandParameter="Online"/>
                     <RadioButton Content="Broadcast Message" Style="{StaticResource AdminNavButton}"
@@ -540,6 +542,110 @@
                         </Border>
                     </StackPanel>
 
+                    <!-- Ranks View -->
+                    <StackPanel Visibility="{Binding CurrentSection, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter='Ranks'}">
+                        <Grid Margin="0,0,0,20">
+                            <TextBlock Text="Server Ranks" FontSize="22" FontWeight="Bold" Foreground="White"/>
+                            <Button Content="+ Create Rank" Style="{StaticResource AccentButton}"
+                                    HorizontalAlignment="Right" Padding="16,8"
+                                    Command="{Binding CreateRankCommand}"/>
+                        </Grid>
+
+                        <!-- Default Ranks -->
+                        <Border Background="{StaticResource SecondaryDark}" CornerRadius="12" Padding="24" Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="Default Ranks" FontSize="16" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,16"/>
+
+                                <!-- Owner Rank -->
+                                <Border Background="{StaticResource TertiaryDark}" CornerRadius="8" Padding="16" Margin="0,0,0,8">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Ellipse Width="12" Height="12" Fill="#FFD700" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="Owner" FontSize="14" FontWeight="SemiBold" Foreground="#FFD700"/>
+                                            <TextBlock Text="Full server control - cannot be modified" FontSize="11" Foreground="{StaticResource TextMuted}"/>
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2" Text="All Permissions" FontSize="11" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Admin Rank -->
+                                <Border Background="{StaticResource TertiaryDark}" CornerRadius="8" Padding="16" Margin="0,0,0,8">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Ellipse Width="12" Height="12" Fill="#ED4245" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="Admin" FontSize="14" FontWeight="SemiBold" Foreground="#ED4245"/>
+                                            <TextBlock Text="Manage channels, ranks, and members" FontSize="11" Foreground="{StaticResource TextMuted}"/>
+                                        </StackPanel>
+                                        <Button Content="Edit" Style="{StaticResource SecondaryButton}" Padding="12,6"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Moderator Rank -->
+                                <Border Background="{StaticResource TertiaryDark}" CornerRadius="8" Padding="16" Margin="0,0,0,8">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Ellipse Width="12" Height="12" Fill="#5865F2" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="Moderator" FontSize="14" FontWeight="SemiBold" Foreground="#5865F2"/>
+                                            <TextBlock Text="Kick/mute users, manage messages" FontSize="11" Foreground="{StaticResource TextMuted}"/>
+                                        </StackPanel>
+                                        <Button Content="Edit" Style="{StaticResource SecondaryButton}" Padding="12,6"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Member Rank -->
+                                <Border Background="{StaticResource TertiaryDark}" CornerRadius="8" Padding="16">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Ellipse Width="12" Height="12" Fill="#8090B0" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="@everyone" FontSize="14" FontWeight="SemiBold" Foreground="#8090B0"/>
+                                            <TextBlock Text="Default rank for all members" FontSize="11" Foreground="{StaticResource TextMuted}"/>
+                                        </StackPanel>
+                                        <Button Content="Edit" Style="{StaticResource SecondaryButton}" Padding="12,6"/>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Permissions Info -->
+                        <Border Background="{StaticResource SecondaryDark}" CornerRadius="12" Padding="24">
+                            <StackPanel>
+                                <TextBlock Text="Permissions" FontSize="16" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,16"/>
+                                <TextBlock Text="Available permissions that can be assigned to ranks:" FontSize="13" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,12"/>
+
+                                <UniformGrid Columns="2" Rows="4">
+                                    <TextBlock Text="• Manage Channels" FontSize="12" Foreground="{StaticResource TextMuted}" Margin="0,4"/>
+                                    <TextBlock Text="• Manage Ranks" FontSize="12" Foreground="{StaticResource TextMuted}" Margin="0,4"/>
+                                    <TextBlock Text="• Kick Members" FontSize="12" Foreground="{StaticResource TextMuted}" Margin="0,4"/>
+                                    <TextBlock Text="• Ban Members" FontSize="12" Foreground="{StaticResource TextMuted}" Margin="0,4"/>
+                                    <TextBlock Text="• Manage Messages" FontSize="12" Foreground="{StaticResource TextMuted}" Margin="0,4"/>
+                                    <TextBlock Text="• Mute Members" FontSize="12" Foreground="{StaticResource TextMuted}" Margin="0,4"/>
+                                    <TextBlock Text="• Send Messages" FontSize="12" Foreground="{StaticResource TextMuted}" Margin="0,4"/>
+                                    <TextBlock Text="• Connect to Voice" FontSize="12" Foreground="{StaticResource TextMuted}" Margin="0,4"/>
+                                </UniformGrid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
                     <!-- Broadcast View -->
                     <StackPanel Visibility="{Binding CurrentSection, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter='Broadcast'}">
                         <TextBlock Text="System Broadcast" FontSize="22" FontWeight="Bold" Foreground="White" Margin="0,0,0,16"/>
@@ -640,8 +746,8 @@
                                 Command="{Binding PromoteUserCommand}" Padding="12,14" Margin="4,4,0,0"/>
                     </UniformGrid>
 
-                    <!-- Role Selection for Promote -->
-                    <TextBlock Text="Role (for promotion)" FontSize="13" Foreground="{StaticResource TextMuted}" Margin="0,0,0,8"/>
+                    <!-- Rank Selection for Promote -->
+                    <TextBlock Text="Rank (for promotion)" FontSize="13" Foreground="{StaticResource TextMuted}" Margin="0,0,0,8"/>
                     <ComboBox ItemsSource="{Binding AvailableRoles}" SelectedItem="{Binding SelectedRole}"
                               Background="{StaticResource TertiaryDark}" Foreground="White"
                               Padding="12,10" Margin="0,0,0,20"/>

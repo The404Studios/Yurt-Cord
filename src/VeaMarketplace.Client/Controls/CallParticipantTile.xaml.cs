@@ -46,15 +46,8 @@ public partial class CallParticipantTile : UserControl
 
         UsernameText.Text = participant.Username;
 
-        // Set avatar
-        try
-        {
-            AvatarBrush.ImageSource = new BitmapImage(new Uri(participant.AvatarUrl, UriKind.RelativeOrAbsolute));
-        }
-        catch
-        {
-            // Default avatar fallback
-        }
+        // Set avatar with proper fallback handling
+        SetAvatarImage(participant.AvatarUrl);
 
         // Update states
         UpdateHostBadge(participant.IsHost);
@@ -165,6 +158,47 @@ public partial class CallParticipantTile : UserControl
     }
 
     public CallParticipant? GetParticipant() => _participant;
+
+    /// <summary>
+    /// Sets the avatar image with proper fallback handling for special formats.
+    /// </summary>
+    private void SetAvatarImage(string? avatarUrl)
+    {
+        // Check if it's a special format (emoji gradient) or empty
+        if (string.IsNullOrWhiteSpace(avatarUrl) ||
+            avatarUrl.StartsWith("emoji:") ||
+            avatarUrl.StartsWith("gradient:"))
+        {
+            // Use default avatar for special formats or empty URLs
+            try
+            {
+                AvatarBrush.ImageSource = new BitmapImage(new Uri(AppConstants.DefaultAvatarPath));
+            }
+            catch
+            {
+                // Fallback failed - leave as-is
+            }
+            return;
+        }
+
+        // Try to load the URL as an image
+        try
+        {
+            AvatarBrush.ImageSource = new BitmapImage(new Uri(avatarUrl, UriKind.RelativeOrAbsolute));
+        }
+        catch
+        {
+            // Invalid URL - use default avatar
+            try
+            {
+                AvatarBrush.ImageSource = new BitmapImage(new Uri(AppConstants.DefaultAvatarPath));
+            }
+            catch
+            {
+                // Fallback also failed - leave as-is
+            }
+        }
+    }
 
     private void ViewProfile_Click(object sender, RoutedEventArgs e)
     {

@@ -24,12 +24,12 @@ public partial class GroupCallView : UserControl
     private bool _isDeafened;
     private bool _isScreenSharing;
 
-    // Discord colors
-    private static readonly SolidColorBrush GreenBrush = new(Color.FromRgb(35, 165, 89));      // #23A559
-    private static readonly SolidColorBrush RedBrush = new(Color.FromRgb(242, 63, 67));        // #F23F43
-    private static readonly SolidColorBrush MutedBrush = new(Color.FromRgb(181, 186, 193));    // #B5BAC1
-    private static readonly SolidColorBrush WhiteBrush = new(Color.FromRgb(242, 243, 245));    // #F2F3F5
-    private static readonly SolidColorBrush DarkBrush = new(Color.FromRgb(17, 18, 20));        // #111214
+    // Blade UI theme colors
+    private static readonly SolidColorBrush GreenBrush = new(Color.FromRgb(0, 255, 159));       // #00FF9F
+    private static readonly SolidColorBrush RedBrush = new(Color.FromRgb(255, 68, 102));        // #FF4466
+    private static readonly SolidColorBrush MutedBrush = new(Color.FromRgb(160, 176, 200));     // #A0B0C8
+    private static readonly SolidColorBrush WhiteBrush = new(Color.FromRgb(232, 240, 255));     // #E8F0FF
+    private static readonly SolidColorBrush DarkBrush = new(Color.FromRgb(2, 4, 8));            // #020408
 
     public event Action? OnCallLeft;
 
@@ -153,16 +153,47 @@ public partial class GroupCallView : UserControl
         if (user != null)
         {
             SelfUsernameText.Text = user.Username;
-            if (!string.IsNullOrEmpty(user.AvatarUrl))
+            SetSelfAvatar(user.AvatarUrl);
+        }
+    }
+
+    /// <summary>
+    /// Sets the self avatar with proper fallback handling for special formats.
+    /// </summary>
+    private void SetSelfAvatar(string? avatarUrl)
+    {
+        // Check if it's a special format (emoji gradient) or empty - use default
+        if (string.IsNullOrWhiteSpace(avatarUrl) ||
+            avatarUrl.StartsWith("emoji:") ||
+            avatarUrl.StartsWith("gradient:"))
+        {
+            try
             {
-                try
-                {
-                    SelfAvatarBrush.ImageSource = new BitmapImage(new Uri(user.AvatarUrl));
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Failed to load avatar: {ex.Message}");
-                }
+                SelfAvatarBrush.ImageSource = new BitmapImage(new Uri(AppConstants.DefaultAvatarPath));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to load default avatar: {ex.Message}");
+            }
+            return;
+        }
+
+        // Try to load the URL as an image
+        try
+        {
+            SelfAvatarBrush.ImageSource = new BitmapImage(new Uri(avatarUrl));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to load avatar: {ex.Message}");
+            // Use default avatar as fallback
+            try
+            {
+                SelfAvatarBrush.ImageSource = new BitmapImage(new Uri(AppConstants.DefaultAvatarPath));
+            }
+            catch
+            {
+                // Fallback also failed
             }
         }
     }
@@ -283,15 +314,23 @@ public partial class GroupCallView : UserControl
 
     private void CloseInviteModal_Click(object sender, RoutedEventArgs e)
     {
-        InviteModal.Visibility = Visibility.Collapsed;
+        CloseInviteModal();
     }
 
     private void InviteModal_MouseDown(object sender, MouseButtonEventArgs e)
     {
         if (e.OriginalSource == InviteModal)
         {
-            InviteModal.Visibility = Visibility.Collapsed;
+            CloseInviteModal();
         }
+    }
+
+    private void CloseInviteModal()
+    {
+        // Clear state when closing
+        InviteModal.Visibility = Visibility.Collapsed;
+        _friends.Clear();
+        InviteSearchBox.Text = string.Empty;
     }
 
     private void ScreenShare_Click(object sender, RoutedEventArgs e)
