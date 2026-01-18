@@ -909,7 +909,7 @@ public class ApiService : IApiService
         {
             ProductId = productId,
             Reason = reason,
-            Details = details ?? string.Empty
+            AdditionalInfo = details
         };
         var response = await _httpClient.PostAsJsonAsync($"/api/products/{productId}/report", request, JsonOptions).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode) return null;

@@ -491,7 +491,7 @@ public partial class SettingsView : UserControl
             var qolService = App.ServiceProvider.GetService(typeof(IQoLService)) as IQoLService;
             if (qolService != null)
             {
-                qolService.RemoveTemplate(templateId);
+                qolService.DeleteTemplate(templateId);
 
                 // Refresh list
                 TemplatesList.ItemsSource = null;

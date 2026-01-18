@@ -29,7 +29,7 @@ public class AdminController : ControllerBase
     /// Gets comprehensive server statistics.
     /// </summary>
     [HttpGet("stats")]
-    public ActionResult<ServerStatsDto> GetServerStats(
+    public ActionResult<AdminServerStatsDto> GetServerStats(
         [FromHeader(Name = "Authorization")] string? authorization)
     {
         var user = GetUserFromToken(authorization);
@@ -51,7 +51,7 @@ public class AdminController : ControllerBase
     /// Gets all currently online users.
     /// </summary>
     [HttpGet("online-users")]
-    public ActionResult<List<OnlineUserInfo>> GetOnlineUsers(
+    public ActionResult<List<AdminOnlineUserInfoDto>> GetOnlineUsers(
         [FromHeader(Name = "Authorization")] string? authorization)
     {
         var user = GetUserFromToken(authorization);
@@ -61,7 +61,15 @@ public class AdminController : ControllerBase
         if (user.Role < UserRole.Moderator)
             return Forbid();
 
-        var users = _adminService.GetOnlineUsers();
+        var onlineUsers = _adminService.GetOnlineUsers();
+        var users = onlineUsers.Select(u => new AdminOnlineUserInfoDto
+        {
+            UserId = u.UserId,
+            ConnectionCount = u.ConnectionCount,
+            ConnectedAt = u.ConnectedAt,
+            LastActivityAt = u.LastActivityAt,
+            ActiveHubs = u.ActiveHubs
+        }).ToList();
         return Ok(users);
     }
 

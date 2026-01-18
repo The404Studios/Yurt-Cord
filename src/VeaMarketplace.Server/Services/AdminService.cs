@@ -421,18 +421,18 @@ public class AdminService
     /// <summary>
     /// Gets comprehensive server statistics.
     /// </summary>
-    public ServerStatsDto GetServerStats(string adminId)
+    public AdminServerStatsDto GetServerStats(string adminId)
     {
         var admin = _db.Users.FindById(adminId);
         if (admin == null || admin.Role < UserRole.Moderator)
-            return new ServerStatsDto();
+            return new AdminServerStatsDto();
 
         var now = DateTime.UtcNow;
         var today = now.Date;
         var yesterday = today.AddDays(-1);
         var lastWeek = today.AddDays(-7);
 
-        return new ServerStatsDto
+        return new AdminServerStatsDto
         {
             TotalUsers = _db.Users.Count(),
             OnlineUsers = _connectionManager.OnlineUserCount,
@@ -520,27 +520,6 @@ public class ServerConfig
     public bool RequireEmailVerification { get; set; } = false;
     public bool MaintenanceMode { get; set; } = false;
     public string AnnouncementChannel { get; set; } = "announcements";
-}
-
-public class ServerStatsDto
-{
-    public int TotalUsers { get; set; }
-    public int OnlineUsers { get; set; }
-    public int TotalProducts { get; set; }
-    public int ActiveProducts { get; set; }
-    public int TotalMessages { get; set; }
-    public int MessagesToday { get; set; }
-    public int TotalOrders { get; set; }
-    public int OrdersToday { get; set; }
-    public int ActiveBans { get; set; }
-    public int ActiveMutes { get; set; }
-    public int PendingReports { get; set; }
-    public int TotalRooms { get; set; }
-    public int NewUsersToday { get; set; }
-    public int NewUsersThisWeek { get; set; }
-    public long ServerUptime { get; set; }
-    public string ServerName { get; set; } = string.Empty;
-    public bool MaintenanceMode { get; set; }
 }
 
 #endregion
