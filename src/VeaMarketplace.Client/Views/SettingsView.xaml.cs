@@ -408,13 +408,13 @@ public partial class SettingsView : UserControl
             var result = await _apiService.UpdateProfileAsync(request);
             if (result != null)
             {
-                var toastService = App.ServiceProvider.GetService(typeof(IToastService)) as IToastService;
+                var toastService = App.ServiceProvider.GetService(typeof(IToastNotificationService)) as IToastNotificationService;
                 toastService?.ShowSuccess("Profile Saved", "Your profile has been updated successfully!");
             }
         }
         catch (Exception ex)
         {
-            var toastService = App.ServiceProvider.GetService(typeof(IToastService)) as IToastService;
+            var toastService = App.ServiceProvider.GetService(typeof(IToastNotificationService)) as IToastNotificationService;
             toastService?.ShowError("Error", $"Failed to save profile: {ex.Message}");
         }
     }
@@ -454,7 +454,7 @@ public partial class SettingsView : UserControl
 
         if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(content))
         {
-            var toastService = App.ServiceProvider.GetService(typeof(IToastService)) as IToastService;
+            var toastService = App.ServiceProvider.GetService(typeof(IToastNotificationService)) as IToastNotificationService;
             toastService?.ShowWarning("Missing Information", "Please enter both a name and content for the template.");
             return;
         }
@@ -479,7 +479,7 @@ public partial class SettingsView : UserControl
 
             NoTemplatesText.Visibility = qolService.Templates.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
-            var toastService = App.ServiceProvider.GetService(typeof(IToastService)) as IToastService;
+            var toastService = App.ServiceProvider.GetService(typeof(IToastNotificationService)) as IToastNotificationService;
             toastService?.ShowSuccess("Template Created", $"Template '{name}' has been saved!");
         }
     }
@@ -508,15 +508,15 @@ public partial class SettingsView : UserControl
         var endTime = StatusEndTimeBox.Text?.Trim();
         var statusText = ScheduledStatusTextBox.Text?.Trim();
 
+        var toastService = App.ServiceProvider.GetService(typeof(IToastNotificationService)) as IToastNotificationService;
+
         if (string.IsNullOrEmpty(startTime) || string.IsNullOrEmpty(endTime) || string.IsNullOrEmpty(statusText))
         {
-            var toastService = App.ServiceProvider.GetService(typeof(IToastService)) as IToastService;
             toastService?.ShowWarning("Missing Information", "Please fill in all fields.");
             return;
         }
 
-        var toastServiceSuccess = App.ServiceProvider.GetService(typeof(IToastService)) as IToastService;
-        toastServiceSuccess?.ShowSuccess("Status Scheduled", $"Status '{statusText}' scheduled from {startTime} to {endTime}");
+        toastService?.ShowSuccess("Status Scheduled", $"Status '{statusText}' scheduled from {startTime} to {endTime}");
     }
 
     private void ResetInsights_Click(object sender, RoutedEventArgs e)
@@ -533,7 +533,7 @@ public partial class SettingsView : UserControl
             VoiceMinutesCount.Text = "0";
             DaysActiveCount.Text = "0";
 
-            var toastService = App.ServiceProvider.GetService(typeof(IToastService)) as IToastService;
+            var toastService = App.ServiceProvider.GetService(typeof(IToastNotificationService)) as IToastNotificationService;
             toastService?.ShowInfo("Statistics Reset", "Your activity statistics have been reset.");
         }
     }
