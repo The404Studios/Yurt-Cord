@@ -44,8 +44,8 @@ public class AuthController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Username) || request.Username.Length < 3)
             return BadRequest(new AuthResponse { Success = false, Message = "Username must be at least 3 characters", AuthMode = _authService.AuthenticationMode });
 
-        if (string.IsNullOrWhiteSpace(request.Password) || request.Password.Length < 6)
-            return BadRequest(new AuthResponse { Success = false, Message = "Password must be at least 6 characters", AuthMode = _authService.AuthenticationMode });
+        if (string.IsNullOrWhiteSpace(request.Password) || request.Password.Length < 8)
+            return BadRequest(new AuthResponse { Success = false, Message = "Password must be at least 8 characters", AuthMode = _authService.AuthenticationMode });
 
         // Validate email format properly
         if (!IsValidEmail(request.Email))
