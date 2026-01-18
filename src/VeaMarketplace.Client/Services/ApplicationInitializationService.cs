@@ -69,9 +69,9 @@ public class ApplicationInitializationService
             Debug.WriteLine("✓ Health monitoring started");
 
             // 6. Start network quality monitoring
-            var serverUrl = AppConstants.DefaultServerUrl.Replace("http://", "").Replace(":5000", "");
-            await _networkQuality.StartMonitoringAsync(serverUrl);
-            Debug.WriteLine($"✓ Network quality monitoring started for {serverUrl}");
+            var serverHost = GetServerHost(AppConstants.DefaultServerUrl);
+            await _networkQuality.StartMonitoringAsync(serverHost);
+            Debug.WriteLine($"✓ Network quality monitoring started for {serverHost}");
 
             // 7. Schedule background maintenance tasks
             ScheduleMaintenanceTasks();
@@ -119,8 +119,8 @@ public class ApplicationInitializationService
         _healthCheck.RegisterHealthCheck(new MemoryHealthCheck(maxMemoryBytes: 1024 * 1024 * 1024)); // 1GB
 
         // Network health check
-        var serverUrl = AppConstants.DefaultServerUrl.Replace("http://", "").Replace(":5000", "");
-        _healthCheck.RegisterHealthCheck(new NetworkHealthCheck(serverUrl));
+        var serverHost = GetServerHost(AppConstants.DefaultServerUrl);
+        _healthCheck.RegisterHealthCheck(new NetworkHealthCheck(serverHost));
 
         // Disk space health check
         var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
@@ -222,6 +222,25 @@ public class ApplicationInitializationService
         {
             Debug.WriteLine($"Error during shutdown: {ex.Message}");
             _crashReporter.ReportCrash(ex, CrashSeverity.Medium);
+        }
+    }
+
+    /// <summary>
+    /// Extracts the host from a URL using proper Uri parsing.
+    /// </summary>
+    private static string GetServerHost(string url)
+    {
+        try
+        {
+            var uri = new Uri(url);
+            return uri.Host;
+        }
+        catch
+        {
+            // Fallback: attempt to extract host from URL string
+            var cleanUrl = url.Replace("http://", "").Replace("https://", "");
+            var portIndex = cleanUrl.IndexOf(':');
+            return portIndex > 0 ? cleanUrl[..portIndex] : cleanUrl;
         }
     }
 }

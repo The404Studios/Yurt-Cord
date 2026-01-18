@@ -60,8 +60,9 @@ public partial class ProductCard : UserControl
                 ProductImage.Source = new BitmapImage(new Uri(product.ImageUrls.First()));
                 NoImageText.Visibility = Visibility.Collapsed;
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"Failed to load product image: {ex.Message}");
                 NoImageText.Visibility = Visibility.Visible;
             }
         }

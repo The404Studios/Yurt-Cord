@@ -407,7 +407,10 @@ public class BoolToTextConverter : IValueConverter
         if (parameter is string paramStr && paramStr.Contains('|'))
         {
             var parts = paramStr.Split('|');
-            return boolValue ? parts[0] : parts[1];
+            if (parts.Length >= 2)
+            {
+                return boolValue ? parts[0] : parts[1];
+            }
         }
 
         return boolValue ? "Yes" : "No";
@@ -432,15 +435,18 @@ public class BoolToColorConverter : IValueConverter
         if (parameter is string paramStr && paramStr.Contains('|'))
         {
             var parts = paramStr.Split('|');
-            var colorStr = boolValue ? parts[0] : parts[1];
-            try
+            if (parts.Length >= 2)
             {
-                var color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(colorStr);
-                return new System.Windows.Media.SolidColorBrush(color);
-            }
-            catch
-            {
-                // Fall through to default
+                var colorStr = boolValue ? parts[0] : parts[1];
+                try
+                {
+                    var color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(colorStr);
+                    return new System.Windows.Media.SolidColorBrush(color);
+                }
+                catch
+                {
+                    // Fall through to default
+                }
             }
         }
 
