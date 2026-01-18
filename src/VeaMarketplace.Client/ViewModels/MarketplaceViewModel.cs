@@ -841,8 +841,22 @@ public partial class MarketplaceViewModel : BaseViewModel
         var targetProduct = product ?? SelectedProduct ?? QuickViewProduct;
         if (targetProduct == null) return;
 
-        // For now, show a message. In a real implementation, this would open a report dialog
-        ShowTemporaryMessage($"Report submitted for '{targetProduct.Title}'. Our team will review it.");
+        try
+        {
+            var dialog = new Views.ProductReportDialog(targetProduct);
+            dialog.Owner = System.Windows.Application.Current.MainWindow;
+            var result = dialog.ShowDialog();
+
+            if (result == true && dialog.ReportSubmitted)
+            {
+                ShowTemporaryMessage($"Report submitted for '{targetProduct.Title}'. Thank you!");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error opening report dialog: {ex.Message}");
+            ShowTemporaryMessage("Could not open report dialog");
+        }
     }
 
     // View seller profile

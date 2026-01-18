@@ -231,6 +231,10 @@ public class AppSettings
     public bool DMNotifications { get; set; } = true;
     public string NotificationSound { get; set; } = "default";
 
+    // Language & Translation Settings
+    public string PreferredLanguage { get; set; } = "en";
+    public bool AutoTranslateMessages { get; set; } = false;
+
     // Keybindings
     public Dictionary<string, string> Keybindings { get; set; } = new()
     {

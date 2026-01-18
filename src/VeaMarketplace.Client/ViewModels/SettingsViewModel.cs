@@ -121,6 +121,16 @@ public partial class SettingsViewModel : BaseViewModel
     [ObservableProperty]
     private string _notificationSound = "default";
 
+    // Language & Translation Settings
+    [ObservableProperty]
+    private string _preferredLanguage = "en";
+
+    [ObservableProperty]
+    private bool _autoTranslate = false;
+
+    [ObservableProperty]
+    private List<LanguageOption> _availableLanguages = new();
+
     public SettingsViewModel(
         ISettingsService settingsService,
         IAudioDeviceService audioDeviceService,
@@ -190,6 +200,11 @@ public partial class SettingsViewModel : BaseViewModel
         MentionNotifications = settings.MentionNotifications;
         DmNotifications = settings.DMNotifications;
         NotificationSound = settings.NotificationSound;
+
+        // Language Settings
+        PreferredLanguage = settings.PreferredLanguage;
+        AutoTranslate = settings.AutoTranslateMessages;
+        LoadAvailableLanguages();
 
         // Apply to voice service
         _voiceService.PushToTalkEnabled = PushToTalkEnabled;
@@ -395,6 +410,45 @@ public partial class SettingsViewModel : BaseViewModel
         SaveSettings();
     }
 
+    // Language Settings Property Changed Handlers
+    partial void OnPreferredLanguageChanged(string value)
+    {
+        _settingsService.Settings.PreferredLanguage = value;
+        SaveSettings();
+    }
+
+    partial void OnAutoTranslateChanged(bool value)
+    {
+        _settingsService.Settings.AutoTranslateMessages = value;
+        SaveSettings();
+    }
+
+    private void LoadAvailableLanguages()
+    {
+        AvailableLanguages = new List<LanguageOption>
+        {
+            new() { Code = "en", Name = "English", NativeName = "English" },
+            new() { Code = "es", Name = "Spanish", NativeName = "Espanol" },
+            new() { Code = "fr", Name = "French", NativeName = "Francais" },
+            new() { Code = "de", Name = "German", NativeName = "Deutsch" },
+            new() { Code = "it", Name = "Italian", NativeName = "Italiano" },
+            new() { Code = "pt", Name = "Portuguese", NativeName = "Portugues" },
+            new() { Code = "ru", Name = "Russian", NativeName = "Русский" },
+            new() { Code = "zh", Name = "Chinese", NativeName = "中文" },
+            new() { Code = "ja", Name = "Japanese", NativeName = "日本語" },
+            new() { Code = "ko", Name = "Korean", NativeName = "한국어" },
+            new() { Code = "ar", Name = "Arabic", NativeName = "العربية" },
+            new() { Code = "hi", Name = "Hindi", NativeName = "हिन्दी" },
+            new() { Code = "nl", Name = "Dutch", NativeName = "Nederlands" },
+            new() { Code = "pl", Name = "Polish", NativeName = "Polski" },
+            new() { Code = "tr", Name = "Turkish", NativeName = "Turkce" },
+            new() { Code = "vi", Name = "Vietnamese", NativeName = "Tieng Viet" },
+            new() { Code = "th", Name = "Thai", NativeName = "ไทย" },
+            new() { Code = "sv", Name = "Swedish", NativeName = "Svenska" },
+            new() { Code = "uk", Name = "Ukrainian", NativeName = "Українська" }
+        };
+    }
+
     [RelayCommand]
     private void StartRecordingPttKey()
     {
@@ -435,4 +489,13 @@ public class AudioDeviceItem
     public bool IsDefault { get; set; }
 
     public override string ToString() => IsDefault ? $"{Name} (Default)" : Name;
+}
+
+public class LanguageOption
+{
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string NativeName { get; set; } = string.Empty;
+
+    public override string ToString() => $"{Name} ({NativeName})";
 }

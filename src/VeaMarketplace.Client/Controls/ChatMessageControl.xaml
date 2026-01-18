@@ -83,6 +83,26 @@
                         <TextBlock Text="📄" FontSize="14"/>
                     </MenuItem.Icon>
                 </MenuItem>
+                <MenuItem Header="Translate" Style="{StaticResource ModernMenuItem}"
+                          x:Name="TranslateMenuItem">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🌐" FontSize="14"/>
+                    </MenuItem.Icon>
+                    <MenuItem Header="English" Style="{StaticResource ModernMenuItem}" Tag="en" Click="Translate_Click"/>
+                    <MenuItem Header="Spanish (Espanol)" Style="{StaticResource ModernMenuItem}" Tag="es" Click="Translate_Click"/>
+                    <MenuItem Header="French (Francais)" Style="{StaticResource ModernMenuItem}" Tag="fr" Click="Translate_Click"/>
+                    <MenuItem Header="German (Deutsch)" Style="{StaticResource ModernMenuItem}" Tag="de" Click="Translate_Click"/>
+                    <MenuItem Header="Italian (Italiano)" Style="{StaticResource ModernMenuItem}" Tag="it" Click="Translate_Click"/>
+                    <MenuItem Header="Portuguese (Portugues)" Style="{StaticResource ModernMenuItem}" Tag="pt" Click="Translate_Click"/>
+                    <MenuItem Header="Russian (Русский)" Style="{StaticResource ModernMenuItem}" Tag="ru" Click="Translate_Click"/>
+                    <MenuItem Header="Chinese (中文)" Style="{StaticResource ModernMenuItem}" Tag="zh" Click="Translate_Click"/>
+                    <MenuItem Header="Japanese (日本語)" Style="{StaticResource ModernMenuItem}" Tag="ja" Click="Translate_Click"/>
+                    <MenuItem Header="Korean (한국어)" Style="{StaticResource ModernMenuItem}" Tag="ko" Click="Translate_Click"/>
+                    <MenuItem Header="Arabic (العربية)" Style="{StaticResource ModernMenuItem}" Tag="ar" Click="Translate_Click"/>
+                    <MenuItem Header="Hindi (हिन्दी)" Style="{StaticResource ModernMenuItem}" Tag="hi" Click="Translate_Click"/>
+                    <Separator Style="{StaticResource MenuSeparator}"/>
+                    <MenuItem Header="More Languages..." Style="{StaticResource ModernMenuItem}" Click="MoreLanguages_Click"/>
+                </MenuItem>
                 <MenuItem Header="Copy Message Link" Style="{StaticResource ModernMenuItem}"
                           Click="CopyMessageLink_Click">
                     <MenuItem.Icon>

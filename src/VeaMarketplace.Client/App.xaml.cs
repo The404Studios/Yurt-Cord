@@ -63,6 +63,7 @@ public partial class App : Application
         services.AddSingleton<ISocialService, SocialService>();
         services.AddSingleton<ILeaderboardService, LeaderboardService>();
         services.AddSingleton<IOverlayService, OverlayService>();
+        services.AddSingleton<ITranslationService, TranslationService>();
 
         // Advanced Infrastructure Services
         services.AddSingleton<IPerformanceMonitorService, PerformanceMonitorService>();

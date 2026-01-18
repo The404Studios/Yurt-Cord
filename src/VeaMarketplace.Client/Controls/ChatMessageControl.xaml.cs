@@ -1104,4 +1104,226 @@ public partial class ChatMessageControl : UserControl
     }
 
     #endregion
+
+    #region Translation Handlers
+
+    private async void Translate_Click(object sender, RoutedEventArgs e)
+    {
+        if (_currentMessage == null || string.IsNullOrWhiteSpace(_currentMessage.Content)) return;
+
+        if (sender is MenuItem menuItem && menuItem.Tag is string targetLanguage)
+        {
+            try
+            {
+                await TranslateMessageAsync(targetLanguage);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Translation error: {ex.Message}");
+                var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+                toastService?.ShowError("Translation Failed", "Could not translate message. Please try again.");
+            }
+        }
+    }
+
+    private async Task TranslateMessageAsync(string targetLanguage)
+    {
+        if (_currentMessage == null) return;
+
+        var translationService = (ITranslationService?)App.ServiceProvider.GetService(typeof(ITranslationService));
+        var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+
+        if (translationService == null)
+        {
+            toastService?.ShowError("Translation Unavailable", "Translation service is not available.");
+            return;
+        }
+
+        // Show translating indicator
+        var originalText = MessageText.Text;
+        MessageText.Text = "Translating...";
+        MessageText.FontStyle = FontStyles.Italic;
+
+        var result = await translationService.TranslateAsync(_currentMessage.Content, targetLanguage);
+
+        if (result.Success)
+        {
+            // Show translated text with indicator
+            var languageName = GetLanguageName(targetLanguage);
+            MessageText.FontStyle = FontStyles.Normal;
+            MessageText.Text = result.TranslatedText;
+
+            // Add translation indicator
+            var indicator = new TextBlock
+            {
+                Text = $"[Translated to {languageName}] ",
+                FontSize = 11,
+                FontStyle = FontStyles.Italic,
+                Foreground = new SolidColorBrush(Color.FromRgb(114, 137, 218)),
+                Margin = new Thickness(0, 2, 0, 0)
+            };
+
+            // Create a link to show original
+            var showOriginalLink = new TextBlock
+            {
+                Text = "Show original",
+                FontSize = 11,
+                Foreground = new SolidColorBrush(Color.FromRgb(114, 137, 218)),
+                Cursor = WpfCursors.Hand,
+                TextDecorations = TextDecorations.Underline,
+                Margin = new Thickness(0, 2, 0, 0)
+            };
+            showOriginalLink.MouseLeftButtonDown += (s, args) =>
+            {
+                MessageText.Text = _currentMessage.Content;
+                // Remove translation indicators
+                var parent = MessageText.Parent as StackPanel;
+                if (parent != null)
+                {
+                    var toRemove = parent.Children.OfType<TextBlock>()
+                        .Where(tb => tb != MessageText && tb != UsernameText && tb != TimestampText)
+                        .ToList();
+                    foreach (var item in toRemove)
+                    {
+                        parent.Children.Remove(item);
+                    }
+                    // Also remove the indicator panel
+                    var panelsToRemove = parent.Children.OfType<StackPanel>()
+                        .Where(sp => sp.Children.Count > 0 && sp.Children[0] is TextBlock tb && tb.Text.StartsWith("[Translated"))
+                        .ToList();
+                    foreach (var panel in panelsToRemove)
+                    {
+                        parent.Children.Remove(panel);
+                    }
+                }
+            };
+
+            // Add indicators to the message area
+            var parentPanel = MessageText.Parent as StackPanel;
+            if (parentPanel != null)
+            {
+                var indicatorPanel = new StackPanel { Orientation = Orientation.Horizontal };
+                indicatorPanel.Children.Add(indicator);
+                indicatorPanel.Children.Add(showOriginalLink);
+
+                // Find index of MessageText and insert after
+                var index = parentPanel.Children.IndexOf(MessageText);
+                if (index >= 0 && index < parentPanel.Children.Count - 1)
+                {
+                    parentPanel.Children.Insert(index + 1, indicatorPanel);
+                }
+                else
+                {
+                    parentPanel.Children.Add(indicatorPanel);
+                }
+            }
+
+            toastService?.ShowSuccess("Translated", $"Message translated to {languageName}");
+        }
+        else
+        {
+            // Restore original text on failure
+            MessageText.FontStyle = FontStyles.Normal;
+            MessageText.Text = originalText;
+            toastService?.ShowError("Translation Failed", result.ErrorMessage ?? "Could not translate message.");
+        }
+    }
+
+    private void MoreLanguages_Click(object sender, RoutedEventArgs e)
+    {
+        // Show a dialog with all available languages
+        var translationService = (ITranslationService?)App.ServiceProvider.GetService(typeof(ITranslationService));
+        if (translationService == null) return;
+
+        var languages = translationService.GetSupportedLanguages();
+
+        // Create a simple selection dialog
+        var dialog = new Window
+        {
+            Title = "Select Language",
+            Width = 300,
+            Height = 400,
+            WindowStartupLocation = WindowStartupLocation.CenterScreen,
+            Background = new SolidColorBrush(Color.FromRgb(32, 34, 37)),
+            WindowStyle = WindowStyle.ToolWindow,
+            ResizeMode = ResizeMode.NoResize
+        };
+
+        var listBox = new ListBox
+        {
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Foreground = Brushes.White,
+            Margin = new Thickness(10)
+        };
+
+        foreach (var lang in languages)
+        {
+            var item = new ListBoxItem
+            {
+                Content = $"{lang.Name} ({lang.NativeName})",
+                Tag = lang.Code,
+                Foreground = Brushes.White,
+                Padding = new Thickness(8, 4, 8, 4)
+            };
+            listBox.Items.Add(item);
+        }
+
+        listBox.SelectionChanged += async (s, args) =>
+        {
+            if (listBox.SelectedItem is ListBoxItem selectedItem && selectedItem.Tag is string langCode)
+            {
+                dialog.Close();
+                try
+                {
+                    await TranslateMessageAsync(langCode);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Translation error: {ex.Message}");
+                }
+            }
+        };
+
+        dialog.Content = listBox;
+        dialog.ShowDialog();
+    }
+
+    private static string GetLanguageName(string code)
+    {
+        return code switch
+        {
+            "en" => "English",
+            "es" => "Spanish",
+            "fr" => "French",
+            "de" => "German",
+            "it" => "Italian",
+            "pt" => "Portuguese",
+            "ru" => "Russian",
+            "zh" => "Chinese",
+            "ja" => "Japanese",
+            "ko" => "Korean",
+            "ar" => "Arabic",
+            "hi" => "Hindi",
+            "nl" => "Dutch",
+            "pl" => "Polish",
+            "tr" => "Turkish",
+            "vi" => "Vietnamese",
+            "th" => "Thai",
+            "sv" => "Swedish",
+            "da" => "Danish",
+            "fi" => "Finnish",
+            "no" => "Norwegian",
+            "cs" => "Czech",
+            "el" => "Greek",
+            "he" => "Hebrew",
+            "hu" => "Hungarian",
+            "id" => "Indonesian",
+            "ro" => "Romanian",
+            "uk" => "Ukrainian",
+            _ => code.ToUpper()
+        };
+    }
+
+    #endregion
 }
