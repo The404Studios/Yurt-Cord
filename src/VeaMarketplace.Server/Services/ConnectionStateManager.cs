@@ -223,8 +223,9 @@ public class ConnectionStateManager
                         ActiveHubs = connectionIds
                             .Select(id => _userConnections.TryGetValue(id, out var s) ? s.HubName : null)
                             .Where(h => h != null)
+                            .Cast<string>()
                             .Distinct()
-                            .ToList()!
+                            .ToList()
                     });
                 }
             }

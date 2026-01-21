@@ -34,7 +34,7 @@ public partial class ServerBrowserView : UserControl
 
         SetupEventHandlers();
         SetupVoiceServiceHandlers();
-        LoadRooms();
+        _ = LoadRoomsAsync();
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
@@ -124,7 +124,7 @@ public partial class ServerBrowserView : UserControl
             : Visibility.Collapsed;
     }
 
-    private async void LoadRooms()
+    private async Task LoadRoomsAsync()
     {
         LoadingOverlay.Visibility = Visibility.Visible;
         try

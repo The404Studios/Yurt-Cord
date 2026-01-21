@@ -21,10 +21,10 @@ public partial class SplashScreen : Window
     public SplashScreen()
     {
         InitializeComponent();
-        StartLoadingAnimation();
+        _ = StartLoadingAnimationAsync();
     }
 
-    private async void StartLoadingAnimation()
+    private async Task StartLoadingAnimationAsync()
     {
         try
         {

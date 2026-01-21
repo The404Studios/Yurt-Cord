@@ -250,11 +250,11 @@ public partial class GroupCallView : UserControl
 
     private void Invite_Click(object sender, RoutedEventArgs e)
     {
-        LoadFriends();
+        _ = LoadFriendsAsync();
         InviteModal.Visibility = Visibility.Visible;
     }
 
-    private async void LoadFriends()
+    private async Task LoadFriendsAsync()
     {
         try
         {
@@ -286,7 +286,7 @@ public partial class GroupCallView : UserControl
             : Visibility.Collapsed;
 
         // Re-filter friends based on search
-        LoadFriends();
+        _ = LoadFriendsAsync();
     }
 
     private void Participant_Click(object sender, MouseButtonEventArgs e)

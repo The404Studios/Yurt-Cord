@@ -221,7 +221,7 @@ public partial class ChatView : UserControl
         if (e.Key == Key.Enter && !Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
         {
             e.Handled = true;
-            SendMessage();
+            _ = SendMessageAsync();
         }
     }
 
@@ -248,10 +248,10 @@ public partial class ChatView : UserControl
 
     private void SendButton_Click(object sender, RoutedEventArgs e)
     {
-        SendMessage();
+        _ = SendMessageAsync();
     }
 
-    private async void SendMessage()
+    private async Task SendMessageAsync()
     {
         if (_chatService == null || _viewModel == null) return;
 

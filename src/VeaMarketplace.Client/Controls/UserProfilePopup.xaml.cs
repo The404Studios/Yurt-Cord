@@ -183,7 +183,7 @@ public partial class UserProfilePopup : UserControl
             }
 
             // Update friend action button based on relationship
-            UpdateFriendActionButton();
+            await UpdateFriendActionButtonAsync();
 
             // Load user note
             var note = await _friendService.GetUserNoteAsync(_user.Id);
@@ -249,7 +249,7 @@ public partial class UserProfilePopup : UserControl
         return border;
     }
 
-    private async void UpdateFriendActionButton()
+    private async Task UpdateFriendActionButtonAsync()
     {
         if (_user == null || _friendService == null) return;
 
@@ -360,7 +360,7 @@ public partial class UserProfilePopup : UserControl
                 await _friendService.SendFriendRequestAsync(_user.Id);
             }
 
-            UpdateFriendActionButton();
+            await UpdateFriendActionButtonAsync();
         }
         catch (Exception ex)
         {

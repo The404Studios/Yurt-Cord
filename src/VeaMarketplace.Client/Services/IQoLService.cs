@@ -143,9 +143,7 @@ public class QoLService : IQoLService, IDisposable
     public event Action<ScheduledStatus>? OnStatusChangeRequired;
     public event Action? OnAutoAwayTriggered;
     public event Action? OnAutoAwayReset;
-#pragma warning disable CS0067 // Event is never used - kept for future API compatibility
     public event Action<FriendAnniversary>? OnAnniversaryReminder;
-#pragma warning restore CS0067
     public event Action<string, string>? OnFriendOnlineNotification;
 
     public QoLService(ISettingsService settingsService)
@@ -284,6 +282,16 @@ public class QoLService : IQoLService, IDisposable
             if (ShouldActivateStatus(status, now))
             {
                 OnStatusChangeRequired?.Invoke(status);
+            }
+        }
+
+        // Check for upcoming anniversaries (only once per day at midnight or on first run)
+        if (now.Hour == 0 && now.Minute == 0)
+        {
+            var upcomingAnniversaries = GetUpcomingAnniversaries(1); // Check for today
+            foreach (var anniversary in upcomingAnniversaries)
+            {
+                OnAnniversaryReminder?.Invoke(anniversary);
             }
         }
     }

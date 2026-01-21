@@ -51,10 +51,10 @@ public partial class StartGroupCallDialog : Window
         _voiceService = voiceService;
 
         FriendsListControl.ItemsSource = _friends;
-        LoadFriends();
+        _ = LoadFriendsAsync();
     }
 
-    private async void LoadFriends()
+    private async Task LoadFriendsAsync()
     {
         try
         {

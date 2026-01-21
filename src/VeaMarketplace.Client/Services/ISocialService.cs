@@ -108,9 +108,7 @@ public class SocialService : ISocialService
     public event Action<string>? OnFriendGroupDeleted;
     public event Action<InteractionEvent>? OnNewInteraction;
     public event Action<RichPresence>? OnPresenceUpdated;
-#pragma warning disable CS0067 // Event is never used - kept for future API compatibility
     public event Action<string, RichPresence>? OnFriendPresenceUpdated;
-#pragma warning restore CS0067
     public event Action<string, MessageReaction>? OnReactionAdded;
     public event Action<string, string>? OnReactionRemoved;
     public event Action<PinnedMessage>? OnMessagePinned;
@@ -152,7 +150,14 @@ public class SocialService : ISocialService
 
     private void OnFriendOnline(FriendDto friend)
     {
-        // Could trigger presence sync here
+        // Update friend presence and notify listeners
+        var presence = new RichPresence
+        {
+            UserId = friend.UserId,
+            Status = "Online",
+            UpdatedAt = DateTime.UtcNow
+        };
+        OnFriendPresenceUpdated?.Invoke(friend.UserId, presence);
     }
 
     #region Friend Groups

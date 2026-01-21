@@ -116,17 +116,17 @@ public partial class GroupCallInviteNotification : Window
     {
         _autoDeclineTimer.Stop();
         _ringTimer.Stop();
-        AcceptCall();
+        _ = AcceptCallAsync();
     }
 
     private void Decline_Click(object sender, RoutedEventArgs e)
     {
         _autoDeclineTimer.Stop();
         _ringTimer.Stop();
-        DeclineCall();
+        _ = DeclineCallAsync();
     }
 
-    private async void AcceptCall()
+    private async Task AcceptCallAsync()
     {
         try
         {
@@ -141,7 +141,7 @@ public partial class GroupCallInviteNotification : Window
         Close();
     }
 
-    private async void DeclineCall()
+    private async Task DeclineCallAsync()
     {
         try
         {
