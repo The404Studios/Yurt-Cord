@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using VeaMarketplace.Server.Data;
 using VeaMarketplace.Shared.DTOs;
 using VeaMarketplace.Shared.Models;
@@ -8,11 +9,13 @@ public class DirectMessageService
 {
     private readonly DatabaseService _db;
     private readonly FriendService _friendService;
+    private readonly ILogger<DirectMessageService> _logger;
 
-    public DirectMessageService(DatabaseService db, FriendService friendService)
+    public DirectMessageService(DatabaseService db, FriendService friendService, ILogger<DirectMessageService> logger)
     {
         _db = db;
         _friendService = friendService;
+        _logger = logger;
     }
 
     public List<ConversationDto> GetConversations(string userId)
@@ -116,43 +119,80 @@ public class DirectMessageService
             Timestamp = DateTime.UtcNow
         };
 
-        _db.DirectMessages.Insert(message);
+        try
+        {
+            _db.DirectMessages.Insert(message);
 
-        // Track response metrics for seller response rate
-        TrackResponseMetrics(senderId, recipientId);
+            // Track response metrics for seller response rate (non-critical, log errors but don't fail)
+            try
+            {
+                TrackResponseMetrics(senderId, recipientId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to track response metrics for message from {SenderId} to {RecipientId}", senderId, recipientId);
+            }
 
-        // Update recipient's message received tracking
-        recipient.TotalMessagesReceived++;
-        recipient.LastMessageReceivedAt = DateTime.UtcNow;
-        _db.Users.Update(recipient);
+            // Update recipient's message received tracking (non-critical)
+            try
+            {
+                recipient.TotalMessagesReceived++;
+                recipient.LastMessageReceivedAt = DateTime.UtcNow;
+                _db.Users.Update(recipient);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to update message tracking for recipient {RecipientId}", recipientId);
+            }
 
-        return (true, "Message sent", MapToDto(message));
+            return (true, "Message sent", MapToDto(message));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send message from {SenderId} to {RecipientId}", senderId, recipientId);
+            return (false, "Failed to send message", null);
+        }
     }
 
     public void MarkAsRead(string userId, string partnerId)
     {
-        var unreadMessages = _db.DirectMessages
-            .Find(m => m.SenderId == partnerId && m.RecipientId == userId && !m.IsRead)
-            .ToList();
-
-        foreach (var message in unreadMessages)
+        try
         {
-            message.IsRead = true;
-            _db.DirectMessages.Update(message);
+            var unreadMessages = _db.DirectMessages
+                .Find(m => m.SenderId == partnerId && m.RecipientId == userId && !m.IsRead)
+                .ToList();
+
+            foreach (var message in unreadMessages)
+            {
+                message.IsRead = true;
+                _db.DirectMessages.Update(message);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to mark messages as read for user {UserId} from partner {PartnerId}", userId, partnerId);
         }
     }
 
     public bool DeleteMessage(string messageId, string userId)
     {
-        var message = _db.DirectMessages.FindById(messageId);
-        if (message == null) return false;
+        try
+        {
+            var message = _db.DirectMessages.FindById(messageId);
+            if (message == null) return false;
 
-        // Only sender can delete
-        if (message.SenderId != userId) return false;
+            // Only sender can delete
+            if (message.SenderId != userId) return false;
 
-        message.IsDeleted = true;
-        _db.DirectMessages.Update(message);
-        return true;
+            message.IsDeleted = true;
+            _db.DirectMessages.Update(message);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete message {MessageId} for user {UserId}", messageId, userId);
+            return false;
+        }
     }
 
     /// <summary>
