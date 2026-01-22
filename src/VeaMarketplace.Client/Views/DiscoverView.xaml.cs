@@ -29,6 +29,13 @@ public partial class DiscoverView : UserControl
 
     private async void DiscoverView_Loaded(object sender, RoutedEventArgs e)
     {
+        // Don't load data if user is not authenticated
+        if (_apiService == null || !_apiService.IsAuthenticated)
+        {
+            Debug.WriteLine("[DiscoverView] Skipping load - user not authenticated");
+            return;
+        }
+
         if (_isLoading) return;
         _isLoading = true;
 
