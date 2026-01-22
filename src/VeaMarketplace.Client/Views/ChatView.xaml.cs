@@ -505,8 +505,9 @@ public partial class ChatView : UserControl
             // Hide banner on success
             ConnectionBanner.Visibility = Visibility.Collapsed;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"Failed to connect to chat: {ex.Message}");
             // Show error state
             ConnectionBanner.Background = new System.Windows.Media.SolidColorBrush(
                 System.Windows.Media.Color.FromRgb(237, 66, 69)); // Red

@@ -75,9 +75,9 @@ public partial class BlockedUsersView : UserControl
 
             UpdateDisplay();
         }
-        catch
+        catch (Exception ex)
         {
-            // Handle error
+            System.Diagnostics.Debug.WriteLine($"Failed to load blocked users: {ex.Message}");
         }
     }
 
