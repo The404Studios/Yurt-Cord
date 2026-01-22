@@ -150,9 +150,7 @@ builder.Services.AddSignalR(options =>
     // Serialize enums as strings for client compatibility (matches controller JSON options)
     options.PayloadSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
     options.PayloadSerializerOptions.PropertyNameCaseInsensitive = true;
-})
-// MessagePack protocol for better performance with binary data (audio/video)
-.AddMessagePackProtocol();
+});
 
 // Database
 builder.Services.AddSingleton<DatabaseService>();

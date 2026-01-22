@@ -745,9 +745,11 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         _connection = new HubConnectionBuilder()
             .WithUrl(HubUrl)
             .WithAutomaticReconnect()
-            // Use MessagePack for better performance with binary audio/video data
-            // ~30% bandwidth reduction, faster serialization
-            .AddMessagePackProtocol()
+            .AddJsonProtocol(options =>
+            {
+                options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                options.PayloadSerializerOptions.PropertyNameCaseInsensitive = true;
+            })
             .Build();
 
         // Handle connection state changes
