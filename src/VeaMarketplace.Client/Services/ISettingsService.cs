@@ -321,8 +321,9 @@ public class SettingsService : ISettingsService
                 // Try to convert
                 return (T)Convert.ChangeType(value, typeof(T));
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.WriteLine($"Failed to deserialize setting '{key}': {ex.Message}");
                 return defaultValue;
             }
         }

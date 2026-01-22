@@ -72,9 +72,17 @@ public class ProfileService : IProfileService, IAsyncDisposable
         // Handle reconnection - re-authenticate when reconnected
         _connection.Reconnected += async (connectionId) =>
         {
-            if (_authToken != null)
+            try
             {
-                await _connection.InvokeAsync("Authenticate", _authToken).ConfigureAwait(false);
+                System.Diagnostics.Debug.WriteLine($"ProfileService: Reconnected with connectionId {connectionId}");
+                if (_authToken != null)
+                {
+                    await _connection.InvokeAsync("Authenticate", _authToken).ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ProfileService: Failed to re-authenticate after reconnection: {ex.Message}");
             }
         };
 

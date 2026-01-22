@@ -91,9 +91,10 @@ public class NotificationService : INotificationService
             _mediaPlayer.Volume = 0.5;
             _mediaPlayer.Play();
         }
-        catch
+        catch (Exception ex)
         {
-            // Silently fail if sound can't be played
+            // Log sound playback failure for debugging
+            Debug.WriteLine($"Failed to play sound '{fileName}': {ex.Message}");
         }
     }
 

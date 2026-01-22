@@ -18,6 +18,7 @@ public class NotificationHub : Hub
     // Track user connections
     private static readonly ConcurrentDictionary<string, string> _connectionUserMap = new(); // connectionId -> userId
     private static readonly ConcurrentDictionary<string, HashSet<string>> _userConnections = new(); // userId -> connectionIds
+    private static readonly object _connectionsLock = new(); // Lock for HashSet operations
 
     private static readonly ConcurrentDictionary<string, DateTime> _connectionTimestamps = new();
 
@@ -63,12 +64,15 @@ public class NotificationHub : Hub
         // Track connection
         _connectionUserMap[Context.ConnectionId] = user.Id;
 
-        if (!_userConnections.TryGetValue(user.Id, out var connections))
+        lock (_connectionsLock)
         {
-            connections = new HashSet<string>();
-            _userConnections[user.Id] = connections;
+            if (!_userConnections.TryGetValue(user.Id, out var connections))
+            {
+                connections = new HashSet<string>();
+                _userConnections[user.Id] = connections;
+            }
+            connections.Add(Context.ConnectionId);
         }
-        connections.Add(Context.ConnectionId);
 
         // Add to user's personal notification group
         await Groups.AddToGroupAsync(Context.ConnectionId, $"notifications_{user.Id}");
@@ -373,7 +377,10 @@ public class NotificationHub : Hub
     /// </summary>
     public static bool IsUserConnected(string userId)
     {
-        return _userConnections.TryGetValue(userId, out var connections) && connections.Count > 0;
+        lock (_connectionsLock)
+        {
+            return _userConnections.TryGetValue(userId, out var connections) && connections.Count > 0;
+        }
     }
 
     /// <summary>
@@ -381,7 +388,10 @@ public class NotificationHub : Hub
     /// </summary>
     public static int GetConnectedUserCount()
     {
-        return _userConnections.Count;
+        lock (_connectionsLock)
+        {
+            return _userConnections.Count;
+        }
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
@@ -390,13 +400,16 @@ public class NotificationHub : Hub
 
         if (_connectionUserMap.TryRemove(Context.ConnectionId, out var userId))
         {
-            if (_userConnections.TryGetValue(userId, out var connections))
+            lock (_connectionsLock)
             {
-                connections.Remove(Context.ConnectionId);
-
-                if (connections.Count == 0)
+                if (_userConnections.TryGetValue(userId, out var connections))
                 {
-                    _userConnections.TryRemove(userId, out _);
+                    connections.Remove(Context.ConnectionId);
+
+                    if (connections.Count == 0)
+                    {
+                        _userConnections.TryRemove(userId, out _);
+                    }
                 }
             }
         }

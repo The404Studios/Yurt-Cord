@@ -84,10 +84,17 @@ public class NotificationHubService : INotificationHubService, IAsyncDisposable
         // Handle reconnection
         _connection.Reconnected += async (connectionId) =>
         {
-            Debug.WriteLine($"NotificationHubService: Reconnected with connectionId {connectionId}");
-            if (_authToken != null)
+            try
             {
-                await _connection.InvokeAsync("Authenticate", _authToken).ConfigureAwait(false);
+                Debug.WriteLine($"NotificationHubService: Reconnected with connectionId {connectionId}");
+                if (_authToken != null)
+                {
+                    await _connection.InvokeAsync("Authenticate", _authToken).ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"NotificationHubService: Failed to re-authenticate after reconnection: {ex.Message}");
             }
         };
 

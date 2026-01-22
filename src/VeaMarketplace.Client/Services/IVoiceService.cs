@@ -748,21 +748,21 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.Reconnected += async connectionId =>
         {
-            Debug.WriteLine($"Voice connection reconnected: {connectionId}");
-            OnConnectionStateChanged?.Invoke(true, "Reconnected");
-
-            // Re-join voice channel if we were in one
-            if (IsInVoiceChannel && !string.IsNullOrEmpty(CurrentChannelId) && !string.IsNullOrEmpty(_currentUserId))
+            try
             {
-                try
+                Debug.WriteLine($"Voice connection reconnected: {connectionId}");
+                OnConnectionStateChanged?.Invoke(true, "Reconnected");
+
+                // Re-join voice channel if we were in one
+                if (IsInVoiceChannel && !string.IsNullOrEmpty(CurrentChannelId) && !string.IsNullOrEmpty(_currentUserId))
                 {
                     await _connection.InvokeAsync("JoinVoiceChannel", CurrentChannelId, _currentUserId, _currentUsername, _currentAvatarUrl);
                     Debug.WriteLine($"Re-joined voice channel {CurrentChannelId} after reconnect");
                 }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Failed to re-join voice channel after reconnect: {ex.Message}");
-                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"VoiceService: Error during reconnection: {ex.Message}");
             }
         };
 

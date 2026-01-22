@@ -157,9 +157,17 @@ public class ContentService : IContentService, IAsyncDisposable
         // Handle reconnection
         _connection.Reconnected += async (connectionId) =>
         {
-            if (_authToken != null)
+            try
             {
-                await _connection.InvokeAsync("Authenticate", _authToken).ConfigureAwait(false);
+                System.Diagnostics.Debug.WriteLine($"ContentService: Reconnected with connectionId {connectionId}");
+                if (_authToken != null)
+                {
+                    await _connection.InvokeAsync("Authenticate", _authToken).ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ContentService: Failed to re-authenticate after reconnection: {ex.Message}");
             }
         };
 

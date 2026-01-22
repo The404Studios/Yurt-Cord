@@ -147,12 +147,20 @@ public class FriendService : IFriendService, IAsyncDisposable
         // Handle reconnection - re-authenticate when reconnected
         _connection.Reconnected += async (connectionId) =>
         {
-            Debug.WriteLine($"FriendService: Reconnected with connectionId {connectionId}");
-            _handshakeReceived = false;
-            if (_authToken != null)
+            try
             {
-                await Task.Delay(100).ConfigureAwait(false);
-                await _connection.InvokeAsync("Authenticate", _authToken).ConfigureAwait(false);
+                Debug.WriteLine($"FriendService: Reconnected with connectionId {connectionId}");
+                _handshakeReceived = false;
+                if (_authToken != null)
+                {
+                    await Task.Delay(100).ConfigureAwait(false);
+                    await _connection.InvokeAsync("Authenticate", _authToken).ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"FriendService: Failed to re-authenticate after reconnection: {ex.Message}");
+                OnError?.Invoke("Connection restored but re-authentication failed");
             }
         };
 
@@ -247,8 +255,9 @@ public class FriendService : IFriendService, IAsyncDisposable
                     errorMessage = response.GetString() ?? "Authentication failed";
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.WriteLine($"FriendService: Error parsing auth response: {ex.Message}");
                 errorMessage = response.ToString();
             }
             Debug.WriteLine($"FriendService: Authentication failed: {errorMessage}");
@@ -646,8 +655,9 @@ public class FriendService : IFriendService, IAsyncDisposable
             var result = await _connection.InvokeAsync<List<UserDto>>("GetMutualFriends", userId).ConfigureAwait(false);
             return result ?? [];
         }
-        catch
+        catch (Exception ex)
         {
+            Debug.WriteLine($"Failed to get mutual friends for user {userId}: {ex.Message}");
             return [];
         }
     }
@@ -676,8 +686,9 @@ public class FriendService : IFriendService, IAsyncDisposable
 
             return FriendRelationship.None;
         }
-        catch
+        catch (Exception ex)
         {
+            Debug.WriteLine($"Failed to get relationship for user {userId}: {ex.Message}");
             return FriendRelationship.None;
         }
     }
@@ -700,8 +711,9 @@ public class FriendService : IFriendService, IAsyncDisposable
         {
             return await _connection.InvokeAsync<string?>("GetUserNote", userId).ConfigureAwait(false);
         }
-        catch
+        catch (Exception ex)
         {
+            Debug.WriteLine($"Failed to get user note for {userId}: {ex.Message}");
             return null;
         }
     }

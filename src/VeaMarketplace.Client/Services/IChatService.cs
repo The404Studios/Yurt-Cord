@@ -116,13 +116,20 @@ public class ChatService : IChatService, IAsyncDisposable
         // Handle reconnection - re-authenticate when reconnected
         _connection.Reconnected += async (connectionId) =>
         {
-            Debug.WriteLine($"ChatService: Reconnected with connectionId {connectionId}");
-            _handshakeReceived = false;
-            if (_authToken != null)
+            try
             {
-                // Wait for handshake before authenticating
-                await Task.Delay(100).ConfigureAwait(false);
-                await _connection.InvokeAsync("Authenticate", _authToken).ConfigureAwait(false);
+                Debug.WriteLine($"ChatService: Reconnected with connectionId {connectionId}");
+                _handshakeReceived = false;
+                if (_authToken != null)
+                {
+                    // Wait for handshake before authenticating
+                    await Task.Delay(100).ConfigureAwait(false);
+                    await _connection.InvokeAsync("Authenticate", _authToken).ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"ChatService: Failed to re-authenticate after reconnection: {ex.Message}");
             }
         };
 
