@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -17,6 +18,7 @@ public interface IApiService : IDisposable
     Task<AuthResponse> LoginAsync(string username, string password);
     Task<AuthResponse> RegisterAsync(string username, string email, string password);
     Task<bool> ValidateTokenAsync();
+    Task<(bool Success, string Message, int LatencyMs)> TestConnectionAsync();
     void Logout();
 
     Task<ProductListResponse> GetProductsAsync(int page = 1, ProductCategory? category = null, string? search = null);
@@ -152,7 +154,13 @@ public class ApiService : IApiService
 
     public ApiService()
     {
-        _httpClient = new HttpClient { BaseAddress = new Uri(BaseUrl) };
+        _httpClient = new HttpClient
+        {
+            BaseAddress = new Uri(BaseUrl),
+            // 15 second timeout - fail fast if server is unreachable
+            Timeout = TimeSpan.FromSeconds(15)
+        };
+        Debug.WriteLine($"[ApiService] Initialized with base URL: {BaseUrl}");
     }
 
     #region Cache Helpers
@@ -203,11 +211,39 @@ public class ApiService : IApiService
 
     public async Task<AuthResponse> LoginAsync(string username, string password)
     {
+        Debug.WriteLine($"[ApiService] LoginAsync starting - connecting to {BaseUrl}/api/auth/login");
         var request = new LoginRequest { Username = username, Password = password };
-        var response = await _httpClient.PostAsJsonAsync("/api/auth/login", request, JsonOptions).ConfigureAwait(false);
+
+        HttpResponseMessage response;
+        try
+        {
+            response = await _httpClient.PostAsJsonAsync("/api/auth/login", request, JsonOptions).ConfigureAwait(false);
+            Debug.WriteLine($"[ApiService] LoginAsync got response: {response.StatusCode}");
+        }
+        catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+        {
+            Debug.WriteLine($"[ApiService] LoginAsync timeout after {_httpClient.Timeout.TotalSeconds}s");
+            return new AuthResponse { Success = false, Message = $"Connection timeout - server at {BaseUrl} did not respond" };
+        }
+        catch (TaskCanceledException)
+        {
+            Debug.WriteLine("[ApiService] LoginAsync request was cancelled");
+            return new AuthResponse { Success = false, Message = "Request was cancelled" };
+        }
+        catch (HttpRequestException ex)
+        {
+            Debug.WriteLine($"[ApiService] LoginAsync HTTP error: {ex.Message}");
+            return new AuthResponse { Success = false, Message = $"Could not connect to server: {ex.Message}" };
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ApiService] LoginAsync unexpected error: {ex.GetType().Name}: {ex.Message}");
+            return new AuthResponse { Success = false, Message = $"Connection failed: {ex.Message}" };
+        }
 
         // Read response body as string first to handle empty/invalid responses
         var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        Debug.WriteLine($"[ApiService] LoginAsync response content length: {content?.Length ?? 0}");
 
         if (string.IsNullOrWhiteSpace(content))
         {
@@ -235,6 +271,7 @@ public class ApiService : IApiService
             CurrentUser = result.User;
             _httpClient.DefaultRequestHeaders.Authorization =
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", AuthToken);
+            Debug.WriteLine("[ApiService] LoginAsync successful, token set");
         }
 
         return result;
@@ -242,11 +279,39 @@ public class ApiService : IApiService
 
     public async Task<AuthResponse> RegisterAsync(string username, string email, string password)
     {
+        Debug.WriteLine($"[ApiService] RegisterAsync starting - connecting to {BaseUrl}/api/auth/register");
         var request = new RegisterRequest { Username = username, Email = email, Password = password };
-        var response = await _httpClient.PostAsJsonAsync("/api/auth/register", request, JsonOptions).ConfigureAwait(false);
+
+        HttpResponseMessage response;
+        try
+        {
+            response = await _httpClient.PostAsJsonAsync("/api/auth/register", request, JsonOptions).ConfigureAwait(false);
+            Debug.WriteLine($"[ApiService] RegisterAsync got response: {response.StatusCode}");
+        }
+        catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+        {
+            Debug.WriteLine($"[ApiService] RegisterAsync timeout after {_httpClient.Timeout.TotalSeconds}s");
+            return new AuthResponse { Success = false, Message = $"Connection timeout - server at {BaseUrl} did not respond" };
+        }
+        catch (TaskCanceledException)
+        {
+            Debug.WriteLine("[ApiService] RegisterAsync request was cancelled");
+            return new AuthResponse { Success = false, Message = "Request was cancelled" };
+        }
+        catch (HttpRequestException ex)
+        {
+            Debug.WriteLine($"[ApiService] RegisterAsync HTTP error: {ex.Message}");
+            return new AuthResponse { Success = false, Message = $"Could not connect to server: {ex.Message}" };
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ApiService] RegisterAsync unexpected error: {ex.GetType().Name}: {ex.Message}");
+            return new AuthResponse { Success = false, Message = $"Connection failed: {ex.Message}" };
+        }
 
         // Read response body as string first to handle empty/invalid responses
         var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        Debug.WriteLine($"[ApiService] RegisterAsync response content length: {content?.Length ?? 0}");
 
         if (string.IsNullOrWhiteSpace(content))
         {
@@ -274,6 +339,7 @@ public class ApiService : IApiService
             CurrentUser = result.User;
             _httpClient.DefaultRequestHeaders.Authorization =
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", AuthToken);
+            Debug.WriteLine("[ApiService] RegisterAsync successful, token set");
         }
 
         return result;
@@ -298,6 +364,48 @@ public class ApiService : IApiService
         }
 
         return false;
+    }
+
+    public async Task<(bool Success, string Message, int LatencyMs)> TestConnectionAsync()
+    {
+        Debug.WriteLine($"[ApiService] TestConnectionAsync - testing connection to {BaseUrl}");
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            // Use auth/mode endpoint as a lightweight health check
+            var response = await _httpClient.GetAsync("/api/auth/mode").ConfigureAwait(false);
+            sw.Stop();
+
+            if (response.IsSuccessStatusCode)
+            {
+                Debug.WriteLine($"[ApiService] TestConnectionAsync success in {sw.ElapsedMilliseconds}ms");
+                return (true, "Connected successfully", (int)sw.ElapsedMilliseconds);
+            }
+            else
+            {
+                Debug.WriteLine($"[ApiService] TestConnectionAsync failed with status {response.StatusCode}");
+                return (false, $"Server returned status {(int)response.StatusCode}", (int)sw.ElapsedMilliseconds);
+            }
+        }
+        catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+        {
+            sw.Stop();
+            Debug.WriteLine($"[ApiService] TestConnectionAsync timeout after {sw.ElapsedMilliseconds}ms");
+            return (false, $"Connection timeout after {_httpClient.Timeout.TotalSeconds}s - server may be unreachable", (int)sw.ElapsedMilliseconds);
+        }
+        catch (HttpRequestException ex)
+        {
+            sw.Stop();
+            Debug.WriteLine($"[ApiService] TestConnectionAsync HTTP error: {ex.Message}");
+            return (false, $"Cannot connect: {ex.Message}", (int)sw.ElapsedMilliseconds);
+        }
+        catch (Exception ex)
+        {
+            sw.Stop();
+            Debug.WriteLine($"[ApiService] TestConnectionAsync error: {ex.GetType().Name}: {ex.Message}");
+            return (false, $"Error: {ex.Message}", (int)sw.ElapsedMilliseconds);
+        }
     }
 
     public void Logout()
