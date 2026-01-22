@@ -99,9 +99,10 @@ public partial class ProductDetailViewModel : BaseViewModel
         {
             Reviews = await _apiService.GetProductReviewsAsync(ProductId, 1);
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore errors loading reviews
+            System.Diagnostics.Debug.WriteLine($"Failed to load reviews for product {ProductId}: {ex.Message}");
+            // Reviews will remain null, UI should handle this gracefully
         }
     }
 
@@ -116,9 +117,10 @@ public partial class ProductDetailViewModel : BaseViewModel
                 SimilarProducts.Add(product);
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore errors loading similar products
+            System.Diagnostics.Debug.WriteLine($"Failed to load similar products for {ProductId}: {ex.Message}");
+            // Similar products will remain empty, UI should handle this gracefully
         }
     }
 
@@ -129,9 +131,10 @@ public partial class ProductDetailViewModel : BaseViewModel
             var wishlist = await _apiService.GetWishlistAsync();
             IsInWishlist = wishlist.Any(w => w.ProductId == ProductId);
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore errors
+            System.Diagnostics.Debug.WriteLine($"Failed to check wishlist status: {ex.Message}");
+            IsInWishlist = false; // Default to false on error
         }
     }
 
@@ -142,9 +145,10 @@ public partial class ProductDetailViewModel : BaseViewModel
             var cart = await _apiService.GetCartAsync();
             IsInCart = cart?.Items?.Any(i => i.ProductId == ProductId) ?? false;
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore errors
+            System.Diagnostics.Debug.WriteLine($"Failed to check cart status: {ex.Message}");
+            IsInCart = false; // Default to false on error
         }
     }
 

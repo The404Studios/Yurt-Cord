@@ -48,6 +48,12 @@ public partial class ChatViewModel : BaseViewModel
     [ObservableProperty]
     private bool _isDeafened;
 
+    [ObservableProperty]
+    private bool _isLoading;
+
+    [ObservableProperty]
+    private string? _errorMessage;
+
     public ChatViewModel(IChatService chatService, IVoiceService voiceService, IApiService apiService, INavigationService navigationService)
     {
         _chatService = chatService;
@@ -275,8 +281,26 @@ public partial class ChatViewModel : BaseViewModel
     {
         if (string.IsNullOrWhiteSpace(MessageInput)) return;
 
-        await _chatService.SendMessageAsync(MessageInput, CurrentChannel);
-        MessageInput = string.Empty;
+        try
+        {
+            var message = MessageInput;
+            MessageInput = string.Empty; // Clear immediately for better UX
+            await _chatService.SendMessageAsync(message, CurrentChannel);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to send message: {ex.Message}");
+            ErrorMessage = "Failed to send message. Please try again.";
+            ClearErrorAfterDelay();
+        }
+    }
+
+    private void ClearErrorAfterDelay()
+    {
+        Task.Delay(5000).ContinueWith(_ =>
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() => ErrorMessage = null);
+        });
     }
 
     [RelayCommand]
@@ -284,45 +308,90 @@ public partial class ChatViewModel : BaseViewModel
     {
         if (channelName == CurrentChannel) return;
 
-        await _chatService.LeaveChannelAsync(CurrentChannel);
-        CurrentChannel = channelName;
-        Messages.Clear();
-        await _chatService.JoinChannelAsync(channelName);
+        var previousChannel = CurrentChannel;
+        try
+        {
+            IsLoading = true;
+            await _chatService.LeaveChannelAsync(CurrentChannel);
+            CurrentChannel = channelName;
+            Messages.Clear();
+            await _chatService.JoinChannelAsync(channelName);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to switch channel: {ex.Message}");
+            CurrentChannel = previousChannel; // Rollback on failure
+            ErrorMessage = "Failed to switch channel. Please try again.";
+            ClearErrorAfterDelay();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     [RelayCommand]
     private async Task JoinVoiceChannel(string channelId)
     {
-        if (IsInVoiceChannel)
+        try
         {
-            await _voiceService.LeaveVoiceChannelAsync();
+            IsLoading = true;
+
+            if (IsInVoiceChannel)
+            {
+                await _voiceService.LeaveVoiceChannelAsync();
+            }
+
+            var user = _apiService.CurrentUser;
+            if (user != null)
+            {
+                await _voiceService.ConnectAsync();
+                // Use default avatar if AvatarUrl is empty or a special format
+                var avatarUrl = GetDisplayableAvatarUrl(user.AvatarUrl);
+                await _voiceService.JoinVoiceChannelAsync(channelId, user.Id, user.Username, avatarUrl);
+                IsInVoiceChannel = true;
+                CurrentVoiceChannel = channelId;
+
+                // Navigate to voice call dashboard
+                _navigationService.NavigateToVoiceCall();
+            }
         }
-
-        var user = _apiService.CurrentUser;
-        if (user != null)
+        catch (Exception ex)
         {
-            await _voiceService.ConnectAsync();
-            // Use default avatar if AvatarUrl is empty or a special format
-            var avatarUrl = GetDisplayableAvatarUrl(user.AvatarUrl);
-            await _voiceService.JoinVoiceChannelAsync(channelId, user.Id, user.Username, avatarUrl);
-            IsInVoiceChannel = true;
-            CurrentVoiceChannel = channelId;
-
-            // Navigate to voice call dashboard
-            _navigationService.NavigateToVoiceCall();
+            System.Diagnostics.Debug.WriteLine($"Failed to join voice channel: {ex.Message}");
+            IsInVoiceChannel = false;
+            CurrentVoiceChannel = null;
+            ErrorMessage = "Failed to join voice channel. Please try again.";
+            ClearErrorAfterDelay();
+        }
+        finally
+        {
+            IsLoading = false;
         }
     }
 
     [RelayCommand]
     private async Task LeaveVoiceChannel()
     {
-        await _voiceService.LeaveVoiceChannelAsync();
-        IsInVoiceChannel = false;
-        CurrentVoiceChannel = null;
-        VoiceUsers.Clear();
+        try
+        {
+            await _voiceService.LeaveVoiceChannelAsync();
+            IsInVoiceChannel = false;
+            CurrentVoiceChannel = null;
+            VoiceUsers.Clear();
 
-        // Navigate back to chat
-        _navigationService.NavigateToChat();
+            // Navigate back to chat
+            _navigationService.NavigateToChat();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to leave voice channel: {ex.Message}");
+            // Force cleanup even on error
+            IsInVoiceChannel = false;
+            CurrentVoiceChannel = null;
+            VoiceUsers.Clear();
+            _navigationService.NavigateToChat();
+        }
     }
 
     [RelayCommand]
