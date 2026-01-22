@@ -47,6 +47,7 @@ public partial class App : Application
         services.AddSingleton<IApiService, ApiService>();
         services.AddSingleton<IChatService, ChatService>();
         services.AddSingleton<IVoiceService, VoiceService>();
+        services.AddSingleton<IWebRTCService, WebRTCService>(); // P2P connections for voice/video
         services.AddSingleton<INavigationService, NavigationService>();
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<IAudioDeviceService, AudioDeviceService>();

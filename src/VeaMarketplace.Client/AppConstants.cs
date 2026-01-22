@@ -182,4 +182,43 @@ public static class AppConstants
     public const int AudioChannels = 1;
 
     #endregion
+
+    #region WebRTC Configuration
+
+    /// <summary>
+    /// WebRTC ICE server configuration for NAT traversal.
+    /// Uses public STUN servers for ICE candidate gathering.
+    /// </summary>
+    public static class WebRTC
+    {
+        /// <summary>Google's public STUN server.</summary>
+        public const string GoogleStunServer = "stun:stun.l.google.com:19302";
+
+        /// <summary>Backup STUN servers for redundancy.</summary>
+        public static readonly string[] StunServers =
+        [
+            "stun:stun.l.google.com:19302",
+            "stun:stun1.l.google.com:19302",
+            "stun:stun2.l.google.com:19302",
+            "stun:stun3.l.google.com:19302",
+            "stun:stun4.l.google.com:19302"
+        ];
+
+        /// <summary>ICE gathering timeout in milliseconds.</summary>
+        public const int IceGatheringTimeoutMs = 10000;
+
+        /// <summary>P2P connection timeout in milliseconds.</summary>
+        public const int P2PConnectionTimeoutMs = 15000;
+
+        /// <summary>
+        /// Whether to prefer P2P connections over server relay.
+        /// When true, will attempt P2P first and fall back to server relay on failure.
+        /// </summary>
+        public const bool PreferP2PConnection = true;
+
+        /// <summary>Maximum peers for P2P mesh network (for small group calls).</summary>
+        public const int MaxP2PPeers = 4;
+    }
+
+    #endregion
 }

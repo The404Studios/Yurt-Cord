@@ -131,10 +131,18 @@ public interface IVoiceService
     event Action<string, bool>? OnUserScreenShareChanged;
     event Action<bool, string>? OnConnectionStateChanged;  // (isConnected, message)
 
-    // WebRTC signaling events
+    // WebRTC signaling events (legacy - kept for compatibility)
     event Action<string, string>? OnReceiveOffer; // senderConnectionId, offer
     event Action<string, string>? OnReceiveAnswer; // senderConnectionId, answer
     event Action<string, string>? OnReceiveIceCandidate; // senderConnectionId, candidate
+
+    // WebRTC P2P signaling events (new)
+    event Action<string, string, string>? OnP2PConnectionRequested; // connectionId, userId, username
+    event Action<string, string, string, string>? OnWebRTCOfferReceived; // connectionId, userId, username, sdpOffer
+    event Action<string, string, string, string>? OnWebRTCAnswerReceived; // connectionId, userId, username, sdpAnswer
+    event Action<string, string, string, int>? OnICECandidateReceived; // connectionId, candidate, sdpMid, sdpMLineIndex
+    event Action<string>? OnP2PConnected; // connectionId
+    event Action<string, string>? OnP2PFailed; // connectionId, reason
 
     // Error events
     event Action<string>? OnVoiceError;
@@ -552,10 +560,18 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     public event Action<string, string, string>? OnUserKickedFromRoom;
     public event Action<string>? OnKickSuccess;
 
-    // WebRTC signaling events
+    // WebRTC signaling events (legacy)
     public event Action<string, string>? OnReceiveOffer;
     public event Action<string, string>? OnReceiveAnswer;
     public event Action<string, string>? OnReceiveIceCandidate;
+
+    // WebRTC P2P signaling events
+    public event Action<string, string, string>? OnP2PConnectionRequested;
+    public event Action<string, string, string, string>? OnWebRTCOfferReceived;
+    public event Action<string, string, string, string>? OnWebRTCAnswerReceived;
+    public event Action<string, string, string, int>? OnICECandidateReceived;
+    public event Action<string>? OnP2PConnected;
+    public event Action<string, string>? OnP2PFailed;
 
     // Error events
     public event Action<string>? OnVoiceError;
@@ -1008,6 +1024,66 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         // Register call handlers
         RegisterCallHandlers();
+
+        // Register WebRTC signaling handlers for P2P connections
+        RegisterWebRTCHandlers();
+    }
+
+    /// <summary>
+    /// Register handlers for WebRTC signaling messages.
+    /// These enable P2P connections for lower latency audio/video.
+    /// </summary>
+    private void RegisterWebRTCHandlers()
+    {
+        if (_connection == null) return;
+
+        // P2P connection request
+        _connection.On<string, string, string>("P2PConnectionRequested", (fromConnectionId, fromUserId, fromUsername) =>
+        {
+            Debug.WriteLine($"VoiceService: P2P connection requested from {fromUsername} ({fromConnectionId})");
+            OnP2PConnectionRequested?.Invoke(fromConnectionId, fromUserId, fromUsername);
+        });
+
+        // WebRTC SDP offer received
+        _connection.On<string, string, string, string>("WebRTCOfferReceived", (fromConnectionId, fromUserId, fromUsername, sdpOffer) =>
+        {
+            Debug.WriteLine($"VoiceService: WebRTC offer received from {fromUsername}");
+            OnWebRTCOfferReceived?.Invoke(fromConnectionId, fromUserId, fromUsername, sdpOffer);
+        });
+
+        // WebRTC SDP answer received
+        _connection.On<string, string, string, string>("WebRTCAnswerReceived", (fromConnectionId, fromUserId, fromUsername, sdpAnswer) =>
+        {
+            Debug.WriteLine($"VoiceService: WebRTC answer received from {fromUsername}");
+            OnWebRTCAnswerReceived?.Invoke(fromConnectionId, fromUserId, fromUsername, sdpAnswer);
+        });
+
+        // ICE candidate received
+        _connection.On<string, string, string, int>("ICECandidateReceived", (fromConnectionId, candidate, sdpMid, sdpMLineIndex) =>
+        {
+            Debug.WriteLine($"VoiceService: ICE candidate received from {fromConnectionId}");
+            OnICECandidateReceived?.Invoke(fromConnectionId, candidate, sdpMid, sdpMLineIndex);
+        });
+
+        // P2P connection established
+        _connection.On<string>("P2PConnected", connectionId =>
+        {
+            Debug.WriteLine($"VoiceService: P2P connection established with {connectionId}");
+            OnP2PConnected?.Invoke(connectionId);
+        });
+
+        // P2P connection failed - fall back to server relay
+        _connection.On<string, string>("P2PFailed", (connectionId, reason) =>
+        {
+            Debug.WriteLine($"VoiceService: P2P connection failed with {connectionId}: {reason}");
+            OnP2PFailed?.Invoke(connectionId, reason);
+        });
+
+        // WebRTC error
+        _connection.On<string>("WebRTCError", error =>
+        {
+            Debug.WriteLine($"VoiceService: WebRTC error: {error}");
+        });
     }
 
     private byte[] ApplyVolume(byte[] audioData, float volume)

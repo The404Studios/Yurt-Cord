@@ -1744,6 +1744,127 @@ public class VoiceHub : Hub
     }
 
     #endregion
+
+    #region WebRTC Signaling
+
+    /// <summary>
+    /// Request a peer-to-peer WebRTC connection with another user.
+    /// Used for 1:1 calls to establish direct connection.
+    /// </summary>
+    public async Task RequestP2PConnection(string targetConnectionId)
+    {
+        if (!_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
+        {
+            await Clients.Caller.SendAsync("WebRTCError", "Not in a voice channel");
+            return;
+        }
+
+        if (!_voiceUsers.TryGetValue(targetConnectionId, out var targetState))
+        {
+            await Clients.Caller.SendAsync("WebRTCError", "Target user not found");
+            return;
+        }
+
+        // Verify both users are in the same channel
+        if (userState.ChannelId != targetState.ChannelId)
+        {
+            await Clients.Caller.SendAsync("WebRTCError", "Users must be in the same channel");
+            return;
+        }
+
+        _logger?.LogDebug("P2P connection requested from {FromId} to {ToId}", Context.ConnectionId, targetConnectionId);
+
+        // Notify the target user that a P2P connection is being requested
+        await Clients.Client(targetConnectionId).SendAsync("P2PConnectionRequested",
+            Context.ConnectionId, userState.UserId, userState.Username);
+    }
+
+    /// <summary>
+    /// Send WebRTC SDP offer to a specific peer for P2P connection establishment.
+    /// </summary>
+    public async Task SendWebRTCOffer(string targetConnectionId, string sdpOffer)
+    {
+        if (string.IsNullOrEmpty(targetConnectionId) || string.IsNullOrEmpty(sdpOffer))
+        {
+            await Clients.Caller.SendAsync("WebRTCError", "Invalid offer parameters");
+            return;
+        }
+
+        if (!_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
+        {
+            await Clients.Caller.SendAsync("WebRTCError", "Not in a voice channel");
+            return;
+        }
+
+        _logger?.LogDebug("WebRTC offer sent from {FromId} to {ToId}", Context.ConnectionId, targetConnectionId);
+
+        await Clients.Client(targetConnectionId).SendAsync("WebRTCOfferReceived",
+            Context.ConnectionId, userState.UserId, userState.Username, sdpOffer);
+    }
+
+    /// <summary>
+    /// Send WebRTC SDP answer to a specific peer in response to an offer.
+    /// </summary>
+    public async Task SendWebRTCAnswer(string targetConnectionId, string sdpAnswer)
+    {
+        if (string.IsNullOrEmpty(targetConnectionId) || string.IsNullOrEmpty(sdpAnswer))
+        {
+            await Clients.Caller.SendAsync("WebRTCError", "Invalid answer parameters");
+            return;
+        }
+
+        if (!_voiceUsers.TryGetValue(Context.ConnectionId, out var userState))
+        {
+            await Clients.Caller.SendAsync("WebRTCError", "Not in a voice channel");
+            return;
+        }
+
+        _logger?.LogDebug("WebRTC answer sent from {FromId} to {ToId}", Context.ConnectionId, targetConnectionId);
+
+        await Clients.Client(targetConnectionId).SendAsync("WebRTCAnswerReceived",
+            Context.ConnectionId, userState.UserId, userState.Username, sdpAnswer);
+    }
+
+    /// <summary>
+    /// Send ICE candidate to a specific peer for NAT traversal.
+    /// </summary>
+    public async Task SendICECandidate(string targetConnectionId, string candidate, string sdpMid, int sdpMLineIndex)
+    {
+        if (string.IsNullOrEmpty(targetConnectionId) || string.IsNullOrEmpty(candidate))
+        {
+            return; // Silently ignore invalid candidates
+        }
+
+        _logger?.LogDebug("ICE candidate sent from {FromId} to {ToId}", Context.ConnectionId, targetConnectionId);
+
+        await Clients.Client(targetConnectionId).SendAsync("ICECandidateReceived",
+            Context.ConnectionId, candidate, sdpMid, sdpMLineIndex);
+    }
+
+    /// <summary>
+    /// Notify peer that P2P connection has been established successfully.
+    /// Falls back to server relay can be initiated if this fails.
+    /// </summary>
+    public async Task NotifyP2PConnected(string targetConnectionId)
+    {
+        _logger?.LogDebug("P2P connection established between {FromId} and {ToId}", Context.ConnectionId, targetConnectionId);
+
+        await Clients.Client(targetConnectionId).SendAsync("P2PConnected", Context.ConnectionId);
+    }
+
+    /// <summary>
+    /// Notify peer that P2P connection failed - should fall back to server relay.
+    /// </summary>
+    public async Task NotifyP2PFailed(string targetConnectionId, string reason)
+    {
+        _logger?.LogWarning("P2P connection failed between {FromId} and {ToId}: {Reason}",
+            Context.ConnectionId, targetConnectionId, reason);
+
+        await Clients.Client(targetConnectionId).SendAsync("P2PFailed", Context.ConnectionId, reason);
+        await Clients.Caller.SendAsync("P2PFailed", targetConnectionId, reason);
+    }
+
+    #endregion
 }
 
 public class VoiceChannelState
