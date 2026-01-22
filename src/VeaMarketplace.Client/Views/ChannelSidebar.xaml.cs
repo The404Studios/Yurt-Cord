@@ -237,9 +237,10 @@ public partial class ChannelSidebar : UserControl
         {
             UserAvatarBrush.ImageSource = new BitmapImage(new Uri(AppConstants.DefaultAvatarPath));
         }
-        catch
+        catch (Exception ex)
         {
             // If default avatar fails, leave it empty
+            System.Diagnostics.Debug.WriteLine($"Failed to load default avatar: {ex.Message}");
         }
     }
 
