@@ -102,6 +102,7 @@ public class AuthService
             AvatarUrl = $"https://api.dicebear.com/7.x/avataaars/svg?seed={request.Username}",
             CreatedAt = DateTime.UtcNow,
             LastSeenAt = DateTime.UtcNow,
+            IsOnline = true, // User is online after registration
             Role = superuserRole ?? UserRole.Member // Assign superuser role if configured
         };
 
@@ -166,6 +167,21 @@ public class AuthService
     public User? GetUserById(string userId)
     {
         return _db.Users.FindById(userId);
+    }
+
+    /// <summary>
+    /// Sets a user's online status in the database
+    /// </summary>
+    public void SetUserOnlineStatus(string userId, bool isOnline)
+    {
+        var user = _db.Users.FindById(userId);
+        if (user != null)
+        {
+            user.IsOnline = isOnline;
+            user.LastSeenAt = DateTime.UtcNow;
+            _db.Users.Update(user);
+            _logger.LogDebug("User {UserId} online status set to {IsOnline}", userId, isOnline);
+        }
     }
 
     public UserDto? UpdateProfile(string userId, UpdateProfileRequest request)

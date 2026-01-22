@@ -90,15 +90,28 @@ public partial class LoginViewModel : BaseViewModel
                     _settingsService.SaveSettings();
                 }
 
-                // Connect to all real-time SignalR services
+                // Connect to all real-time SignalR services in parallel for faster login
                 if (result.Token != null)
                 {
-                    await _chatService.ConnectAsync(result.Token);
-                    await _friendService.ConnectAsync(result.Token);
-                    await _profileService.ConnectAsync(result.Token);
-                    await _contentService.ConnectAsync(result.Token);
-                    await _notificationHubService.ConnectAsync(result.Token);
-                    await _roomHubService.ConnectAsync(result.Token);
+                    var connectionTasks = new List<Task>
+                    {
+                        _chatService.ConnectAsync(result.Token),
+                        _friendService.ConnectAsync(result.Token),
+                        _profileService.ConnectAsync(result.Token),
+                        _contentService.ConnectAsync(result.Token),
+                        _notificationHubService.ConnectAsync(result.Token),
+                        _roomHubService.ConnectAsync(result.Token)
+                    };
+
+                    try
+                    {
+                        await Task.WhenAll(connectionTasks);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Some services failed to connect: {ex.Message}");
+                        // Continue with login - partial connectivity is acceptable
+                    }
                 }
 
                 OnLoginSuccess?.Invoke();
@@ -151,15 +164,28 @@ public partial class LoginViewModel : BaseViewModel
 
             if (result.Success)
             {
-                // Connect to all real-time SignalR services
+                // Connect to all real-time SignalR services in parallel
                 if (result.Token != null)
                 {
-                    await _chatService.ConnectAsync(result.Token);
-                    await _friendService.ConnectAsync(result.Token);
-                    await _profileService.ConnectAsync(result.Token);
-                    await _contentService.ConnectAsync(result.Token);
-                    await _notificationHubService.ConnectAsync(result.Token);
-                    await _roomHubService.ConnectAsync(result.Token);
+                    var connectionTasks = new List<Task>
+                    {
+                        _chatService.ConnectAsync(result.Token),
+                        _friendService.ConnectAsync(result.Token),
+                        _profileService.ConnectAsync(result.Token),
+                        _contentService.ConnectAsync(result.Token),
+                        _notificationHubService.ConnectAsync(result.Token),
+                        _roomHubService.ConnectAsync(result.Token)
+                    };
+
+                    try
+                    {
+                        await Task.WhenAll(connectionTasks);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Some services failed to connect: {ex.Message}");
+                        // Continue with registration - partial connectivity is acceptable
+                    }
                 }
 
                 OnLoginSuccess?.Invoke();

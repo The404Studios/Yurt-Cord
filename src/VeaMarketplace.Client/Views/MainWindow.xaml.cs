@@ -185,6 +185,8 @@ public partial class MainWindow : Window
         var chatService = (IChatService)App.ServiceProvider.GetService(typeof(IChatService))!;
         var profileService = (IProfileService)App.ServiceProvider.GetService(typeof(IProfileService))!;
         var contentService = (IContentService)App.ServiceProvider.GetService(typeof(IContentService))!;
+        var notificationHubService = (INotificationHubService)App.ServiceProvider.GetService(typeof(INotificationHubService))!;
+        var roomHubService = (IRoomHubService)App.ServiceProvider.GetService(typeof(IRoomHubService))!;
         var settingsService = (ISettingsService)App.ServiceProvider.GetService(typeof(ISettingsService))!;
 
         // Disconnect from voice channel if connected
@@ -201,7 +203,9 @@ public partial class MainWindow : Window
                 chatService.DisconnectAsync(),
                 _friendService.DisconnectAsync(),
                 profileService.DisconnectAsync(),
-                contentService.DisconnectAsync()
+                contentService.DisconnectAsync(),
+                notificationHubService.DisconnectAsync(),
+                roomHubService.DisconnectAsync()
             );
         }
         catch (Exception ex)

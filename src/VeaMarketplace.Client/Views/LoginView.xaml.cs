@@ -145,9 +145,37 @@ public partial class LoginView : UserControl
                     UpdateLoadingText("Success!", "Connecting to services...");
                     await Task.Delay(200);
 
-                    var chatService = (IChatService)App.ServiceProvider.GetService(typeof(IChatService))!;
+                    // Connect all services (same as login flow)
                     if (result.Token != null)
-                        await chatService.ConnectAsync(result.Token);
+                    {
+                        var chatService = (IChatService)App.ServiceProvider.GetService(typeof(IChatService))!;
+                        var friendService = (IFriendService)App.ServiceProvider.GetService(typeof(IFriendService))!;
+                        var profileService = (IProfileService)App.ServiceProvider.GetService(typeof(IProfileService))!;
+                        var contentService = (IContentService)App.ServiceProvider.GetService(typeof(IContentService))!;
+                        var notificationHubService = (INotificationHubService)App.ServiceProvider.GetService(typeof(INotificationHubService))!;
+                        var roomHubService = (IRoomHubService)App.ServiceProvider.GetService(typeof(IRoomHubService))!;
+
+                        // Connect all services with error handling
+                        var connectionTasks = new List<Task>
+                        {
+                            chatService.ConnectAsync(result.Token),
+                            friendService.ConnectAsync(result.Token),
+                            profileService.ConnectAsync(result.Token),
+                            contentService.ConnectAsync(result.Token),
+                            notificationHubService.ConnectAsync(result.Token),
+                            roomHubService.ConnectAsync(result.Token)
+                        };
+
+                        try
+                        {
+                            await Task.WhenAll(connectionTasks);
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Some services failed to connect: {ex.Message}");
+                            // Continue anyway - partial connectivity is better than none
+                        }
+                    }
 
                     UpdateLoadingText("Welcome!", "Let's set up your profile...");
                     await Task.Delay(300);

@@ -180,6 +180,9 @@ public class ChatHub : Hub
         _onlineUsers[user.Id] = onlineUser;
         _connectionUserMap[connectionId] = user.Id;
 
+        // Update database to mark user as online
+        _authService.SetUserOnlineStatus(user.Id, true);
+
         // Track multiple connections per user
         _userConnectionsMap.AddOrUpdate(
             user.Id,
@@ -388,6 +391,9 @@ public class ChatHub : Hub
             if (_onlineUsers.TryRemove(userId, out var user))
             {
                 _logger.LogInformation("User disconnected: {Username} ({UserId})", user.Username, userId);
+
+                // Update database to mark user as offline
+                _authService.SetUserOnlineStatus(userId, false);
 
                 await Clients.All.SendAsync("UserLeft", user);
 
