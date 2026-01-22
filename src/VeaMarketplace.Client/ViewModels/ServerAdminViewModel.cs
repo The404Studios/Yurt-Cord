@@ -24,42 +24,42 @@ public partial class ServerAdminViewModel : BaseViewModel
     private string _serverUptime = "0d 0h 0m";
 
     [ObservableProperty]
-    private long _memoryUsageMb = 0;
+    private long _memoryUsageMb;
 
     [ObservableProperty]
-    private int _threadCount = 0;
+    private int _threadCount;
 
     [ObservableProperty]
     private string _serverVersion = "1.0.0";
 
     // Database Stats
     [ObservableProperty]
-    private int _totalUsers = 0;
+    private int _totalUsers;
 
     [ObservableProperty]
-    private int _onlineUsers = 0;
+    private int _onlineUsers;
 
     [ObservableProperty]
-    private int _totalProducts = 0;
+    private int _totalProducts;
 
     [ObservableProperty]
-    private int _totalMessages = 0;
+    private int _totalMessages;
 
     [ObservableProperty]
-    private int _totalRooms = 0;
+    private int _totalRooms;
 
     [ObservableProperty]
-    private int _totalOrders = 0;
+    private int _totalOrders;
 
     // Moderation Stats
     [ObservableProperty]
-    private int _activeBans = 0;
+    private int _activeBans;
 
     [ObservableProperty]
-    private int _activeMutes = 0;
+    private int _activeMutes;
 
     [ObservableProperty]
-    private int _pendingReports = 0;
+    private int _pendingReports;
 
     // User Management
     [ObservableProperty]
@@ -75,18 +75,18 @@ public partial class ServerAdminViewModel : BaseViewModel
     private ObservableCollection<UserSearchResultDto> _userSearchResults = new();
 
     [ObservableProperty]
-    private UserDto? _selectedUser = null;
+    private UserDto? _selectedUser;
 
     // Broadcast
     [ObservableProperty]
     private string _broadcastMessage = string.Empty;
 
     [ObservableProperty]
-    private bool _isBroadcastSent = false;
+    private bool _isBroadcastSent;
 
     // Action Dialog
     [ObservableProperty]
-    private bool _isUserActionDialogOpen = false;
+    private bool _isUserActionDialogOpen;
 
     [ObservableProperty]
     private string _actionReason = string.Empty;

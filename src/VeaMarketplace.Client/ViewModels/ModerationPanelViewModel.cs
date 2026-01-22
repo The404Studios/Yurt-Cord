@@ -18,19 +18,19 @@ public partial class ModerationPanelViewModel : BaseViewModel
 
     // Dashboard Stats
     [ObservableProperty]
-    private int _activeBans = 0;
+    private int _activeBans;
 
     [ObservableProperty]
-    private int _activeMutes = 0;
+    private int _activeMutes;
 
     [ObservableProperty]
-    private int _pendingReports = 0;
+    private int _pendingReports;
 
     [ObservableProperty]
-    private int _autoModActions24h = 0;
+    private int _autoModActions24h;
 
     [ObservableProperty]
-    private int _totalModActions = 0;
+    private int _totalModActions;
 
     [ObservableProperty]
     private ObservableCollection<ModerationLogDto> _recentModActions = new();
@@ -48,7 +48,7 @@ public partial class ModerationPanelViewModel : BaseViewModel
 
     // Ban Dialog
     [ObservableProperty]
-    private bool _isBanDialogOpen = false;
+    private bool _isBanDialogOpen;
 
     [ObservableProperty]
     private string _banUserId = string.Empty;
@@ -60,14 +60,14 @@ public partial class ModerationPanelViewModel : BaseViewModel
     private bool _isPermanentBan = true;
 
     [ObservableProperty]
-    private DateTime? _banExpiryDate = null;
+    private DateTime? _banExpiryDate;
 
     // Action Dialog
     [ObservableProperty]
-    private bool _isActionDialogOpen = false;
+    private bool _isActionDialogOpen;
 
     [ObservableProperty]
-    private MessageReportDto? _selectedReport = null;
+    private MessageReportDto? _selectedReport;
 
     [ObservableProperty]
     private string _actionReason = string.Empty;

@@ -16,7 +16,7 @@ public partial class NotificationCenterViewModel : BaseViewModel
     private ObservableCollection<NotificationDto> _notifications = new();
 
     [ObservableProperty]
-    private bool _hasNotifications = false;
+    private bool _hasNotifications;
 
     [ObservableProperty]
     private string _currentFilter = "All";

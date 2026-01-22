@@ -11,7 +11,7 @@ public partial class WriteReviewViewModel : BaseViewModel
     private readonly string _productTitle;
 
     [ObservableProperty]
-    private int _selectedRating = 0;
+    private int _selectedRating;
 
     [ObservableProperty]
     private string _reviewTitle = string.Empty;
@@ -26,7 +26,7 @@ public partial class WriteReviewViewModel : BaseViewModel
     private List<string> _uploadedImageUrls = new();
 
     [ObservableProperty]
-    private bool _canSubmit = false;
+    private bool _canSubmit;
 
     public string ProductTitle => _productTitle;
 

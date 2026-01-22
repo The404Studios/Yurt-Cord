@@ -126,7 +126,7 @@ public partial class SettingsViewModel : BaseViewModel
     private string _preferredLanguage = "en";
 
     [ObservableProperty]
-    private bool _autoTranslate = false;
+    private bool _autoTranslate;
 
     [ObservableProperty]
     private List<LanguageOption> _availableLanguages = new();

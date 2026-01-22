@@ -20,10 +20,10 @@ public partial class ProductReviewsViewModel : BaseViewModel
     private string _productTitle = string.Empty;
 
     [ObservableProperty]
-    private double _averageRating = 0;
+    private double _averageRating;
 
     [ObservableProperty]
-    private int _totalReviews = 0;
+    private int _totalReviews;
 
     [ObservableProperty]
     private ObservableCollection<RatingBreakdownItem> _ratingBreakdown = new();

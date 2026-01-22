@@ -15,16 +15,16 @@ public partial class OrderHistoryViewModel : BaseViewModel
     private ObservableCollection<OrderDto> _orders = new();
 
     [ObservableProperty]
-    private int _totalOrders = 0;
+    private int _totalOrders;
 
     [ObservableProperty]
-    private decimal _totalSpent = 0;
+    private decimal _totalSpent;
 
     [ObservableProperty]
-    private int _pendingOrders = 0;
+    private int _pendingOrders;
 
     [ObservableProperty]
-    private int _completedOrders = 0;
+    private int _completedOrders;
 
     [ObservableProperty]
     private string _searchQuery = string.Empty;
