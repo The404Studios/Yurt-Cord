@@ -127,6 +127,10 @@ public partial class App : Application
         var leaderboardService = ServiceProvider.GetRequiredService<ILeaderboardService>();
         _ = SafeFireAndForgetAsync(leaderboardService.LoadAsync(), "LeaderboardService.LoadAsync");
 
+        // Initialize WebRTC service for P2P connections
+        var webRTCService = ServiceProvider.GetRequiredService<IWebRTCService>();
+        _ = SafeFireAndForgetAsync(webRTCService.InitializeAsync(), "WebRTCService.InitializeAsync");
+
         // Wire up cross-service event handlers for social activity tracking
         WireUpSocialActivityTracking();
 
@@ -173,6 +177,65 @@ public partial class App : Application
         {
             overlay.SpawnFlyingEnvelope(nudge.FromUsername);
         };
+
+        // Wire up WebRTC for P2P voice connections
+        WireUpWebRTCIntegration(voiceService);
+    }
+
+    /// <summary>
+    /// Wire up WebRTC service with VoiceService for P2P connections.
+    /// Enables lower latency audio for 1:1 and small group calls.
+    /// </summary>
+    private static void WireUpWebRTCIntegration(IVoiceService voiceService)
+    {
+        try
+        {
+            var webRTCService = ServiceProvider.GetRequiredService<IWebRTCService>();
+
+            // When a P2P connection is requested, handle it through WebRTC service
+            voiceService.OnP2PConnectionRequested += async (connectionId, userId, username) =>
+            {
+                Debug.WriteLine($"P2P connection requested from {username}, handling via WebRTC service");
+                await webRTCService.HandleP2PRequestAsync(connectionId, userId, username);
+            };
+
+            // Forward WebRTC offer to the service
+            voiceService.OnWebRTCOfferReceived += async (connectionId, userId, username, sdpOffer) =>
+            {
+                await webRTCService.HandleOfferAsync(connectionId, sdpOffer);
+            };
+
+            // Forward WebRTC answer to the service
+            voiceService.OnWebRTCAnswerReceived += async (connectionId, userId, username, sdpAnswer) =>
+            {
+                await webRTCService.HandleAnswerAsync(connectionId, sdpAnswer);
+            };
+
+            // Forward ICE candidates to the service
+            voiceService.OnICECandidateReceived += async (connectionId, candidate, sdpMid, sdpMLineIndex) =>
+            {
+                await webRTCService.HandleICECandidateAsync(connectionId, candidate, sdpMid, sdpMLineIndex);
+            };
+
+            // Log P2P connection success
+            voiceService.OnP2PConnected += (connectionId) =>
+            {
+                Debug.WriteLine($"P2P connection established with {connectionId}");
+            };
+
+            // Handle P2P failure - already falls back to server relay automatically
+            voiceService.OnP2PFailed += (connectionId, reason) =>
+            {
+                Debug.WriteLine($"P2P connection failed with {connectionId}: {reason}. Using server relay.");
+            };
+
+            Debug.WriteLine("WebRTC integration wired up successfully");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to wire up WebRTC integration: {ex.Message}");
+            // Non-critical - voice will still work via server relay
+        }
     }
 
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
