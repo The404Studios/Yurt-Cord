@@ -54,15 +54,18 @@ public class StreamingOrchestrator : IDisposable
     private const int NetworkCheckIntervalMs = 500;
 
     // Buffer pool for reducing allocations
-    private readonly ConcurrentBag<byte[]> _smallBufferPool = new();  // For audio (~4KB)
+    private readonly ConcurrentBag<byte[]> _smallBufferPool = new();  // For audio PCM bytes (~4KB)
     private readonly ConcurrentBag<byte[]> _largeBufferPool = new();  // For video (~1MB)
     private readonly ConcurrentBag<byte[]> _mediumBufferPool = new(); // For encoded frames (~256KB)
+    private readonly ConcurrentBag<short[]> _audioSamplePool = new(); // For Opus decode (~2KB, 960 samples)
     private const int SmallBufferSize = 4096;
     private const int MediumBufferSize = 256 * 1024;  // 256KB for encoded frames
     private const int LargeBufferSize = 1024 * 1024;
+    private const int AudioSampleBufferSize = 960;    // Opus frame size at 48kHz/20ms
     private const int MaxPooledBuffers = 20;
     private const int MaxPooledLargeBuffers = 5;      // Fewer large buffers
     private const int MaxPooledMediumBuffers = 10;
+    private const int MaxPooledAudioSampleBuffers = 30; // High frequency, need more pooled
 
     // Memory pressure tracking for adaptive pool sizing
     private volatile int _memoryPressureLevel; // 0=low, 1=medium, 2=high
@@ -127,6 +130,11 @@ public class StreamingOrchestrator : IDisposable
         for (int i = 0; i < 2; i++)
         {
             _largeBufferPool.Add(new byte[LargeBufferSize]);
+        }
+        // Pre-allocate audio sample buffers (high frequency usage during voice)
+        for (int i = 0; i < 15; i++)
+        {
+            _audioSamplePool.Add(new short[AudioSampleBufferSize]);
         }
 
         _lastBufferTrimTimeTicks = DateTime.UtcNow.Ticks;
@@ -315,6 +323,32 @@ public class StreamingOrchestrator : IDisposable
     }
 
     /// <summary>
+    /// Get an audio sample buffer from the pool (for Opus decode, 960 samples)
+    /// This is the hottest path - called 50x/second per user during voice
+    /// </summary>
+    public short[] RentAudioSampleBuffer()
+    {
+        if (_audioSamplePool.TryTake(out var buffer))
+            return buffer;
+        return new short[AudioSampleBufferSize];
+    }
+
+    /// <summary>
+    /// Return an audio sample buffer to the pool
+    /// </summary>
+    public void ReturnAudioSampleBuffer(short[] buffer)
+    {
+        if (buffer.Length != AudioSampleBufferSize) return;
+
+        // Keep more audio buffers pooled since they're used frequently
+        var maxPooled = _memoryPressureLevel > 1 ? MaxPooledAudioSampleBuffers / 2 : MaxPooledAudioSampleBuffers;
+        if (_audioSamplePool.Count < maxPooled)
+        {
+            _audioSamplePool.Add(buffer);
+        }
+    }
+
+    /// <summary>
     /// Memory management background loop
     /// </summary>
     private void MemoryManagementLoop()
@@ -402,6 +436,7 @@ public class StreamingOrchestrator : IDisposable
         var targetSmall = _memoryPressureLevel > 1 ? 3 : (_memoryPressureLevel > 0 ? 5 : 8);
         var targetMedium = _memoryPressureLevel > 1 ? 2 : (_memoryPressureLevel > 0 ? 3 : 4);
         var targetLarge = _memoryPressureLevel > 1 ? 1 : 2;
+        var targetAudioSample = _memoryPressureLevel > 1 ? 8 : (_memoryPressureLevel > 0 ? 12 : 15);
 
         // Trim small buffers
         while (_smallBufferPool.Count > targetSmall)
@@ -415,7 +450,11 @@ public class StreamingOrchestrator : IDisposable
         while (_largeBufferPool.Count > targetLarge)
             _largeBufferPool.TryTake(out _);
 
-        Debug.WriteLine($"[Orchestrator] Buffer pools trimmed: small={_smallBufferPool.Count}, medium={_mediumBufferPool.Count}, large={_largeBufferPool.Count}");
+        // Trim audio sample buffers
+        while (_audioSamplePool.Count > targetAudioSample)
+            _audioSamplePool.TryTake(out _);
+
+        Debug.WriteLine($"[Orchestrator] Buffer pools trimmed: small={_smallBufferPool.Count}, medium={_mediumBufferPool.Count}, large={_largeBufferPool.Count}, audioSample={_audioSamplePool.Count}");
     }
 
     #endregion
@@ -575,6 +614,7 @@ public class StreamingOrchestrator : IDisposable
         _smallBufferPool.Clear();
         _mediumBufferPool.Clear();
         _largeBufferPool.Clear();
+        _audioSamplePool.Clear();
 
         Debug.WriteLine("[Orchestrator] Disposed");
         GC.SuppressFinalize(this);

@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Diagnostics;
 using NAudio.Wave;
 
@@ -195,34 +196,54 @@ public class AudioQualityOptimizer
     }
 
     /// <summary>
-    /// Applies noise gate to reduce background noise
+    /// Applies noise gate to reduce background noise (in-place, no allocation)
+    /// </summary>
+    public void ApplyNoiseGateInPlace(byte[] audioData, float threshold = -40.0f)
+    {
+        for (int i = 0; i < audioData.Length - 1; i += 2)
+        {
+            // Convert bytes to 16-bit sample
+            short sample = (short)((audioData[i + 1] << 8) | audioData[i]);
+
+            // Calculate amplitude in dB
+            float amplitude = 20 * (float)Math.Log10(Math.Abs(sample) / 32768.0f + float.Epsilon);
+
+            if (amplitude < threshold)
+            {
+                // Below threshold, mute
+                audioData[i] = 0;
+                audioData[i + 1] = 0;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Applies noise gate to reduce background noise.
+    /// IMPORTANT: Caller must return the result array to ArrayPool when done.
     /// </summary>
     public byte[] ApplyNoiseGate(byte[] audioData, float threshold = -40.0f)
     {
-        var result = new byte[audioData.Length];
+        var result = ArrayPool<byte>.Shared.Rent(audioData.Length);
 
-        for (int i = 0; i < audioData.Length; i += 2)
+        for (int i = 0; i < audioData.Length - 1; i += 2)
         {
-            if (i + 1 < audioData.Length)
+            // Convert bytes to 16-bit sample
+            short sample = (short)((audioData[i + 1] << 8) | audioData[i]);
+
+            // Calculate amplitude in dB
+            float amplitude = 20 * (float)Math.Log10(Math.Abs(sample) / 32768.0f + float.Epsilon);
+
+            if (amplitude < threshold)
             {
-                // Convert bytes to 16-bit sample
-                short sample = (short)((audioData[i + 1] << 8) | audioData[i]);
-
-                // Calculate amplitude in dB
-                float amplitude = 20 * (float)Math.Log10(Math.Abs(sample) / 32768.0f);
-
-                if (amplitude < threshold)
-                {
-                    // Below threshold, mute
-                    result[i] = 0;
-                    result[i + 1] = 0;
-                }
-                else
-                {
-                    // Above threshold, pass through
-                    result[i] = audioData[i];
-                    result[i + 1] = audioData[i + 1];
-                }
+                // Below threshold, mute
+                result[i] = 0;
+                result[i + 1] = 0;
+            }
+            else
+            {
+                // Above threshold, pass through
+                result[i] = audioData[i];
+                result[i + 1] = audioData[i + 1];
             }
         }
 
@@ -230,30 +251,87 @@ public class AudioQualityOptimizer
     }
 
     /// <summary>
-    /// Applies automatic gain control to normalize volume
+    /// Returns a pooled audio buffer. Call this when done with buffers from ApplyNoiseGate/ApplyAutomaticGainControl.
+    /// </summary>
+    public static void ReturnBuffer(byte[] buffer)
+    {
+        ArrayPool<byte>.Shared.Return(buffer);
+    }
+
+    /// <summary>
+    /// Applies automatic gain control to normalize volume (in-place, no allocation)
+    /// </summary>
+    public void ApplyAutomaticGainControlInPlace(byte[] audioData, float targetLevel = -20.0f)
+    {
+        // Calculate current RMS level
+        double sum = 0;
+        int sampleCount = audioData.Length / 2;
+
+        for (int i = 0; i < audioData.Length - 1; i += 2)
+        {
+            short sample = (short)((audioData[i + 1] << 8) | audioData[i]);
+            sum += sample * sample;
+        }
+
+        if (sampleCount == 0) return;
+
+        double rms = Math.Sqrt(sum / sampleCount);
+        if (rms < 1.0) return; // Avoid log of zero
+
+        double currentDb = 20 * Math.Log10(rms / 32768.0);
+
+        // Calculate gain needed
+        double gainDb = targetLevel - currentDb;
+        double gain = Math.Pow(10, gainDb / 20.0);
+
+        // Limit gain to reasonable range
+        gain = Math.Max(0.1, Math.Min(10.0, gain));
+
+        // Apply gain in-place
+        for (int i = 0; i < audioData.Length - 1; i += 2)
+        {
+            short sample = (short)((audioData[i + 1] << 8) | audioData[i]);
+            int adjusted = (int)(sample * gain);
+
+            // Prevent clipping
+            adjusted = Math.Clamp(adjusted, -32768, 32767);
+
+            audioData[i] = (byte)(adjusted & 0xFF);
+            audioData[i + 1] = (byte)((adjusted >> 8) & 0xFF);
+        }
+    }
+
+    /// <summary>
+    /// Applies automatic gain control to normalize volume.
+    /// IMPORTANT: Caller must return the result array to ArrayPool when done via ReturnBuffer().
     /// </summary>
     public byte[] ApplyAutomaticGainControl(byte[] audioData, float targetLevel = -20.0f)
     {
-        var result = new byte[audioData.Length];
+        var result = ArrayPool<byte>.Shared.Rent(audioData.Length);
 
         // Calculate current RMS level
         double sum = 0;
-        int sampleCount = 0;
+        int sampleCount = audioData.Length / 2;
 
-        for (int i = 0; i < audioData.Length; i += 2)
+        for (int i = 0; i < audioData.Length - 1; i += 2)
         {
-            if (i + 1 < audioData.Length)
-            {
-                short sample = (short)((audioData[i + 1] << 8) | audioData[i]);
-                sum += sample * sample;
-                sampleCount++;
-            }
+            short sample = (short)((audioData[i + 1] << 8) | audioData[i]);
+            sum += sample * sample;
         }
 
         if (sampleCount == 0)
-            return audioData;
+        {
+            Buffer.BlockCopy(audioData, 0, result, 0, audioData.Length);
+            return result;
+        }
 
         double rms = Math.Sqrt(sum / sampleCount);
+        if (rms < 1.0)
+        {
+            Buffer.BlockCopy(audioData, 0, result, 0, audioData.Length);
+            return result;
+        }
+
         double currentDb = 20 * Math.Log10(rms / 32768.0);
 
         // Calculate gain needed
@@ -264,19 +342,16 @@ public class AudioQualityOptimizer
         gain = Math.Max(0.1, Math.Min(10.0, gain));
 
         // Apply gain
-        for (int i = 0; i < audioData.Length; i += 2)
+        for (int i = 0; i < audioData.Length - 1; i += 2)
         {
-            if (i + 1 < audioData.Length)
-            {
-                short sample = (short)((audioData[i + 1] << 8) | audioData[i]);
-                int adjusted = (int)(sample * gain);
+            short sample = (short)((audioData[i + 1] << 8) | audioData[i]);
+            int adjusted = (int)(sample * gain);
 
-                // Prevent clipping
-                adjusted = Math.Max(-32768, Math.Min(32767, adjusted));
+            // Prevent clipping
+            adjusted = Math.Clamp(adjusted, -32768, 32767);
 
-                result[i] = (byte)(adjusted & 0xFF);
-                result[i + 1] = (byte)((adjusted >> 8) & 0xFF);
-            }
+            result[i] = (byte)(adjusted & 0xFF);
+            result[i + 1] = (byte)((adjusted >> 8) & 0xFF);
         }
 
         return result;
@@ -337,20 +412,23 @@ public class AudioQualityOptimizer
     }
 
     /// <summary>
-    /// Converts audio format
+    /// Converts audio format. Uses pooled buffer internally.
     /// </summary>
     public byte[]? ConvertFormat(byte[] audioData, WaveFormat sourceFormat, WaveFormat targetFormat)
     {
+        byte[]? buffer = null;
         try
         {
             using var sourceStream = new RawSourceWaveStream(audioData, 0, audioData.Length, sourceFormat);
             using var resampler = new MediaFoundationResampler(sourceStream, targetFormat);
 
-            var buffer = new byte[resampler.WaveFormat.AverageBytesPerSecond];
-            var outputStream = new System.IO.MemoryStream();
+            // Use pooled buffer for reading
+            var bufferSize = resampler.WaveFormat.AverageBytesPerSecond;
+            buffer = ArrayPool<byte>.Shared.Rent(bufferSize);
+            using var outputStream = new System.IO.MemoryStream();
 
             int bytesRead;
-            while ((bytesRead = resampler.Read(buffer, 0, buffer.Length)) > 0)
+            while ((bytesRead = resampler.Read(buffer, 0, bufferSize)) > 0)
             {
                 outputStream.Write(buffer, 0, bytesRead);
             }
@@ -361,6 +439,13 @@ public class AudioQualityOptimizer
         {
             Debug.WriteLine($"Failed to convert audio format: {ex.Message}");
             return null;
+        }
+        finally
+        {
+            if (buffer != null)
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
         }
     }
 
