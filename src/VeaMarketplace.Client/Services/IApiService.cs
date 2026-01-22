@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -152,7 +153,12 @@ public class ApiService : IApiService
 
     public ApiService()
     {
-        _httpClient = new HttpClient { BaseAddress = new Uri(BaseUrl) };
+        _httpClient = new HttpClient
+        {
+            BaseAddress = new Uri(BaseUrl),
+            Timeout = TimeSpan.FromSeconds(10) // Fail fast if server unreachable
+        };
+        Debug.WriteLine($"[ApiService] Created with BaseUrl: {BaseUrl}");
     }
 
     #region Cache Helpers
@@ -203,8 +209,33 @@ public class ApiService : IApiService
 
     public async Task<AuthResponse> LoginAsync(string username, string password)
     {
+        Debug.WriteLine($"[ApiService] LoginAsync called for {username}");
+        Debug.WriteLine($"[ApiService] Target URL: {BaseUrl}/api/auth/login");
+
         var request = new LoginRequest { Username = username, Password = password };
-        var response = await _httpClient.PostAsJsonAsync("/api/auth/login", request, JsonOptions).ConfigureAwait(false);
+
+        HttpResponseMessage response;
+        try
+        {
+            Debug.WriteLine("[ApiService] Sending HTTP POST...");
+            response = await _httpClient.PostAsJsonAsync("/api/auth/login", request, JsonOptions).ConfigureAwait(false);
+            Debug.WriteLine($"[ApiService] Got response: {response.StatusCode}");
+        }
+        catch (HttpRequestException ex)
+        {
+            Debug.WriteLine($"[ApiService] HTTP Error: {ex.Message}");
+            return new AuthResponse { Success = false, Message = $"Cannot connect to server ({BaseUrl}): {ex.Message}" };
+        }
+        catch (TaskCanceledException)
+        {
+            Debug.WriteLine("[ApiService] Request timed out");
+            return new AuthResponse { Success = false, Message = $"Connection timed out - server at {BaseUrl} is not responding" };
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ApiService] Unexpected error: {ex.GetType().Name}: {ex.Message}");
+            return new AuthResponse { Success = false, Message = $"Connection error: {ex.Message}" };
+        }
 
         // Read response body as string first to handle empty/invalid responses
         var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -242,8 +273,33 @@ public class ApiService : IApiService
 
     public async Task<AuthResponse> RegisterAsync(string username, string email, string password)
     {
+        Debug.WriteLine($"[ApiService] RegisterAsync called for {username}");
+        Debug.WriteLine($"[ApiService] Target URL: {BaseUrl}/api/auth/register");
+
         var request = new RegisterRequest { Username = username, Email = email, Password = password };
-        var response = await _httpClient.PostAsJsonAsync("/api/auth/register", request, JsonOptions).ConfigureAwait(false);
+
+        HttpResponseMessage response;
+        try
+        {
+            Debug.WriteLine("[ApiService] Sending HTTP POST...");
+            response = await _httpClient.PostAsJsonAsync("/api/auth/register", request, JsonOptions).ConfigureAwait(false);
+            Debug.WriteLine($"[ApiService] Got response: {response.StatusCode}");
+        }
+        catch (HttpRequestException ex)
+        {
+            Debug.WriteLine($"[ApiService] HTTP Error: {ex.Message}");
+            return new AuthResponse { Success = false, Message = $"Cannot connect to server ({BaseUrl}): {ex.Message}" };
+        }
+        catch (TaskCanceledException)
+        {
+            Debug.WriteLine("[ApiService] Request timed out");
+            return new AuthResponse { Success = false, Message = $"Connection timed out - server at {BaseUrl} is not responding" };
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ApiService] Unexpected error: {ex.GetType().Name}: {ex.Message}");
+            return new AuthResponse { Success = false, Message = $"Connection error: {ex.Message}" };
+        }
 
         // Read response body as string first to handle empty/invalid responses
         var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
