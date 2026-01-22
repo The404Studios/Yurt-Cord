@@ -152,14 +152,7 @@ builder.Services.AddSignalR(options =>
     options.PayloadSerializerOptions.PropertyNameCaseInsensitive = true;
 })
 // MessagePack protocol for better performance with binary data (audio/video)
-// Reduces bandwidth by ~30% and CPU usage for serialization
-.AddMessagePackProtocol(options =>
-{
-    // Use contractless resolver for compatibility with existing DTOs
-    options.SerializerOptions = MessagePack.MessagePackSerializerOptions.Standard
-        .WithResolver(MessagePack.Resolvers.ContractlessStandardResolver.Instance)
-        .WithSecurity(MessagePack.MessagePackSecurity.UntrustedData);
-});
+.AddMessagePackProtocol();
 
 // Database
 builder.Services.AddSingleton<DatabaseService>();

@@ -1,7 +1,5 @@
 using Concentus.Enums;
 using Concentus.Structs;
-using MessagePack;
-using MessagePack.Resolvers;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using NAudio.Wave;
@@ -749,12 +747,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             .WithAutomaticReconnect()
             // Use MessagePack for better performance with binary audio/video data
             // ~30% bandwidth reduction, faster serialization
-            .AddMessagePackProtocol(options =>
-            {
-                options.SerializerOptions = MessagePackSerializerOptions.Standard
-                    .WithResolver(ContractlessStandardResolver.Instance)
-                    .WithSecurity(MessagePackSecurity.UntrustedData);
-            })
+            .AddMessagePackProtocol()
             .Build();
 
         // Handle connection state changes
