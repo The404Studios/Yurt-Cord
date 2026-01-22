@@ -134,14 +134,11 @@ public partial class LoginView : UserControl
         {
             if (_isRegistering)
             {
-                UpdateLoadingText("Creating account...", "Connecting to server...");
-                System.Diagnostics.Debug.WriteLine($"[LoginView] Starting registration for {username}");
+                UpdateLoadingText("Creating account...", "Registering your profile...");
+                await Task.Delay(300); // Brief delay for visual feedback
 
-                var apiService = (IApiService)App.ServiceProvider.GetService(typeof(IApiService))!;
-                System.Diagnostics.Debug.WriteLine("[LoginView] Got ApiService, calling RegisterAsync...");
-
-                var result = await apiService.RegisterAsync(username, email, password);
-                System.Diagnostics.Debug.WriteLine($"[LoginView] RegisterAsync returned: Success={result.Success}, Message={result.Message}");
+                var result = await ((IApiService)App.ServiceProvider.GetService(typeof(IApiService))!)
+                    .RegisterAsync(username, email, password);
 
                 if (result.Success)
                 {
@@ -208,17 +205,9 @@ public partial class LoginView : UserControl
                 }
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            System.Diagnostics.Debug.WriteLine($"[LoginView] Exception during {(_isRegistering ? "registration" : "login")}: {ex.GetType().Name}: {ex.Message}");
-            var message = ex switch
-            {
-                HttpRequestException => $"Cannot connect to server: {ex.Message}",
-                TaskCanceledException when ex.InnerException is TimeoutException => "Connection timeout - server may be unreachable",
-                TaskCanceledException => "Request was cancelled",
-                _ => $"Connection failed: {ex.Message}"
-            };
-            ShowError(message);
+            ShowError("Connection failed. Is the server running?");
             ShakeCard();
         }
         finally
