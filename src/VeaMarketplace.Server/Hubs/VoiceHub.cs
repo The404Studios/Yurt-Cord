@@ -1103,11 +1103,6 @@ public class VoiceHub : Hub
         await Clients.Client(targetConnectionId).SendAsync("ReceiveAnswer", Context.ConnectionId, answer);
     }
 
-    public async Task SendIceCandidate(string targetConnectionId, string candidate)
-    {
-        await Clients.Client(targetConnectionId).SendAsync("ReceiveIceCandidate", Context.ConnectionId, candidate);
-    }
-
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         var connectionId = Context.ConnectionId;
