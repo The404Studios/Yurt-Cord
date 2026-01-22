@@ -53,7 +53,7 @@ public class ToastNotificationService : IToastNotificationService
             toast.Closed += OnToastClosed;
 
             _activeNotifications.Add(toast);
-            _container.Children.Add(toast);
+            _container?.Children.Add(toast);
 
             // Auto-dismiss
             if (durationMs > 0)

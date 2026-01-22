@@ -98,7 +98,9 @@ public class WebRTCService : IWebRTCService
 
     public event Action<string, string>? OnP2PConnected;
     public event Action<string, string>? OnP2PDisconnected;
+#pragma warning disable CS0067 // Event is never used - reserved for future WebRTC audio implementation
     public event Action<string, byte[]>? OnP2PAudioReceived;
+#pragma warning restore CS0067
     public event Action<string, string, string>? OnSignalingMessage;
 
     public Task InitializeAsync()
