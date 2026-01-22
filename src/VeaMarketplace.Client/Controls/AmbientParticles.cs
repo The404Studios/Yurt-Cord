@@ -95,11 +95,11 @@ namespace VeaMarketplace.Client.Controls
 
         private readonly List<Particle> _particles = new();
         private readonly Random _random = new();
-        private DispatcherTimer _updateTimer;
+        private DispatcherTimer? _updateTimer;
 
         private class Particle
         {
-            public Ellipse Visual { get; set; }
+            public Ellipse Visual { get; set; } = null!;
             public double X { get; set; }
             public double Y { get; set; }
             public double VelocityX { get; set; }
@@ -259,7 +259,7 @@ namespace VeaMarketplace.Client.Controls
             _updateTimer = null;
         }
 
-        private void UpdateParticles(object sender, EventArgs e)
+        private void UpdateParticles(object? sender, EventArgs e)
         {
             if (ActualWidth <= 0 || ActualHeight <= 0) return;
 

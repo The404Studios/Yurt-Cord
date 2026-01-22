@@ -97,9 +97,9 @@ namespace VeaMarketplace.Client.Controls
 
         #endregion
 
-        private DropShadowEffect _glowEffect;
-        private Storyboard _pulseStoryboard;
-        private Storyboard _rainbowStoryboard;
+        private DropShadowEffect? _glowEffect;
+        private Storyboard? _pulseStoryboard;
+        private Storyboard? _rainbowStoryboard;
 
         public GlowingBorder()
         {

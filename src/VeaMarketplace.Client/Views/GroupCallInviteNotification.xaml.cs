@@ -76,7 +76,7 @@ public partial class GroupCallInviteNotification : Window
     {
         _autoDeclineTimer.Stop();
         _ringTimer.Stop();
-        DeclineCall();
+        _ = DeclineCallAsync();
     }
 
     private void OnWindowClosed(object? sender, EventArgs e)

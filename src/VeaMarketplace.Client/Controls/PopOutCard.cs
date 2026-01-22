@@ -97,10 +97,8 @@ namespace VeaMarketplace.Client.Controls
 
         #endregion
 
-        private Border _mainBorder;
-        private Border _glowBorder;
-        private ScaleTransform _scaleTransform;
-        private TranslateTransform _translateTransform;
+        private ScaleTransform? _scaleTransform;
+        private TranslateTransform? _translateTransform;
 
         public PopOutCard()
         {

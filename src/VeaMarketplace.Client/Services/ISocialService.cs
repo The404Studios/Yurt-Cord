@@ -154,8 +154,8 @@ public class SocialService : ISocialService
         var presence = new RichPresence
         {
             UserId = friend.UserId,
-            Status = "Online",
-            UpdatedAt = DateTime.UtcNow
+            State = "Online",
+            StartTimestamp = DateTime.UtcNow
         };
         OnFriendPresenceUpdated?.Invoke(friend.UserId, presence);
     }

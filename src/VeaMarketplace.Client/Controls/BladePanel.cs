@@ -99,8 +99,8 @@ namespace VeaMarketplace.Client.Controls
 
         #region Events
 
-        public event EventHandler Opened;
-        public event EventHandler Closed;
+        public event EventHandler? Opened;
+        public event EventHandler? Closed;
 
         #endregion
 
