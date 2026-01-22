@@ -14,12 +14,12 @@ public class MessageBatchingService : IDisposable
     private readonly System.Timers.Timer _flushTimer;
     private readonly TimeSpan _batchWindow = TimeSpan.FromMilliseconds(50); // 50ms batching window
     private const int MaxBatchSize = 100; // Max messages per batch
-    private bool _disposed = false;
+    private bool _disposed;
 
     // Metrics
-    private long _totalMessages = 0;
-    private long _totalBatches = 0;
-    private long _messagesSaved = 0; // Messages that would have been individual sends
+    private long _totalMessages;
+    private long _totalBatches;
+    private long _messagesSaved; // Messages that would have been individual sends
 
     public MessageBatchingService()
     {

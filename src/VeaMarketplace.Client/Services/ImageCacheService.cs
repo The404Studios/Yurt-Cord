@@ -26,7 +26,7 @@ public class ImageCacheService : IImageCacheService
     private readonly string _cacheDirectory;
     private readonly TimeSpan _defaultCacheExpiry = TimeSpan.FromDays(7);
     private static readonly object _cacheLock = new();
-    private bool _disposed = false;
+    private bool _disposed;
 
     // In-memory cache for frequently accessed images
     private readonly Dictionary<string, (BitmapImage image, DateTime cachedAt)> _memoryCache = new();

@@ -51,7 +51,7 @@ public class DiagnosticLoggerService : IDiagnosticLoggerService
     private readonly SemaphoreSlim _fileLock = new(1, 1);
     private readonly CancellationTokenSource _cts = new();
     private readonly string _logFilePath;
-    private bool _disposed = false;
+    private bool _disposed;
 
     private const int MaxBufferSize = 10000;
     private const int FlushThreshold = 100;

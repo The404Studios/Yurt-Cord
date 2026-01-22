@@ -54,7 +54,7 @@ public class CrashReportingService : ICrashReportingService
 {
     private readonly string _crashReportsPath;
     private bool _isInitialized;
-    private bool _disposed = false;
+    private bool _disposed;
 
     public event Action<CrashReport>? OnCrashReported;
 

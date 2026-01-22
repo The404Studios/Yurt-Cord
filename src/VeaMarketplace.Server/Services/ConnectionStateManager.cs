@@ -15,8 +15,8 @@ public class ConnectionStateManager
     private readonly object _setLock = new(); // Only for HashSet modifications
 
     // Metrics for monitoring
-    private long _totalConnections = 0;
-    private long _peakConnections = 0;
+    private long _totalConnections;
+    private long _peakConnections;
     private readonly System.Timers.Timer _metricsTimer;
 
     public ConnectionStateManager()

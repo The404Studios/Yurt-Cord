@@ -360,8 +360,8 @@ public class VoiceService : IVoiceService, IAsyncDisposable
     // Playback buffer for decoded audio (replaces complex mixing thread)
 
     // Audio device configuration
-    private int _inputDeviceNumber = 0;
-    private int _outputDeviceNumber = 0;
+    private int _inputDeviceNumber;
+    private int _outputDeviceNumber;
     private double _voiceActivityThreshold = 0.02;
     private double _currentAudioLevel;
 

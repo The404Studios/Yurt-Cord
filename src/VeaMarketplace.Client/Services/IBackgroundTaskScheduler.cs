@@ -63,7 +63,7 @@ public class BackgroundTaskScheduler : IBackgroundTaskScheduler
     private readonly System.Threading.Timer _schedulerTimer;
     private readonly SemaphoreSlim _executionLock = new(10, 10); // Max 10 concurrent tasks
     private bool _isShuttingDown;
-    private bool _disposed = false;
+    private bool _disposed;
 
     public event Action<string, TaskStatus>? OnTaskStatusChanged;
 

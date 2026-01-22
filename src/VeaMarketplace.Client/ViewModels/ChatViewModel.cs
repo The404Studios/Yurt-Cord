@@ -13,7 +13,7 @@ public partial class ChatViewModel : BaseViewModel
     private readonly IApiService _apiService;
     private readonly INavigationService _navigationService;
     private DateTime _lastTypingSent = DateTime.MinValue;
-    private bool _eventHandlersRegistered = false;
+    private bool _eventHandlersRegistered;
 
     [ObservableProperty]
     private ObservableCollection<ChatMessageDto> _messages = [];

@@ -14,7 +14,7 @@ public class VirtualizedObservableCollection<T> : IList<T>, INotifyCollectionCha
     private readonly List<T> _allItems = new();
     private readonly ObservableCollection<T> _visibleItems = new();
     private int _pageSize = 50;
-    private int _currentPage = 0;
+    private int _currentPage;
     private readonly object _lock = new();
 
     public event NotifyCollectionChangedEventHandler? CollectionChanged;
@@ -209,8 +209,8 @@ public class LazyLoadingCollection<T> : ObservableCollection<T>
 {
     private readonly Func<int, int, Task<List<T>>> _loadItemsFunc;
     private readonly int _pageSize;
-    private int _currentPage = 0;
-    private bool _isLoading = false;
+    private int _currentPage;
+    private bool _isLoading;
     private bool _hasMoreItems = true;
 
     public bool IsLoading
