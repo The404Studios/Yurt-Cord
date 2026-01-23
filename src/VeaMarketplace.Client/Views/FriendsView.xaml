@@ -41,7 +41,7 @@
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Setter TargetName="border" Property="Background" Value="{StaticResource BladeHighlightBrush}"/>
-                                    <Setter TargetName="border" Property="BorderBrush" Value="#00FF9F30"/>
+                                    <Setter TargetName="border" Property="BorderBrush" Value="#00B4D830"/>
                                 </Trigger>
                                 <Trigger Property="IsPressed" Value="True">
                                     <Setter TargetName="border" Property="Background" Value="{StaticResource BladeElevatedBrush}"/>
@@ -74,7 +74,7 @@
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Setter TargetName="border" Property="Background" Value="{StaticResource BladeHighlightBrush}"/>
                                     <Setter Property="Foreground" Value="{StaticResource BladeTextPrimaryBrush}"/>
-                                    <Setter TargetName="border" Property="BorderBrush" Value="#00FF9F30"/>
+                                    <Setter TargetName="border" Property="BorderBrush" Value="#00B4D830"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -109,7 +109,7 @@
                 <!-- Search Bar -->
                 <Border Grid.Row="0" Margin="10,10,10,4">
                     <Border Background="{StaticResource BladeDeepBrush}" CornerRadius="8" Padding="8,6"
-                            BorderThickness="1" BorderBrush="#00FF9F30">
+                            BorderThickness="1" BorderBrush="#00B4D830">
                         <Grid>
                             <TextBlock Text="Find or start a conversation"
                                        Foreground="{StaticResource BladeTextMutedBrush}" FontSize="13"
@@ -131,8 +131,8 @@
                         <Border Width="32" Height="32" CornerRadius="16" Margin="0,0,12,0">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                    <GradientStop Color="#00FF9F" Offset="0"/>
-                                    <GradientStop Color="#00E5FF" Offset="1"/>
+                                    <GradientStop Color="#00B4D8" Offset="0"/>
+                                    <GradientStop Color="#48CAE4" Offset="1"/>
                                 </LinearGradientBrush>
                             </Border.Background>
                             <TextBlock Text="👥" FontSize="16" HorizontalAlignment="Center"
@@ -232,7 +232,7 @@
 
                 <!-- User Panel (Bottom) -->
                 <Border Grid.Row="3" Background="{StaticResource BladeElevatedBrush}" Padding="8"
-                        BorderThickness="0,1,0,0" BorderBrush="#00FF9F30">
+                        BorderThickness="0,1,0,0" BorderBrush="#00B4D830">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
@@ -290,7 +290,7 @@
                 </Grid.RowDefinitions>
 
                 <!-- Header -->
-                <Border Grid.Row="0" Background="{StaticResource BladeSurfaceBrush}" BorderBrush="#00FF9F30"
+                <Border Grid.Row="0" Background="{StaticResource BladeSurfaceBrush}" BorderBrush="#00B4D830"
                         BorderThickness="0,0,0,1">
                     <Grid Margin="16,0">
                         <!-- Friends Icon and Title -->
@@ -332,8 +332,8 @@
                                             <Border x:Name="addBtn" CornerRadius="6" Padding="{TemplateBinding Padding}">
                                                 <Border.Background>
                                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                                        <GradientStop Color="#00FF9F" Offset="0"/>
-                                                        <GradientStop Color="#00E5FF" Offset="1"/>
+                                                        <GradientStop Color="#00B4D8" Offset="0"/>
+                                                        <GradientStop Color="#48CAE4" Offset="1"/>
                                                     </LinearGradientBrush>
                                                 </Border.Background>
                                                 <ContentPresenter/>
@@ -863,7 +863,7 @@
                 </Grid.RowDefinitions>
 
                 <!-- DM Header -->
-                <Border Grid.Row="0" Background="{StaticResource BladeSurfaceBrush}" BorderBrush="#00FF9F30"
+                <Border Grid.Row="0" Background="{StaticResource BladeSurfaceBrush}" BorderBrush="#00B4D830"
                         BorderThickness="0,0,0,1">
                     <Grid Margin="16,0">
                         <StackPanel Orientation="Horizontal">

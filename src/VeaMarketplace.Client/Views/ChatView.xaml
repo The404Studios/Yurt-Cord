@@ -5,16 +5,16 @@
              Background="Transparent">
 
     <UserControl.Resources>
-        <!-- Neon pulse animation for input border -->
+        <!-- Teal pulse animation for input border -->
         <Storyboard x:Key="InputNeonPulse" RepeatBehavior="Forever">
             <ColorAnimationUsingKeyFrames Storyboard.TargetName="InputGlowBrush"
                                           Storyboard.TargetProperty="Color"
                                           Duration="0:0:4">
-                <LinearColorKeyFrame Value="#00FF9F" KeyTime="0:0:0"/>
-                <LinearColorKeyFrame Value="#00E5FF" KeyTime="0:0:1"/>
-                <LinearColorKeyFrame Value="#B366FF" KeyTime="0:0:2"/>
-                <LinearColorKeyFrame Value="#FF66B2" KeyTime="0:0:3"/>
-                <LinearColorKeyFrame Value="#00FF9F" KeyTime="0:0:4"/>
+                <LinearColorKeyFrame Value="#00B4D8" KeyTime="0:0:0"/>
+                <LinearColorKeyFrame Value="#48CAE4" KeyTime="0:0:1"/>
+                <LinearColorKeyFrame Value="#0096B8" KeyTime="0:0:2"/>
+                <LinearColorKeyFrame Value="#48CAE4" KeyTime="0:0:3"/>
+                <LinearColorKeyFrame Value="#00B4D8" KeyTime="0:0:4"/>
             </ColorAnimationUsingKeyFrames>
         </Storyboard>
 
@@ -139,14 +139,14 @@
             </Border.Background>
             <Border.BorderBrush>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                    <GradientStop Color="#5000FF9F" Offset="0"/>
-                    <GradientStop Color="#3000E5FF" Offset="0.5"/>
-                    <GradientStop Color="#50B366FF" Offset="1"/>
+                    <GradientStop Color="#5000B4D8" Offset="0"/>
+                    <GradientStop Color="#3048CAE4" Offset="0.5"/>
+                    <GradientStop Color="#500096B8" Offset="1"/>
                 </LinearGradientBrush>
             </Border.BorderBrush>
             <Border.BorderThickness>1</Border.BorderThickness>
             <Border.Effect>
-                <DropShadowEffect Color="#00FF9F" BlurRadius="15" ShadowDepth="0" Opacity="0.3"/>
+                <DropShadowEffect Color="#00B4D8" BlurRadius="15" ShadowDepth="0" Opacity="0.3"/>
             </Border.Effect>
 
             <Grid Height="54">
@@ -154,9 +154,9 @@
                 <Border Width="4" HorizontalAlignment="Left" CornerRadius="4,0,0,4">
                     <Border.Background>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                            <GradientStop Color="#00FF9F" Offset="0"/>
-                            <GradientStop Color="#00E5FF" Offset="0.5"/>
-                            <GradientStop Color="#B366FF" Offset="1"/>
+                            <GradientStop Color="#00B4D8" Offset="0"/>
+                            <GradientStop Color="#48CAE4" Offset="0.5"/>
+                            <GradientStop Color="#0096B8" Offset="1"/>
                         </LinearGradientBrush>
                     </Border.Background>
                 </Border>
@@ -174,12 +174,12 @@
                         <Border CornerRadius="8" Width="36" Height="36" Margin="0,0,14,0">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                    <GradientStop Color="#00FF9F" Offset="0"/>
-                                    <GradientStop Color="#00E5FF" Offset="1"/>
+                                    <GradientStop Color="#00B4D8" Offset="0"/>
+                                    <GradientStop Color="#48CAE4" Offset="1"/>
                                 </LinearGradientBrush>
                             </Border.Background>
                             <Border.Effect>
-                                <DropShadowEffect Color="#00FF9F" BlurRadius="12" ShadowDepth="0" Opacity="0.7"/>
+                                <DropShadowEffect Color="#00B4D8" BlurRadius="12" ShadowDepth="0" Opacity="0.7"/>
                             </Border.Effect>
                             <TextBlock Text="#" FontSize="18" FontWeight="Bold"
                                        Foreground="#020408"
@@ -189,9 +189,9 @@
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock x:Name="ChannelNameText" Text="general"
                                        FontSize="16" FontWeight="SemiBold"
-                                       Foreground="#00FF9F">
+                                       Foreground="#00B4D8">
                                 <TextBlock.Effect>
-                                    <DropShadowEffect Color="#00FF9F" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
+                                    <DropShadowEffect Color="#00B4D8" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
                                 </TextBlock.Effect>
                             </TextBlock>
                             <TextBlock x:Name="ChannelDescText" Text="General communications channel"
@@ -206,7 +206,7 @@
                         <Rectangle.Fill>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                                 <GradientStop Color="Transparent" Offset="0"/>
-                                <GradientStop Color="#00E5FF" Offset="0.5"/>
+                                <GradientStop Color="#48CAE4" Offset="0.5"/>
                                 <GradientStop Color="Transparent" Offset="1"/>
                             </LinearGradientBrush>
                         </Rectangle.Fill>
@@ -219,9 +219,9 @@
                                 Background="#15101828" BorderThickness="1"
                                 BorderBrush="#4000FF9F">
                             <StackPanel Orientation="Horizontal">
-                                <Ellipse Width="8" Height="8" Fill="#00FF9F" Margin="0,0,8,0">
+                                <Ellipse Width="8" Height="8" Fill="#00B4D8" Margin="0,0,8,0">
                                     <Ellipse.Effect>
-                                        <DropShadowEffect Color="#00FF9F" BlurRadius="8" ShadowDepth="0"/>
+                                        <DropShadowEffect Color="#00B4D8" BlurRadius="8" ShadowDepth="0"/>
                                     </Ellipse.Effect>
                                 </Ellipse>
                                 <TextBlock x:Name="OnlineCountText" Text="0 online"
@@ -284,17 +284,17 @@
                 CornerRadius="16" Background="#20101828"
                 BorderThickness="1" BorderBrush="#3000FF9F">
             <Border.Effect>
-                <DropShadowEffect Color="#00FF9F" BlurRadius="10" ShadowDepth="0" Opacity="0.3"/>
+                <DropShadowEffect Color="#00B4D8" BlurRadius="10" ShadowDepth="0" Opacity="0.3"/>
             </Border.Effect>
             <StackPanel Orientation="Horizontal">
                 <!-- Animated typing dots -->
                 <Canvas Width="50" Height="16">
                     <Ellipse x:Name="TypingDot1" Width="10" Height="10" Canvas.Left="0" Canvas.Top="3">
                         <Ellipse.Fill>
-                            <SolidColorBrush Color="#00FF9F"/>
+                            <SolidColorBrush Color="#00B4D8"/>
                         </Ellipse.Fill>
                         <Ellipse.Effect>
-                            <DropShadowEffect Color="#00FF9F" BlurRadius="8" ShadowDepth="0"/>
+                            <DropShadowEffect Color="#00B4D8" BlurRadius="8" ShadowDepth="0"/>
                         </Ellipse.Effect>
                         <Ellipse.Triggers>
                             <EventTrigger RoutedEvent="Loaded">
@@ -310,10 +310,10 @@
                     </Ellipse>
                     <Ellipse x:Name="TypingDot2" Width="10" Height="10" Canvas.Left="16" Canvas.Top="3">
                         <Ellipse.Fill>
-                            <SolidColorBrush Color="#00E5FF"/>
+                            <SolidColorBrush Color="#48CAE4"/>
                         </Ellipse.Fill>
                         <Ellipse.Effect>
-                            <DropShadowEffect Color="#00E5FF" BlurRadius="8" ShadowDepth="0"/>
+                            <DropShadowEffect Color="#48CAE4" BlurRadius="8" ShadowDepth="0"/>
                         </Ellipse.Effect>
                         <Ellipse.Triggers>
                             <EventTrigger RoutedEvent="Loaded">
@@ -329,10 +329,10 @@
                     </Ellipse>
                     <Ellipse x:Name="TypingDot3" Width="10" Height="10" Canvas.Left="32" Canvas.Top="3">
                         <Ellipse.Fill>
-                            <SolidColorBrush Color="#B366FF"/>
+                            <SolidColorBrush Color="#0096B8"/>
                         </Ellipse.Fill>
                         <Ellipse.Effect>
-                            <DropShadowEffect Color="#B366FF" BlurRadius="8" ShadowDepth="0"/>
+                            <DropShadowEffect Color="#0096B8" BlurRadius="8" ShadowDepth="0"/>
                         </Ellipse.Effect>
                         <Ellipse.Triggers>
                             <EventTrigger RoutedEvent="Loaded">
@@ -409,7 +409,7 @@
                                         <Button Grid.Column="2" Style="{StaticResource BladeIconButton}"
                                                 Width="28" Height="28" VerticalAlignment="Top"
                                                 Click="RemoveAttachment_Click" Tag="{Binding}">
-                                            <TextBlock Text="✕" FontSize="10" Foreground="#FF66B2"/>
+                                            <TextBlock Text="✕" FontSize="10" Foreground="#EC4899"/>
                                         </Button>
                                     </Grid>
                                 </Border>
@@ -421,9 +421,9 @@
                     <StackPanel x:Name="UploadProgressPanel" Grid.Column="1"
                                 VerticalAlignment="Center" Visibility="Collapsed" Margin="14,0">
                         <TextBlock Text="UPLOADING..." FontSize="10"
-                                   Foreground="#00FF9F" FontWeight="SemiBold"/>
+                                   Foreground="#00B4D8" FontWeight="SemiBold"/>
                         <ProgressBar x:Name="UploadProgressBar" Width="100" Height="4"
-                                     Margin="0,4,0,0" Background="#20101828" Foreground="#00FF9F"/>
+                                     Margin="0,4,0,0" Background="#20101828" Foreground="#00B4D8"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -439,10 +439,10 @@
                     </LinearGradientBrush>
                 </Border.Background>
                 <Border.BorderBrush>
-                    <SolidColorBrush x:Name="InputGlowBrush" Color="#00FF9F"/>
+                    <SolidColorBrush x:Name="InputGlowBrush" Color="#00B4D8"/>
                 </Border.BorderBrush>
                 <Border.Effect>
-                    <DropShadowEffect Color="#00FF9F" BlurRadius="20" ShadowDepth="0" Opacity="0.5"/>
+                    <DropShadowEffect Color="#00B4D8" BlurRadius="20" ShadowDepth="0" Opacity="0.5"/>
                 </Border.Effect>
                 <Border.Triggers>
                     <EventTrigger RoutedEvent="Loaded">
@@ -470,7 +470,7 @@
                              Background="Transparent"
                              BorderThickness="0"
                              Foreground="#E0E8FF"
-                             CaretBrush="#00FF9F"
+                             CaretBrush="#00B4D8"
                              FontSize="14"
                              VerticalContentAlignment="Center"
                              Padding="12,10"
@@ -519,8 +519,8 @@
                             <Border CornerRadius="10" Padding="8,6">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Color="#00FF9F" Offset="0"/>
-                                        <GradientStop Color="#00E5FF" Offset="1"/>
+                                        <GradientStop Color="#00B4D8" Offset="0"/>
+                                        <GradientStop Color="#48CAE4" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
                                 <TextBlock Text="➤" FontSize="14" Foreground="#020408" FontWeight="Bold"/>
@@ -544,13 +544,13 @@
                     </Border.Background>
                     <Border.BorderBrush>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                            <GradientStop Color="#00FF9F" Offset="0"/>
-                            <GradientStop Color="#00E5FF" Offset="0.5"/>
-                            <GradientStop Color="#B366FF" Offset="1"/>
+                            <GradientStop Color="#00B4D8" Offset="0"/>
+                            <GradientStop Color="#48CAE4" Offset="0.5"/>
+                            <GradientStop Color="#0096B8" Offset="1"/>
                         </LinearGradientBrush>
                     </Border.BorderBrush>
                     <Border.Effect>
-                        <DropShadowEffect BlurRadius="30" ShadowDepth="0" Opacity="0.7" Color="#00FF9F"/>
+                        <DropShadowEffect BlurRadius="30" ShadowDepth="0" Opacity="0.7" Color="#00B4D8"/>
                     </Border.Effect>
 
                     <Grid Width="360" Height="320">
@@ -569,7 +569,7 @@
                                            VerticalAlignment="Center"/>
                                 <TextBox x:Name="EmojiSearchBox" Background="Transparent"
                                          BorderThickness="0" Foreground="#E0E8FF" FontSize="12"
-                                         CaretBrush="#00FF9F" VerticalAlignment="Center"
+                                         CaretBrush="#00B4D8" VerticalAlignment="Center"
                                          TextChanged="EmojiSearch_TextChanged"/>
                             </Grid>
                         </Border>
@@ -626,12 +626,12 @@
                 Cursor="Hand" MouseLeftButtonDown="NewMessageIndicator_Click">
             <Border.Background>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                    <GradientStop Color="#00FF9F" Offset="0"/>
-                    <GradientStop Color="#00E5FF" Offset="1"/>
+                    <GradientStop Color="#00B4D8" Offset="0"/>
+                    <GradientStop Color="#48CAE4" Offset="1"/>
                 </LinearGradientBrush>
             </Border.Background>
             <Border.Effect>
-                <DropShadowEffect Color="#00FF9F" BlurRadius="15" ShadowDepth="0" Opacity="0.6"/>
+                <DropShadowEffect Color="#00B4D8" BlurRadius="15" ShadowDepth="0" Opacity="0.6"/>
             </Border.Effect>
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="↓" FontSize="12" Foreground="#020408" FontWeight="Bold"

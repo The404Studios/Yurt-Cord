@@ -25,7 +25,7 @@
                                     Background="{StaticResource BladeHighlightBrush}"
                                     BorderThickness="1" BorderBrush="Transparent">
                                 <Border.Effect>
-                                    <DropShadowEffect Color="#00FF9F" BlurRadius="0" ShadowDepth="0" Opacity="0"/>
+                                    <DropShadowEffect Color="#00B4D8" BlurRadius="0" ShadowDepth="0" Opacity="0"/>
                                 </Border.Effect>
                                 <ContentPresenter HorizontalAlignment="Center"
                                                 VerticalAlignment="Center"/>
@@ -33,10 +33,10 @@
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Setter TargetName="border" Property="Background" Value="{StaticResource BladeElevatedBrush}"/>
-                                    <Setter TargetName="border" Property="BorderBrush" Value="#00FF9F50"/>
+                                    <Setter TargetName="border" Property="BorderBrush" Value="#00B4D850"/>
                                     <Setter TargetName="border" Property="Effect">
                                         <Setter.Value>
-                                            <DropShadowEffect Color="#00FF9F" BlurRadius="10" ShadowDepth="0" Opacity="0.4"/>
+                                            <DropShadowEffect Color="#00B4D8" BlurRadius="10" ShadowDepth="0" Opacity="0.4"/>
                                         </Setter.Value>
                                     </Setter>
                                 </Trigger>
@@ -57,12 +57,12 @@
                             <Border x:Name="border" CornerRadius="26">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Color="#00FF9F" Offset="0"/>
-                                        <GradientStop Color="#00E5FF" Offset="1"/>
+                                        <GradientStop Color="#00B4D8" Offset="0"/>
+                                        <GradientStop Color="#48CAE4" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
                                 <Border.Effect>
-                                    <DropShadowEffect Color="#00FF9F" BlurRadius="12" ShadowDepth="0" Opacity="0.5"/>
+                                    <DropShadowEffect Color="#00B4D8" BlurRadius="12" ShadowDepth="0" Opacity="0.5"/>
                                 </Border.Effect>
                                 <ContentPresenter HorizontalAlignment="Center"
                                                 VerticalAlignment="Center"/>
@@ -71,7 +71,7 @@
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Setter TargetName="border" Property="Effect">
                                         <Setter.Value>
-                                            <DropShadowEffect Color="#00FF9F" BlurRadius="16" ShadowDepth="0" Opacity="0.7"/>
+                                            <DropShadowEffect Color="#00B4D8" BlurRadius="16" ShadowDepth="0" Opacity="0.7"/>
                                         </Setter.Value>
                                     </Setter>
                                 </Trigger>
@@ -127,7 +127,7 @@
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Setter TargetName="border" Property="Background" Value="{StaticResource BladeHighlightBrush}"/>
-                                    <Setter TargetName="border" Property="BorderBrush" Value="#00FF9F40"/>
+                                    <Setter TargetName="border" Property="BorderBrush" Value="#00B4D840"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>

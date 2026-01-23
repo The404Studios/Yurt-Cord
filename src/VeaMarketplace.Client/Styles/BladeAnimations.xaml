@@ -270,15 +270,15 @@
                          To="0.5" Duration="0:0:0.2"/>
     </Storyboard>
 
-    <!-- Rainbow Cycle (For special elements) -->
+    <!-- Teal Cycle (For special elements) -->
     <Storyboard x:Key="RainbowCycle" RepeatBehavior="Forever">
         <ColorAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.Color)">
-            <EasingColorKeyFrame KeyTime="0:0:0" Value="#00FF9F"/>
-            <EasingColorKeyFrame KeyTime="0:0:1" Value="#00E5FF"/>
-            <EasingColorKeyFrame KeyTime="0:0:2" Value="#B366FF"/>
-            <EasingColorKeyFrame KeyTime="0:0:3" Value="#FF66B2"/>
-            <EasingColorKeyFrame KeyTime="0:0:4" Value="#FF9933"/>
-            <EasingColorKeyFrame KeyTime="0:0:5" Value="#00FF9F"/>
+            <EasingColorKeyFrame KeyTime="0:0:0" Value="#00B4D8"/>
+            <EasingColorKeyFrame KeyTime="0:0:1" Value="#48CAE4"/>
+            <EasingColorKeyFrame KeyTime="0:0:2" Value="#0096B8"/>
+            <EasingColorKeyFrame KeyTime="0:0:3" Value="#48CAE4"/>
+            <EasingColorKeyFrame KeyTime="0:0:4" Value="#00B4D8"/>
+            <EasingColorKeyFrame KeyTime="0:0:5" Value="#00B4D8"/>
         </ColorAnimationUsingKeyFrames>
     </Storyboard>
 

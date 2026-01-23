@@ -120,7 +120,7 @@ public partial class SettingsView : UserControl
                 _viewModel.Bio = apiService.CurrentUser.Bio ?? "";
                 _viewModel.StatusMessage = apiService.CurrentUser.StatusMessage ?? "";
                 _viewModel.AvatarUrl = apiService.CurrentUser.AvatarUrl ?? "";
-                _viewModel.AccentColor = apiService.CurrentUser.AccentColor ?? "#00FF9F";
+                _viewModel.AccentColor = apiService.CurrentUser.AccentColor ?? "#00B4D8";
             }
         }
     }

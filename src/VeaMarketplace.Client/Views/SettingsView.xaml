@@ -79,14 +79,14 @@
                                 <Setter TargetName="Background" Property="Background">
                                     <Setter.Value>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                            <GradientStop Color="#00FF9F" Offset="0"/>
-                                            <GradientStop Color="#00E5FF" Offset="1"/>
+                                            <GradientStop Color="#00B4D8" Offset="0"/>
+                                            <GradientStop Color="#48CAE4" Offset="1"/>
                                         </LinearGradientBrush>
                                     </Setter.Value>
                                 </Setter>
                                 <Setter TargetName="Background" Property="Effect">
                                     <Setter.Value>
-                                        <DropShadowEffect Color="#00FF9F" BlurRadius="10" ShadowDepth="0" Opacity="0.5"/>
+                                        <DropShadowEffect Color="#00B4D8" BlurRadius="10" ShadowDepth="0" Opacity="0.5"/>
                                     </Setter.Value>
                                 </Setter>
                                 <Setter TargetName="Indicator" Property="HorizontalAlignment" Value="Right"/>
@@ -136,7 +136,7 @@
         <!-- Active Nav Button Style -->
         <Style x:Key="BladeSettingsNavButtonActive" TargetType="Button" BasedOn="{StaticResource BladeSettingsNavButton}">
             <Setter Property="Background" Value="#25101828"/>
-            <Setter Property="Foreground" Value="#00FF9F"/>
+            <Setter Property="Foreground" Value="#00B4D8"/>
         </Style>
 
         <!-- Blade ComboBox Style -->
@@ -175,7 +175,7 @@
                                         BorderThickness="1" BorderBrush="#5000FF9F"
                                         MaxHeight="{TemplateBinding MaxDropDownHeight}">
                                     <Border.Effect>
-                                        <DropShadowEffect Color="#00FF9F" BlurRadius="15" ShadowDepth="0" Opacity="0.4"/>
+                                        <DropShadowEffect Color="#00B4D8" BlurRadius="15" ShadowDepth="0" Opacity="0.4"/>
                                     </Border.Effect>
                                     <ScrollViewer Style="{StaticResource BladeScrollViewer}">
                                         <ItemsPresenter/>
@@ -185,10 +185,10 @@
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsDropDownOpen" Value="True">
-                                <Setter TargetName="Border" Property="BorderBrush" Value="#00FF9F"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#00B4D8"/>
                                 <Setter TargetName="Border" Property="Effect">
                                     <Setter.Value>
-                                        <DropShadowEffect Color="#00FF9F" BlurRadius="10" ShadowDepth="0" Opacity="0.3"/>
+                                        <DropShadowEffect Color="#00B4D8" BlurRadius="10" ShadowDepth="0" Opacity="0.3"/>
                                     </Setter.Value>
                                 </Setter>
                             </Trigger>
@@ -319,9 +319,9 @@
                                 </LinearGradientBrush>
                             </Border.Background>
                             <TextBlock Text="QOL FEATURES" FontSize="10" FontWeight="Bold"
-                                       Foreground="#00FF9F">
+                                       Foreground="#00B4D8">
                                 <TextBlock.Effect>
-                                    <DropShadowEffect Color="#00FF9F" BlurRadius="6" ShadowDepth="0" Opacity="0.5"/>
+                                    <DropShadowEffect Color="#00B4D8" BlurRadius="6" ShadowDepth="0" Opacity="0.5"/>
                                 </TextBlock.Effect>
                             </TextBlock>
                         </Border>
@@ -393,8 +393,8 @@
                     <Border Width="4" HorizontalAlignment="Left" CornerRadius="12,0,0,0">
                         <Border.Background>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                <GradientStop Color="#00FF9F" Offset="0"/>
-                                <GradientStop Color="#00E5FF" Offset="1"/>
+                                <GradientStop Color="#00B4D8" Offset="0"/>
+                                <GradientStop Color="#48CAE4" Offset="1"/>
                             </LinearGradientBrush>
                         </Border.Background>
                     </Border>
@@ -403,7 +403,7 @@
                         <TextBlock x:Name="SettingsHeader" Text="Voice &amp; Audio" FontSize="18" FontWeight="SemiBold"
                                    Foreground="#E0E8FF">
                             <TextBlock.Effect>
-                                <DropShadowEffect Color="#00FF9F" BlurRadius="6" ShadowDepth="0" Opacity="0.4"/>
+                                <DropShadowEffect Color="#00B4D8" BlurRadius="6" ShadowDepth="0" Opacity="0.4"/>
                             </TextBlock.Effect>
                         </TextBlock>
                     </StackPanel>
@@ -434,9 +434,9 @@
                                     </LinearGradientBrush>
                                 </Border.Background>
                                 <TextBlock Text="VOICE &amp; AUDIO" FontSize="11" FontWeight="Bold"
-                                           Foreground="#00FF9F">
+                                           Foreground="#00B4D8">
                                     <TextBlock.Effect>
-                                        <DropShadowEffect Color="#00FF9F" BlurRadius="6" ShadowDepth="0" Opacity="0.5"/>
+                                        <DropShadowEffect Color="#00B4D8" BlurRadius="6" ShadowDepth="0" Opacity="0.5"/>
                                     </TextBlock.Effect>
                                 </TextBlock>
                             </Border>
@@ -478,12 +478,12 @@
                                                 HorizontalAlignment="Left">
                                             <Border.Background>
                                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                    <GradientStop Color="#00FF9F" Offset="0"/>
-                                                    <GradientStop Color="#00E5FF" Offset="1"/>
+                                                    <GradientStop Color="#00B4D8" Offset="0"/>
+                                                    <GradientStop Color="#48CAE4" Offset="1"/>
                                                 </LinearGradientBrush>
                                             </Border.Background>
                                             <Border.Effect>
-                                                <DropShadowEffect Color="#00FF9F" BlurRadius="8" ShadowDepth="0" Opacity="0.5"/>
+                                                <DropShadowEffect Color="#00B4D8" BlurRadius="8" ShadowDepth="0" Opacity="0.5"/>
                                             </Border.Effect>
                                             <Border.Width>
                                                 <MultiBinding Converter="{StaticResource AudioLevelConverter}">
@@ -535,7 +535,7 @@
                                     </LinearGradientBrush>
                                 </Border.Background>
                                 <TextBlock Text="VOICE MODE" FontSize="11" FontWeight="Bold"
-                                           Foreground="#00E5FF"/>
+                                           Foreground="#48CAE4"/>
                             </Border>
 
                             <!-- Push to Talk Card -->
@@ -566,7 +566,7 @@
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="Key: " Foreground="#8090B0"/>
                                                 <TextBlock Text="{Binding PushToTalkKeyDisplay}"
-                                                           FontWeight="Bold" Foreground="#00FF9F"/>
+                                                           FontWeight="Bold" Foreground="#00B4D8"/>
                                             </StackPanel>
                                         </Button>
                                         <TextBlock Text="Click to change, then press a new key"
@@ -638,7 +638,7 @@
                             <!-- Refresh Button -->
                             <Button Content="↻ Refresh Audio Devices" Style="{StaticResource BladeNavButton}"
                                     Command="{Binding RefreshDevicesCommand}" HorizontalAlignment="Left"
-                                    Margin="0,8,0,0" Foreground="#00FF9F"/>
+                                    Margin="0,8,0,0" Foreground="#00B4D8"/>
                         </StackPanel>
 
                         <!-- Other Panels (Collapsed by default) -->
@@ -659,12 +659,12 @@
                                     <Border Grid.Column="0" Width="80" Height="80" CornerRadius="12" Margin="0,0,20,0">
                                         <Border.Background>
                                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                                <GradientStop Color="#00FF9F" Offset="0"/>
-                                                <GradientStop Color="#B366FF" Offset="1"/>
+                                                <GradientStop Color="#00B4D8" Offset="0"/>
+                                                <GradientStop Color="#0096B8" Offset="1"/>
                                             </LinearGradientBrush>
                                         </Border.Background>
                                         <Border.Effect>
-                                            <DropShadowEffect Color="#00FF9F" BlurRadius="15" ShadowDepth="0" Opacity="0.5"/>
+                                            <DropShadowEffect Color="#00B4D8" BlurRadius="15" ShadowDepth="0" Opacity="0.5"/>
                                         </Border.Effect>
                                         <TextBlock Text="U" FontSize="32" FontWeight="Bold" Foreground="#020408"
                                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -676,7 +676,7 @@
                                                    Foreground="#6080A0" Margin="0,4,0,0"/>
                                     </StackPanel>
                                     <Button Grid.Column="2" Content="Edit Profile" Style="{StaticResource BladeNavButton}"
-                                            VerticalAlignment="Center" Click="EditProfile_Click" Foreground="#00FF9F"/>
+                                            VerticalAlignment="Center" Click="EditProfile_Click" Foreground="#00B4D8"/>
                                 </Grid>
                             </Border>
 
@@ -697,7 +697,7 @@
                                     <TextBlock Text="Add an extra layer of security to your account"
                                                FontSize="12" Foreground="#6080A0" Margin="0,0,0,12"/>
                                     <Button Content="Enable 2FA" Style="{StaticResource BladeNavButton}"
-                                            HorizontalAlignment="Left" Foreground="#00E5FF"/>
+                                            HorizontalAlignment="Left" Foreground="#48CAE4"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
@@ -711,7 +711,7 @@
                                         <GradientStop Color="#10101828" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
-                                <TextBlock Text="PROFILE" FontSize="11" FontWeight="Bold" Foreground="#00FF9F"/>
+                                <TextBlock Text="PROFILE" FontSize="11" FontWeight="Bold" Foreground="#00B4D8"/>
                             </Border>
 
                             <!-- Display Name Card -->
@@ -723,7 +723,7 @@
                                                FontSize="12" Foreground="#6080A0" Margin="0,0,0,12"/>
                                     <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000FF9F" Padding="12,10">
                                         <TextBox x:Name="ProfileDisplayNameBox" Background="Transparent" BorderThickness="0"
-                                                 Foreground="#E0E8FF" FontSize="14" CaretBrush="#00FF9F"
+                                                 Foreground="#E0E8FF" FontSize="14" CaretBrush="#00B4D8"
                                                  Text="{Binding DisplayName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                                     </Border>
                                 </StackPanel>
@@ -740,7 +740,7 @@
                                                FontSize="12" Foreground="#6080A0" Margin="0,0,0,12"/>
                                     <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000FF9F" Padding="12,10">
                                         <TextBox x:Name="ProfileBioBox" Background="Transparent" BorderThickness="0"
-                                                 Foreground="#E0E8FF" FontSize="14" CaretBrush="#00FF9F"
+                                                 Foreground="#E0E8FF" FontSize="14" CaretBrush="#00B4D8"
                                                  TextWrapping="Wrap" AcceptsReturn="True" Height="80"
                                                  VerticalScrollBarVisibility="Auto" MaxLength="150"
                                                  Text="{Binding Bio, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -764,7 +764,7 @@
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="💭" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
                                             <TextBox Grid.Column="1" x:Name="ProfileStatusBox" Background="Transparent" BorderThickness="0"
-                                                     Foreground="#E0E8FF" FontSize="14" CaretBrush="#00FF9F" MaxLength="100"
+                                                     Foreground="#E0E8FF" FontSize="14" CaretBrush="#00B4D8" MaxLength="100"
                                                      Text="{Binding StatusMessage, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                                         </Grid>
                                     </Border>
@@ -780,7 +780,7 @@
                                                FontSize="12" Foreground="#6080A0" Margin="0,0,0,12"/>
                                     <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000FF9F" Padding="12,10">
                                         <TextBox x:Name="ProfileAvatarBox" Background="Transparent" BorderThickness="0"
-                                                 Foreground="#E0E8FF" FontSize="14" CaretBrush="#00FF9F"
+                                                 Foreground="#E0E8FF" FontSize="14" CaretBrush="#00B4D8"
                                                  Text="{Binding AvatarUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                                     </Border>
                                 </StackPanel>
@@ -795,14 +795,14 @@
                                                FontSize="12" Foreground="#6080A0" Margin="0,0,0,12"/>
                                     <StackPanel Orientation="Horizontal">
                                         <Border x:Name="AccentColorPreview" Width="40" Height="40" CornerRadius="8"
-                                                Background="#00FF9F" Margin="0,0,12,0">
+                                                Background="#00B4D8" Margin="0,0,12,0">
                                             <Border.Effect>
-                                                <DropShadowEffect Color="#00FF9F" BlurRadius="10" ShadowDepth="0" Opacity="0.5"/>
+                                                <DropShadowEffect Color="#00B4D8" BlurRadius="10" ShadowDepth="0" Opacity="0.5"/>
                                             </Border.Effect>
                                         </Border>
                                         <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000FF9F" Padding="12,10" VerticalAlignment="Center">
                                             <TextBox x:Name="AccentColorBox" Background="Transparent" BorderThickness="0"
-                                                     Foreground="#E0E8FF" FontSize="14" CaretBrush="#00FF9F" Width="100"
+                                                     Foreground="#E0E8FF" FontSize="14" CaretBrush="#00B4D8" Width="100"
                                                      Text="{Binding AccentColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                      TextChanged="AccentColor_TextChanged"/>
                                         </Border>
@@ -812,7 +812,7 @@
 
                             <!-- Save Button -->
                             <Button Content="💾 Save Profile Changes" Style="{StaticResource BladeNavButton}"
-                                    HorizontalAlignment="Left" Margin="0,8,0,0" Foreground="#00FF9F"
+                                    HorizontalAlignment="Left" Margin="0,8,0,0" Foreground="#00B4D8"
                                     Click="SaveProfile_Click"/>
                         </StackPanel>
 
@@ -825,7 +825,7 @@
                                         <GradientStop Color="#10101828" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
-                                <TextBlock Text="PRIVACY &amp; SAFETY" FontSize="11" FontWeight="Bold" Foreground="#00FF9F"/>
+                                <TextBlock Text="PRIVACY &amp; SAFETY" FontSize="11" FontWeight="Bold" Foreground="#00B4D8"/>
                             </Border>
                             <Border Style="{StaticResource BladeSettingsCard}">
                                 <StackPanel>
@@ -890,7 +890,7 @@
                                         <GradientStop Color="#10101828" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
-                                <TextBlock Text="APPEARANCE" FontSize="11" FontWeight="Bold" Foreground="#00E5FF"/>
+                                <TextBlock Text="APPEARANCE" FontSize="11" FontWeight="Bold" Foreground="#48CAE4"/>
                             </Border>
                             <Border Style="{StaticResource BladeSettingsCard}">
                                 <StackPanel>
@@ -1016,7 +1016,7 @@
                                         <GradientStop Color="#10101828" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
-                                <TextBlock Text="KEYBINDS" FontSize="11" FontWeight="Bold" Foreground="#B366FF"/>
+                                <TextBlock Text="KEYBINDS" FontSize="11" FontWeight="Bold" Foreground="#0096B8"/>
                             </Border>
 
                             <!-- Voice Keybinds Card -->
@@ -1037,7 +1037,7 @@
                                         </StackPanel>
                                         <Button Grid.Column="1" x:Name="MuteKeyButton" Click="KeybindButton_Click" Tag="ToggleMute"
                                                 Style="{StaticResource BladeNavButton}" HorizontalAlignment="Right">
-                                            <TextBlock x:Name="MuteKeyText" Text="Ctrl+M" Foreground="#B366FF" FontWeight="SemiBold"/>
+                                            <TextBlock x:Name="MuteKeyText" Text="Ctrl+M" Foreground="#0096B8" FontWeight="SemiBold"/>
                                         </Button>
                                     </Grid>
 
@@ -1053,7 +1053,7 @@
                                         </StackPanel>
                                         <Button Grid.Column="1" x:Name="DeafenKeyButton" Click="KeybindButton_Click" Tag="ToggleDeafen"
                                                 Style="{StaticResource BladeNavButton}" HorizontalAlignment="Right">
-                                            <TextBlock x:Name="DeafenKeyText" Text="Ctrl+D" Foreground="#B366FF" FontWeight="SemiBold"/>
+                                            <TextBlock x:Name="DeafenKeyText" Text="Ctrl+D" Foreground="#0096B8" FontWeight="SemiBold"/>
                                         </Button>
                                     </Grid>
 
@@ -1069,7 +1069,7 @@
                                         </StackPanel>
                                         <Button Grid.Column="1" x:Name="PttKeyBindButton" Click="KeybindButton_Click" Tag="PushToTalk"
                                                 Style="{StaticResource BladeNavButton}" HorizontalAlignment="Right">
-                                            <TextBlock x:Name="PttKeyBindText" Text="{Binding PushToTalkKeyDisplay}" Foreground="#B366FF" FontWeight="SemiBold"/>
+                                            <TextBlock x:Name="PttKeyBindText" Text="{Binding PushToTalkKeyDisplay}" Foreground="#0096B8" FontWeight="SemiBold"/>
                                         </Button>
                                     </Grid>
                                 </StackPanel>
@@ -1093,7 +1093,7 @@
                                         </StackPanel>
                                         <Button Grid.Column="1" x:Name="QuickSwitchKeyButton" Click="KeybindButton_Click" Tag="QuickSwitch"
                                                 Style="{StaticResource BladeNavButton}" HorizontalAlignment="Right">
-                                            <TextBlock x:Name="QuickSwitchKeyText" Text="Ctrl+K" Foreground="#B366FF" FontWeight="SemiBold"/>
+                                            <TextBlock x:Name="QuickSwitchKeyText" Text="Ctrl+K" Foreground="#0096B8" FontWeight="SemiBold"/>
                                         </Button>
                                     </Grid>
 
@@ -1109,7 +1109,7 @@
                                         </StackPanel>
                                         <Button Grid.Column="1" x:Name="SettingsKeyButton" Click="KeybindButton_Click" Tag="Settings"
                                                 Style="{StaticResource BladeNavButton}" HorizontalAlignment="Right">
-                                            <TextBlock x:Name="SettingsKeyText" Text="Ctrl+," Foreground="#B366FF" FontWeight="SemiBold"/>
+                                            <TextBlock x:Name="SettingsKeyText" Text="Ctrl+," Foreground="#0096B8" FontWeight="SemiBold"/>
                                         </Button>
                                     </Grid>
                                 </StackPanel>
@@ -1127,7 +1127,7 @@
                                         <GradientStop Color="#10101828" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
-                                <TextBlock Text="MESSAGE TEMPLATES" FontSize="11" FontWeight="Bold" Foreground="#00FF9F"/>
+                                <TextBlock Text="MESSAGE TEMPLATES" FontSize="11" FontWeight="Bold" Foreground="#00B4D8"/>
                             </Border>
 
                             <!-- Create Template Card -->
@@ -1138,16 +1138,16 @@
                                     <TextBlock Text="Template Name" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
                                     <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000FF9F" Padding="12,10" Margin="0,0,0,12">
                                         <TextBox x:Name="TemplateNameBox" Background="Transparent" BorderThickness="0"
-                                                 Foreground="#E0E8FF" FontSize="14" CaretBrush="#00FF9F"/>
+                                                 Foreground="#E0E8FF" FontSize="14" CaretBrush="#00B4D8"/>
                                     </Border>
                                     <TextBlock Text="Template Content" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
                                     <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000FF9F" Padding="12,10">
                                         <TextBox x:Name="TemplateContentBox" Background="Transparent" BorderThickness="0"
-                                                 Foreground="#E0E8FF" FontSize="14" CaretBrush="#00FF9F"
+                                                 Foreground="#E0E8FF" FontSize="14" CaretBrush="#00B4D8"
                                                  TextWrapping="Wrap" AcceptsReturn="True" Height="80" VerticalScrollBarVisibility="Auto"/>
                                     </Border>
                                     <Button Content="➕ Add Template" Style="{StaticResource BladeNavButton}"
-                                            HorizontalAlignment="Left" Margin="0,12,0,0" Foreground="#00FF9F"
+                                            HorizontalAlignment="Left" Margin="0,12,0,0" Foreground="#00B4D8"
                                             Click="AddTemplate_Click"/>
                                 </StackPanel>
                             </Border>
@@ -1192,7 +1192,7 @@
                                         <GradientStop Color="#10101828" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
-                                <TextBlock Text="SCHEDULED MESSAGES" FontSize="11" FontWeight="Bold" Foreground="#00E5FF"/>
+                                <TextBlock Text="SCHEDULED MESSAGES" FontSize="11" FontWeight="Bold" Foreground="#48CAE4"/>
                             </Border>
 
                             <!-- Schedule New Message Card -->
@@ -1204,13 +1204,13 @@
                                     <TextBlock Text="Channel/User" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
                                     <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000E5FF" Padding="12,10" Margin="0,0,0,12">
                                         <TextBox x:Name="ScheduleTargetBox" Background="Transparent" BorderThickness="0"
-                                                 Foreground="#E0E8FF" FontSize="14" CaretBrush="#00E5FF"/>
+                                                 Foreground="#E0E8FF" FontSize="14" CaretBrush="#48CAE4"/>
                                     </Border>
 
                                     <TextBlock Text="Message" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
                                     <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000E5FF" Padding="12,10" Margin="0,0,0,12">
                                         <TextBox x:Name="ScheduleMessageBox" Background="Transparent" BorderThickness="0"
-                                                 Foreground="#E0E8FF" FontSize="14" CaretBrush="#00E5FF"
+                                                 Foreground="#E0E8FF" FontSize="14" CaretBrush="#48CAE4"
                                                  TextWrapping="Wrap" AcceptsReturn="True" Height="60"/>
                                     </Border>
 
@@ -1223,20 +1223,20 @@
                                             <TextBlock Text="Date" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
                                             <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000E5FF" Padding="12,10">
                                                 <TextBox x:Name="ScheduleDateBox" Background="Transparent" BorderThickness="0"
-                                                         Foreground="#E0E8FF" FontSize="14" CaretBrush="#00E5FF" Text="YYYY-MM-DD"/>
+                                                         Foreground="#E0E8FF" FontSize="14" CaretBrush="#48CAE4" Text="YYYY-MM-DD"/>
                                             </Border>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Margin="8,0,0,0">
                                             <TextBlock Text="Time" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
                                             <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000E5FF" Padding="12,10">
                                                 <TextBox x:Name="ScheduleTimeBox" Background="Transparent" BorderThickness="0"
-                                                         Foreground="#E0E8FF" FontSize="14" CaretBrush="#00E5FF" Text="HH:MM"/>
+                                                         Foreground="#E0E8FF" FontSize="14" CaretBrush="#48CAE4" Text="HH:MM"/>
                                             </Border>
                                         </StackPanel>
                                     </Grid>
 
                                     <Button Content="📅 Schedule Message" Style="{StaticResource BladeNavButton}"
-                                            HorizontalAlignment="Left" Foreground="#00E5FF" Click="ScheduleMessage_Click"/>
+                                            HorizontalAlignment="Left" Foreground="#48CAE4" Click="ScheduleMessage_Click"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
@@ -1512,7 +1512,7 @@
                                         <GradientStop Color="#10101828" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
-                                <TextBlock Text="ACTIVITY INSIGHTS" FontSize="11" FontWeight="Bold" Foreground="#B366FF"/>
+                                <TextBlock Text="ACTIVITY INSIGHTS" FontSize="11" FontWeight="Bold" Foreground="#0096B8"/>
                             </Border>
 
                             <!-- Stats Overview Card -->
@@ -1528,15 +1528,15 @@
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel HorizontalAlignment="Center">
-                                            <TextBlock x:Name="MessagesSentCount" Text="0" FontSize="28" FontWeight="Bold" Foreground="#00FF9F" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="MessagesSentCount" Text="0" FontSize="28" FontWeight="Bold" Foreground="#00B4D8" HorizontalAlignment="Center"/>
                                             <TextBlock Text="Messages Sent" FontSize="12" Foreground="#6080A0" HorizontalAlignment="Center"/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-                                            <TextBlock x:Name="VoiceMinutesCount" Text="0" FontSize="28" FontWeight="Bold" Foreground="#00E5FF" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="VoiceMinutesCount" Text="0" FontSize="28" FontWeight="Bold" Foreground="#48CAE4" HorizontalAlignment="Center"/>
                                             <TextBlock Text="Voice Minutes" FontSize="12" Foreground="#6080A0" HorizontalAlignment="Center"/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="2" HorizontalAlignment="Center">
-                                            <TextBlock x:Name="DaysActiveCount" Text="0" FontSize="28" FontWeight="Bold" Foreground="#B366FF" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="DaysActiveCount" Text="0" FontSize="28" FontWeight="Bold" Foreground="#0096B8" HorizontalAlignment="Center"/>
                                             <TextBlock Text="Days Active" FontSize="12" Foreground="#6080A0" HorizontalAlignment="Center"/>
                                         </StackPanel>
                                     </Grid>

@@ -24,8 +24,8 @@ public partial class GroupCallView : UserControl
     private bool _isDeafened;
     private bool _isScreenSharing;
 
-    // Blade UI theme colors
-    private static readonly SolidColorBrush GreenBrush = new(Color.FromRgb(0, 255, 159));       // #00FF9F
+    // Blade UI theme colors (Teal)
+    private static readonly SolidColorBrush TealBrush = new(Color.FromRgb(0, 180, 216));        // #00B4D8
     private static readonly SolidColorBrush RedBrush = new(Color.FromRgb(255, 68, 102));        // #FF4466
     private static readonly SolidColorBrush MutedBrush = new(Color.FromRgb(160, 176, 200));     // #A0B0C8
     private static readonly SolidColorBrush WhiteBrush = new(Color.FromRgb(232, 240, 255));     // #E8F0FF
@@ -379,7 +379,7 @@ public partial class GroupCallView : UserControl
             MutePath.Fill = MutedBrush;
             MuteBtn.Style = (Style)FindResource("CallControlButton");
             SelfStatusText.Text = _isDeafened ? "Deafened" : "Connected";
-            SelfStatusText.Foreground = _isDeafened ? RedBrush : GreenBrush;
+            SelfStatusText.Foreground = _isDeafened ? RedBrush : TealBrush;
         }
     }
 
@@ -413,7 +413,7 @@ public partial class GroupCallView : UserControl
             DeafenBtn.Style = (Style)FindResource("CallControlButton");
 
             SelfStatusText.Text = _isMuted ? "Muted" : "Connected";
-            SelfStatusText.Foreground = _isMuted ? RedBrush : GreenBrush;
+            SelfStatusText.Foreground = _isMuted ? RedBrush : TealBrush;
         }
     }
 
