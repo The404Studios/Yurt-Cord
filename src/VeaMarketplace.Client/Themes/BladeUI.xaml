@@ -7,7 +7,7 @@
     ═══════════════════════════════════════════════════════════════════════════════════ -->
 
     <!-- ══════════════════════════════════════════════════════════════════════════════
-         BLADE COLOR PALETTE - Holographic Neon with Deep Blacks
+         BLADE COLOR PALETTE - Modern Teal Theme with Deep Blacks
     ══════════════════════════════════════════════════════════════════════════════ -->
 
     <!-- Core Blade Colors -->
@@ -19,15 +19,15 @@
     <Color x:Key="BladeElevated">#182030</Color>
     <Color x:Key="BladeHighlight">#202840</Color>
 
-    <!-- Neon Accent Colors -->
-    <Color x:Key="BladeNeonGreen">#00FF9F</Color>
-    <Color x:Key="BladeNeonCyan">#00E5FF</Color>
-    <Color x:Key="BladeNeonBlue">#4D9FFF</Color>
-    <Color x:Key="BladeNeonPurple">#B366FF</Color>
-    <Color x:Key="BladeNeonPink">#FF66B2</Color>
-    <Color x:Key="BladeNeonOrange">#FF9933</Color>
-    <Color x:Key="BladeNeonRed">#FF4466</Color>
-    <Color x:Key="BladeNeonYellow">#FFDD33</Color>
+    <!-- Accent Colors - Refined Teal Theme -->
+    <Color x:Key="BladeNeonGreen">#00B4D8</Color>
+    <Color x:Key="BladeNeonCyan">#48CAE4</Color>
+    <Color x:Key="BladeNeonBlue">#3B82F6</Color>
+    <Color x:Key="BladeNeonPurple">#A855F7</Color>
+    <Color x:Key="BladeNeonPink">#EC4899</Color>
+    <Color x:Key="BladeNeonOrange">#F5A623</Color>
+    <Color x:Key="BladeNeonRed">#EF4444</Color>
+    <Color x:Key="BladeNeonYellow">#EAB308</Color>
 
     <!-- Text Colors -->
     <Color x:Key="BladeTextBright">#FFFFFF</Color>
@@ -75,13 +75,11 @@
          GRADIENT BRUSHES - Holographic and Blade Effects
     ══════════════════════════════════════════════════════════════════════════════ -->
 
-    <!-- Holographic Rainbow Gradient -->
+    <!-- Accent Gradient -->
     <LinearGradientBrush x:Key="HolographicGradient" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="#00FF9F" Offset="0"/>
-        <GradientStop Color="#00E5FF" Offset="0.25"/>
-        <GradientStop Color="#B366FF" Offset="0.5"/>
-        <GradientStop Color="#FF66B2" Offset="0.75"/>
-        <GradientStop Color="#FF9933" Offset="1"/>
+        <GradientStop Color="#00B4D8" Offset="0"/>
+        <GradientStop Color="#48CAE4" Offset="0.5"/>
+        <GradientStop Color="#0096B8" Offset="1"/>
     </LinearGradientBrush>
 
     <!-- Blade Panel Gradient (Xbox 360 Guide inspired) -->
@@ -93,9 +91,9 @@
 
     <!-- Blade Active Gradient -->
     <LinearGradientBrush x:Key="BladeActiveGradient" StartPoint="0,0" EndPoint="1,0">
-        <GradientStop Color="#00FF9F20" Offset="0"/>
-        <GradientStop Color="#00E5FF40" Offset="0.5"/>
-        <GradientStop Color="#00FF9F20" Offset="1"/>
+        <GradientStop Color="#00B4D815" Offset="0"/>
+        <GradientStop Color="#48CAE430" Offset="0.5"/>
+        <GradientStop Color="#00B4D815" Offset="1"/>
     </LinearGradientBrush>
 
     <!-- Origami Fold Gradient (3D depth effect) -->
@@ -118,25 +116,24 @@
         <GradientStop Color="#00000000" Offset="1"/>
     </LinearGradientBrush>
 
-    <!-- Neon Edge Gradient -->
+    <!-- Accent Edge Gradient -->
     <LinearGradientBrush x:Key="NeonEdgeGradient" StartPoint="0,0" EndPoint="1,0">
-        <GradientStop Color="#00FF9F00" Offset="0"/>
-        <GradientStop Color="#00FF9F" Offset="0.5"/>
-        <GradientStop Color="#00FF9F00" Offset="1"/>
+        <GradientStop Color="#00B4D800" Offset="0"/>
+        <GradientStop Color="#00B4D8" Offset="0.5"/>
+        <GradientStop Color="#00B4D800" Offset="1"/>
     </LinearGradientBrush>
 
     <!-- Selection Glow Gradient -->
     <RadialGradientBrush x:Key="SelectionGlowGradient" Center="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
-        <GradientStop Color="#00E5FF60" Offset="0"/>
-        <GradientStop Color="#00E5FF30" Offset="0.5"/>
-        <GradientStop Color="#00E5FF00" Offset="1"/>
+        <GradientStop Color="#48CAE440" Offset="0"/>
+        <GradientStop Color="#48CAE420" Offset="0.5"/>
+        <GradientStop Color="#48CAE400" Offset="1"/>
     </RadialGradientBrush>
 
     <!-- Ambient Glow Background -->
     <RadialGradientBrush x:Key="AmbientGlowBrush" Center="0.3,0.3" RadiusX="0.8" RadiusY="0.8">
-        <GradientStop Color="#00FF9F10" Offset="0"/>
-        <GradientStop Color="#00E5FF08" Offset="0.3"/>
-        <GradientStop Color="#B366FF05" Offset="0.6"/>
+        <GradientStop Color="#00B4D808" Offset="0"/>
+        <GradientStop Color="#48CAE405" Offset="0.5"/>
         <GradientStop Color="#00000000" Offset="1"/>
     </RadialGradientBrush>
 
@@ -145,22 +142,22 @@
          BlurRadius kept under 20 for smooth rendering, use CacheMode on containers
     ══════════════════════════════════════════════════════════════════════════════ -->
 
-    <!-- Primary Neon Glow - Optimized -->
-    <DropShadowEffect x:Key="NeonGlow" Color="#00FF9F" BlurRadius="16" ShadowDepth="0" Opacity="0.7" RenderingBias="Performance"/>
-    <DropShadowEffect x:Key="NeonGlowSubtle" Color="#00FF9F" BlurRadius="10" ShadowDepth="0" Opacity="0.4" RenderingBias="Performance"/>
-    <DropShadowEffect x:Key="NeonGlowIntense" Color="#00FF9F" BlurRadius="20" ShadowDepth="0" Opacity="0.9" RenderingBias="Performance"/>
+    <!-- Primary Accent Glow - Optimized -->
+    <DropShadowEffect x:Key="NeonGlow" Color="#00B4D8" BlurRadius="12" ShadowDepth="0" Opacity="0.5" RenderingBias="Performance"/>
+    <DropShadowEffect x:Key="NeonGlowSubtle" Color="#00B4D8" BlurRadius="8" ShadowDepth="0" Opacity="0.3" RenderingBias="Performance"/>
+    <DropShadowEffect x:Key="NeonGlowIntense" Color="#00B4D8" BlurRadius="16" ShadowDepth="0" Opacity="0.6" RenderingBias="Performance"/>
 
-    <!-- Cyan Neon Glow - Optimized -->
-    <DropShadowEffect x:Key="CyanGlow" Color="#00E5FF" BlurRadius="16" ShadowDepth="0" Opacity="0.7" RenderingBias="Performance"/>
-    <DropShadowEffect x:Key="CyanGlowSubtle" Color="#00E5FF" BlurRadius="10" ShadowDepth="0" Opacity="0.4" RenderingBias="Performance"/>
-    <DropShadowEffect x:Key="CyanGlowIntense" Color="#00E5FF" BlurRadius="20" ShadowDepth="0" Opacity="0.9" RenderingBias="Performance"/>
+    <!-- Cyan Glow - Optimized -->
+    <DropShadowEffect x:Key="CyanGlow" Color="#48CAE4" BlurRadius="12" ShadowDepth="0" Opacity="0.5" RenderingBias="Performance"/>
+    <DropShadowEffect x:Key="CyanGlowSubtle" Color="#48CAE4" BlurRadius="8" ShadowDepth="0" Opacity="0.3" RenderingBias="Performance"/>
+    <DropShadowEffect x:Key="CyanGlowIntense" Color="#48CAE4" BlurRadius="16" ShadowDepth="0" Opacity="0.6" RenderingBias="Performance"/>
 
-    <!-- Purple Neon Glow - Optimized -->
-    <DropShadowEffect x:Key="PurpleGlow" Color="#B366FF" BlurRadius="16" ShadowDepth="0" Opacity="0.7" RenderingBias="Performance"/>
-    <DropShadowEffect x:Key="PurpleGlowSubtle" Color="#B366FF" BlurRadius="10" ShadowDepth="0" Opacity="0.4" RenderingBias="Performance"/>
+    <!-- Purple Glow - Optimized -->
+    <DropShadowEffect x:Key="PurpleGlow" Color="#A855F7" BlurRadius="12" ShadowDepth="0" Opacity="0.5" RenderingBias="Performance"/>
+    <DropShadowEffect x:Key="PurpleGlowSubtle" Color="#A855F7" BlurRadius="8" ShadowDepth="0" Opacity="0.3" RenderingBias="Performance"/>
 
-    <!-- Pink Neon Glow - Optimized -->
-    <DropShadowEffect x:Key="PinkGlow" Color="#FF66B2" BlurRadius="16" ShadowDepth="0" Opacity="0.7" RenderingBias="Performance"/>
+    <!-- Pink Glow - Optimized -->
+    <DropShadowEffect x:Key="PinkGlow" Color="#EC4899" BlurRadius="12" ShadowDepth="0" Opacity="0.5" RenderingBias="Performance"/>
 
     <!-- Depth Shadow (for pop-out effect) - Optimized -->
     <DropShadowEffect x:Key="PopOutShadow" Color="#000000" BlurRadius="18" ShadowDepth="10" Opacity="0.6" Direction="270" RenderingBias="Performance"/>
@@ -187,9 +184,9 @@
         <Setter Property="BorderBrush">
             <Setter.Value>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                    <GradientStop Color="#00FF9F40" Offset="0"/>
-                    <GradientStop Color="#00E5FF30" Offset="0.5"/>
-                    <GradientStop Color="#00FF9F40" Offset="1"/>
+                    <GradientStop Color="#00B4D830" Offset="0"/>
+                    <GradientStop Color="#48CAE420" Offset="0.5"/>
+                    <GradientStop Color="#00B4D830" Offset="1"/>
                 </LinearGradientBrush>
             </Setter.Value>
         </Setter>
@@ -208,15 +205,15 @@
         <Setter Property="BorderBrush">
             <Setter.Value>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                    <GradientStop Color="#00FF9F" Offset="0"/>
-                    <GradientStop Color="#00E5FF" Offset="0.5"/>
-                    <GradientStop Color="#00FF9F" Offset="1"/>
+                    <GradientStop Color="#00B4D8" Offset="0"/>
+                    <GradientStop Color="#48CAE4" Offset="0.5"/>
+                    <GradientStop Color="#00B4D8" Offset="1"/>
                 </LinearGradientBrush>
             </Setter.Value>
         </Setter>
         <Setter Property="Effect">
             <Setter.Value>
-                <DropShadowEffect Color="#00FF9F" BlurRadius="35" ShadowDepth="0" Opacity="0.6"/>
+                <DropShadowEffect Color="#00B4D8" BlurRadius="20" ShadowDepth="0" Opacity="0.4"/>
             </Setter.Value>
         </Setter>
     </Style>
@@ -233,9 +230,9 @@
         <Setter Property="BorderBrush">
             <Setter.Value>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Color="#00FF9F50" Offset="0"/>
-                    <GradientStop Color="#00E5FF30" Offset="0.5"/>
-                    <GradientStop Color="#B366FF50" Offset="1"/>
+                    <GradientStop Color="#00B4D830" Offset="0"/>
+                    <GradientStop Color="#48CAE420" Offset="0.5"/>
+                    <GradientStop Color="#00B4D830" Offset="1"/>
                 </LinearGradientBrush>
             </Setter.Value>
         </Setter>
@@ -257,9 +254,9 @@
         <Setter Property="BorderBrush">
             <Setter.Value>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Color="#00FF9F" Offset="0"/>
-                    <GradientStop Color="#00E5FF" Offset="0.5"/>
-                    <GradientStop Color="#B366FF" Offset="1"/>
+                    <GradientStop Color="#00B4D8" Offset="0"/>
+                    <GradientStop Color="#48CAE4" Offset="0.5"/>
+                    <GradientStop Color="#0096B8" Offset="1"/>
                 </LinearGradientBrush>
             </Setter.Value>
         </Setter>
@@ -332,8 +329,8 @@
                                 Opacity="0" IsHitTestVisible="False">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                    <GradientStop Color="#00FF9F20" Offset="0"/>
-                                    <GradientStop Color="#00FF9F00" Offset="1"/>
+                                    <GradientStop Color="#00B4D815" Offset="0"/>
+                                    <GradientStop Color="#00B4D800" Offset="1"/>
                                 </LinearGradientBrush>
                             </Border.Background>
                         </Border>
@@ -478,7 +475,7 @@
                                 CornerRadius="1.5,1.5,0,0" Opacity="0"
                                 Background="{StaticResource BladeNeonGreenBrush}">
                             <Border.Effect>
-                                <DropShadowEffect Color="#00FF9F" BlurRadius="10" ShadowDepth="0" Opacity="0.8"/>
+                                <DropShadowEffect Color="#00B4D8" BlurRadius="8" ShadowDepth="0" Opacity="0.5"/>
                             </Border.Effect>
                         </Border>
 
@@ -487,8 +484,8 @@
                                 IsHitTestVisible="False">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0.5,1" EndPoint="0.5,0">
-                                    <GradientStop Color="#00FF9F30" Offset="0"/>
-                                    <GradientStop Color="#00FF9F00" Offset="1"/>
+                                    <GradientStop Color="#00B4D820" Offset="0"/>
+                                    <GradientStop Color="#00B4D800" Offset="1"/>
                                 </LinearGradientBrush>
                             </Border.Background>
                         </Border>
@@ -582,7 +579,7 @@
         <Setter Property="FontWeight" Value="Medium"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="#00FF9F40"/>
+        <Setter Property="BorderBrush" Value="#00B4D830"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -610,12 +607,12 @@
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
 
-                        <!-- Neon Edge Effect -->
+                        <!-- Accent Edge Effect -->
                         <Border x:Name="NeonEdge" CornerRadius="12" Opacity="0"
                                 BorderThickness="2" IsHitTestVisible="False"
                                 BorderBrush="{StaticResource BladeNeonGreenBrush}">
                             <Border.Effect>
-                                <DropShadowEffect Color="#00FF9F" BlurRadius="15" ShadowDepth="0" Opacity="0.6"/>
+                                <DropShadowEffect Color="#00B4D8" BlurRadius="10" ShadowDepth="0" Opacity="0.4"/>
                             </Border.Effect>
                         </Border>
                     </Grid>
@@ -709,19 +706,19 @@
         </Setter>
     </Style>
 
-    <!-- Pop-Out Button Accent (Neon Green) -->
+    <!-- Pop-Out Button Accent (Teal) -->
     <Style x:Key="PopOutButtonAccent" TargetType="Button" BasedOn="{StaticResource PopOutButton}">
         <Setter Property="Background">
             <Setter.Value>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Color="#00FF9F" Offset="0"/>
-                    <GradientStop Color="#00E5FF" Offset="1"/>
+                    <GradientStop Color="#00B4D8" Offset="0"/>
+                    <GradientStop Color="#48CAE4" Offset="1"/>
                 </LinearGradientBrush>
             </Setter.Value>
         </Setter>
         <Setter Property="Foreground" Value="#020408"/>
         <Setter Property="FontWeight" Value="Bold"/>
-        <Setter Property="BorderBrush" Value="#00FF9F"/>
+        <Setter Property="BorderBrush" Value="#00B4D8"/>
     </Style>
 
     <!-- ══════════════════════════════════════════════════════════════════════════════
@@ -754,7 +751,7 @@
                         <Ellipse x:Name="GlowRing" Stroke="{StaticResource BladeNeonGreenBrush}"
                                  StrokeThickness="2" Opacity="0">
                             <Ellipse.Effect>
-                                <DropShadowEffect Color="#00FF9F" BlurRadius="15" ShadowDepth="0" Opacity="0.8"/>
+                                <DropShadowEffect Color="#00B4D8" BlurRadius="10" ShadowDepth="0" Opacity="0.5"/>
                             </Ellipse.Effect>
                         </Ellipse>
 
@@ -860,9 +857,9 @@
         <Setter Property="Background" Value="{StaticResource BladeDeepBrush}"/>
         <Setter Property="Foreground" Value="{StaticResource BladeTextPrimaryBrush}"/>
         <Setter Property="CaretBrush" Value="{StaticResource BladeNeonGreenBrush}"/>
-        <Setter Property="SelectionBrush" Value="#00FF9F60"/>
+        <Setter Property="SelectionBrush" Value="#00B4D840"/>
         <Setter Property="BorderThickness" Value="2"/>
-        <Setter Property="BorderBrush" Value="#00FF9F40"/>
+        <Setter Property="BorderBrush" Value="#00B4D830"/>
         <Setter Property="Padding" Value="16,14"/>
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="Template">
@@ -892,12 +889,12 @@
                             </Grid>
                         </Border>
 
-                        <!-- Neon Glow Border -->
+                        <!-- Accent Glow Border -->
                         <Border x:Name="GlowBorder" CornerRadius="14" Opacity="0"
                                 BorderThickness="2" BorderBrush="{StaticResource BladeNeonGreenBrush}"
                                 IsHitTestVisible="False">
                             <Border.Effect>
-                                <DropShadowEffect Color="#00FF9F" BlurRadius="15" ShadowDepth="0" Opacity="0.6"/>
+                                <DropShadowEffect Color="#00B4D8" BlurRadius="10" ShadowDepth="0" Opacity="0.4"/>
                             </Border.Effect>
                         </Border>
                     </Grid>
@@ -954,7 +951,7 @@
             </Setter.Value>
         </Setter>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="BorderBrush" Value="#00FF9F30"/>
+        <Setter Property="BorderBrush" Value="#00B4D820"/>
         <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
         <Setter Property="RenderTransform">
             <Setter.Value>
@@ -976,12 +973,12 @@
         <Setter Property="Background">
             <Setter.Value>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Color="#00FF9F20" Offset="0"/>
-                    <GradientStop Color="#00E5FF15" Offset="1"/>
+                    <GradientStop Color="#00B4D815" Offset="0"/>
+                    <GradientStop Color="#48CAE410" Offset="1"/>
                 </LinearGradientBrush>
             </Setter.Value>
         </Setter>
-        <Setter Property="BorderBrush" Value="#00FF9F60"/>
+        <Setter Property="BorderBrush" Value="#00B4D840"/>
     </Style>
 
     <!-- ══════════════════════════════════════════════════════════════════════════════
@@ -994,7 +991,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ScrollBar">
-                    <Border Background="#00FF9F10" CornerRadius="5" Padding="2">
+                    <Border Background="#00B4D808" CornerRadius="5" Padding="2">
                         <Track x:Name="PART_Track" IsDirectionReversed="True">
                             <Track.Thumb>
                                 <Thumb>
@@ -1004,8 +1001,8 @@
                                                     MinHeight="30">
                                                 <Border.Background>
                                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                        <GradientStop Color="#00FF9F60" Offset="0"/>
-                                                        <GradientStop Color="#00E5FF60" Offset="1"/>
+                                                        <GradientStop Color="#00B4D850" Offset="0"/>
+                                                        <GradientStop Color="#48CAE450" Offset="1"/>
                                                     </LinearGradientBrush>
                                                 </Border.Background>
                                             </Border>
@@ -1014,14 +1011,14 @@
                                                     <Setter TargetName="ThumbBorder" Property="Background">
                                                         <Setter.Value>
                                                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                                <GradientStop Color="#00FF9F" Offset="0"/>
-                                                                <GradientStop Color="#00E5FF" Offset="1"/>
+                                                                <GradientStop Color="#00B4D8" Offset="0"/>
+                                                                <GradientStop Color="#48CAE4" Offset="1"/>
                                                             </LinearGradientBrush>
                                                         </Setter.Value>
                                                     </Setter>
                                                     <Setter TargetName="ThumbBorder" Property="Effect">
                                                         <Setter.Value>
-                                                            <DropShadowEffect Color="#00FF9F" BlurRadius="8" ShadowDepth="0" Opacity="0.5"/>
+                                                            <DropShadowEffect Color="#00B4D8" BlurRadius="6" ShadowDepth="0" Opacity="0.4"/>
                                                         </Setter.Value>
                                                     </Setter>
                                                 </Trigger>
@@ -1071,7 +1068,7 @@
         <Setter Property="StrokeThickness" Value="2"/>
         <Setter Property="Effect">
             <Setter.Value>
-                <DropShadowEffect Color="#00FF9F" BlurRadius="8" ShadowDepth="0" Opacity="1"/>
+                <DropShadowEffect Color="#22C55E" BlurRadius="6" ShadowDepth="0" Opacity="0.6"/>
             </Setter.Value>
         </Setter>
     </Style>
@@ -1080,7 +1077,7 @@
         <Setter Property="Fill" Value="{StaticResource BladeNeonYellowBrush}"/>
         <Setter Property="Effect">
             <Setter.Value>
-                <DropShadowEffect Color="#FFDD33" BlurRadius="8" ShadowDepth="0" Opacity="1"/>
+                <DropShadowEffect Color="#EAB308" BlurRadius="6" ShadowDepth="0" Opacity="0.6"/>
             </Setter.Value>
         </Setter>
     </Style>
@@ -1089,7 +1086,7 @@
         <Setter Property="Fill" Value="{StaticResource BladeNeonRedBrush}"/>
         <Setter Property="Effect">
             <Setter.Value>
-                <DropShadowEffect Color="#FF4466" BlurRadius="8" ShadowDepth="0" Opacity="1"/>
+                <DropShadowEffect Color="#EF4444" BlurRadius="6" ShadowDepth="0" Opacity="0.6"/>
             </Setter.Value>
         </Setter>
     </Style>
@@ -1109,14 +1106,14 @@
         <Setter Property="BorderBrush">
             <Setter.Value>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Color="#00FF9F" Offset="0"/>
-                    <GradientStop Color="#00E5FF" Offset="1"/>
+                    <GradientStop Color="#00B4D8" Offset="0"/>
+                    <GradientStop Color="#48CAE4" Offset="1"/>
                 </LinearGradientBrush>
             </Setter.Value>
         </Setter>
         <Setter Property="Effect">
             <Setter.Value>
-                <DropShadowEffect Color="#00FF9F" BlurRadius="10" ShadowDepth="0" Opacity="0.5"/>
+                <DropShadowEffect Color="#00B4D8" BlurRadius="8" ShadowDepth="0" Opacity="0.35"/>
             </Setter.Value>
         </Setter>
     </Style>
@@ -1164,12 +1161,12 @@
                                 IsHitTestVisible="False">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                    <GradientStop Color="#00FF9F40" Offset="0"/>
-                                    <GradientStop Color="#00E5FF30" Offset="1"/>
+                                    <GradientStop Color="#00B4D830" Offset="0"/>
+                                    <GradientStop Color="#48CAE425" Offset="1"/>
                                 </LinearGradientBrush>
                             </Border.Background>
                             <Border.Effect>
-                                <DropShadowEffect Color="#00FF9F" BlurRadius="12" ShadowDepth="0" Opacity="0.6"/>
+                                <DropShadowEffect Color="#00B4D8" BlurRadius="8" ShadowDepth="0" Opacity="0.4"/>
                             </Border.Effect>
                         </Border>
 
@@ -1194,14 +1191,14 @@
                             <Setter TargetName="Thumb" Property="Background">
                                 <Setter.Value>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Color="#00FF9F" Offset="0"/>
-                                        <GradientStop Color="#00E5FF" Offset="1"/>
+                                        <GradientStop Color="#00B4D8" Offset="0"/>
+                                        <GradientStop Color="#48CAE4" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Setter.Value>
                             </Setter>
                             <Setter TargetName="Thumb" Property="Effect">
                                 <Setter.Value>
-                                    <DropShadowEffect Color="#00FF9F" BlurRadius="10" ShadowDepth="0" Opacity="0.8"/>
+                                    <DropShadowEffect Color="#00B4D8" BlurRadius="8" ShadowDepth="0" Opacity="0.5"/>
                                 </Setter.Value>
                             </Setter>
                             <Trigger.EnterActions>
@@ -1304,12 +1301,12 @@
                                 HorizontalAlignment="Left" VerticalAlignment="Center">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                    <GradientStop Color="#00FF9F" Offset="0"/>
-                                    <GradientStop Color="#00E5FF" Offset="1"/>
+                                    <GradientStop Color="#00B4D8" Offset="0"/>
+                                    <GradientStop Color="#48CAE4" Offset="1"/>
                                 </LinearGradientBrush>
                             </Border.Background>
                             <Border.Effect>
-                                <DropShadowEffect Color="#00FF9F" BlurRadius="8" ShadowDepth="0" Opacity="0.5"/>
+                                <DropShadowEffect Color="#00B4D8" BlurRadius="6" ShadowDepth="0" Opacity="0.35"/>
                             </Border.Effect>
                         </Border>
 
@@ -1328,8 +1325,8 @@
                                                 <Ellipse x:Name="GlowRing" Width="24" Height="24" Opacity="0">
                                                     <Ellipse.Fill>
                                                         <RadialGradientBrush>
-                                                            <GradientStop Color="#00FF9F60" Offset="0"/>
-                                                            <GradientStop Color="#00FF9F00" Offset="1"/>
+                                                            <GradientStop Color="#00B4D840" Offset="0"/>
+                                                            <GradientStop Color="#00B4D800" Offset="1"/>
                                                         </RadialGradientBrush>
                                                     </Ellipse.Fill>
                                                 </Ellipse>
@@ -1338,12 +1335,12 @@
                                                 <Ellipse x:Name="ThumbCircle" Width="18" Height="18">
                                                     <Ellipse.Fill>
                                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                                            <GradientStop Color="#00FF9F" Offset="0"/>
-                                                            <GradientStop Color="#00E5FF" Offset="1"/>
+                                                            <GradientStop Color="#00B4D8" Offset="0"/>
+                                                            <GradientStop Color="#48CAE4" Offset="1"/>
                                                         </LinearGradientBrush>
                                                     </Ellipse.Fill>
                                                     <Ellipse.Effect>
-                                                        <DropShadowEffect Color="#00FF9F" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
+                                                        <DropShadowEffect Color="#00B4D8" BlurRadius="6" ShadowDepth="0" Opacity="0.4"/>
                                                     </Ellipse.Effect>
                                                 </Ellipse>
 
@@ -1422,9 +1419,9 @@
         <Setter Property="BorderBrush">
             <Setter.Value>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Color="#00FF9F" Offset="0"/>
-                    <GradientStop Color="#00E5FF" Offset="0.5"/>
-                    <GradientStop Color="#B366FF" Offset="1"/>
+                    <GradientStop Color="#00B4D8" Offset="0"/>
+                    <GradientStop Color="#48CAE4" Offset="0.5"/>
+                    <GradientStop Color="#0096B8" Offset="1"/>
                 </LinearGradientBrush>
             </Setter.Value>
         </Setter>
@@ -1437,7 +1434,7 @@
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="12" Padding="{TemplateBinding Padding}">
                         <Border.Effect>
-                            <DropShadowEffect Color="#00FF9F" BlurRadius="25" ShadowDepth="0" Opacity="0.5"/>
+                            <DropShadowEffect Color="#00B4D8" BlurRadius="16" ShadowDepth="0" Opacity="0.3"/>
                         </Border.Effect>
                         <StackPanel IsItemsHost="True"/>
                     </Border>
@@ -1483,8 +1480,8 @@
                             <Setter TargetName="Bd" Property="Background">
                                 <Setter.Value>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#3000FF9F" Offset="0"/>
-                                        <GradientStop Color="#2000E5FF" Offset="1"/>
+                                        <GradientStop Color="#2000B4D8" Offset="0"/>
+                                        <GradientStop Color="#1548CAE4" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Setter.Value>
                             </Setter>
@@ -1518,7 +1515,7 @@
                         <Border.Background>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                                 <GradientStop Color="Transparent" Offset="0"/>
-                                <GradientStop Color="#4000FF9F" Offset="0.5"/>
+                                <GradientStop Color="#3000B4D8" Offset="0.5"/>
                                 <GradientStop Color="Transparent" Offset="1"/>
                             </LinearGradientBrush>
                         </Border.Background>

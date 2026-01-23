@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:VeaMarketplace.Client.Views"
         xmlns:controls="clr-namespace:VeaMarketplace.Client.Controls"
-        Title="Overseer"
+        Title="Yurt Cord"
         Height="900" Width="1440"
         MinHeight="700" MinWidth="1100"
         WindowStyle="None"
@@ -14,12 +14,11 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
 
-        <!-- Holographic Gradient for Header -->
+        <!-- Subtle Teal Gradient for Header -->
         <LinearGradientBrush x:Key="HeaderGradient" StartPoint="0,0" EndPoint="1,0">
-            <GradientStop Color="#00FF9F15" Offset="0"/>
-            <GradientStop Color="#00E5FF10" Offset="0.3"/>
-            <GradientStop Color="#B366FF10" Offset="0.6"/>
-            <GradientStop Color="#FF66B210" Offset="1"/>
+            <GradientStop Color="#00B4D810" Offset="0"/>
+            <GradientStop Color="#48CAE408" Offset="0.5"/>
+            <GradientStop Color="#00B4D810" Offset="1"/>
         </LinearGradientBrush>
 
         <!-- Blade Nav Item Hover Animation -->
@@ -48,18 +47,18 @@
 
         <Grid>
             <!-- Ambient Particle Background -->
-            <controls:AmbientParticles x:Name="AmbientParticlesBg" ParticleCount="40"
-                                        MinSize="2" MaxSize="6" SpeedFactor="0.8"
-                                        GlowIntensity="0.4" Opacity="0.6"/>
+            <controls:AmbientParticles x:Name="AmbientParticlesBg" ParticleCount="25"
+                                        MinSize="1" MaxSize="4" SpeedFactor="0.5"
+                                        GlowIntensity="0.25" Opacity="0.4"/>
 
             <!-- Matrix Background (Dimmed) -->
-            <controls:MatrixBackground x:Name="MatrixBg" Opacity="0.15"/>
+            <controls:MatrixBackground x:Name="MatrixBg" Opacity="0.08"/>
 
             <!-- Ambient Glow Overlay -->
-            <Border Opacity="0.3" IsHitTestVisible="False">
+            <Border Opacity="0.2" IsHitTestVisible="False">
                 <Border.Background>
                     <RadialGradientBrush Center="0.2,0.2" RadiusX="0.8" RadiusY="0.8">
-                        <GradientStop Color="#00FF9F10" Offset="0"/>
+                        <GradientStop Color="#00B4D808" Offset="0"/>
                         <GradientStop Color="#00000000" Offset="1"/>
                     </RadialGradientBrush>
                 </Border.Background>
@@ -90,14 +89,14 @@
                             <GradientStop Color="#060810" Offset="1"/>
                         </LinearGradientBrush>
                     </Border.Background>
-                    <!-- Bottom Glow Line -->
+                    <!-- Bottom Accent Line -->
                     <Border VerticalAlignment="Bottom" Height="1">
                         <Border.Background>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                                 <GradientStop Color="#00000000" Offset="0"/>
-                                <GradientStop Color="#00FF9F60" Offset="0.3"/>
-                                <GradientStop Color="#00E5FF80" Offset="0.5"/>
-                                <GradientStop Color="#00FF9F60" Offset="0.7"/>
+                                <GradientStop Color="#00B4D840" Offset="0.3"/>
+                                <GradientStop Color="#48CAE460" Offset="0.5"/>
+                                <GradientStop Color="#00B4D840" Offset="0.7"/>
                                 <GradientStop Color="#00000000" Offset="1"/>
                             </LinearGradientBrush>
                         </Border.Background>
@@ -115,32 +114,32 @@
 
                     <!-- Logo and Brand -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <!-- Holographic Logo -->
+                        <!-- Logo -->
                         <Border Width="32" Height="32" CornerRadius="16" Margin="0,0,12,0">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                    <GradientStop Color="#00FF9F" Offset="0"/>
-                                    <GradientStop Color="#00E5FF" Offset="0.5"/>
-                                    <GradientStop Color="#B366FF" Offset="1"/>
+                                    <GradientStop Color="#00B4D8" Offset="0"/>
+                                    <GradientStop Color="#48CAE4" Offset="0.5"/>
+                                    <GradientStop Color="#0096B8" Offset="1"/>
                                 </LinearGradientBrush>
                             </Border.Background>
                             <Border.Effect>
-                                <DropShadowEffect Color="#00FF9F" BlurRadius="15" ShadowDepth="0" Opacity="0.7"/>
+                                <DropShadowEffect Color="#00B4D8" BlurRadius="12" ShadowDepth="0" Opacity="0.4"/>
                             </Border.Effect>
                             <TextBlock Text="◉" FontSize="16" Foreground="#020408"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
 
-                        <TextBlock Text="OVERSEER" FontWeight="Black" FontSize="16"
+                        <TextBlock Text="YURT CORD" FontWeight="Black" FontSize="16"
                                    VerticalAlignment="Center" Margin="0,0,8,0">
                             <TextBlock.Foreground>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                    <GradientStop Color="#00FF9F" Offset="0"/>
-                                    <GradientStop Color="#00E5FF" Offset="1"/>
+                                    <GradientStop Color="#00B4D8" Offset="0"/>
+                                    <GradientStop Color="#48CAE4" Offset="1"/>
                                 </LinearGradientBrush>
                             </TextBlock.Foreground>
                             <TextBlock.Effect>
-                                <DropShadowEffect Color="#00FF9F" BlurRadius="12" ShadowDepth="0" Opacity="0.6"/>
+                                <DropShadowEffect Color="#00B4D8" BlurRadius="8" ShadowDepth="0" Opacity="0.3"/>
                             </TextBlock.Effect>
                         </TextBlock>
 
@@ -148,13 +147,13 @@
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                                     <GradientStop Color="#00000000" Offset="0"/>
-                                    <GradientStop Color="#00FF9F60" Offset="0.5"/>
+                                    <GradientStop Color="#00B4D840" Offset="0.5"/>
                                     <GradientStop Color="#00000000" Offset="1"/>
                                 </LinearGradientBrush>
                             </Border.Background>
                         </Border>
 
-                        <TextBlock Text="OBSERVE • CONNECT • CONTROL" FontSize="10" FontWeight="Medium"
+                        <TextBlock Text="YOUR COMMUNITY • YOUR WAY" FontSize="10" FontWeight="Medium"
                                    Foreground="#607090" VerticalAlignment="Center" Opacity="0.8"/>
                     </StackPanel>
 
@@ -201,12 +200,12 @@
                                         Visibility="Collapsed">
                                     <Border.Background>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                            <GradientStop Color="#00FF9F" Offset="0"/>
-                                            <GradientStop Color="#00E5FF" Offset="1"/>
+                                            <GradientStop Color="#00B4D8" Offset="0"/>
+                                            <GradientStop Color="#48CAE4" Offset="1"/>
                                         </LinearGradientBrush>
                                     </Border.Background>
                                     <Border.Effect>
-                                        <DropShadowEffect Color="#00FF9F" BlurRadius="8" ShadowDepth="0" Opacity="0.8"/>
+                                        <DropShadowEffect Color="#00B4D8" BlurRadius="6" ShadowDepth="0" Opacity="0.5"/>
                                     </Border.Effect>
                                     <TextBlock x:Name="CartCount" Text="0" FontSize="9" FontWeight="Bold"
                                                Foreground="#020408" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -273,14 +272,14 @@
                         </Border.Background>
                         <Border CornerRadius="16" ClipToBounds="True">
                             <Grid>
-                                <!-- Side Glow -->
+                                <!-- Side Accent -->
                                 <Border Width="2" HorizontalAlignment="Right" CornerRadius="1" Margin="0,20">
                                     <Border.Background>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                                             <GradientStop Color="#00000000" Offset="0"/>
-                                            <GradientStop Color="#00FF9F40" Offset="0.3"/>
-                                            <GradientStop Color="#00E5FF60" Offset="0.5"/>
-                                            <GradientStop Color="#00FF9F40" Offset="0.7"/>
+                                            <GradientStop Color="#00B4D830" Offset="0.3"/>
+                                            <GradientStop Color="#48CAE450" Offset="0.5"/>
+                                            <GradientStop Color="#00B4D830" Offset="0.7"/>
                                             <GradientStop Color="#00000000" Offset="1"/>
                                         </LinearGradientBrush>
                                     </Border.Background>
@@ -296,15 +295,15 @@
                                                 <Ellipse Width="44" Height="44" StrokeThickness="2">
                                                     <Ellipse.Stroke>
                                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                                            <GradientStop Color="#00FF9F" Offset="0"/>
-                                                            <GradientStop Color="#00E5FF" Offset="1"/>
+                                                            <GradientStop Color="#00B4D8" Offset="0"/>
+                                                            <GradientStop Color="#48CAE4" Offset="1"/>
                                                         </LinearGradientBrush>
                                                     </Ellipse.Stroke>
                                                     <Ellipse.Effect>
-                                                        <DropShadowEffect Color="#00FF9F" BlurRadius="12" ShadowDepth="0" Opacity="0.5"/>
+                                                        <DropShadowEffect Color="#00B4D8" BlurRadius="10" ShadowDepth="0" Opacity="0.35"/>
                                                     </Ellipse.Effect>
                                                 </Ellipse>
-                                                <TextBlock Text="◉" FontSize="20" Foreground="#00FF9F"
+                                                <TextBlock Text="◉" FontSize="20" Foreground="#00B4D8"
                                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Grid>
                                         </Button>
@@ -314,7 +313,7 @@
                                             <Border.Background>
                                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                                                     <GradientStop Color="#00000000" Offset="0"/>
-                                                    <GradientStop Color="#00FF9F60" Offset="0.5"/>
+                                                    <GradientStop Color="#00B4D840" Offset="0.5"/>
                                                     <GradientStop Color="#00000000" Offset="1"/>
                                                 </LinearGradientBrush>
                                             </Border.Background>
@@ -376,8 +375,8 @@
                                         <Button Style="{StaticResource BladeIconButton}"
                                                 Width="48" Height="48" Margin="8,8" ToolTip="Add Server">
                                             <Border Width="36" Height="36" CornerRadius="18"
-                                                    BorderThickness="2" BorderBrush="#00FF9F40">
-                                                <TextBlock Text="+" FontSize="20" Foreground="#00FF9F"
+                                                    BorderThickness="2" BorderBrush="#00B4D840">
+                                                <TextBlock Text="+" FontSize="20" Foreground="#00B4D8"
                                                            HorizontalAlignment="Center" VerticalAlignment="Center"
                                                            Margin="0,-2,0,0"/>
                                             </Border>
@@ -393,11 +392,11 @@
                     ═══════════════════════════════════════════════════════════════ -->
                     <Border Grid.Column="1" Margin="4,8,4,8" Style="{StaticResource BladePanel}">
                         <Grid>
-                            <!-- Panel Header Glow -->
+                            <!-- Panel Header Accent -->
                             <Border Height="60" VerticalAlignment="Top" CornerRadius="0,20,0,0">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                        <GradientStop Color="#00FF9F15" Offset="0"/>
+                                        <GradientStop Color="#00B4D810" Offset="0"/>
                                         <GradientStop Color="#00000000" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
@@ -412,7 +411,7 @@
                     ═══════════════════════════════════════════════════════════════ -->
                     <Border Grid.Column="2" Margin="4,8" Style="{StaticResource OrigamiCard}">
                         <Border.Effect>
-                            <DropShadowEffect Color="#00FF9F" BlurRadius="20" ShadowDepth="0" Opacity="0.15"/>
+                            <DropShadowEffect Color="#00B4D8" BlurRadius="16" ShadowDepth="0" Opacity="0.1"/>
                         </Border.Effect>
 
                         <Grid ClipToBounds="True">
@@ -438,14 +437,14 @@
                                 <views:LeaderboardView x:Name="LeaderboardViewControl" Visibility="Collapsed"/>
                             </Grid>
 
-                            <!-- Corner Accents -->
-                            <Path Data="M0,20 L0,0 L20,0" Stroke="#00FF9F40" StrokeThickness="2"
+                            <!-- Corner Accents - Subtle teal theme -->
+                            <Path Data="M0,20 L0,0 L20,0" Stroke="#00B4D830" StrokeThickness="1"
                                   HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8,8"/>
-                            <Path Data="M20,0 L0,0 L0,20" Stroke="#00E5FF40" StrokeThickness="2"
+                            <Path Data="M20,0 L0,0 L0,20" Stroke="#00B4D830" StrokeThickness="1"
                                   HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8,8"/>
-                            <Path Data="M0,0 L0,20 L20,20" Stroke="#B366FF40" StrokeThickness="2"
+                            <Path Data="M0,0 L0,20 L20,20" Stroke="#00B4D830" StrokeThickness="1"
                                   HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="8,8"/>
-                            <Path Data="M20,20 L0,20 L0,0" Stroke="#FF66B240" StrokeThickness="2"
+                            <Path Data="M20,20 L0,20 L0,0" Stroke="#00B4D830" StrokeThickness="1"
                                   HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="8,8"/>
                         </Grid>
                     </Border>
@@ -462,14 +461,14 @@
                         </Border.Background>
                         <Border CornerRadius="20,0,0,20" ClipToBounds="True">
                             <Grid>
-                                <!-- Left Glow Edge -->
+                                <!-- Left Accent Edge -->
                                 <Border Width="2" HorizontalAlignment="Left" CornerRadius="1" Margin="0,20">
                                     <Border.Background>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                                             <GradientStop Color="#00000000" Offset="0"/>
-                                            <GradientStop Color="#00E5FF40" Offset="0.3"/>
-                                            <GradientStop Color="#B366FF60" Offset="0.5"/>
-                                            <GradientStop Color="#00E5FF40" Offset="0.7"/>
+                                            <GradientStop Color="#00B4D830" Offset="0.3"/>
+                                            <GradientStop Color="#48CAE450" Offset="0.5"/>
+                                            <GradientStop Color="#00B4D830" Offset="0.7"/>
                                             <GradientStop Color="#00000000" Offset="1"/>
                                         </LinearGradientBrush>
                                     </Border.Background>
