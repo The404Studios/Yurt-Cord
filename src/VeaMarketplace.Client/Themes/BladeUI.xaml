@@ -1452,30 +1452,71 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="MenuItem">
-                    <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                            CornerRadius="8" Padding="{TemplateBinding Padding}"
-                            Margin="2">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <ContentPresenter Grid.Column="0" x:Name="Icon"
-                                              Content="{TemplateBinding Icon}"
-                                              VerticalAlignment="Center"
-                                              Margin="0,0,12,0"/>
-                            <ContentPresenter Grid.Column="1"
-                                              ContentSource="Header"
-                                              VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="2" x:Name="InputGesture"
-                                       Text="{TemplateBinding InputGestureText}"
-                                       Foreground="{StaticResource BladeTextMutedBrush}"
-                                       FontSize="11" VerticalAlignment="Center"
-                                       Margin="20,0,0,0"/>
-                        </Grid>
-                    </Border>
+                    <Grid>
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                CornerRadius="8" Padding="{TemplateBinding Padding}"
+                                Margin="2">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <ContentPresenter Grid.Column="0" x:Name="Icon"
+                                                  Content="{TemplateBinding Icon}"
+                                                  VerticalAlignment="Center"
+                                                  Margin="0,0,12,0"/>
+                                <ContentPresenter Grid.Column="1"
+                                                  ContentSource="Header"
+                                                  VerticalAlignment="Center"/>
+                                <!-- Submenu arrow or input gesture -->
+                                <TextBlock Grid.Column="2" x:Name="SubMenuArrow"
+                                           Text="▶" FontSize="10"
+                                           Foreground="{StaticResource BladeTextMutedBrush}"
+                                           VerticalAlignment="Center"
+                                           Margin="16,0,0,0" Visibility="Collapsed"/>
+                                <TextBlock Grid.Column="2" x:Name="InputGesture"
+                                           Text="{TemplateBinding InputGestureText}"
+                                           Foreground="{StaticResource BladeTextMutedBrush}"
+                                           FontSize="11" VerticalAlignment="Center"
+                                           Margin="20,0,0,0"/>
+                            </Grid>
+                        </Border>
+                        <!-- Submenu Popup -->
+                        <Popup x:Name="PART_Popup"
+                               IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                               Placement="Right" HorizontalOffset="2"
+                               AllowsTransparency="True" Focusable="False"
+                               PopupAnimation="Fade">
+                            <Border CornerRadius="12" Padding="4"
+                                    BorderThickness="1">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#F8080C18" Offset="0"/>
+                                        <GradientStop Color="#F8101828" Offset="0.5"/>
+                                        <GradientStop Color="#F8080C18" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Border.BorderBrush>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#00B4D8" Offset="0"/>
+                                        <GradientStop Color="#48CAE4" Offset="0.5"/>
+                                        <GradientStop Color="#0096B8" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.BorderBrush>
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#00B4D8" BlurRadius="16" ShadowDepth="0" Opacity="0.3"/>
+                                </Border.Effect>
+                                <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                            </Border>
+                        </Popup>
+                    </Grid>
                     <ControlTemplate.Triggers>
+                        <!-- Show submenu arrow when has items -->
+                        <Trigger Property="HasItems" Value="True">
+                            <Setter TargetName="SubMenuArrow" Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="InputGesture" Property="Visibility" Value="Collapsed"/>
+                        </Trigger>
                         <Trigger Property="IsHighlighted" Value="True">
                             <Setter TargetName="Bd" Property="Background">
                                 <Setter.Value>
