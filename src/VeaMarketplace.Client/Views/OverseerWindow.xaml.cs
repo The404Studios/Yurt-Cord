@@ -136,7 +136,7 @@ public partial class OverseerWindow : Window
                 scale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleX);
                 scale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleY);
 
-                _toastService.ShowSuccess("ACCESS GRANTED", "Welcome to OVERSEER");
+                _toastService.ShowSuccess("Welcome!", "Connected to Yurt Cord");
             };
             LoginView.BeginAnimation(OpacityProperty, fadeOut);
         });
@@ -164,7 +164,7 @@ public partial class OverseerWindow : Window
     {
         Dispatcher.Invoke(() =>
         {
-            TransitionToMainApp("Profile initialized. Welcome to OVERSEER.");
+            TransitionToMainApp("Profile initialized. Welcome to Yurt Cord!");
         });
     }
 
@@ -323,10 +323,10 @@ public partial class OverseerWindow : Window
             btn.BorderBrush = (SolidColorBrush)FindResource("OverseerPrimaryBrush");
             btn.Effect = new DropShadowEffect
             {
-                Color = Color.FromRgb(0, 255, 136),
-                BlurRadius = 20,
+                Color = Color.FromRgb(0, 180, 216),  // #00B4D8 teal
+                BlurRadius = 15,
                 ShadowDepth = 0,
-                Opacity = 0.8
+                Opacity = 0.5
             };
         }
 
@@ -336,10 +336,10 @@ public partial class OverseerWindow : Window
             activeButton.BorderBrush = (SolidColorBrush)FindResource("OverseerAccentBrush");
             activeButton.Effect = new DropShadowEffect
             {
-                Color = Color.FromRgb(255, 0, 255),
-                BlurRadius = 30,
+                Color = Color.FromRgb(72, 202, 228),  // #48CAE4 light teal
+                BlurRadius = 20,
                 ShadowDepth = 0,
-                Opacity = 1
+                Opacity = 0.7
             };
             _activeNavButton = activeButton;
         }

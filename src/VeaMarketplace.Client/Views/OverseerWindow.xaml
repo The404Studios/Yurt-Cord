@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:VeaMarketplace.Client.Views"
         xmlns:controls="clr-namespace:VeaMarketplace.Client.Controls"
-        Title="OVERSEER"
+        Title="Yurt Cord"
         Height="900" Width="1400"
         MinHeight="700" MinWidth="1100"
         WindowStyle="None"
@@ -18,13 +18,13 @@
         <Storyboard x:Key="BorderGlowAnimation" RepeatBehavior="Forever">
             <ColorAnimation Storyboard.TargetName="BorderGradient1"
                            Storyboard.TargetProperty="Color"
-                           From="#00FF88" To="#FF00FF" Duration="0:0:3"/>
+                           From="#00B4D8" To="#48CAE4" Duration="0:0:4"/>
             <ColorAnimation Storyboard.TargetName="BorderGradient2"
                            Storyboard.TargetProperty="Color"
-                           From="#00CCFF" To="#00FF88" Duration="0:0:3"/>
+                           From="#48CAE4" To="#0096B8" Duration="0:0:4"/>
             <ColorAnimation Storyboard.TargetName="BorderGradient3"
                            Storyboard.TargetProperty="Color"
-                           From="#FF00FF" To="#00CCFF" Duration="0:0:3"/>
+                           From="#0096B8" To="#00B4D8" Duration="0:0:4"/>
         </Storyboard>
     </Window.Resources>
 
@@ -37,10 +37,10 @@
     <!-- Main Circular Container -->
     <Grid>
         <!-- Outer Glow Effect -->
-        <Ellipse Margin="-20" Opacity="0.3">
+        <Ellipse Margin="-20" Opacity="0.2">
             <Ellipse.Fill>
                 <RadialGradientBrush>
-                    <GradientStop Color="#00FF88" Offset="0.8"/>
+                    <GradientStop Color="#00B4D8" Offset="0.8"/>
                     <GradientStop Color="Transparent" Offset="1"/>
                 </RadialGradientBrush>
             </Ellipse.Fill>
@@ -50,13 +50,13 @@
         <Border CornerRadius="50" BorderThickness="3" ClipToBounds="True">
             <Border.BorderBrush>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop x:Name="BorderGradient1" Color="#00FF88" Offset="0"/>
-                    <GradientStop x:Name="BorderGradient2" Color="#00CCFF" Offset="0.5"/>
-                    <GradientStop x:Name="BorderGradient3" Color="#FF00FF" Offset="1"/>
+                    <GradientStop x:Name="BorderGradient1" Color="#00B4D8" Offset="0"/>
+                    <GradientStop x:Name="BorderGradient2" Color="#48CAE4" Offset="0.5"/>
+                    <GradientStop x:Name="BorderGradient3" Color="#0096B8" Offset="1"/>
                 </LinearGradientBrush>
             </Border.BorderBrush>
             <Border.Effect>
-                <DropShadowEffect Color="#00FF88" BlurRadius="30" ShadowDepth="0" Opacity="0.6"/>
+                <DropShadowEffect Color="#00B4D8" BlurRadius="25" ShadowDepth="0" Opacity="0.4"/>
             </Border.Effect>
             <Border.Background>
                 <SolidColorBrush Color="#050510"/>
@@ -108,28 +108,27 @@
                                 <Border Width="36" Height="36" CornerRadius="18" Margin="0,0,12,0">
                                     <Border.Background>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                            <GradientStop Color="#00FF88" Offset="0"/>
-                                            <GradientStop Color="#00CCFF" Offset="1"/>
+                                            <GradientStop Color="#00B4D8" Offset="0"/>
+                                            <GradientStop Color="#48CAE4" Offset="1"/>
                                         </LinearGradientBrush>
                                     </Border.Background>
                                     <Border.Effect>
-                                        <DropShadowEffect Color="#00FF88" BlurRadius="15" ShadowDepth="0" Opacity="0.8"/>
+                                        <DropShadowEffect Color="#00B4D8" BlurRadius="12" ShadowDepth="0" Opacity="0.5"/>
                                     </Border.Effect>
-                                    <TextBlock Text="O" FontSize="20" FontWeight="Bold"
+                                    <TextBlock Text="◉" FontSize="20" FontWeight="Bold"
                                                Foreground="#050510"
                                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
-                                <TextBlock Text="OVERSEER" FontWeight="Bold" FontSize="18"
+                                <TextBlock Text="YURT CORD" FontWeight="Bold" FontSize="18"
                                            VerticalAlignment="Center">
                                     <TextBlock.Foreground>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                            <GradientStop Color="#00FF88" Offset="0"/>
-                                            <GradientStop Color="#00CCFF" Offset="0.5"/>
-                                            <GradientStop Color="#FF00FF" Offset="1"/>
+                                            <GradientStop Color="#00B4D8" Offset="0"/>
+                                            <GradientStop Color="#48CAE4" Offset="1"/>
                                         </LinearGradientBrush>
                                     </TextBlock.Foreground>
                                     <TextBlock.Effect>
-                                        <DropShadowEffect Color="#00FF88" BlurRadius="10" ShadowDepth="0" Opacity="0.6"/>
+                                        <DropShadowEffect Color="#00B4D8" BlurRadius="8" ShadowDepth="0" Opacity="0.4"/>
                                     </TextBlock.Effect>
                                 </TextBlock>
                             </StackPanel>
@@ -172,7 +171,7 @@
                                     <Rectangle.Fill>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                                             <GradientStop Color="Transparent" Offset="0"/>
-                                            <GradientStop Color="#00FF88" Offset="0.5"/>
+                                            <GradientStop Color="#00B4D8" Offset="0.5"/>
                                             <GradientStop Color="Transparent" Offset="1"/>
                                         </LinearGradientBrush>
                                     </Rectangle.Fill>
@@ -222,7 +221,7 @@
                                         <Ellipse.Fill>
                                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                                                 <GradientStop Color="Transparent" Offset="0"/>
-                                                <GradientStop Color="#00FF88" Offset="0.5"/>
+                                                <GradientStop Color="#00B4D8" Offset="0.5"/>
                                                 <GradientStop Color="Transparent" Offset="1"/>
                                             </LinearGradientBrush>
                                         </Ellipse.Fill>
