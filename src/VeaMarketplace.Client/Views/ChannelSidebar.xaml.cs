@@ -18,6 +18,7 @@ public partial class ChannelSidebar : UserControl
     private readonly IVoiceService? _voiceService;
     private readonly INavigationService? _navigationService;
     private readonly IToastNotificationService? _toastService;
+    private readonly INetworkQualityService? _networkQualityService;
     private bool _isMuted;
     private bool _isDeafened;
     private System.Timers.Timer? _latencyTimer;
@@ -43,6 +44,7 @@ public partial class ChannelSidebar : UserControl
         _voiceService = (IVoiceService)App.ServiceProvider.GetService(typeof(IVoiceService))!;
         _navigationService = (INavigationService)App.ServiceProvider.GetService(typeof(INavigationService))!;
         _toastService = (IToastNotificationService)App.ServiceProvider.GetService(typeof(IToastNotificationService))!;
+        _networkQualityService = (INetworkQualityService)App.ServiceProvider.GetService(typeof(INetworkQualityService))!;
 
         // Setup connection status monitoring
         SetupConnectionStatusMonitoring();
@@ -645,6 +647,17 @@ public partial class ChannelSidebar : UserControl
         {
             Debug.WriteLine("ChannelSidebar: Connection handshake received");
             UpdateConnectionStatus(ConnectionState.Connected);
+
+            // Start network quality monitoring for latency
+            try
+            {
+                var serverHost = new Uri(AppConstants.DefaultServerUrl).Host;
+                _ = _networkQualityService?.StartMonitoringAsync(serverHost);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to start network monitoring: {ex.Message}");
+            }
         });
     }
 
@@ -681,10 +694,18 @@ public partial class ChannelSidebar : UserControl
             if (_chatService.IsConnected)
             {
                 UpdateConnectionStatus(ConnectionState.Connected);
+
+                // Update latency display from network quality service
+                if (_networkQualityService != null && _networkQualityService.IsConnected)
+                {
+                    var latency = _networkQualityService.CurrentLatency;
+                    LatencyText.Text = $"{latency}ms";
+                }
             }
             else
             {
                 UpdateConnectionStatus(ConnectionState.Reconnecting);
+                LatencyText.Text = "--ms";
             }
         });
     }

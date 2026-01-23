@@ -78,10 +78,13 @@ public partial class LeaderboardViewModel : BaseViewModel
         // Subscribe to events
         _leaderboardService.OnStatsUpdated += _onStatsUpdated;
         _leaderboardService.OnLeaderboardUpdated += _onLeaderboardUpdated;
-
-        // Load initial data with error handling
-        _ = SafeLoadAsync();
+        // Don't auto-load - call LoadDataAsync() explicitly after authentication
     }
+
+    /// <summary>
+    /// Loads leaderboard data. Call this after user is authenticated.
+    /// </summary>
+    public Task LoadDataAsync() => SafeLoadAsync();
 
     private async Task SafeLoadAsync()
     {

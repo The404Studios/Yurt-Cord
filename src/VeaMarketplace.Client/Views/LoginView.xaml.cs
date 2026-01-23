@@ -148,6 +148,11 @@ public partial class LoginView : UserControl
                     // Connect all services (same as login flow)
                     if (result.Token != null)
                     {
+                        // IMPORTANT: Get ViewModels first to ensure event subscriptions are set up
+                        // before services connect and send events
+                        _ = App.ServiceProvider.GetService(typeof(ChatViewModel));
+                        _ = App.ServiceProvider.GetService(typeof(FriendsViewModel));
+
                         var chatService = (IChatService)App.ServiceProvider.GetService(typeof(IChatService))!;
                         var friendService = (IFriendService)App.ServiceProvider.GetService(typeof(IFriendService))!;
                         var profileService = (IProfileService)App.ServiceProvider.GetService(typeof(IProfileService))!;

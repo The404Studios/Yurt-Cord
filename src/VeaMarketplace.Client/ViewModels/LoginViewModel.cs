@@ -93,6 +93,11 @@ public partial class LoginViewModel : BaseViewModel
                 // Connect to all real-time SignalR services in parallel for faster login
                 if (result.Token != null)
                 {
+                    // IMPORTANT: Ensure ViewModels are created first so their event subscriptions
+                    // are set up before services connect and start sending events
+                    _ = App.ServiceProvider.GetService(typeof(ChatViewModel));
+                    _ = App.ServiceProvider.GetService(typeof(FriendsViewModel));
+
                     var connectionTasks = new List<Task>
                     {
                         _chatService.ConnectAsync(result.Token),
@@ -167,6 +172,11 @@ public partial class LoginViewModel : BaseViewModel
                 // Connect to all real-time SignalR services in parallel
                 if (result.Token != null)
                 {
+                    // IMPORTANT: Ensure ViewModels are created first so their event subscriptions
+                    // are set up before services connect and start sending events
+                    _ = App.ServiceProvider.GetService(typeof(ChatViewModel));
+                    _ = App.ServiceProvider.GetService(typeof(FriendsViewModel));
+
                     var connectionTasks = new List<Task>
                     {
                         _chatService.ConnectAsync(result.Token),

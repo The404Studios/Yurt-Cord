@@ -39,8 +39,13 @@ public partial class OrderHistoryViewModel : BaseViewModel
     {
         _apiService = apiService;
         _navigationService = navigationService;
-        _ = LoadOrdersAsync();
+        // Don't auto-load - call LoadDataAsync() explicitly when view opens
     }
+
+    /// <summary>
+    /// Loads order history. Call this when orders view opens.
+    /// </summary>
+    public Task LoadDataAsync() => LoadOrdersAsync();
 
     private async Task LoadOrdersAsync()
     {

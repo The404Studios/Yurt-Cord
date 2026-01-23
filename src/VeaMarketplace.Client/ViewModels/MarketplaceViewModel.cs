@@ -152,9 +152,13 @@ public partial class MarketplaceViewModel : BaseViewModel
 
         _actionMessageTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
         _actionMessageTimer.Tick += OnActionMessageTimerTick;
-
-        _ = InitializeAsync();
+        // Don't auto-load - call LoadDataAsync() explicitly after authentication
     }
+
+    /// <summary>
+    /// Loads marketplace data. Call this after user is authenticated.
+    /// </summary>
+    public Task LoadDataAsync() => InitializeAsync();
 
     private void OnActionMessageTimerTick(object? sender, EventArgs e)
     {

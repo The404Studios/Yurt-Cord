@@ -63,8 +63,13 @@ public partial class CartViewModel : BaseViewModel
     {
         _apiService = apiService;
         _navigationService = navigationService;
-        _ = LoadCartAsync();
+        // Don't auto-load - call LoadDataAsync() explicitly when view opens
     }
+
+    /// <summary>
+    /// Loads cart data. Call this when cart view opens.
+    /// </summary>
+    public Task LoadDataAsync() => LoadCartAsync();
 
     private async Task LoadCartAsync()
     {

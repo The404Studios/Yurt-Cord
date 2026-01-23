@@ -36,8 +36,13 @@ public partial class NotificationCenterViewModel : BaseViewModel
     {
         _apiService = apiService;
         _navigationService = navigationService;
-        _ = SafeLoadNotificationsAsync();
+        // Don't auto-load - call LoadDataAsync() explicitly when view opens
     }
+
+    /// <summary>
+    /// Loads notifications. Call this when notification center opens.
+    /// </summary>
+    public Task LoadDataAsync() => SafeLoadNotificationsAsync();
 
     private async Task SafeLoadNotificationsAsync()
     {

@@ -75,8 +75,13 @@ public partial class ModerationPanelViewModel : BaseViewModel
     public ModerationPanelViewModel(Services.IApiService apiService)
     {
         _apiService = apiService;
-        _ = LoadDashboardAsync();
+        // Don't auto-load - call LoadDataAsync() explicitly when view opens
     }
+
+    /// <summary>
+    /// Loads moderation data. Call this when moderation panel opens.
+    /// </summary>
+    public Task LoadDataAsync() => LoadDashboardAsync();
 
     private async Task LoadDashboardAsync()
     {

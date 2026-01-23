@@ -20,8 +20,13 @@ public partial class WishlistViewModel : BaseViewModel
     {
         _apiService = apiService;
         _navigationService = navigationService;
-        _ = LoadWishlistAsync();
+        // Don't auto-load - call LoadDataAsync() explicitly when view opens
     }
+
+    /// <summary>
+    /// Loads wishlist data. Call this when wishlist view opens.
+    /// </summary>
+    public Task LoadDataAsync() => LoadWishlistAsync();
 
     private async Task LoadWishlistAsync()
     {

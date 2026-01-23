@@ -37,8 +37,13 @@ public partial class ActivityFeedViewModel : BaseViewModel
         _apiService = apiService;
         _navigationService = navigationService;
         _friendService = friendService;
-        _ = LoadActivitiesAsync();
+        // Don't auto-load - call LoadDataAsync() explicitly when view opens
     }
+
+    /// <summary>
+    /// Loads activity feed data. Call this when activity view opens.
+    /// </summary>
+    public Task LoadDataAsync() => LoadActivitiesAsync();
 
     private async Task LoadActivitiesAsync(bool refresh = false)
     {

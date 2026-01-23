@@ -127,7 +127,7 @@ public partial class ServerAdminViewModel : BaseViewModel
             Interval = TimeSpan.FromSeconds(30)
         };
         _refreshTimer.Tick += OnRefreshTimerTick;
-        _refreshTimer.Start();
+        // Don't start timer until view loads - call LoadDataAsync() explicitly
 
         // Subscribe to online users events
         if (_chatService != null)
@@ -136,8 +136,15 @@ public partial class ServerAdminViewModel : BaseViewModel
             _chatService.OnUserJoined += OnUserJoined;
             _chatService.OnUserLeft += OnUserLeft;
         }
+    }
 
-        _ = SafeLoadDashboardAsync();
+    /// <summary>
+    /// Loads admin dashboard and starts auto-refresh. Call this when admin panel opens.
+    /// </summary>
+    public async Task LoadDataAsync()
+    {
+        _refreshTimer.Start();
+        await SafeLoadDashboardAsync();
     }
 
     private void OnOnlineUsersReceived(List<OnlineUserDto> users)
