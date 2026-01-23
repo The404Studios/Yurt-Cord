@@ -10,9 +10,15 @@ using VeaMarketplace.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Explicitly bind to all interfaces on port 5000
+builder.WebHost.UseUrls("http://0.0.0.0:5000");
+
 // Configure Kestrel for high concurrency
 builder.WebHost.ConfigureKestrel(options =>
 {
+    // Listen on all interfaces, port 5000
+    options.ListenAnyIP(5000);
+
     options.Limits.MaxConcurrentConnections = 10000;
     options.Limits.MaxConcurrentUpgradedConnections = 10000;
     options.Limits.MaxRequestBodySize = 50 * 1024 * 1024; // 50MB max request body
