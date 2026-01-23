@@ -10,6 +10,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using VeaMarketplace.Client.Helpers;
+using VeaMarketplace.Client.Models;
 using VeaMarketplace.Client.Services;
 using VeaMarketplace.Client.ViewModels;
 using VeaMarketplace.Client.Views;

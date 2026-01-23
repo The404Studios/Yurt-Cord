@@ -78,7 +78,11 @@ public partial class ChatViewModel : BaseViewModel
         _chatService.OnChatHistoryReceived += OnChatHistoryReceived;
         _chatService.OnChannelListReceived += OnChannelListReceived;
         _chatService.OnUserTyping += OnUserTyping;
+        _chatService.OnUserStoppedTyping += OnUserStoppedTyping;
         _chatService.OnMessageDeleted += OnMessageDeleted;
+        _chatService.OnMessageEdited += OnMessageEdited;
+        _chatService.OnReactionAdded += OnReactionAdded;
+        _chatService.OnReactionRemoved += OnReactionRemoved;
         _chatService.OnUserProfileUpdated += OnUserProfileUpdated;
 
         // Voice events
@@ -188,6 +192,69 @@ public partial class ChatViewModel : BaseViewModel
         });
     }
 
+    private void OnMessageEdited(string messageId, string newContent)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            var message = Messages.FirstOrDefault(m => m.Id == messageId);
+            if (message != null)
+            {
+                message.Content = newContent;
+                message.IsEdited = true;
+            }
+        });
+    }
+
+    private void OnReactionAdded(string messageId, string userId, string emoji, int count)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            var message = Messages.FirstOrDefault(m => m.Id == messageId);
+            if (message != null)
+            {
+                // Check if this user already has this reaction
+                var existingReaction = message.Reactions.FirstOrDefault(r => r.UserId == userId && r.Emoji == emoji);
+                if (existingReaction == null)
+                {
+                    message.Reactions.Add(new MessageReactionDto
+                    {
+                        MessageId = messageId,
+                        UserId = userId,
+                        Emoji = emoji,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+            }
+        });
+    }
+
+    private void OnReactionRemoved(string messageId, string userId, string emoji)
+    {
+        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        {
+            var message = Messages.FirstOrDefault(m => m.Id == messageId);
+            if (message != null)
+            {
+                var reaction = message.Reactions.FirstOrDefault(r => r.UserId == userId && r.Emoji == emoji);
+                if (reaction != null)
+                {
+                    message.Reactions.Remove(reaction);
+                }
+            }
+        });
+    }
+
+    private void OnUserStoppedTyping(string username, string channel)
+    {
+        if (channel == CurrentChannel && TypingUser == username)
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                TypingUser = null;
+            });
+        }
+    }
+
     private void OnUserProfileUpdated(OnlineUserDto updatedUser)
     {
         System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
@@ -264,7 +331,11 @@ public partial class ChatViewModel : BaseViewModel
         _chatService.OnChatHistoryReceived -= OnChatHistoryReceived;
         _chatService.OnChannelListReceived -= OnChannelListReceived;
         _chatService.OnUserTyping -= OnUserTyping;
+        _chatService.OnUserStoppedTyping -= OnUserStoppedTyping;
         _chatService.OnMessageDeleted -= OnMessageDeleted;
+        _chatService.OnMessageEdited -= OnMessageEdited;
+        _chatService.OnReactionAdded -= OnReactionAdded;
+        _chatService.OnReactionRemoved -= OnReactionRemoved;
         _chatService.OnUserProfileUpdated -= OnUserProfileUpdated;
 
         // Unsubscribe from voice service events
