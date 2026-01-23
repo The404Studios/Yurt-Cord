@@ -58,8 +58,13 @@ public partial class DiscoverViewModel : BaseViewModel
     {
         _apiService = apiService;
         _navigationService = navigationService;
-        _ = InitializeAsync();
+        // Don't auto-load in constructor - call LoadDataAsync() explicitly after authentication
     }
+
+    /// <summary>
+    /// Loads all discovery data. Should be called after user is authenticated.
+    /// </summary>
+    public Task LoadDataAsync() => InitializeAsync();
 
     private async Task InitializeAsync()
     {
