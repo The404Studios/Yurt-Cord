@@ -36,15 +36,24 @@ public partial class MarketplaceView : UserControl
         Unloaded += OnUnloaded;
     }
 
-    private void OnLoaded(object sender, RoutedEventArgs e)
+    private async void OnLoaded(object sender, RoutedEventArgs e)
     {
-        // Initialize page info
-        if (_viewModel != null)
+        if (_viewModel == null) return;
+
+        // Load marketplace data
+        try
         {
-            PageInfoText.Text = $"Page {_viewModel.CurrentPage} of {_viewModel.TotalPages}";
-            PrevPageButton.IsEnabled = _viewModel.CurrentPage > 1;
-            NextPageButton.IsEnabled = _viewModel.CurrentPage < _viewModel.TotalPages;
+            await _viewModel.LoadDataAsync();
         }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"MarketplaceView: Failed to load data: {ex.Message}");
+        }
+
+        // Initialize page info
+        PageInfoText.Text = $"Page {_viewModel.CurrentPage} of {_viewModel.TotalPages}";
+        PrevPageButton.IsEnabled = _viewModel.CurrentPage > 1;
+        NextPageButton.IsEnabled = _viewModel.CurrentPage < _viewModel.TotalPages;
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
