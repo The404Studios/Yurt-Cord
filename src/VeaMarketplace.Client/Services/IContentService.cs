@@ -183,7 +183,7 @@ public class ContentService : IContentService, IAsyncDisposable
         // Connection events
         _connection.On("ContentHubConnected", () =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnConnected?.Invoke();
             });
@@ -191,7 +191,7 @@ public class ContentService : IContentService, IAsyncDisposable
 
         _connection.On<string>("AuthenticationFailed", error =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnError?.Invoke(error);
             });
@@ -200,7 +200,7 @@ public class ContentService : IContentService, IAsyncDisposable
         // Profile picture updates - visible everywhere
         _connection.On<ProfilePictureUpdateEvent>("ProfilePictureUpdated", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnProfilePictureUpdated?.Invoke(evt);
             });
@@ -209,7 +209,7 @@ public class ContentService : IContentService, IAsyncDisposable
         // Banner updates
         _connection.On<BannerUpdateEvent>("BannerUpdated", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnBannerUpdated?.Invoke(evt);
             });
@@ -218,7 +218,7 @@ public class ContentService : IContentService, IAsyncDisposable
         // New post events
         _connection.On<NewPostEvent>("NewPost", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnNewPost?.Invoke(evt);
             });
@@ -226,7 +226,7 @@ public class ContentService : IContentService, IAsyncDisposable
 
         _connection.On<NewPostEvent>("FollowedUserPost", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 _notificationService.PlayMessageSound();
                 OnFollowedUserPost?.Invoke(evt);
@@ -235,7 +235,7 @@ public class ContentService : IContentService, IAsyncDisposable
 
         _connection.On<NewPostEvent>("CategoryPost", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnNewPost?.Invoke(evt);
             });
@@ -244,7 +244,7 @@ public class ContentService : IContentService, IAsyncDisposable
         // Post updates
         _connection.On<PostUpdateEvent>("PostUpdated", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnPostUpdated?.Invoke(evt);
             });
@@ -252,7 +252,7 @@ public class ContentService : IContentService, IAsyncDisposable
 
         _connection.On<PostUpdateEvent>("FollowedUserPostUpdated", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnPostUpdated?.Invoke(evt);
             });
@@ -260,7 +260,7 @@ public class ContentService : IContentService, IAsyncDisposable
 
         _connection.On<PostUpdateEvent>("PriceDrop", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 _notificationService.PlayMessageSound();
                 OnPriceDrop?.Invoke(evt);
@@ -270,7 +270,7 @@ public class ContentService : IContentService, IAsyncDisposable
         // Product events
         _connection.On<NewProductEvent>("NewProduct", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnNewProduct?.Invoke(evt);
             });
@@ -278,7 +278,7 @@ public class ContentService : IContentService, IAsyncDisposable
 
         _connection.On<NewProductEvent>("FollowedUserProduct", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 _notificationService.PlayMessageSound();
                 OnFollowedUserProduct?.Invoke(evt);
@@ -287,7 +287,7 @@ public class ContentService : IContentService, IAsyncDisposable
 
         _connection.On<NewProductEvent>("NewCategoryProduct", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnNewCategoryProduct?.Invoke(evt);
             });
@@ -296,7 +296,7 @@ public class ContentService : IContentService, IAsyncDisposable
         // Auction events
         _connection.On<AuctionBidEvent>("AuctionBidPlaced", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnAuctionBidPlaced?.Invoke(evt);
             });
@@ -304,7 +304,7 @@ public class ContentService : IContentService, IAsyncDisposable
 
         _connection.On<AuctionBidEvent>("BidOnYourAuction", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 _notificationService.PlayMentionSound();
                 OnBidOnYourAuction?.Invoke(evt);
@@ -313,7 +313,7 @@ public class ContentService : IContentService, IAsyncDisposable
 
         _connection.On<AuctionBidEvent>("AuctionActivity", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnAuctionBidPlaced?.Invoke(evt);
             });
@@ -321,7 +321,7 @@ public class ContentService : IContentService, IAsyncDisposable
 
         _connection.On<AuctionEndingEvent>("AuctionEnding", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnAuctionEnding?.Invoke(evt);
             });
@@ -329,7 +329,7 @@ public class ContentService : IContentService, IAsyncDisposable
 
         _connection.On<AuctionEndingEvent>("AuctionEndingSoon", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 _notificationService.PlayMentionSound();
                 OnAuctionEndingSoon?.Invoke(evt);
@@ -339,7 +339,7 @@ public class ContentService : IContentService, IAsyncDisposable
         // Image events
         _connection.On<ImageUploadEvent>("ImageUploaded", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnImageUploaded?.Invoke(evt);
             });
@@ -347,7 +347,7 @@ public class ContentService : IContentService, IAsyncDisposable
 
         _connection.On<ImageUploadEvent>("AuctionImageAdded", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnImageUploaded?.Invoke(evt);
             });
@@ -356,7 +356,7 @@ public class ContentService : IContentService, IAsyncDisposable
         // Social events
         _connection.On<FollowEvent>("NewFollower", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 _notificationService.PlayFriendRequestSound();
                 OnNewFollower?.Invoke(evt);
@@ -365,7 +365,7 @@ public class ContentService : IContentService, IAsyncDisposable
 
         _connection.On<ReactionEvent>("NewReaction", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnNewReaction?.Invoke(evt);
             });
@@ -373,7 +373,7 @@ public class ContentService : IContentService, IAsyncDisposable
 
         _connection.On<ReactionEvent>("ReactionUpdate", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnReactionUpdate?.Invoke(evt);
             });
@@ -381,7 +381,7 @@ public class ContentService : IContentService, IAsyncDisposable
 
         _connection.On<CommentEvent>("NewComment", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 _notificationService.PlayMessageSound();
                 OnNewComment?.Invoke(evt);
@@ -390,7 +390,7 @@ public class ContentService : IContentService, IAsyncDisposable
 
         _connection.On<CommentEvent>("CommentAdded", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnCommentAdded?.Invoke(evt);
             });
@@ -398,7 +398,7 @@ public class ContentService : IContentService, IAsyncDisposable
 
         _connection.On<CommentEvent>("ReplyToComment", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 _notificationService.PlayMentionSound();
                 OnNewComment?.Invoke(evt);
@@ -408,7 +408,7 @@ public class ContentService : IContentService, IAsyncDisposable
         // Presence events
         _connection.On<PresenceUpdateEvent>("UserPresenceChanged", evt =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnUserPresenceChanged?.Invoke(evt);
             });
@@ -417,7 +417,7 @@ public class ContentService : IContentService, IAsyncDisposable
         // Feed events
         _connection.On<FeedItemDto>("FeedUpdate", item =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnFeedUpdate?.Invoke(item);
             });
@@ -425,7 +425,7 @@ public class ContentService : IContentService, IAsyncDisposable
 
         _connection.On<FeedItemDto>("FeedItem", item =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 FeedItems.Insert(0, item);
                 OnFeedItem?.Invoke(item);
@@ -435,7 +435,7 @@ public class ContentService : IContentService, IAsyncDisposable
         // Subscription events
         _connection.On<ContentSubscription>("SubscriptionUpdated", sub =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 CurrentSubscription = sub;
             });

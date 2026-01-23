@@ -184,7 +184,7 @@ public class RoomHubService : IRoomHubService, IAsyncDisposable
         // User rooms list
         _connection.On<List<RoomDto>>("UserRooms", rooms =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 UserRooms.Clear();
                 foreach (var room in rooms)
@@ -197,7 +197,7 @@ public class RoomHubService : IRoomHubService, IAsyncDisposable
         // Public rooms list
         _connection.On<List<RoomDto>>("PublicRooms", rooms =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 PublicRooms.Clear();
                 foreach (var room in rooms)
@@ -210,7 +210,7 @@ public class RoomHubService : IRoomHubService, IAsyncDisposable
         // Room created
         _connection.On<RoomDto>("RoomCreated", room =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 UserRooms.Add(room);
                 OnRoomCreated?.Invoke(room);
@@ -220,7 +220,7 @@ public class RoomHubService : IRoomHubService, IAsyncDisposable
         // Room joined
         _connection.On<RoomDto>("RoomJoined", room =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 CurrentRoom = room;
                 if (!UserRooms.Any(r => r.Id == room.Id))
@@ -234,7 +234,7 @@ public class RoomHubService : IRoomHubService, IAsyncDisposable
         // Room updated
         _connection.On<RoomDto>("RoomUpdated", room =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 var existing = UserRooms.FirstOrDefault(r => r.Id == room.Id);
                 if (existing != null)
@@ -286,7 +286,7 @@ public class RoomHubService : IRoomHubService, IAsyncDisposable
         // Streaming events
         _connection.On<List<StreamInfoDto>>("ActiveStreams", streams =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 ActiveStreams.Clear();
                 foreach (var stream in streams)
@@ -298,7 +298,7 @@ public class RoomHubService : IRoomHubService, IAsyncDisposable
 
         _connection.On<StreamInfoDto>("StreamStarted", stream =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 ActiveStreams.Add(stream);
                 OnStreamStarted?.Invoke(stream);
@@ -307,7 +307,7 @@ public class RoomHubService : IRoomHubService, IAsyncDisposable
 
         _connection.On<string>("StreamStopped", streamerId =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 var stream = ActiveStreams.FirstOrDefault(s => s.StreamerId == streamerId);
                 if (stream != null)

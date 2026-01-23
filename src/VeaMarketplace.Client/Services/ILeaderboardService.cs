@@ -533,7 +533,7 @@ public class LeaderboardService : ILeaderboardService
 
     private void UpdateCollection(ObservableCollection<LeaderboardEntry> collection, List<LeaderboardEntry> entries)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             collection.Clear();
             foreach (var entry in entries)
@@ -644,7 +644,7 @@ public class LeaderboardService : ILeaderboardService
             .ThenByDescending(p => p.CreatedAt)
             .ToList();
 
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             CurrentProfilePosts.Clear();
             foreach (var post in posts)
@@ -668,7 +668,7 @@ public class LeaderboardService : ILeaderboardService
 
         _data.ProfilePosts.Add(post);
 
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             CurrentProfilePosts.Insert(0, post);
         });
@@ -685,7 +685,7 @@ public class LeaderboardService : ILeaderboardService
         {
             post.IsDeleted = true;
 
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 var uiPost = CurrentProfilePosts.FirstOrDefault(p => p.Id == postId);
                 if (uiPost != null)

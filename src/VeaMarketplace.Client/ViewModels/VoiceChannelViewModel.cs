@@ -43,7 +43,7 @@ public partial class VoiceChannelViewModel : BaseViewModel
 
     private void OnVoiceChannelUsers(List<VoiceUserState> users)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             Users.Clear();
             foreach (var user in users)
@@ -53,7 +53,7 @@ public partial class VoiceChannelViewModel : BaseViewModel
 
     private void OnUserJoinedVoice(VoiceUserState user)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             if (!Users.Any(u => u.ConnectionId == user.ConnectionId))
                 Users.Add(user);
@@ -62,7 +62,7 @@ public partial class VoiceChannelViewModel : BaseViewModel
 
     private void OnUserLeftVoice(VoiceUserState user)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             var existing = Users.FirstOrDefault(u => u.ConnectionId == user.ConnectionId);
             if (existing != null)
@@ -72,7 +72,7 @@ public partial class VoiceChannelViewModel : BaseViewModel
 
     private void OnUserScreenShareChanged(string connectionId, bool isSharing)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             var user = Users.FirstOrDefault(u => u.ConnectionId == connectionId);
             if (user != null)
@@ -91,7 +91,7 @@ public partial class VoiceChannelViewModel : BaseViewModel
 
     private void OnScreenShareStatsUpdated(ScreenShareStats stats)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             ScreenShareStats = stats;
         });

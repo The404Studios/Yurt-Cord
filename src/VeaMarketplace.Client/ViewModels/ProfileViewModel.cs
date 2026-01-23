@@ -117,7 +117,7 @@ public partial class ProfileViewModel : BaseViewModel
     {
         if (post.ProfileUserId == User?.Id)
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 ProfilePosts.Insert(0, post);
             });
@@ -126,7 +126,7 @@ public partial class ProfileViewModel : BaseViewModel
 
     private void OnProfilePostDeleted(string postId)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             var post = ProfilePosts.FirstOrDefault(p => p.Id == postId);
             if (post != null)

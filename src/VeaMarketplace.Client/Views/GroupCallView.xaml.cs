@@ -127,7 +127,7 @@ public partial class GroupCallView : UserControl
 
     private void OnLocalAudioLevel(double level)
     {
-        Dispatcher.InvokeAsync(() =>
+        Dispatcher.Invoke(() =>
         {
             if (MicLevelBar.Parent is Border parent)
             {
@@ -141,7 +141,7 @@ public partial class GroupCallView : UserControl
 
     private void OnSpeakingChanged(bool speaking)
     {
-        Dispatcher.InvokeAsync(() =>
+        Dispatcher.Invoke(() =>
         {
             SelfSpeakingRing.Visibility = speaking ? Visibility.Visible : Visibility.Collapsed;
         });

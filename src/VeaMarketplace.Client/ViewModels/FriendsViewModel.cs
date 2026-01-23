@@ -360,7 +360,7 @@ public partial class FriendsViewModel : BaseViewModel
 
     private void OnUserSearchResult(UserSearchResultDto? result)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             IsSearchingUser = false;
             UserSearchCompleted = true;
@@ -381,7 +381,7 @@ public partial class FriendsViewModel : BaseViewModel
 
     private void OnUserTypingDM(string userId, string username)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             if (SelectedFriend?.UserId == userId)
             {
@@ -393,7 +393,7 @@ public partial class FriendsViewModel : BaseViewModel
 
     private void OnUserStoppedTypingDM(string userId)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             if (SelectedFriend?.UserId == userId)
             {
@@ -405,7 +405,7 @@ public partial class FriendsViewModel : BaseViewModel
 
     private void OnFriendRemoved(FriendDto friend)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             OnPropertyChanged(nameof(TotalFriendsCount));
             OnPropertyChanged(nameof(OnlineFriendsCount));
@@ -414,7 +414,7 @@ public partial class FriendsViewModel : BaseViewModel
 
     private void OnUserBlocked(BlockedUserDto user)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             OnPropertyChanged(nameof(TotalFriendsCount));
             OnPropertyChanged(nameof(OnlineFriendsCount));
@@ -423,7 +423,7 @@ public partial class FriendsViewModel : BaseViewModel
 
     private void OnFriendOnline(FriendDto friend)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             OnPropertyChanged(nameof(OnlineFriendsCount));
 
@@ -434,7 +434,7 @@ public partial class FriendsViewModel : BaseViewModel
 
     private void OnFriendOffline(string userId)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             OnPropertyChanged(nameof(OnlineFriendsCount));
         });
@@ -442,7 +442,7 @@ public partial class FriendsViewModel : BaseViewModel
 
     private void OnConversationsUpdated()
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             OnPropertyChanged(nameof(UnreadConversationsCount));
         });
@@ -450,7 +450,7 @@ public partial class FriendsViewModel : BaseViewModel
 
     private void OnFriendProfileUpdated(FriendDto friend)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             // The Friends collection is already updated by the service
             // We just need to refresh the UI if the selected friend was updated
@@ -467,7 +467,7 @@ public partial class FriendsViewModel : BaseViewModel
 
     private void OnIncomingCall(VoiceCallDto call)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             CurrentCall = call;
             HasIncomingCall = true;
@@ -477,7 +477,7 @@ public partial class FriendsViewModel : BaseViewModel
 
     private void OnCallAnswered(VoiceCallDto call)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             CurrentCall = call;
             HasIncomingCall = false;
@@ -489,7 +489,7 @@ public partial class FriendsViewModel : BaseViewModel
 
     private void OnCallDeclined(VoiceCallDto call)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             HasIncomingCall = false;
             IsInCall = false;
@@ -499,7 +499,7 @@ public partial class FriendsViewModel : BaseViewModel
 
     private void OnCallEnded(string callId, string reason)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             IsInCall = false;
             HasIncomingCall = false;
@@ -511,7 +511,7 @@ public partial class FriendsViewModel : BaseViewModel
 
     private void OnCallFailed(string error)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             IsInCall = false;
             HasIncomingCall = false;
@@ -522,7 +522,7 @@ public partial class FriendsViewModel : BaseViewModel
 
     private void OnCallUserSpeaking(string connectionId, bool isSpeaking, double audioLevel)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             IsCallUserSpeaking = isSpeaking;
             CallUserAudioLevel = audioLevel;
@@ -531,7 +531,7 @@ public partial class FriendsViewModel : BaseViewModel
 
     private void OnLocalAudioLevel(double level)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             AudioLevelWidth = level * 80;
         });

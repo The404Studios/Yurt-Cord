@@ -171,7 +171,7 @@ public class ScreenShareViewerService : IScreenShareViewerService
 
     private void DecodeJpegFrame(string sharerConnectionId, byte[] frameData, int width, int height, ConcurrentQueue<BufferedFrame> buffer)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             try
             {
@@ -217,7 +217,7 @@ public class ScreenShareViewerService : IScreenShareViewerService
                 if (decodedBitmap != null)
                 {
                     // Must dispatch to UI thread to create WPF bitmap
-                    System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+                    System.Windows.Application.Current?.Dispatcher.Invoke(() =>
                     {
                         EnqueueDecodedFrame(sharerConnectionId, decodedBitmap, width, height, buffer);
                     }, DispatcherPriority.Background);
@@ -275,7 +275,7 @@ public class ScreenShareViewerService : IScreenShareViewerService
         {
             if (_playbackTimer != null) return;
 
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 if (_playbackTimer != null) return;
 
@@ -364,7 +364,7 @@ public class ScreenShareViewerService : IScreenShareViewerService
 
         _screenShares[connectionId] = share;
 
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             var existing = ActiveScreenShares.FirstOrDefault(s => s.SharerConnectionId == connectionId);
             if (existing != null)
@@ -410,7 +410,7 @@ public class ScreenShareViewerService : IScreenShareViewerService
             _viewingConnectionId = null;
         }
 
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             var existing = ActiveScreenShares.FirstOrDefault(s => s.SharerConnectionId == connectionId);
             if (existing != null)
@@ -473,7 +473,7 @@ public class ScreenShareViewerService : IScreenShareViewerService
             _decoderLock.ExitWriteLock();
         }
 
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             ActiveScreenShares.Clear();
         });

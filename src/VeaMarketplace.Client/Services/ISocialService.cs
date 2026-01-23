@@ -348,7 +348,7 @@ public class SocialService : ISocialService
         }
 
         // Add to recent interactions
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             RecentInteractions.Insert(0, evt);
             while (RecentInteractions.Count > 50)
@@ -530,7 +530,7 @@ public class SocialService : ISocialService
 
         _data.PinnedMessages.Add(pin);
 
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             PinnedMessages.Add(pin);
         });
@@ -546,7 +546,7 @@ public class SocialService : ISocialService
         {
             _data.PinnedMessages.Remove(pin);
 
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 var obsPin = PinnedMessages.FirstOrDefault(p => p.Id == pinnedMessageId);
                 if (obsPin != null)
@@ -640,7 +640,7 @@ public class SocialService : ISocialService
 
         _data.Recommendations.AddRange(topRecommendations);
 
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             foreach (var rec in topRecommendations)
             {
@@ -659,7 +659,7 @@ public class SocialService : ISocialService
         {
             rec.IsDismissed = true;
 
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 var obsRec = Recommendations.FirstOrDefault(r => r.UserId == userId);
                 if (obsRec != null)

@@ -59,7 +59,7 @@ public partial class LeaderboardViewModel : BaseViewModel
         // Create and store event handlers for proper cleanup
         _onStatsUpdated = stats =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 CurrentUserStats = stats;
                 OnPropertyChanged(nameof(HasNoAchievements));
@@ -68,7 +68,7 @@ public partial class LeaderboardViewModel : BaseViewModel
 
         _onLeaderboardUpdated = entry =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnPropertyChanged(nameof(CurrentLeaderboard));
                 OnPropertyChanged(nameof(IsEmpty));

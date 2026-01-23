@@ -124,7 +124,7 @@ public partial class ChatView : UserControl
 
     private void OnMessagesCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
-        Dispatcher.InvokeAsync(() =>
+        Dispatcher.Invoke(() =>
         {
             MessagesScrollViewer.ScrollToEnd();
         }, System.Windows.Threading.DispatcherPriority.Background);

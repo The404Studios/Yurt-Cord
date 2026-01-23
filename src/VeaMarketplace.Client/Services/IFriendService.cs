@@ -280,7 +280,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<List<FriendDto>>("FriendsList", friends =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 Friends.Clear();
                 foreach (var friend in friends)
@@ -290,7 +290,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<List<FriendRequestDto>>("PendingRequests", requests =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 PendingRequests.Clear();
                 foreach (var request in requests)
@@ -300,7 +300,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<List<FriendRequestDto>>("OutgoingRequests", requests =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OutgoingRequests.Clear();
                 foreach (var request in requests)
@@ -310,7 +310,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<List<ConversationDto>>("Conversations", conversations =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 Conversations.Clear();
                 foreach (var conv in conversations)
@@ -320,7 +320,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<string, List<DirectMessageDto>>("DMHistory", (partnerId, messages) =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 CurrentDMPartnerId = partnerId;
                 CurrentDMHistory.Clear();
@@ -335,7 +335,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<DirectMessageDto>("DirectMessageReceived", message =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 // If we're in a conversation with this person, add the message
                 if (CurrentDMPartnerId == message.SenderId || CurrentDMPartnerId == message.RecipientId)
@@ -351,7 +351,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<string, string>("FriendOnline", (userId, username) =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 var friend = Friends.FirstOrDefault(f => f.UserId == userId);
                 if (friend != null)
@@ -364,7 +364,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<string>("FriendOffline", userId =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 var friend = Friends.FirstOrDefault(f => f.UserId == userId);
                 if (friend != null)
@@ -387,7 +387,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<string, string>("UserTypingDM", (userId, username) =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 TypingUserId = userId;
                 TypingUsername = username;
@@ -408,7 +408,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<string>("UserStoppedTypingDM", userId =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 if (TypingUserId == userId)
                 {
@@ -426,7 +426,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<string>("FriendRequestCancelled", requestId =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 var request = PendingRequests.FirstOrDefault(r => r.Id == requestId);
                 if (request != null)
@@ -437,7 +437,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<FriendDto>("FriendRemoved", friend =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 var existing = Friends.FirstOrDefault(f => f.UserId == friend.UserId);
                 if (existing != null)
@@ -448,7 +448,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<List<BlockedUserDto>>("BlockedUsers", users =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 BlockedUsers.Clear();
                 foreach (var user in users)
@@ -458,7 +458,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<BlockedUserDto>("UserBlocked", user =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 BlockedUsers.Add(user);
                 // Remove from friends if blocked
@@ -471,7 +471,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<string>("UserUnblocked", userId =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 var user = BlockedUsers.FirstOrDefault(u => u.UserId == userId);
                 if (user != null)
@@ -490,7 +490,7 @@ public class FriendService : IFriendService, IAsyncDisposable
         // User search handlers
         _connection.On<UserSearchResultDto?>("UserSearchResult", result =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 LastSearchResult = result;
                 OnUserSearchResult?.Invoke(result);
@@ -499,7 +499,7 @@ public class FriendService : IFriendService, IAsyncDisposable
 
         _connection.On<List<UserSearchResultDto>>("UserSearchResults", results =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 SearchResults.Clear();
                 foreach (var result in results)
@@ -511,7 +511,7 @@ public class FriendService : IFriendService, IAsyncDisposable
         // Friend profile update handler
         _connection.On<FriendDto>("FriendProfileUpdated", friend =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 var existing = Friends.FirstOrDefault(f => f.UserId == friend.UserId);
                 if (existing != null)
@@ -567,7 +567,7 @@ public class FriendService : IFriendService, IAsyncDisposable
         if (_connection != null && IsConnected)
         {
             await _connection.InvokeAsync("CancelFriendRequest", requestId).ConfigureAwait(false);
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 var request = OutgoingRequests.FirstOrDefault(r => r.Id == requestId);
                 if (request != null)

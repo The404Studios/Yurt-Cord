@@ -1987,7 +1987,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<VoiceCallDto>("IncomingCall", call =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 _currentCall = call;
                 OnIncomingCall?.Invoke(call);
@@ -1996,7 +1996,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<VoiceCallDto>("CallStarted", call =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 _currentCall = call;
                 CurrentCallId = call.Id;
@@ -2006,7 +2006,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<VoiceCallDto>("CallAnswered", call =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 _currentCall = call;
                 CurrentCallId = call.Id;
@@ -2018,7 +2018,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<VoiceCallDto>("CallDeclined", call =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 IsInCall = false;
                 CurrentCallId = null;
@@ -2029,7 +2029,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<string, string>("CallEnded", (callId, reason) =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 IsInCall = false;
                 CurrentCallId = null;
@@ -2041,7 +2041,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<string>("CallFailed", error =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 IsInCall = false;
                 CurrentCallId = null;
@@ -2101,7 +2101,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<GroupCallDto>("GroupCallStarted", call =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 _currentGroupCall = call;
                 CurrentGroupCallId = call.Id;
@@ -2113,7 +2113,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<GroupCallInviteDto>("GroupCallInvite", invite =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnGroupCallInvite?.Invoke(invite);
             });
@@ -2121,7 +2121,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<GroupCallDto>("GroupCallUpdated", call =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 _currentGroupCall = call;
                 OnGroupCallUpdated?.Invoke(call);
@@ -2130,7 +2130,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<string, GroupCallParticipantDto>("GroupCallParticipantJoined", (callId, participant) =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnGroupCallParticipantJoined?.Invoke(callId, participant);
             });
@@ -2138,7 +2138,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<string, string>("GroupCallParticipantLeft", (callId, userId) =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnGroupCallParticipantLeft?.Invoke(callId, userId);
             });
@@ -2146,7 +2146,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<string, string>("GroupCallEnded", (callId, reason) =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 if (CurrentGroupCallId == callId)
                 {
@@ -2161,7 +2161,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<string>("GroupCallError", error =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnGroupCallError?.Invoke(error);
             });
@@ -2191,7 +2191,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         // Voice room handlers
         _connection.On<List<VoiceRoomDto>, int, int, int>("PublicVoiceRooms", (rooms, totalCount, page, pageSize) =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnPublicVoiceRoomsReceived?.Invoke(rooms, totalCount, page, pageSize);
             });
@@ -2199,7 +2199,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<VoiceRoomDto>("VoiceRoomCreated", room =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnVoiceRoomCreated?.Invoke(room);
             });
@@ -2207,7 +2207,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<VoiceRoomDto>("VoiceRoomJoined", room =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnVoiceRoomJoined?.Invoke(room);
             });
@@ -2215,7 +2215,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<VoiceRoomDto>("VoiceRoomUpdated", room =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnVoiceRoomUpdated?.Invoke(room);
             });
@@ -2223,7 +2223,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<VoiceRoomDto>("VoiceRoomAdded", room =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnVoiceRoomAdded?.Invoke(room);
             });
@@ -2231,7 +2231,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<string>("VoiceRoomRemoved", roomId =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnVoiceRoomRemoved?.Invoke(roomId);
             });
@@ -2239,7 +2239,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<string>("VoiceRoomError", error =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnVoiceRoomError?.Invoke(error);
             });
@@ -2247,7 +2247,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<VoiceRoomParticipantDto>("VoiceRoomParticipantJoined", participant =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnVoiceRoomParticipantJoined?.Invoke(participant);
             });
@@ -2255,7 +2255,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<VoiceRoomParticipantDto>("VoiceRoomParticipantLeft", participant =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnVoiceRoomParticipantLeft?.Invoke(participant);
             });
@@ -2263,7 +2263,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<VoiceRoomParticipantDto>("VoiceRoomHostChanged", participant =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnVoiceRoomHostChanged?.Invoke(participant);
             });
@@ -2271,7 +2271,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<string, string>("VoiceRoomClosed", (roomId, reason) =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnVoiceRoomClosed?.Invoke(roomId, reason);
             });
@@ -2279,7 +2279,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<string, string>("VoiceRoomKicked", (roomId, reason) =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnVoiceRoomKicked?.Invoke(roomId, reason);
             });
@@ -2287,7 +2287,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<VoiceRoomParticipantDto>("VoiceRoomModeratorAdded", participant =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnVoiceRoomModeratorAdded?.Invoke(participant);
             });
@@ -2298,7 +2298,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         {
             var roomId = data.TryGetProperty("RoomId", out var rid) ? rid.GetString() ?? "" : "";
             var reason = data.TryGetProperty("Reason", out var r) ? r.GetString() ?? "Kicked" : "Kicked";
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnVoiceRoomKicked?.Invoke(roomId, reason);
             });
@@ -2310,7 +2310,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
             var roomId = data.TryGetProperty("RoomId", out var rid) ? rid.GetString() ?? "" : "";
             var userId = data.TryGetProperty("UserId", out var uid) ? uid.GetString() ?? "" : "";
             var reason = data.TryGetProperty("Reason", out var r) ? r.GetString() ?? "" : "";
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnUserKickedFromRoom?.Invoke(roomId, userId, reason);
             });
@@ -2318,7 +2318,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<string>("KickSuccess", userId =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnKickSuccess?.Invoke(userId);
             });
@@ -2328,7 +2328,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         {
             var channelId = data.TryGetProperty("ChannelId", out var cid) ? cid.GetString() ?? "" : "";
             var reason = data.TryGetProperty("Reason", out var r) ? r.GetString() ?? "Kicked" : "Kicked";
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnKickedFromChannel?.Invoke(channelId, reason);
             });
@@ -2354,7 +2354,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
         // Error handlers
         _connection.On<string>("VoiceError", error =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnVoiceError?.Invoke(error);
             });
@@ -2362,7 +2362,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<string>("CallError", error =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnCallError?.Invoke(error);
             });
@@ -2381,7 +2381,7 @@ public class VoiceService : IVoiceService, IAsyncDisposable
 
         _connection.On<List<ActiveScreenShareDto>>("ActiveScreenShares", activeShares =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnActiveScreenShares?.Invoke(activeShares);
             });

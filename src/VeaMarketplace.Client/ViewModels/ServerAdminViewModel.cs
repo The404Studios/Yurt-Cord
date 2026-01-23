@@ -149,7 +149,7 @@ public partial class ServerAdminViewModel : BaseViewModel
 
     private void OnOnlineUsersReceived(List<OnlineUserDto> users)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             OnlineUsersList.Clear();
             foreach (var user in users)
@@ -162,7 +162,7 @@ public partial class ServerAdminViewModel : BaseViewModel
 
     private void OnUserJoined(OnlineUserDto user)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             if (!OnlineUsersList.Any(u => u.Id == user.Id))
             {
@@ -174,7 +174,7 @@ public partial class ServerAdminViewModel : BaseViewModel
 
     private void OnUserLeft(OnlineUserDto user)
     {
-        System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
         {
             var existingUser = OnlineUsersList.FirstOrDefault(u => u.Id == user.Id);
             if (existingUser != null)

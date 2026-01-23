@@ -137,7 +137,7 @@ public class NotificationHubService : INotificationHubService, IAsyncDisposable
         // Unread count
         _connection.On<int>("UnreadCount", count =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 UnreadCount = count;
                 OnUnreadCountChanged?.Invoke(count);
@@ -147,7 +147,7 @@ public class NotificationHubService : INotificationHubService, IAsyncDisposable
         // Unread count incremented
         _connection.On("UnreadCountIncremented", () =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 UnreadCount++;
                 OnUnreadCountChanged?.Invoke(UnreadCount);
@@ -157,7 +157,7 @@ public class NotificationHubService : INotificationHubService, IAsyncDisposable
         // Notification list
         _connection.On<List<NotificationDto>>("NotificationList", notifications =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 Notifications.Clear();
                 foreach (var notification in notifications)
@@ -170,7 +170,7 @@ public class NotificationHubService : INotificationHubService, IAsyncDisposable
         // New notification
         _connection.On<NotificationDto>("NewNotification", notification =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 Notifications.Insert(0, notification);
                 OnNewNotification?.Invoke(notification);
@@ -180,7 +180,7 @@ public class NotificationHubService : INotificationHubService, IAsyncDisposable
         // System notification
         _connection.On<NotificationDto>("SystemNotification", notification =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnSystemNotification?.Invoke(notification);
             });
@@ -189,7 +189,7 @@ public class NotificationHubService : INotificationHubService, IAsyncDisposable
         // Notification read
         _connection.On<string>("NotificationRead", notificationId =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 var notification = Notifications.FirstOrDefault(n => n.Id == notificationId);
                 if (notification != null)
@@ -203,7 +203,7 @@ public class NotificationHubService : INotificationHubService, IAsyncDisposable
         // All notifications read
         _connection.On<int>("AllNotificationsRead", count =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 foreach (var notification in Notifications)
                 {
@@ -216,7 +216,7 @@ public class NotificationHubService : INotificationHubService, IAsyncDisposable
         // Notification deleted
         _connection.On<string>("NotificationDeleted", notificationId =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 var notification = Notifications.FirstOrDefault(n => n.Id == notificationId);
                 if (notification != null)

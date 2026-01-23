@@ -105,7 +105,7 @@ public class ProfileService : IProfileService, IAsyncDisposable
         // Own profile loaded on connect
         _connection.On<UserDto>("ProfileLoaded", profile =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 CurrentProfile = profile;
                 OnProfileLoaded?.Invoke(profile);
@@ -115,7 +115,7 @@ public class ProfileService : IProfileService, IAsyncDisposable
         // Own profile updated
         _connection.On<UserDto>("ProfileUpdated", profile =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 CurrentProfile = profile;
                 OnProfileUpdated?.Invoke(profile);
@@ -125,7 +125,7 @@ public class ProfileService : IProfileService, IAsyncDisposable
         // Another user's profile loaded (when viewing their profile)
         _connection.On<UserDto>("UserProfileLoaded", profile =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnUserProfileLoaded?.Invoke(profile);
             });
@@ -134,7 +134,7 @@ public class ProfileService : IProfileService, IAsyncDisposable
         // Any user updated their profile
         _connection.On<UserDto>("UserProfileUpdated", profile =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 // Update in online users list
                 var existing = OnlineUsers.FirstOrDefault(u => u.Id == profile.Id);
@@ -150,7 +150,7 @@ public class ProfileService : IProfileService, IAsyncDisposable
         // Friend updated their profile
         _connection.On<UserDto>("FriendProfileUpdated", profile =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnUserProfileUpdated?.Invoke(profile);
             });
@@ -159,7 +159,7 @@ public class ProfileService : IProfileService, IAsyncDisposable
         // User came online
         _connection.On<UserDto>("UserOnline", user =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 if (!OnlineUsers.Any(u => u.Id == user.Id))
                 {
@@ -172,7 +172,7 @@ public class ProfileService : IProfileService, IAsyncDisposable
         // User went offline
         _connection.On<string, string>("UserOffline", (userId, username) =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 var user = OnlineUsers.FirstOrDefault(u => u.Id == userId);
                 if (user != null)
@@ -186,7 +186,7 @@ public class ProfileService : IProfileService, IAsyncDisposable
         // Online users list
         _connection.On<List<UserDto>>("OnlineUsersList", users =>
         {
-            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 OnlineUsers.Clear();
                 foreach (var user in users)

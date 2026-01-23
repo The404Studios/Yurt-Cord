@@ -128,7 +128,7 @@ public partial class WriteReviewViewModel : BaseViewModel
             if (review != null && !string.IsNullOrEmpty(review.Id))
             {
                 // Close dialog on success
-                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                await System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     if (System.Windows.Application.Current.MainWindow?.OwnedWindows.Count > 0)
                     {
