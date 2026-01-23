@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:VeaMarketplace.Client.Controls"
-        Title="OVERSEER"
+        Title="Yurt Cord"
         Height="550" Width="700"
         WindowStyle="None"
         AllowsTransparency="True"
@@ -332,36 +332,35 @@
                         </Border>
                     </Grid>
 
-                    <!-- Title with Rainbow Gradient -->
+                    <!-- Title with Teal Gradient -->
                     <TextBlock FontSize="48" FontWeight="Bold"
                                HorizontalAlignment="Center" Margin="0,0,0,8">
                         <TextBlock.Foreground>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                <GradientStop Color="#00FF88" Offset="0"/>
-                                <GradientStop Color="#00CCFF" Offset="0.3"/>
-                                <GradientStop Color="#FF00FF" Offset="0.6"/>
-                                <GradientStop Color="#00FF88" Offset="1"/>
+                                <GradientStop Color="#00B4D8" Offset="0"/>
+                                <GradientStop Color="#48CAE4" Offset="0.5"/>
+                                <GradientStop Color="#0096B8" Offset="1"/>
                             </LinearGradientBrush>
                         </TextBlock.Foreground>
                         <TextBlock.Effect>
-                            <DropShadowEffect BlurRadius="25" ShadowDepth="0"
-                                              Color="#00FF88" Opacity="0.6"/>
+                            <DropShadowEffect BlurRadius="18" ShadowDepth="0"
+                                              Color="#00B4D8" Opacity="0.45"/>
                         </TextBlock.Effect>
-                        OVERSEER
+                        YURT CORD
                     </TextBlock>
 
                     <!-- Tagline -->
-                    <TextBlock Text="OBSERVE  •  CONNECT  •  CONTROL" FontSize="13"
+                    <TextBlock Text="YOUR COMMUNITY  •  YOUR WAY" FontSize="13"
                                Foreground="#8080A0" HorizontalAlignment="Center"
                                FontWeight="Medium" Margin="0,0,0,45"/>
 
                     <!-- Loading Status -->
                     <StackPanel HorizontalAlignment="Center" Margin="0,0,0,14">
-                        <TextBlock x:Name="LoadingText" Text="INITIALIZING SYSTEMS..."
-                                   FontSize="12" Foreground="#00FF88"
+                        <TextBlock x:Name="LoadingText" Text="LOADING..."
+                                   FontSize="12" Foreground="#00B4D8"
                                    HorizontalAlignment="Center" FontWeight="SemiBold">
                             <TextBlock.Effect>
-                                <DropShadowEffect Color="#00FF88" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
+                                <DropShadowEffect Color="#00B4D8" BlurRadius="6" ShadowDepth="0" Opacity="0.5"/>
                             </TextBlock.Effect>
                         </TextBlock>
                     </StackPanel>
@@ -437,9 +436,9 @@
 
                     <!-- Version and Status -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <TextBlock Text="v3.0.0" FontSize="11" Foreground="#00FF88" FontWeight="SemiBold"/>
+                        <TextBlock Text="v3.0.0" FontSize="11" Foreground="#00B4D8" FontWeight="SemiBold"/>
                         <TextBlock Text=" :: " FontSize="11" Foreground="#303040"/>
-                        <TextBlock x:Name="StatusDetail" Text="Loading neural modules..."
+                        <TextBlock x:Name="StatusDetail" Text="Loading components..."
                                    FontSize="11" Foreground="#6060A0"/>
                     </StackPanel>
                 </StackPanel>
@@ -450,7 +449,7 @@
                     <TextBlock FontSize="10" Foreground="#404060" HorizontalAlignment="Center">
                         <Run Text="© 2024 The404Studios"/>
                         <Run Text=" :: "/>
-                        <Run Text="OVERSEER" Foreground="#00FF88"/>
+                        <Run Text="YURT CORD" Foreground="#00B4D8"/>
                     </TextBlock>
                 </StackPanel>
             </Grid>

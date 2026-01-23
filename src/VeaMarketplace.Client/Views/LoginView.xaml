@@ -250,46 +250,46 @@
 
                             <!-- Logo Rings -->
                             <Ellipse Width="100" Height="100" StrokeThickness="2"
-                                     Stroke="#3000FF88"/>
+                                     Stroke="#2500B4D8"/>
                             <Ellipse Width="90" Height="90" StrokeThickness="1"
-                                     Stroke="#2000CCFF"/>
+                                     Stroke="#1848CAE4"/>
 
                             <!-- Logo Circle -->
                             <Border Width="80" Height="80" CornerRadius="40">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Color="#00FF88" Offset="0"/>
-                                        <GradientStop Color="#00CCFF" Offset="0.5"/>
-                                        <GradientStop Color="#FF00FF" Offset="1"/>
+                                        <GradientStop Color="#00B4D8" Offset="0"/>
+                                        <GradientStop Color="#48CAE4" Offset="0.5"/>
+                                        <GradientStop Color="#0096B8" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
                                 <Border.Effect>
-                                    <DropShadowEffect BlurRadius="25" ShadowDepth="0"
-                                                      Color="#00FF88" Opacity="0.8"/>
+                                    <DropShadowEffect BlurRadius="18" ShadowDepth="0"
+                                                      Color="#00B4D8" Opacity="0.5"/>
                                 </Border.Effect>
-                                <TextBlock Text="O" FontSize="42" FontWeight="Bold"
+                                <TextBlock Text="Y" FontSize="42" FontWeight="Bold"
                                            Foreground="#050510"
                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                         </Grid>
 
-                        <!-- Title with Rainbow Gradient -->
+                        <!-- Title with Teal Gradient -->
                         <TextBlock FontSize="28" FontWeight="Bold" HorizontalAlignment="Center">
                             <TextBlock.Foreground>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                    <GradientStop Color="#00FF88" Offset="0"/>
-                                    <GradientStop Color="#00CCFF" Offset="0.5"/>
-                                    <GradientStop Color="#FF00FF" Offset="1"/>
+                                    <GradientStop Color="#00B4D8" Offset="0"/>
+                                    <GradientStop Color="#48CAE4" Offset="0.5"/>
+                                    <GradientStop Color="#0096B8" Offset="1"/>
                                 </LinearGradientBrush>
                             </TextBlock.Foreground>
                             <TextBlock.Effect>
-                                <DropShadowEffect Color="#00FF88" BlurRadius="15" ShadowDepth="0" Opacity="0.5"/>
+                                <DropShadowEffect Color="#00B4D8" BlurRadius="10" ShadowDepth="0" Opacity="0.4"/>
                             </TextBlock.Effect>
-                            OVERSEER ACCESS
+                            YURT CORD
                         </TextBlock>
 
                         <TextBlock x:Name="SubtitleText"
-                                   Text="AUTHENTICATE TO PROCEED"
+                                   Text="SIGN IN TO YOUR COMMUNITY"
                                    FontSize="11" Foreground="#6060A0"
                                    HorizontalAlignment="Center"
                                    Margin="0,8,0,0" FontWeight="SemiBold"/>
@@ -480,8 +480,8 @@
         <TextBlock FontSize="10" Foreground="#404060"
                    HorizontalAlignment="Left" VerticalAlignment="Bottom"
                    Margin="16,0,0,16">
-            <Run Text="OVERSEER"/>
-            <Run Text=" v3.0.0" Foreground="#00FF88"/>
+            <Run Text="YURT CORD"/>
+            <Run Text=" v3.0.0" Foreground="#00B4D8"/>
         </TextBlock>
     </Grid>
 </UserControl>
