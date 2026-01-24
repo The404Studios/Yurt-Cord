@@ -217,7 +217,7 @@
                         <!-- Online Count Indicator -->
                         <Border CornerRadius="12" Padding="12,6" Margin="0,0,12,0"
                                 Background="#15101828" BorderThickness="1"
-                                BorderBrush="#4000FF9F">
+                                BorderBrush="#4000B4D8">
                             <StackPanel Orientation="Horizontal">
                                 <Ellipse Width="8" Height="8" Fill="#00B4D8" Margin="0,0,8,0">
                                     <Ellipse.Effect>
@@ -282,7 +282,7 @@
         <Border x:Name="TypingIndicator" Grid.Row="3" Visibility="Collapsed"
                 Margin="24,4,24,8" Padding="14,8" HorizontalAlignment="Left"
                 CornerRadius="16" Background="#20101828"
-                BorderThickness="1" BorderBrush="#3000FF9F">
+                BorderThickness="1" BorderBrush="#3000B4D8">
             <Border.Effect>
                 <DropShadowEffect Color="#00B4D8" BlurRadius="10" ShadowDepth="0" Opacity="0.3"/>
             </Border.Effect>
@@ -364,7 +364,7 @@
             <Border x:Name="AttachmentPreviewArea" Grid.Row="0" Visibility="Collapsed"
                     CornerRadius="16,16,0,0" Padding="14" Margin="0,0,0,0"
                     Background="#18101828" BorderThickness="1,1,1,0"
-                    BorderBrush="#3000E5FF">
+                    BorderBrush="#3048CAE4">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -381,7 +381,7 @@
                             <DataTemplate>
                                 <Border CornerRadius="10" Padding="10" Margin="4"
                                         MaxWidth="200" BorderThickness="1"
-                                        BorderBrush="#4000E5FF" Background="#20101828">
+                                        BorderBrush="#4048CAE4" Background="#20101828">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
@@ -562,7 +562,7 @@
 
                         <!-- Search Box -->
                         <Border Grid.Row="0" CornerRadius="12" Padding="12,8" Margin="0,0,0,12"
-                                BorderThickness="1" BorderBrush="#3000E5FF" Background="#15101828">
+                                BorderThickness="1" BorderBrush="#3048CAE4" Background="#15101828">
                             <Grid>
                                 <TextBlock x:Name="EmojiSearchPlaceholder" Text="Search emoji..."
                                            Foreground="#506080" FontSize="12"

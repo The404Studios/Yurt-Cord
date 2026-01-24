@@ -43,7 +43,7 @@
             </Setter>
             <Setter Property="BorderBrush">
                 <Setter.Value>
-                    <SolidColorBrush Color="#3000FF9F"/>
+                    <SolidColorBrush Color="#3000B4D8"/>
                 </Setter.Value>
             </Setter>
         </Style>
@@ -124,7 +124,7 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Bd" Property="Background" Value="#20101828"/>
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="#3000FF9F"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#3000B4D8"/>
                                 <Setter Property="Foreground" Value="#E0E8FF"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -144,7 +144,7 @@
             <Setter Property="Background" Value="#15101828"/>
             <Setter Property="Foreground" Value="#E0E8FF"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="#3000FF9F"/>
+            <Setter Property="BorderBrush" Value="#3000B4D8"/>
             <Setter Property="Padding" Value="14,10"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Template">
@@ -172,7 +172,7 @@
                             <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}"
                                    Placement="Bottom" AllowsTransparency="True">
                                 <Border Background="#F8080C18" CornerRadius="8" Margin="0,4,0,0"
-                                        BorderThickness="1" BorderBrush="#5000FF9F"
+                                        BorderThickness="1" BorderBrush="#5000B4D8"
                                         MaxHeight="{TemplateBinding MaxDropDownHeight}">
                                     <Border.Effect>
                                         <DropShadowEffect Color="#00B4D8" BlurRadius="15" ShadowDepth="0" Opacity="0.4"/>
@@ -217,8 +217,8 @@
                                             <Setter TargetName="Bd" Property="Background">
                                                 <Setter.Value>
                                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                        <GradientStop Color="#4000FF9F" Offset="0"/>
-                                                        <GradientStop Color="#2000E5FF" Offset="1"/>
+                                                        <GradientStop Color="#4000B4D8" Offset="0"/>
+                                                        <GradientStop Color="#2048CAE4" Offset="1"/>
                                                     </LinearGradientBrush>
                                                 </Setter.Value>
                                             </Setter>
@@ -257,7 +257,7 @@
                     <GradientStop Color="#15101828" Offset="1"/>
                 </LinearGradientBrush>
             </Border.Background>
-            <Border CornerRadius="12" BorderThickness="1" BorderBrush="#2000FF9F">
+            <Border CornerRadius="12" BorderThickness="1" BorderBrush="#2000B4D8">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Style="{StaticResource BladeScrollViewer}">
                     <StackPanel Margin="12,16">
                         <!-- User Settings Section -->
@@ -278,7 +278,7 @@
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                                     <GradientStop Color="Transparent" Offset="0"/>
-                                    <GradientStop Color="#3000FF9F" Offset="0.5"/>
+                                    <GradientStop Color="#3000B4D8" Offset="0.5"/>
                                     <GradientStop Color="Transparent" Offset="1"/>
                                 </LinearGradientBrush>
                             </Border.Background>
@@ -304,7 +304,7 @@
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                                     <GradientStop Color="Transparent" Offset="0"/>
-                                    <GradientStop Color="#3000E5FF" Offset="0.5"/>
+                                    <GradientStop Color="#3048CAE4" Offset="0.5"/>
                                     <GradientStop Color="Transparent" Offset="1"/>
                                 </LinearGradientBrush>
                             </Border.Background>
@@ -314,7 +314,7 @@
                         <Border Padding="10,6" Margin="0,0,0,8" CornerRadius="6">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                    <GradientStop Color="#1500FF9F" Offset="0"/>
+                                    <GradientStop Color="#1500B4D8" Offset="0"/>
                                     <GradientStop Color="#10101828" Offset="1"/>
                                 </LinearGradientBrush>
                             </Border.Background>
@@ -380,7 +380,7 @@
         <Grid Grid.Column="1" Margin="0,8,8,8">
             <!-- Header Blade -->
             <Border Height="56" VerticalAlignment="Top" CornerRadius="12,12,0,0"
-                    BorderThickness="1,1,1,0" BorderBrush="#2000FF9F">
+                    BorderThickness="1,1,1,0" BorderBrush="#2000B4D8">
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                         <GradientStop Color="#18101828" Offset="0"/>
@@ -412,7 +412,7 @@
 
             <!-- Content Area with Blade ScrollViewer -->
             <Border Margin="0,56,0,0" CornerRadius="0,0,12,12"
-                    BorderThickness="1,0,1,1" BorderBrush="#2000FF9F">
+                    BorderThickness="1,0,1,1" BorderBrush="#2000B4D8">
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                         <GradientStop Color="#10101828" Offset="0"/>
@@ -429,7 +429,7 @@
                             <Border Padding="12,8" Margin="0,0,0,16" CornerRadius="8" HorizontalAlignment="Left">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#2000FF9F" Offset="0"/>
+                                        <GradientStop Color="#2000B4D8" Offset="0"/>
                                         <GradientStop Color="#10101828" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
@@ -530,7 +530,7 @@
                             <Border Padding="12,8" Margin="0,12,0,16" CornerRadius="8" HorizontalAlignment="Left">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#2000E5FF" Offset="0"/>
+                                        <GradientStop Color="#2048CAE4" Offset="0"/>
                                         <GradientStop Color="#10101828" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
@@ -707,7 +707,7 @@
                             <Border Padding="12,8" Margin="0,0,0,16" CornerRadius="8" HorizontalAlignment="Left">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#2000FF9F" Offset="0"/>
+                                        <GradientStop Color="#2000B4D8" Offset="0"/>
                                         <GradientStop Color="#10101828" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
@@ -721,7 +721,7 @@
                                                Foreground="#E0E8FF" Margin="0,0,0,8"/>
                                     <TextBlock Text="This is how others see you across Yurt Cord"
                                                FontSize="12" Foreground="#6080A0" Margin="0,0,0,12"/>
-                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000FF9F" Padding="12,10">
+                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000B4D8" Padding="12,10">
                                         <TextBox x:Name="ProfileDisplayNameBox" Background="Transparent" BorderThickness="0"
                                                  Foreground="#E0E8FF" FontSize="14" CaretBrush="#00B4D8"
                                                  Text="{Binding DisplayName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
@@ -738,7 +738,7 @@
                                     </Grid>
                                     <TextBlock Text="Tell others a bit about yourself"
                                                FontSize="12" Foreground="#6080A0" Margin="0,0,0,12"/>
-                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000FF9F" Padding="12,10">
+                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000B4D8" Padding="12,10">
                                         <TextBox x:Name="ProfileBioBox" Background="Transparent" BorderThickness="0"
                                                  Foreground="#E0E8FF" FontSize="14" CaretBrush="#00B4D8"
                                                  TextWrapping="Wrap" AcceptsReturn="True" Height="80"
@@ -756,7 +756,7 @@
                                                Foreground="#E0E8FF" Margin="0,0,0,8"/>
                                     <TextBlock Text="Set a custom status message visible to others"
                                                FontSize="12" Foreground="#6080A0" Margin="0,0,0,12"/>
-                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000FF9F" Padding="12,10">
+                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000B4D8" Padding="12,10">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>
@@ -778,7 +778,7 @@
                                                Foreground="#E0E8FF" Margin="0,0,0,8"/>
                                     <TextBlock Text="Enter a URL to use as your profile picture"
                                                FontSize="12" Foreground="#6080A0" Margin="0,0,0,12"/>
-                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000FF9F" Padding="12,10">
+                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000B4D8" Padding="12,10">
                                         <TextBox x:Name="ProfileAvatarBox" Background="Transparent" BorderThickness="0"
                                                  Foreground="#E0E8FF" FontSize="14" CaretBrush="#00B4D8"
                                                  Text="{Binding AvatarUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
@@ -800,7 +800,7 @@
                                                 <DropShadowEffect Color="#00B4D8" BlurRadius="10" ShadowDepth="0" Opacity="0.5"/>
                                             </Border.Effect>
                                         </Border>
-                                        <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000FF9F" Padding="12,10" VerticalAlignment="Center">
+                                        <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000B4D8" Padding="12,10" VerticalAlignment="Center">
                                             <TextBox x:Name="AccentColorBox" Background="Transparent" BorderThickness="0"
                                                      Foreground="#E0E8FF" FontSize="14" CaretBrush="#00B4D8" Width="100"
                                                      Text="{Binding AccentColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -821,7 +821,7 @@
                             <Border Padding="12,8" Margin="0,0,0,16" CornerRadius="8" HorizontalAlignment="Left">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#2000FF9F" Offset="0"/>
+                                        <GradientStop Color="#2000B4D8" Offset="0"/>
                                         <GradientStop Color="#10101828" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
@@ -886,7 +886,7 @@
                             <Border Padding="12,8" Margin="0,0,0,16" CornerRadius="8" HorizontalAlignment="Left">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#2000E5FF" Offset="0"/>
+                                        <GradientStop Color="#2048CAE4" Offset="0"/>
                                         <GradientStop Color="#10101828" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
@@ -1012,7 +1012,7 @@
                             <Border Padding="12,8" Margin="0,0,0,16" CornerRadius="8" HorizontalAlignment="Left">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#20B366FF" Offset="0"/>
+                                        <GradientStop Color="#200096B8" Offset="0"/>
                                         <GradientStop Color="#10101828" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
@@ -1123,7 +1123,7 @@
                             <Border Padding="12,8" Margin="0,0,0,16" CornerRadius="8" HorizontalAlignment="Left">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#2000FF9F" Offset="0"/>
+                                        <GradientStop Color="#2000B4D8" Offset="0"/>
                                         <GradientStop Color="#10101828" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
@@ -1136,12 +1136,12 @@
                                     <TextBlock Text="Create New Template" FontSize="15" FontWeight="SemiBold"
                                                Foreground="#E0E8FF" Margin="0,0,0,12"/>
                                     <TextBlock Text="Template Name" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
-                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000FF9F" Padding="12,10" Margin="0,0,0,12">
+                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000B4D8" Padding="12,10" Margin="0,0,0,12">
                                         <TextBox x:Name="TemplateNameBox" Background="Transparent" BorderThickness="0"
                                                  Foreground="#E0E8FF" FontSize="14" CaretBrush="#00B4D8"/>
                                     </Border>
                                     <TextBlock Text="Template Content" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
-                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000FF9F" Padding="12,10">
+                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000B4D8" Padding="12,10">
                                         <TextBox x:Name="TemplateContentBox" Background="Transparent" BorderThickness="0"
                                                  Foreground="#E0E8FF" FontSize="14" CaretBrush="#00B4D8"
                                                  TextWrapping="Wrap" AcceptsReturn="True" Height="80" VerticalScrollBarVisibility="Auto"/>
@@ -1188,7 +1188,7 @@
                             <Border Padding="12,8" Margin="0,0,0,16" CornerRadius="8" HorizontalAlignment="Left">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#2000E5FF" Offset="0"/>
+                                        <GradientStop Color="#2048CAE4" Offset="0"/>
                                         <GradientStop Color="#10101828" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
@@ -1202,13 +1202,13 @@
                                                Foreground="#E0E8FF" Margin="0,0,0,12"/>
 
                                     <TextBlock Text="Channel/User" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
-                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000E5FF" Padding="12,10" Margin="0,0,0,12">
+                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3048CAE4" Padding="12,10" Margin="0,0,0,12">
                                         <TextBox x:Name="ScheduleTargetBox" Background="Transparent" BorderThickness="0"
                                                  Foreground="#E0E8FF" FontSize="14" CaretBrush="#48CAE4"/>
                                     </Border>
 
                                     <TextBlock Text="Message" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
-                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000E5FF" Padding="12,10" Margin="0,0,0,12">
+                                    <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3048CAE4" Padding="12,10" Margin="0,0,0,12">
                                         <TextBox x:Name="ScheduleMessageBox" Background="Transparent" BorderThickness="0"
                                                  Foreground="#E0E8FF" FontSize="14" CaretBrush="#48CAE4"
                                                  TextWrapping="Wrap" AcceptsReturn="True" Height="60"/>
@@ -1221,14 +1221,14 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,8,0">
                                             <TextBlock Text="Date" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
-                                            <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000E5FF" Padding="12,10">
+                                            <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3048CAE4" Padding="12,10">
                                                 <TextBox x:Name="ScheduleDateBox" Background="Transparent" BorderThickness="0"
                                                          Foreground="#E0E8FF" FontSize="14" CaretBrush="#48CAE4" Text="YYYY-MM-DD"/>
                                             </Border>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Margin="8,0,0,0">
                                             <TextBlock Text="Time" FontSize="13" Foreground="#8090B0" Margin="0,0,0,8"/>
-                                            <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3000E5FF" Padding="12,10">
+                                            <Border Background="#15101828" CornerRadius="8" BorderThickness="1" BorderBrush="#3048CAE4" Padding="12,10">
                                                 <TextBox x:Name="ScheduleTimeBox" Background="Transparent" BorderThickness="0"
                                                          Foreground="#E0E8FF" FontSize="14" CaretBrush="#48CAE4" Text="HH:MM"/>
                                             </Border>
@@ -1508,7 +1508,7 @@
                             <Border Padding="12,8" Margin="0,0,0,16" CornerRadius="8" HorizontalAlignment="Left">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#20B366FF" Offset="0"/>
+                                        <GradientStop Color="#200096B8" Offset="0"/>
                                         <GradientStop Color="#10101828" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
