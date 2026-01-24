@@ -343,8 +343,8 @@
                                                     <Setter TargetName="addBtn" Property="Background">
                                                         <Setter.Value>
                                                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                                                <GradientStop Color="#00FFB8" Offset="0"/>
-                                                                <GradientStop Color="#00F5FF" Offset="1"/>
+                                                                <GradientStop Color="#00B4D8" Offset="0"/>
+                                                                <GradientStop Color="#48CAE4" Offset="1"/>
                                                             </LinearGradientBrush>
                                                         </Setter.Value>
                                                     </Setter>

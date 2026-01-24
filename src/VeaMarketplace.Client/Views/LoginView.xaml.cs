@@ -379,6 +379,18 @@ public partial class LoginView : UserControl
         Application.Current.Shutdown();
     }
 
+    private void DiscordLogin_Click(object sender, RoutedEventArgs e)
+    {
+        ShowError("Discord login is not yet available. Please use username/password.");
+        ShakeCard();
+    }
+
+    private void MagicLinkLogin_Click(object sender, RoutedEventArgs e)
+    {
+        ShowError("Magic link login is not yet available. Please use username/password.");
+        ShakeCard();
+    }
+
     /// <summary>
     /// Resets the login view to its initial state (called after logout)
     /// </summary>

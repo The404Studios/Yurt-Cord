@@ -15,7 +15,7 @@
         <Storyboard x:Key="GradientPulse" RepeatBehavior="Forever">
             <ColorAnimation Storyboard.TargetName="GradientStop1"
                             Storyboard.TargetProperty="Color"
-                            From="#00FF88" To="#00CCFF" Duration="0:0:3"
+                            From="#00B4D8" To="#0096B8" Duration="0:0:3"
                             AutoReverse="True"/>
             <ColorAnimation Storyboard.TargetName="GradientStop2"
                             Storyboard.TargetProperty="Color"
@@ -55,7 +55,7 @@
             </DoubleAnimation>
             <ColorAnimation Storyboard.TargetName="GlowColor"
                             Storyboard.TargetProperty="Color"
-                            From="#00FF88" To="#FF00FF" Duration="0:0:2"
+                            From="#00B4D8" To="#48CAE4" Duration="0:0:2"
                             AutoReverse="True"/>
         </Storyboard>
 
@@ -162,15 +162,15 @@
         <Storyboard x:Key="BorderCycle" RepeatBehavior="Forever">
             <ColorAnimation Storyboard.TargetName="BorderColor1"
                             Storyboard.TargetProperty="Color"
-                            From="#00FF88" To="#FF00FF" Duration="0:0:3"
+                            From="#00B4D8" To="#48CAE4" Duration="0:0:3"
                             AutoReverse="True"/>
             <ColorAnimation Storyboard.TargetName="BorderColor2"
                             Storyboard.TargetProperty="Color"
-                            From="#00CCFF" To="#00FF88" Duration="0:0:3"
+                            From="#0096B8" To="#00B4D8" Duration="0:0:3"
                             AutoReverse="True"/>
             <ColorAnimation Storyboard.TargetName="BorderColor3"
                             Storyboard.TargetProperty="Color"
-                            From="#FF00FF" To="#00CCFF" Duration="0:0:3"
+                            From="#48CAE4" To="#0096B8" Duration="0:0:3"
                             AutoReverse="True"/>
         </Storyboard>
     </Window.Resources>
@@ -196,7 +196,7 @@
         <Ellipse Margin="-30" Opacity="0.4">
             <Ellipse.Fill>
                 <RadialGradientBrush>
-                    <GradientStop Color="#00FF88" Offset="0.7"/>
+                    <GradientStop Color="#00B4D8" Offset="0.7"/>
                     <GradientStop Color="Transparent" Offset="1"/>
                 </RadialGradientBrush>
             </Ellipse.Fill>
@@ -205,9 +205,9 @@
         <Border CornerRadius="40" BorderThickness="3" ClipToBounds="True">
             <Border.BorderBrush>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop x:Name="BorderColor1" Color="#00FF88" Offset="0"/>
-                    <GradientStop x:Name="BorderColor2" Color="#00CCFF" Offset="0.5"/>
-                    <GradientStop x:Name="BorderColor3" Color="#FF00FF" Offset="1"/>
+                    <GradientStop x:Name="BorderColor1" Color="#00B4D8" Offset="0"/>
+                    <GradientStop x:Name="BorderColor2" Color="#0096B8" Offset="0.5"/>
+                    <GradientStop x:Name="BorderColor3" Color="#48CAE4" Offset="1"/>
                 </LinearGradientBrush>
             </Border.BorderBrush>
             <Border.Background>
@@ -217,7 +217,7 @@
                 </LinearGradientBrush>
             </Border.Background>
             <Border.Effect>
-                <DropShadowEffect BlurRadius="60" ShadowDepth="0" Opacity="0.8" Color="#00FF88"/>
+                <DropShadowEffect BlurRadius="60" ShadowDepth="0" Opacity="0.8" Color="#00B4D8"/>
             </Border.Effect>
 
             <Grid>
@@ -229,7 +229,7 @@
                     <Ellipse Canvas.Left="100" Canvas.Top="80" Width="10" Height="10"
                              Fill="#4000FF88" Opacity="0.8">
                         <Ellipse.Effect>
-                            <DropShadowEffect Color="#00FF88" BlurRadius="15" ShadowDepth="0"/>
+                            <DropShadowEffect Color="#00B4D8" BlurRadius="15" ShadowDepth="0"/>
                         </Ellipse.Effect>
                         <Ellipse.RenderTransform>
                             <TranslateTransform x:Name="Particle1Translate"/>
@@ -238,7 +238,7 @@
                     <Ellipse Canvas.Left="550" Canvas.Top="70" Width="8" Height="8"
                              Fill="#4000CCFF" Opacity="0.7">
                         <Ellipse.Effect>
-                            <DropShadowEffect Color="#00CCFF" BlurRadius="12" ShadowDepth="0"/>
+                            <DropShadowEffect Color="#0096B8" BlurRadius="12" ShadowDepth="0"/>
                         </Ellipse.Effect>
                         <Ellipse.RenderTransform>
                             <TranslateTransform x:Name="Particle2Translate"/>
@@ -247,7 +247,7 @@
                     <Ellipse Canvas.Left="580" Canvas.Top="420" Width="12" Height="12"
                              Fill="#40FF00FF" Opacity="0.6">
                         <Ellipse.Effect>
-                            <DropShadowEffect Color="#FF00FF" BlurRadius="18" ShadowDepth="0"/>
+                            <DropShadowEffect Color="#48CAE4" BlurRadius="18" ShadowDepth="0"/>
                         </Ellipse.Effect>
                         <Ellipse.RenderTransform>
                             <TranslateTransform x:Name="Particle3Translate"/>
@@ -256,7 +256,7 @@
                     <Ellipse Canvas.Left="60" Canvas.Top="430" Width="9" Height="9"
                              Fill="#4000FF88" Opacity="0.7">
                         <Ellipse.Effect>
-                            <DropShadowEffect Color="#00FF88" BlurRadius="14" ShadowDepth="0"/>
+                            <DropShadowEffect Color="#00B4D8" BlurRadius="14" ShadowDepth="0"/>
                         </Ellipse.Effect>
                         <Ellipse.RenderTransform>
                             <TranslateTransform x:Name="Particle4Translate"/>
@@ -301,7 +301,7 @@
                         <Ellipse x:Name="LogoGlow" Width="160" Height="160" Opacity="0.5">
                             <Ellipse.Fill>
                                 <RadialGradientBrush>
-                                    <GradientStop x:Name="GlowColor" Color="#00FF88" Offset="0"/>
+                                    <GradientStop x:Name="GlowColor" Color="#00B4D8" Offset="0"/>
                                     <GradientStop Color="Transparent" Offset="1"/>
                                 </RadialGradientBrush>
                             </Ellipse.Fill>
@@ -317,14 +317,14 @@
                         <Border Width="100" Height="100" CornerRadius="50">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                    <GradientStop Color="#00FF88" Offset="0"/>
-                                    <GradientStop Color="#00CCFF" Offset="0.5"/>
-                                    <GradientStop Color="#FF00FF" Offset="1"/>
+                                    <GradientStop Color="#00B4D8" Offset="0"/>
+                                    <GradientStop Color="#0096B8" Offset="0.5"/>
+                                    <GradientStop Color="#48CAE4" Offset="1"/>
                                 </LinearGradientBrush>
                             </Border.Background>
                             <Border.Effect>
                                 <DropShadowEffect BlurRadius="30" ShadowDepth="0"
-                                                  Color="#00FF88" Opacity="0.8"/>
+                                                  Color="#00B4D8" Opacity="0.8"/>
                             </Border.Effect>
                             <TextBlock Text="O" FontSize="52" FontWeight="Bold"
                                        Foreground="#050510"
@@ -368,28 +368,28 @@
                     <!-- Loading Dots -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
                                 Margin="0,0,0,22">
-                        <Ellipse x:Name="Dot1" Width="12" Height="12" Fill="#00FF88"
+                        <Ellipse x:Name="Dot1" Width="12" Height="12" Fill="#00B4D8"
                                  Margin="0,0,10,0" Opacity="0.3">
                             <Ellipse.Effect>
-                                <DropShadowEffect Color="#00FF88" BlurRadius="8" ShadowDepth="0"/>
+                                <DropShadowEffect Color="#00B4D8" BlurRadius="8" ShadowDepth="0"/>
                             </Ellipse.Effect>
                             <Ellipse.RenderTransform>
                                 <TranslateTransform x:Name="Dot1Transform"/>
                             </Ellipse.RenderTransform>
                         </Ellipse>
-                        <Ellipse x:Name="Dot2" Width="12" Height="12" Fill="#00CCFF"
+                        <Ellipse x:Name="Dot2" Width="12" Height="12" Fill="#0096B8"
                                  Margin="0,0,10,0" Opacity="0.3">
                             <Ellipse.Effect>
-                                <DropShadowEffect Color="#00CCFF" BlurRadius="8" ShadowDepth="0"/>
+                                <DropShadowEffect Color="#0096B8" BlurRadius="8" ShadowDepth="0"/>
                             </Ellipse.Effect>
                             <Ellipse.RenderTransform>
                                 <TranslateTransform x:Name="Dot2Transform"/>
                             </Ellipse.RenderTransform>
                         </Ellipse>
-                        <Ellipse x:Name="Dot3" Width="12" Height="12" Fill="#FF00FF"
+                        <Ellipse x:Name="Dot3" Width="12" Height="12" Fill="#48CAE4"
                                  Opacity="0.3">
                             <Ellipse.Effect>
-                                <DropShadowEffect Color="#FF00FF" BlurRadius="8" ShadowDepth="0"/>
+                                <DropShadowEffect Color="#48CAE4" BlurRadius="8" ShadowDepth="0"/>
                             </Ellipse.Effect>
                             <Ellipse.RenderTransform>
                                 <TranslateTransform x:Name="Dot3Transform"/>
@@ -401,20 +401,20 @@
                     <Border Width="450" Height="8" CornerRadius="4"
                             Background="#151520" Margin="0,0,0,14">
                         <Border.Effect>
-                            <DropShadowEffect Color="#00FF88" BlurRadius="5" ShadowDepth="0" Opacity="0.3"/>
+                            <DropShadowEffect Color="#00B4D8" BlurRadius="5" ShadowDepth="0" Opacity="0.3"/>
                         </Border.Effect>
                         <Grid ClipToBounds="True">
                             <Border x:Name="LoadingProgress" Width="0" Height="8"
                                     CornerRadius="4" HorizontalAlignment="Left">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#00FF88" Offset="0"/>
-                                        <GradientStop Color="#00CCFF" Offset="0.5"/>
-                                        <GradientStop Color="#FF00FF" Offset="1"/>
+                                        <GradientStop Color="#00B4D8" Offset="0"/>
+                                        <GradientStop Color="#0096B8" Offset="0.5"/>
+                                        <GradientStop Color="#48CAE4" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
                                 <Border.Effect>
-                                    <DropShadowEffect Color="#00FF88" BlurRadius="10" ShadowDepth="0" Opacity="0.8"/>
+                                    <DropShadowEffect Color="#00B4D8" BlurRadius="10" ShadowDepth="0" Opacity="0.8"/>
                                 </Border.Effect>
                             </Border>
                             <!-- Shimmer Effect -->

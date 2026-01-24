@@ -157,7 +157,7 @@
                                         ToolTip="Cart" Click="CartButton_Click">
                                     <Grid>
                                         <TextBlock Text="🛒" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        <Border x:Name="CartBadge" Background="#00FF88"
+                                        <Border x:Name="CartBadge" Background="#00B4D8"
                                                 CornerRadius="8" Width="16" Height="16"
                                                 HorizontalAlignment="Right" VerticalAlignment="Top"
                                                 Margin="0,-4,-4,0" Visibility="Collapsed">

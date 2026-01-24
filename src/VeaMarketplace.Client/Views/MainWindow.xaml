@@ -373,7 +373,8 @@
 
                                         <!-- Add Server -->
                                         <Button Style="{StaticResource BladeIconButton}"
-                                                Width="48" Height="48" Margin="8,8" ToolTip="Add Server">
+                                                Width="48" Height="48" Margin="8,8" ToolTip="Add Server"
+                                                Click="AddServerButton_Click">
                                             <Border Width="36" Height="36" CornerRadius="18"
                                                     BorderThickness="2" BorderBrush="#00B4D840">
                                                 <TextBlock Text="+" FontSize="20" Foreground="#00B4D8"

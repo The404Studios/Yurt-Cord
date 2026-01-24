@@ -64,7 +64,7 @@
             </DoubleAnimation>
             <ColorAnimation Storyboard.TargetName="GlowColorStop"
                             Storyboard.TargetProperty="Color"
-                            From="#00FF88" To="#FF00FF" Duration="0:0:2"
+                            From="#00B4D8" To="#48CAE4" Duration="0:0:2"
                             AutoReverse="True"/>
             <DoubleAnimation Storyboard.TargetName="LogoScale"
                              Storyboard.TargetProperty="ScaleX"
@@ -88,15 +88,15 @@
         <Storyboard x:Key="BorderGlow" RepeatBehavior="Forever">
             <ColorAnimation Storyboard.TargetName="BorderColor1"
                             Storyboard.TargetProperty="Color"
-                            From="#00FF88" To="#FF00FF" Duration="0:0:3"
+                            From="#00B4D8" To="#48CAE4" Duration="0:0:3"
                             AutoReverse="True"/>
             <ColorAnimation Storyboard.TargetName="BorderColor2"
                             Storyboard.TargetProperty="Color"
-                            From="#00CCFF" To="#00FF88" Duration="0:0:3"
+                            From="#0096B8" To="#00B4D8" Duration="0:0:3"
                             AutoReverse="True"/>
             <ColorAnimation Storyboard.TargetName="BorderColor3"
                             Storyboard.TargetProperty="Color"
-                            From="#FF00FF" To="#00CCFF" Duration="0:0:3"
+                            From="#48CAE4" To="#0096B8" Duration="0:0:3"
                             AutoReverse="True"/>
         </Storyboard>
 
@@ -151,12 +151,12 @@
                 </Ellipse.RenderTransform>
                 <Ellipse.Fill>
                     <RadialGradientBrush>
-                        <GradientStop Color="#00FF88" Offset="0"/>
+                        <GradientStop Color="#00B4D8" Offset="0"/>
                         <GradientStop Color="Transparent" Offset="1"/>
                     </RadialGradientBrush>
                 </Ellipse.Fill>
                 <Ellipse.Effect>
-                    <DropShadowEffect Color="#00FF88" BlurRadius="30" ShadowDepth="0"/>
+                    <DropShadowEffect Color="#00B4D8" BlurRadius="30" ShadowDepth="0"/>
                 </Ellipse.Effect>
             </Ellipse>
             <Ellipse Width="200" Height="200" Opacity="0.1" Canvas.Right="50" Canvas.Top="50">
@@ -165,12 +165,12 @@
                 </Ellipse.RenderTransform>
                 <Ellipse.Fill>
                     <RadialGradientBrush>
-                        <GradientStop Color="#FF00FF" Offset="0"/>
+                        <GradientStop Color="#48CAE4" Offset="0"/>
                         <GradientStop Color="Transparent" Offset="1"/>
                     </RadialGradientBrush>
                 </Ellipse.Fill>
                 <Ellipse.Effect>
-                    <DropShadowEffect Color="#FF00FF" BlurRadius="40" ShadowDepth="0"/>
+                    <DropShadowEffect Color="#48CAE4" BlurRadius="40" ShadowDepth="0"/>
                 </Ellipse.Effect>
             </Ellipse>
             <Ellipse Width="180" Height="180" Opacity="0.12" Canvas.Left="200" Canvas.Bottom="80">
@@ -179,12 +179,12 @@
                 </Ellipse.RenderTransform>
                 <Ellipse.Fill>
                     <RadialGradientBrush>
-                        <GradientStop Color="#00CCFF" Offset="0"/>
+                        <GradientStop Color="#0096B8" Offset="0"/>
                         <GradientStop Color="Transparent" Offset="1"/>
                     </RadialGradientBrush>
                 </Ellipse.Fill>
                 <Ellipse.Effect>
-                    <DropShadowEffect Color="#00CCFF" BlurRadius="35" ShadowDepth="0"/>
+                    <DropShadowEffect Color="#0096B8" BlurRadius="35" ShadowDepth="0"/>
                 </Ellipse.Effect>
             </Ellipse>
         </Canvas>
@@ -202,9 +202,9 @@
 
             <Border.BorderBrush>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop x:Name="BorderColor1" Color="#00FF88" Offset="0"/>
-                    <GradientStop x:Name="BorderColor2" Color="#00CCFF" Offset="0.5"/>
-                    <GradientStop x:Name="BorderColor3" Color="#FF00FF" Offset="1"/>
+                    <GradientStop x:Name="BorderColor1" Color="#00B4D8" Offset="0"/>
+                    <GradientStop x:Name="BorderColor2" Color="#0096B8" Offset="0.5"/>
+                    <GradientStop x:Name="BorderColor3" Color="#48CAE4" Offset="1"/>
                 </LinearGradientBrush>
             </Border.BorderBrush>
 
@@ -223,7 +223,7 @@
             </Border.RenderTransform>
 
             <Border.Effect>
-                <DropShadowEffect BlurRadius="50" ShadowDepth="0" Opacity="0.7" Color="#00FF88"/>
+                <DropShadowEffect BlurRadius="50" ShadowDepth="0" Opacity="0.7" Color="#00B4D8"/>
             </Border.Effect>
 
             <Grid>
@@ -242,7 +242,7 @@
                             <Ellipse x:Name="LogoGlow" Width="130" Height="130" Opacity="0.6">
                                 <Ellipse.Fill>
                                     <RadialGradientBrush>
-                                        <GradientStop x:Name="GlowColorStop" Color="#00FF88" Offset="0"/>
+                                        <GradientStop x:Name="GlowColorStop" Color="#00B4D8" Offset="0"/>
                                         <GradientStop Color="Transparent" Offset="1"/>
                                     </RadialGradientBrush>
                                 </Ellipse.Fill>
@@ -301,7 +301,7 @@
                         <Border.Background>
                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                                 <GradientStop Color="#FF4444" Offset="0"/>
-                                <GradientStop Color="#FF00FF" Offset="1"/>
+                                <GradientStop Color="#48CAE4" Offset="1"/>
                             </LinearGradientBrush>
                         </Border.Background>
                         <Border.Effect>
@@ -318,9 +318,9 @@
 
                     <!-- Username Input -->
                     <TextBlock Text="IDENTITY" FontSize="10" FontWeight="Bold"
-                               Foreground="#00FF88" Margin="8,0,0,8">
+                               Foreground="#00B4D8" Margin="8,0,0,8">
                         <TextBlock.Effect>
-                            <DropShadowEffect Color="#00FF88" BlurRadius="5" ShadowDepth="0" Opacity="0.5"/>
+                            <DropShadowEffect Color="#00B4D8" BlurRadius="5" ShadowDepth="0" Opacity="0.5"/>
                         </TextBlock.Effect>
                     </TextBlock>
                     <TextBox x:Name="UsernameBox"
@@ -330,9 +330,9 @@
                     <!-- Email Input (Register only) -->
                     <StackPanel x:Name="EmailPanel" Visibility="Collapsed">
                         <TextBlock Text="COMM CHANNEL" FontSize="10" FontWeight="Bold"
-                                   Foreground="#00CCFF" Margin="8,0,0,8">
+                                   Foreground="#0096B8" Margin="8,0,0,8">
                             <TextBlock.Effect>
-                                <DropShadowEffect Color="#00CCFF" BlurRadius="5" ShadowDepth="0" Opacity="0.5"/>
+                                <DropShadowEffect Color="#0096B8" BlurRadius="5" ShadowDepth="0" Opacity="0.5"/>
                             </TextBlock.Effect>
                         </TextBlock>
                         <TextBox x:Name="EmailBox"
@@ -342,9 +342,9 @@
 
                     <!-- Password Input -->
                     <TextBlock Text="ACCESS CODE" FontSize="10" FontWeight="Bold"
-                               Foreground="#FF00FF" Margin="8,0,0,8">
+                               Foreground="#48CAE4" Margin="8,0,0,8">
                         <TextBlock.Effect>
-                            <DropShadowEffect Color="#FF00FF" BlurRadius="5" ShadowDepth="0" Opacity="0.5"/>
+                            <DropShadowEffect Color="#48CAE4" BlurRadius="5" ShadowDepth="0" Opacity="0.5"/>
                         </TextBlock.Effect>
                     </TextBlock>
                     <PasswordBox x:Name="PasswordBox"
@@ -354,9 +354,9 @@
                     <!-- Confirm Password (Register only) -->
                     <StackPanel x:Name="ConfirmPasswordPanel" Visibility="Collapsed">
                         <TextBlock Text="CONFIRM ACCESS CODE" FontSize="10" FontWeight="Bold"
-                                   Foreground="#FF00FF" Margin="8,0,0,8">
+                                   Foreground="#48CAE4" Margin="8,0,0,8">
                             <TextBlock.Effect>
-                                <DropShadowEffect Color="#FF00FF" BlurRadius="5" ShadowDepth="0" Opacity="0.5"/>
+                                <DropShadowEffect Color="#48CAE4" BlurRadius="5" ShadowDepth="0" Opacity="0.5"/>
                             </TextBlock.Effect>
                         </TextBlock>
                         <PasswordBox x:Name="ConfirmPasswordBox"
@@ -381,7 +381,7 @@
                             <Rectangle.Fill>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                                     <GradientStop Color="Transparent" Offset="0"/>
-                                    <GradientStop Color="#00FF88" Offset="0.5"/>
+                                    <GradientStop Color="#00B4D8" Offset="0.5"/>
                                     <GradientStop Color="Transparent" Offset="1"/>
                                 </LinearGradientBrush>
                             </Rectangle.Fill>
@@ -403,11 +403,13 @@
                         <Button Grid.Column="0" Content="DISCORD"
                                 Style="{StaticResource OverseerPillButton}"
                                 Height="42" FontSize="11"
-                                BorderBrush="#5865F2"/>
+                                BorderBrush="#5865F2"
+                                Click="DiscordLogin_Click"/>
                         <Button Grid.Column="2" Content="MAGIC LINK"
                                 Style="{StaticResource OverseerPillButton}"
                                 Height="42" FontSize="11"
-                                BorderBrush="#00CCFF"/>
+                                BorderBrush="#0096B8"
+                                Click="MagicLinkLogin_Click"/>
                     </Grid>
 
                     <!-- Toggle Mode Link -->
@@ -419,13 +421,13 @@
                                    FontSize="12"/>
                         <TextBlock x:Name="ToggleLinkText"
                                    Text="REQUEST ACCESS"
-                                   Foreground="#00FF88"
+                                   Foreground="#00B4D8"
                                    Margin="6,0,0,0" FontSize="12"
                                    FontWeight="Bold"
                                    Cursor="Hand"
                                    MouseLeftButtonDown="ToggleMode_Click">
                             <TextBlock.Effect>
-                                <DropShadowEffect Color="#00FF88" BlurRadius="8" ShadowDepth="0" Opacity="0.5"/>
+                                <DropShadowEffect Color="#00B4D8" BlurRadius="8" ShadowDepth="0" Opacity="0.5"/>
                             </TextBlock.Effect>
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
@@ -455,17 +457,17 @@
                                      StrokeDashArray="2,4">
                                 <Ellipse.Stroke>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Color="#00FF88" Offset="0"/>
-                                        <GradientStop Color="#FF00FF" Offset="1"/>
+                                        <GradientStop Color="#00B4D8" Offset="0"/>
+                                        <GradientStop Color="#48CAE4" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Ellipse.Stroke>
                             </Ellipse>
                         </Grid>
                         <TextBlock x:Name="LoadingText" Text="CONNECTING..."
-                                   Foreground="#00FF88" FontWeight="Bold"
+                                   Foreground="#00B4D8" FontWeight="Bold"
                                    Margin="0,18,0,0" FontSize="13">
                             <TextBlock.Effect>
-                                <DropShadowEffect Color="#00FF88" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
+                                <DropShadowEffect Color="#00B4D8" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
                             </TextBlock.Effect>
                         </TextBlock>
                         <TextBlock x:Name="LoadingSubtext" Text="Please wait..."

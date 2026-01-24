@@ -374,6 +374,11 @@ public partial class MainWindow : Window
         _navigationService.NavigateTo("Settings");
     }
 
+    private void AddServerButton_Click(object sender, RoutedEventArgs e)
+    {
+        _toastService.ShowInfo("Coming Soon", "Server creation will be available in a future update.");
+    }
+
     private void NotificationsButton_Click(object sender, RoutedEventArgs e)
     {
         _navigationService.NavigateToNotifications();
