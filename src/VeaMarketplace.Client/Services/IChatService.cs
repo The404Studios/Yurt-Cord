@@ -431,7 +431,8 @@ public class ChatService : IChatService, IAsyncDisposable
 
     public async Task SendMessageAsync(string content, string channel = "general")
     {
-        if (_connection == null) return;
+        if (_connection == null)
+            throw new InvalidOperationException("Chat service not initialized");
 
         // Wait briefly for connection if reconnecting
         if (_connection.State == HubConnectionState.Reconnecting)
@@ -439,10 +440,10 @@ public class ChatService : IChatService, IAsyncDisposable
             await Task.Delay(500).ConfigureAwait(false);
         }
 
-        if (IsConnected)
-        {
-            await _connection.InvokeAsync("SendMessage", content, channel).ConfigureAwait(false);
-        }
+        if (!IsConnected)
+            throw new InvalidOperationException("Not connected to chat server");
+
+        await _connection.InvokeAsync("SendMessage", content, channel).ConfigureAwait(false);
     }
 
     public async Task DeleteMessageAsync(string messageId, string channel = "general")
@@ -459,7 +460,8 @@ public class ChatService : IChatService, IAsyncDisposable
 
     public async Task SendMessageWithAttachmentsAsync(string content, string channel, List<MessageAttachmentDto> attachments)
     {
-        if (_connection == null) return;
+        if (_connection == null)
+            throw new InvalidOperationException("Chat service not initialized");
 
         // Wait briefly for connection if reconnecting
         if (_connection.State == HubConnectionState.Reconnecting)
@@ -467,10 +469,10 @@ public class ChatService : IChatService, IAsyncDisposable
             await Task.Delay(500).ConfigureAwait(false);
         }
 
-        if (IsConnected)
-        {
-            await _connection.InvokeAsync("SendMessageWithAttachments", content, channel, attachments).ConfigureAwait(false);
-        }
+        if (!IsConnected)
+            throw new InvalidOperationException("Not connected to chat server");
+
+        await _connection.InvokeAsync("SendMessageWithAttachments", content, channel, attachments).ConfigureAwait(false);
     }
 
     public async Task UpdateProfileAsync(string? avatarUrl = null, string? bannerUrl = null)
