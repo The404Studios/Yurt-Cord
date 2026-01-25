@@ -318,7 +318,7 @@
                         </TextBlock.Style>
                     </TextBlock>
                     <Button Grid.Column="1" Content="📎" Style="{StaticResource IconButton}"
-                            Width="32" Height="32" ToolTip="Add attachment"/>
+                            Width="32" Height="32" ToolTip="Add attachment" Click="AddAttachment_Click"/>
                 </Grid>
             </Border>
         </Grid>

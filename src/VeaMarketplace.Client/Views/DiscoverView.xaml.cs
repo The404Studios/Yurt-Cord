@@ -191,4 +191,26 @@ public partial class DiscoverView : UserControl
             }
         }
     }
+
+    private void ExploreNow_Click(object sender, RoutedEventArgs e)
+    {
+        _navigationService?.NavigateToMarketplace();
+    }
+
+    private void ViewSellerProfile_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && button.Tag != null)
+        {
+            var seller = button.Tag;
+            var usernameProperty = seller.GetType().GetProperty("Username");
+            if (usernameProperty != null)
+            {
+                var username = usernameProperty.GetValue(seller)?.ToString();
+                if (!string.IsNullOrEmpty(username))
+                {
+                    _navigationService?.NavigateToProfile(username);
+                }
+            }
+        }
+    }
 }

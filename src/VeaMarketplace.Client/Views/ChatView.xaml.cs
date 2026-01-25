@@ -539,4 +539,27 @@ public partial class ChatView : UserControl
     }
 
     #endregion
+
+    #region Header Actions
+
+    private void PinnedMessages_Click(object sender, RoutedEventArgs e)
+    {
+        var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+        toastService?.ShowInfo("Coming Soon", "Pinned messages will be available in a future update.");
+    }
+
+    private void SearchMessages_Click(object sender, RoutedEventArgs e)
+    {
+        var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+        toastService?.ShowInfo("Coming Soon", "Message search will be available in a future update.");
+    }
+
+    private void ToggleMembers_Click(object sender, RoutedEventArgs e)
+    {
+        // Toggle member sidebar visibility - this would typically communicate with the parent view
+        var toastService = (IToastNotificationService?)App.ServiceProvider.GetService(typeof(IToastNotificationService));
+        toastService?.ShowInfo("Coming Soon", "Member panel toggle will be available in a future update.");
+    }
+
+    #endregion
 }

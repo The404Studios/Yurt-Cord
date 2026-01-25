@@ -155,7 +155,8 @@
                                    FontSize="14" Foreground="White" Opacity="0.9" Margin="0,8,0,0"/>
                         <Button Content="Explore Now" Style="{StaticResource SecondaryButton}"
                                 Background="#44FFFFFF" Foreground="White" BorderThickness="0"
-                                Padding="20,10" HorizontalAlignment="Left" Margin="0,16,0,0"/>
+                                Padding="20,10" HorizontalAlignment="Left" Margin="0,16,0,0"
+                                Click="ExploreNow_Click"/>
                     </StackPanel>
 
                     <!-- Decorative Elements -->
@@ -410,7 +411,8 @@
 
                                 <!-- Follow Button -->
                                 <Button Content="View Profile" Style="{StaticResource SecondaryButton}"
-                                        Padding="16,6" Margin="0,12,0,0" FontSize="11"/>
+                                        Padding="16,6" Margin="0,12,0,0" FontSize="11"
+                                        Click="ViewSellerProfile_Click" Tag="{Binding}"/>
                             </StackPanel>
                         </Border>
                     </DataTemplate>

@@ -231,15 +231,15 @@
 
                         <!-- Action Buttons -->
                         <Button Style="{StaticResource BladeIconButton}" ToolTip="Pinned Messages"
-                                Width="38" Height="38">
+                                Width="38" Height="38" Click="PinnedMessages_Click">
                             <TextBlock Text="📌" FontSize="14"/>
                         </Button>
                         <Button Style="{StaticResource BladeIconButton}" ToolTip="Search"
-                                Width="38" Height="38" Margin="6,0,0,0">
+                                Width="38" Height="38" Margin="6,0,0,0" Click="SearchMessages_Click">
                             <TextBlock Text="🔍" FontSize="14"/>
                         </Button>
                         <Button Style="{StaticResource BladeIconButton}" ToolTip="Members"
-                                Width="38" Height="38" Margin="6,0,0,0">
+                                Width="38" Height="38" Margin="6,0,0,0" Click="ToggleMembers_Click">
                             <TextBlock Text="👥" FontSize="14"/>
                         </Button>
                     </StackPanel>

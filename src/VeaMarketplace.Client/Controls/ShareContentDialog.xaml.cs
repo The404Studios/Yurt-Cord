@@ -288,4 +288,10 @@ public partial class ShareContentDialog : UserControl
     {
         return MessageBox.Text;
     }
+
+    private void AddAttachment_Click(object sender, RoutedEventArgs e)
+    {
+        var toastService = (Services.IToastNotificationService?)App.ServiceProvider.GetService(typeof(Services.IToastNotificationService));
+        toastService?.ShowInfo("Coming Soon", "Attachments in shared content will be available in a future update.");
+    }
 }
